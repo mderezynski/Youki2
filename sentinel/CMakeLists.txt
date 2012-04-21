@@ -1,0 +1,23 @@
+INCLUDE_DIRECTORIES(
+  ${PROJECT_BINARY_DIR}
+  ${PROJECT_SOURCE_DIR}/include
+  ${GLIB_INCLUDE_DIRS}
+  ${GTK_INCLUDE_DIRS}
+  ${DBUS_INCLUDE_DIRS}
+  ${SOUP_INCLUDE_DIRS}
+)
+
+SET(youki_sentinel_bin_SOURCES
+  youki-sentinel.cc
+)
+
+ADD_EXECUTABLE(youki-sentinel-bin ${youki_sentinel_bin_SOURCES})
+
+TARGET_LINK_LIBRARIES(youki-sentinel-bin
+  ${GLIB_LIBRARIES}
+  ${GTK_LIBRARIES}
+  ${DBUS_LIBRARIES}
+  ${SOUP_LIBRARIES}
+)
+
+INSTALL(TARGETS youki-sentinel-bin RUNTIME DESTINATION ${MPX_LIBEXECDIR})

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+  <xs:element name="lfm">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="artist"/>
+      </xs:sequence>
+      <xs:attribute name="status" use="required" type="xs:NCName"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="artist">
+    <xs:complexType>
+      <xs:choice>
+        <xs:element ref="bio"/>
+        <xs:choice maxOccurs="unbounded">
+          <xs:element ref="image"/>
+          <xs:element ref="mbid"/>
+          <xs:element ref="name"/>
+          <xs:element ref="similar"/>
+          <xs:element ref="stats"/>
+          <xs:element ref="streamable"/>
+          <xs:element ref="url"/>
+        </xs:choice>
+      </xs:choice>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="bio">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="published"/>
+        <xs:element ref="summary"/>
+        <xs:element ref="content"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="published" type="xs:string"/>
+  <xs:element name="summary" type="xs:string"/>
+  <xs:element name="content" type="xs:string"/>
+  <xs:element name="image">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:anyURI">
+          <xs:attribute name="size" use="required" type="xs:NCName"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="mbid" type="xs:string"/>
+  <xs:element name="name" type="xs:string"/>
+  <xs:element name="similar">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element maxOccurs="unbounded" ref="artist"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="stats">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="listeners"/>
+        <xs:element ref="playcount"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="listeners" type="xs:integer"/>
+  <xs:element name="playcount" type="xs:integer"/>
+  <xs:element name="streamable" type="xs:integer"/>
+  <xs:element name="url" type="xs:anyURI"/>
+</xs:schema>

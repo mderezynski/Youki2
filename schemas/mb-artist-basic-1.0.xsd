@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://musicbrainz.org/ns/mmd-1.0#" xmlns:mmd-1.0="http://musicbrainz.org/ns/mmd-1.0#">
+  <xs:element name="metadata">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="mmd-1.0:artist"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="artist">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="mmd-1.0:name"/>
+        <xs:element ref="mmd-1.0:sort-name"/>
+        <xs:element name="life-span" minOccurs="0">
+            <xs:complexType>
+                  <xs:attribute name="begin" use="optional" type="xs:NMTOKEN"/>
+                  <xs:attribute name="end" use="optional" type="xs:NMTOKEN"/>
+            </xs:complexType>
+       </xs:element>
+      </xs:sequence>
+      <xs:attribute name="id" use="required" type="xs:string"/>
+      <xs:attribute name="type" use="required" type="xs:NCName"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="name" type="xs:string"/>
+  <xs:element name="sort-name" type="xs:string"/>
+</xs:schema>

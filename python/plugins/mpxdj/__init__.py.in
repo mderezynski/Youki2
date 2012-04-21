@@ -1,0 +1,651 @@
+#@
+# -*- coding: utf-8 -*-
+# -*- mode:python ; tab-width:4 -*- ex:set tabstop=4 shiftwidth=4 expandtab: -*-
+#
+# MPX Trackinfo
+# (C) 2008 M. Derezynski
+#
+
+import mpx
+import gtkmm
+import time
+import pygtk
+pygtk.require('2.0')
+import gtk
+import gobject
+import gtk.glade
+import urllib
+import random
+import threading
+import Queue
+import gtk
+import gobject
+import glib
+from mpxapi import lastfm
+from gettext import gettext as _
+#import musicbrainz2
+#import musicbrainz2.webservice as ws
+
+def extract_IDs(rv, v):
+
+    for val in rv:
+        v.append(val["id"].get_int())
+
+def extract_IDs_n(rv, v, n):
+
+    for n in range(0, n):
+        v.append(rv[n]["id"].get_int())
+
+ui_playlist_popup = """ 
+        <ui>
+        <menubar name='musiclib-playlist-popup-playlist-list'>
+           <menu action='dummy' name='musiclib-playlist-menu-playlist-list'>
+               <placeholder name='musiclib-playlist-placeholder-playlist'>
+               <menuitem action='mpxdj-enable'/>
+               <menu action='mpxdj-playmode'>
+                    <menuitem action='mpxdj-mode-analyzer'/>
+                    <menuitem action='mpxdj-mode-entertain'/>
+                    <menuitem action='mpxdj-mode-toptunes'/>
+                    <menuitem action='mpxdj-mode-random'/>
+                    <menuitem action='mpxdj-mode-memorylane'/>
+                    <menuitem action='mpxdj-mode-soundsof'/>
+                    <menuitem action='mpxdj-mode-gems'/>
+                    <menuitem action='mpxdj-mode-dejavu'/>
+                    <menuitem action='mpxdj-mode-lastfmtag'/>
+               </menu>
+               </placeholder>
+           </menu>
+        </menubar>
+        </ui>
+"""
+
+class BaseOPTION__(threading.Thread):
+
+    def __init__(self, lib, v, xml, queue, mcs, track, id):
+
+        threading.Thread.__init__(self)
+
+        self.lib        = lib
+        self.xml        = xml
+        self.queue      = queue
+        self.v          = v
+        self.mcs        = mcs
+        self.track      = track
+        self.id         = id
+
+class OPTION__Analyzer(BaseOPTION__):    
+
+    def __init__( self, lib, v, xml, queue, mcs, track, id):
+
+        BaseOPTION__.__init__( self, lib, v, xml, queue, mcs, track, id)
+        self.range = xml.get_widget("analyzer-range")
+
+    def get_similartracks(self, id):
+
+        try:
+                self.track = self.lib.getTrackById( id ) 
+                m = lastfm.SimilarTracks(self.track[mpx.AttributeId.ARTIST].get(), self.track[mpx.AttributeId.TITLE].get())
+                return m.get()
+        except Exception, e:
+                print str(e)
+
+    def run_similar_track(self):
+
+        tracks = self.get_similartracks(self.queue[-1:][0])[-1:]
+        random.shuffle(tracks)
+
+        for track in tracks: 
+
+                rv = mpx.SQLRowV()
+
+                self.lib.getSQL(rv, str("SELECT id FROM track_view WHERE artist ='%s' AND title = '%s' ORDER BY random() LIMIT 1" % ( track.getArtist().getName().replace("'", "''") , track.getName().replace("'","''") ) ))
+                extract_IDs(rv, self.v)
+
+    def run_accumulate_tags(self):
+
+        tags  = {} 
+
+        for id in self.queue: 
+
+            try:
+                    track = self.lib.getTrackById( id ) 
+                    t     = lastfm.TrackTopTags(track[mpx.AttributeId.ARTIST].get(), track[mpx.AttributeId.TITLE].get())
+                    ttags = t.get()
+                   
+                    for tag in ttags: 
+                        name = tag.getName()
+
+                        try: 
+                            if name in tags:
+                                tags[name] = tags[name] + (float(tag.getCount()) / float(len(ttags)))
+                            else:
+                                tags[name] = float(tag.getCount()) / float(len(ttags))
+
+                        except Exception, e: 
+                                print "Exception in run_accumulate_tags: " + str(e)
+
+            except Exception, e: 
+                print "Exception in run_accumulate_tags: " + str(e)
+
+        highest_count = 0
+        highest_tag   = None
+
+        for tag in tags: 
+
+            if tags[tag] > highest_count:
+
+                highest_tag     = tag 
+                highest_count   = tags[tag]
+
+        if highest_tag:
+                    
+                r = lastfm.TagTopArtists(str(highest_tag))
+                a = r.get()
+
+                random.shuffle(a)
+
+                for artist in a: 
+
+                    id = artist.getMBID() 
+                    rv = mpx.SQLRowV()
+
+                    self.lib.getSQL(rv, str("SELECT id FROM track_view WHERE mb_artist_id ='%s' ORDER BY random() LIMIT 1" % id))
+                    extract_IDs(rv, self.v)
+
+                    if len(rv) > 0: return
+
+    def run_similar_artist(self):
+
+        artist = ""
+
+        try:
+                id = self.queue[-1:][0]
+
+                if id:
+                    track  = self.lib.getTrackById( id ) 
+                    artist = track[mpx.AttributeId.ARTIST].get()
+                else:
+                    return
+
+        except Exception, e:
+                print str(e)
+
+        try:
+                rv     = mpx.SQLRowV()
+                tries  = int(self.range.get_value())
+                max    = tries
+                
+                m = lastfm.SimilarArtists(artist)
+                a = m.get()[:tries]
+
+                random.shuffle(a)
+
+                while tries > 0:
+                        name = str(a[max-tries].getName())
+
+                        self.lib.getSQL(rv, str("SELECT id FROM track_view WHERE artist ='%s' ORDER BY random() LIMIT 1" % name.replace("'","''") ))
+                        extract_IDs(rv, self.v)
+
+                        if len(self.v): return
+
+                        tries = tries - 1
+
+        except Exception, e:
+                print "Error running run_similar_artist: " + str(e) 
+
+    def run_markov(self):
+
+        if not len(self.queue): return
+        
+        id = self.queue[-1:][0]
+
+        if id:
+            markov_id = self.lib.markovGetRandomProbableTrack(id)
+            if markov_id and markov_id != 0: self.v.append(markov_id)
+
+    def run(self):
+
+         if not len(self.queue):
+            return
+
+         callables = [self.run_accumulate_tags, self.run_similar_track, self.run_similar_artist, self.run_markov]
+
+         for n in range(0,5):
+ 
+                 choice = random.randint(0,3)
+                 callables[choice]()
+ 
+         if not len(self.v) and id:
+            self.run_markov()
+
+
+class OPTION__LastFmTag(BaseOPTION__):    
+
+    def __init__(self, lib, v, xml, mlib, mcs, track, id):
+
+         BaseOPTION__.__init__(self, lib, v, xml, mlib, mcs, track, id)
+
+    def run(self):
+        
+        text = self.xml.get_widget("entry-lastfm-tag").get_text()
+        rv = mpx.SQLRowV()
+
+        r = lastfm.TagTopArtists(text)
+        a = r.get()
+        random.shuffle(a)
+
+        idx = 0
+
+        while not len(rv) and len(a):
+
+                r = lastfm.SimilarArtists(a[idx].getName())
+                s = r.get()
+
+                random.shuffle(s)
+                self.lib.getSQL(rv, str("SELECT id FROM track_view WHERE mb_artist_id ='%s' ORDER BY random() LIMIT 1" % a[0].getMBID()))
+
+                l = 10
+                if len(s) < 10: l = len(s)
+                   
+                for x in range(l):
+                    self.lib.getSQL(rv, str("SELECT id FROM track_view WHERE mb_artist_id ='%s' ORDER BY random() LIMIT 1" % s[x].getMBID()))
+
+                extract_IDs(rv, self.v)
+                idx = idx + 1
+
+class OPTION__RandomMix(BaseOPTION__):
+
+    def __init__(self, lib, v, xml, queue, mcs, track, id):
+
+        BaseOPTION__.__init__(self, lib, v, xml, queue, mcs, track, id)
+
+    def run(self):
+
+        if not len(self.v):
+            [self.RANDOM_genre,
+             self.RANDOM_toptune,
+            ][ random.randint(0,1) ](self.lib, self.v, self.track, self.id)
+
+    def RANDOM_genre(self, lib, v, track, id):
+
+        choice = random.randint(0,2)
+        rv = mpx.SQLRowV()
+
+        if choice == 0:
+
+            rv2 = mpx.SQLRowV()
+            lib.getSQL(rv2, "SELECT id, genre FROM track_view WHERE genre IS NOT NULL ORDER BY random()")
+            random.shuffle(rv2)
+            genre = rv2[0]["genre"].get_string()
+            lib.getSQL(rv, "SELECT id FROM track_view WHERE genre ='%s' ORDER BY random() LIMIT 2" % genre)
+            random.shuffle(rv)
+
+        if choice == 1 and track: 
+
+            genre = track[mpx.AttributeId.GENRE].get()
+            lib.getSQL(rv, "SELECT id FROM track_view WHERE genre ='%s' ORDER BY random() LIMIT 2" % genre)
+        
+        if choice == 2:
+
+            lib.getSQL(rv, "SELECT id FROM track_view ORDER BY random() LIMIT 25")
+
+        extract_IDs(rv, v)
+
+    def RANDOM_toptune(self, lib, v, track, id):
+    
+        rv = mpx.SQLRowV()
+        self.lib.getSQL(rv, "SELECT id FROM track_view WHERE rating > 3 AND album_rating > 3 ORDER BY random() LIMIT 1")
+        extract_IDs(rv, v)
+
+    def RANDOM_markov(self, lib, v, track, id):
+        
+        markov_id = lib.markovGetRandomProbableTrack(id)
+        if markov_id and markov_id != 0:
+            v.append(markov_id)
+
+class OPTION__TopTunes(BaseOPTION__):
+
+    def __init__(self, lib, v, xml, mlib, mcs, track, id):
+
+        BaseOPTION__.__init__(self, lib, v, xml, mlib, mcs, track, id)
+
+    def run(self):
+    
+        rv = mpx.SQLRowV()
+        self.lib.getSQL(rv, "SELECT id FROM track_view WHERE rating > 3 AND album_rating > 3 ORDER BY random() LIMIT 10")
+        extract_IDs(rv, self.v)
+
+class OPTION__PlayAll(BaseOPTION__):
+
+    def __init__(self, lib, v, xml, mlib, mcs, track, id ):
+
+        BaseOPTION__.__init__(self, lib, v, xml, mlib, mcs, track, id)
+
+    def run(self):
+
+        rv = mpx.SQLRowV()
+        self.lib.getSQL(rv, "SELECT id FROM track_view ORDER BY album_j, track")
+        extract_IDs(rv, self.v)
+
+class OPTION__EntertainMe(BaseOPTION__):
+
+    def __init__( self, lib, v, xml, queue, mcs, track, id ):
+
+        BaseOPTION__.__init__( self, lib, v, xml, queue, mcs, track, id )
+
+    def run(self):
+
+        [self.ENTERTAIN_Local,
+         self.ENTERTAIN_LastFm
+        ][random.randint(0,1)]()
+
+    def ENTERTAIN_Local(self):
+
+        rv = mpx.SQLRowV()
+        self.lib.getSQL(rv, "SELECT track.id FROM track ORDER BY pcount DESC LIMIT 5")
+        self.lib.getSQL(rv, "SELECT track.id FROM track JOIN artist ON artist.id = track.artist_j ORDER BY artist.pcount DESC LIMIT 5") ;
+
+        if len(rv):
+            random.shuffle(rv)
+            extract_IDs(rv, self.v)
+        else:
+            self.ENTERTAIN_LastFm()
+  
+    def ENTERTAIN_LastFm(self):
+
+        r = lastfm.UserTopTracks(self.mcs.key_get_string("lastfm","username"))
+        t = r.get()
+
+        for n in range(5):
+
+            random.shuffle(t)
+            rv = mpx.SQLRowV()
+            artist = t[0].getArtistMBID().replace("'","''")
+            self.lib.getSQL(rv, str("SELECT id FROM track_view WHERE mb_artist_id = '%s'" % artist))
+
+            if len(rv):
+                random.shuffle(rv)
+                extract_IDs_n(rv, self.v, 1)
+
+class OPTION__SoundsOf(BaseOPTION__):
+
+    def __init__(self, lib, v, xml, mlib, mcs, model):
+
+        BaseOPTION__.__init__(self, lib, v, xml, mlib, mcs, model)
+ 
+    def run(self):
+    
+        active = self.xml.get_widget("cbox-decade").get_active()
+        upper = 0
+        lower = 0
+
+        if(active == 6):
+            lower = 2000
+            upper = 3000
+        else:
+            lower = 1940 + (active * 10)
+            upper = 1950 + (active * 10)
+        
+        rv = mpx.SQLRowV()
+        for x in range(10):
+            self.lib.getSQL(rv, "SELECT id FROM track_view WHERE date >= " + str(lower) + " AND date < " + str(upper) + " ORDER BY random() LIMIT 1")
+
+        extract_IDs(rv, self.v)
+
+class OPTION__ForgottenGems(BaseOPTION__):
+
+    def __init__(self, lib, v, xml, mlib, mcs, model):
+
+        BaseOPTION__.__init__(self, lib, v, xml, mlib, mcs, model)
+ 
+    def run(self):
+   
+        rv = mpx.SQLRowV() 
+        self.lib.getSQL(rv, "SELECT id FROM track_view WHERE pdate IS NOT NULL AND pcount > 3 ORDER BY pdate ASC")
+
+        if len(rv):
+            random.shuffle(rv)
+            extract_IDs_n(rv, self.v, 5)
+
+class OPTION__DejaVu(BaseOPTION__):
+
+    def __init__(self, lib, v, xml, mlib, mcs, model):
+
+        BaseOPTION__.__init__(self, lib, v, xml, mlib, mcs, model)
+ 
+    def run(self):
+   
+        rv = mpx.SQLRowV() 
+        self.lib.getSQL(rv, "SELECT id FROM track_view ORDER BY pcount DESC LIMIT 10")
+
+        if len(rv):
+            random.shuffle(rv)
+            extract_IDs_n(rv, self.v, 5)
+
+class MPXDJ(mpx.Plugin):
+
+    """MPXDJ DJs your music library for you!"""
+
+    def __init__(self,id,youki,mcs):
+       
+        self.id             = id 
+        self.youki          = youki
+        self.lib            = youki.get_library()
+        self.mcs            = mcs
+        self.playmode       = 0
+        self.tqueue         = Queue.Queue()
+
+        self.xml            = gtk.glade.XML("@PLUGIN_DIR@" + "/plugins-python/mpxdj/mpxdj.glade")
+
+        self.widget         = self.xml.get_widget("widget")
+        self.combo          = self.xml.get_widget("combobox")
+        self.button         = self.xml.get_widget("button")
+        self.button_handler = self.button.connect("clicked", self.on_cold_start)
+
+
+        self.header_image = self.xml.get_widget("header-image")
+        self.header_image.set_from_file("@PLUGIN_DIR@" + "/plugins-python/mpxdj/mpxdj.png")
+
+        self.notebook     = self.xml.get_widget("notebook")
+
+        try:
+            self.icon = gtk.gdk.pixbuf_new_from_file("@PLUGIN_DIR@" + "/plugins-python/mpxdj/mpxdj-icon.png")
+        except:
+            self.icon = None
+
+            
+        self.callables = [
+            OPTION__Analyzer,
+            OPTION__EntertainMe,
+            OPTION__TopTunes,
+            OPTION__RandomMix 
+#            None,
+#            OPTION__SoundsOf, 
+#            OPTION__ForgottenGems,
+#            OPTION__DejaVu,
+#            OPTION__LastFmTag 
+        ]
+
+        self.helptexts = [
+            "Analyzes the playlist and plays similar Music",
+            "Creates a running order composed of the most frequently played tracks.",
+            "Plays some of the best rated tracks",
+            "Plays random, but similar tracks"
+#            "",
+#           "Plays tracks from a specific decade.",
+#            "Plays long forgotten but popular tracks.",
+#            "Plays a set number of the most frequently played tracks.",
+#            "Creates a playlist from your music library based on a Last.fm tag"
+        ]   
+
+        self.actionnames = [
+            "mpxdj-mode-analyzer",
+            "mpxdj-mode-entertain"
+            "mpxdj-mode-toptunes"
+            "mpxdj-mode-random"
+#            "mpxdj-mode-memorylane",
+#            "mpxdj-mode-soundsof",
+#            "mpxdj-mode-gems",
+#            "mpxdj-mode-dejavu",
+#            "mpxdj-mode-lastfmtag",
+        ] 
+
+        self.options = [
+            "Analyzer",
+            "Entertain Me!",
+            "Top Tunes",
+            "Random Mix"
+#            "Memory Lane",
+#            "Sounds Of...",
+#            "Forgotten Gems",
+#            "Deja Vu",
+#            "Last.fm Tag"
+        ]
+
+#        self.action1 = gtk.ToggleAction('mpxdj-enable', "Enable MPXDJ", "", "")
+#        self.action2 = gtk.Action('mpxdj-playmode', "MPXDJ Play Mode", "", "")
+        
+#        self.actiongroup.add_action(self.action1)
+#        self.actiongroup.add_action(self.action2)
+
+#        self.action_handler1 = self.action1.connect("toggled", self.on_enable_toggled)
+
+#        self.action = []
+#        idx = 0
+
+#        for action in self.actionnames:
+
+#                a = gtk.RadioAction(self.actionnames[idx], self.options[idx], "", "", idx)
+#                if not self.callables[idx]: a.set_sensitive(False)
+#                self.action.append(a)
+#                if idx is not 0: a.set_group(self.action[0])
+#                self.actiongroup.add_action(a)
+#                idx = idx + 1
+
+#        self.action_handler2 = self.action[0].connect("changed", self.on_mode_changed)
+#        self.action[0].set_active(True)
+
+#        self.ui.insert_action_group(self.actiongroup, pos=-1)
+#        self.ui.add_ui_from_string(ui_playlist_popup)
+
+        cell = gtk.CellRendererText()
+        self.combo.pack_start(cell)
+        self.combo.add_attribute(cell, "text", 0)
+
+        self.store = gtk.ListStore(gobject.TYPE_STRING)
+        for option in self.options: self.store.append([option])
+
+        self.combo.connect("changed", self.on_mode_cbox_changed)
+        self.combo.set_model(self.store)
+        self.combo.set_active(0)
+
+        self.queue = []
+
+    def on_mode_changed(self, action, current):
+
+        self.combo.set_active(current.get_current_value())
+        self.playmode = current.get_current_value()
+        #self.youki.show_plugin(self.id)
+
+    def get_icon(self):
+
+        return self.icon
+
+    def get_gui(self):
+
+        return self.widget
+
+    def activate(self):
+
+        self.conn_metadata_updated = self.youki.gobj().connect("track-new", self.on_metadata_updated)
+        self.conn_track_cancelled = self.youki.gobj().connect("track-cancelled", self.on_track_cancelled)
+
+        self.on_metadata_updated([]) 
+
+        qv = self.youki.get_current_play_queue()
+
+        for n in qv: 
+
+            self.queue.append( n )
+
+        #self.action1.handler_block(self.action_handler1)
+        #self.action1.set_active(True) 
+        #self.action1.handler_unblock(self.action_handler1)
+        return True
+
+    def deactivate(self):
+
+        self.youki.gobj().disconnect(self.conn_metadata_updated)
+        self.youki.gobj().disconnect(self.conn_track_cancelled)
+        #self.action1.handler_block(self.action_handler1)
+        #self.action1.set_active(False) 
+        #self.action1.handler_unblock(self.action_handler1)
+        self.queue = []
+        return True
+
+    def on_mode_cbox_changed(self, cbox):
+
+        self.notebook.set_current_page(cbox.get_active())       
+
+        #self.action[0].handler_block(self.action_handler2)
+        #self.action[self.combo.get_active()].set_active(True) 
+        #self.action[0].handler_unblock(self.action_handler2)
+
+        self.playmode = self.combo.get_active() 
+
+    def on_track_cancelled(self, object):
+
+        if not len(self.queue):
+            return
+
+        self.queue.pop()
+
+    def on_metadata_updated(self, object):
+
+        try:
+                self.track      = self.youki.get_metadata()
+                self.track_id   = self.track[mpx.AttributeId.MPX_TRACK_ID].get()
+                klass           = self.callables[self.playmode]
+
+                self.queue.append( self.track_id ) 
+
+                if klass:
+
+                    self.idv = []
+
+                    instance = klass( self.lib, self.idv, self.xml, self.queue, self.mcs, self.track, self.track_id )
+                    instance.setDaemon(True)
+                    instance.start() 
+
+                    while instance.isAlive(): 
+                        while gtk.events_pending(): gtk.main_iteration()
+
+                    if len(self.idv): 
+                        print "MPXDJ: Next track: " + str(self.idv[0])
+                        self.youki.queue_next_track(self.idv[0]) 
+                    
+        except Exception, e:
+                print str(e)
+
+    def on_cold_start(self, object):
+
+        try:
+                klass = self.callables[self.playmode]
+
+                if klass:
+
+                    self.idv = []
+
+                    instance = klass( self.lib, self.idv, self.xml, self.queue, self.mcs, None, None )
+                    instance.setDaemon(True)
+                    instance.start() 
+
+                    while instance.isAlive(): 
+                        while gtk.events_pending(): gtk.main_iteration()
+
+                    if len(self.idv): 
+                        print "MPXDJ: Next track: " + str(self.idv[0])
+                        self.youki.play_track(self.idv[0]) 
+                    
+        except Exception, e:
+                print str(e)

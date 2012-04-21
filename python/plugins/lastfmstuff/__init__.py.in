@@ -1,0 +1,209 @@
+#
+# -*- coding: utf-8 -*-
+# -*- mode:python ; tab-width:4 -*- ex:set tabstop=4 shiftwidth=4 expandtab: -*-
+#
+# MPX Trackinfo
+# (C) 2008 M. Derezynski
+
+
+import mpx
+import random
+import xmlrpclib
+import md5
+import time
+import gtk
+import gobject
+from gettext import gettext as _
+import urllib
+import urllib2
+import libxml2
+from mpxapi import lastfm
+
+def rpchead(mcs):
+
+        rpc_time  = int(time.time())         
+
+        md5_value = md5.new()
+        md5_value.update(mcs.key_get_string("lastfm","password"))
+
+        rpc_pass  = md5_value.hexdigest()
+        rpc_pass  = rpc_pass + str(rpc_time)
+
+        md5_value = md5.new()
+        md5_value.update(rpc_pass)
+
+        rpc_pass  = md5_value.hexdigest()
+
+        return [mcs.key_get_string("lastfm","username"), str(rpc_time), rpc_pass] 
+
+class LoveTrack():
+
+    def __init__(self, track, mcs):
+
+        self.title   = track[mpx.AttributeId.TITLE].get()
+        self.artist  = track[mpx.AttributeId.ARTIST].get()
+        self.mcs     = mcs
+
+    def run(self):
+
+        head    = rpchead(self.mcs)
+        rpcsvr  = xmlrpclib.Server("http://ws.audioscrobbler.com/1.0/rw/xmlrpc.php")
+        rpcsvr.loveTrack(head[0], head[1], head[2], self.artist, self.title)
+
+class TagTrack():
+
+    def __init__(self, track, mcs, lib):
+
+        self.title      = track[mpx.AttributeId.TITLE].get()
+        self.artist     = track[mpx.AttributeId.ARTIST].get()
+        self.id         = track[mpx.AttributeId.MPX_TRACK_ID].get()
+
+        self.mcs        = mcs
+        self.lib        = lib
+
+        self.model      = gtk.ListStore(gobject.TYPE_STRING)
+        self.tags       = {}
+
+        self.xml        = gtk.glade.XML("@PLUGIN_DIR@" + "/plugins-python/lastfmstuff/tag-track.glade")
+        self.dialog     = self.xml.get_widget("dialog")
+        self.box        = self.xml.get_widget("entry")
+        self.entry      = self.box.child
+
+        self.box.set_model(self.model)
+        self.box.set_text_column(0)
+
+    def run(self):
+
+        self.model.clear()
+
+        try:
+                t = lastfm.TrackTopTags(self.artist, self.title)
+                tags = t.get()
+
+                for tag in tags:
+
+                        self.model.append([tag.getName()])
+                        self.tags[tag.getName()] = True
+
+                response = self.dialog.run()
+                self.dialog.destroy()
+
+                if response == gtk.RESPONSE_OK:
+
+                    head    = rpchead(self.mcs)
+                    rpcsvr  = xmlrpclib.Server("http://ws.audioscrobbler.com/1.0/rw/xmlrpc.php")
+                    tag     = self.entry.props.text
+
+                    method  = "" 
+
+                    if tag in self.tags:
+                        method = "append"
+                    else:
+                        method = "set"
+
+                    print rpcsvr.tagTrack(head[0], head[1], head[2], self.artist, self.title, [tag], method)
+                    self.lib.trackTagged(self.id, tag)
+
+        except Exception, e:
+
+                print "Error tagging track: " + str(e)
+
+
+class LastFmActions(mpx.Plugin):
+        
+    """Last.fm Actions provides actions based on Last.fm, e.g. 'I Love this Track'. Tagging a track also tags it locally (this functionality can currently not be used in reverse, i.e. finding tracks by local tags is not yet implemented)"""
+
+    def activate(self):
+
+        self.merge_id = self.ui.add_ui_from_string(self.uistring)
+        self.handler1_id = self.player.gobj().connect("metadata-updated", self.on_metadata_updated)
+        self.handler2_id = self.player.gobj().connect("play-status-changed", self.on_play_status_changed)
+        return True
+
+    def deactivate(self):
+
+        self.player.gobj().disconnect(self.handler1_id)
+        self.player.gobj().disconnect(self.handler2_id)
+        self.ui.remove_ui(self.merge_id)
+        return True
+
+    def __init__(self,id,player,mcs):
+
+        self.lib        = player.get_library()
+        self.covers     = player.get_covers()
+        self.ui         = player.ui()
+        self.player     = player
+        self.mcs        = mcs
+        self.actions    = {}
+
+        self.actions["love"] = gtk.Action("lastfmstuff-action-ilovethistrack", _("I Love this Track!"), "", "mpx-stock-lastfm")
+        self.actions["tagtrack"] = gtk.Action("lastfmstuff-action-tagtrack", _("Tag Track"), "", "mpx-stock-lastfm")
+
+        Callbacks = {
+                        "love"      :   self.on_action_love,
+                        "tagtrack"  :   self.on_action_tagtrack
+                    }
+
+        for action in self.actions:
+
+                self.actions[action].set_sensitive(False)
+                self.actions[action].connect("activate", Callbacks[action])
+
+        self.group = gtk.ActionGroup("LastFmStuff")
+        self.group.add_action(self.actions["love"])
+        self.group.add_action_with_accel(self.actions["tagtrack"], "<ctrl>T")
+
+        self.ui.insert_action_group(self.group, -1)
+
+        self.uistring   = """
+                <ui>
+                <menubar name='MenubarMain'>
+                     <menu action='MenuTrack'>
+                        <placeholder name='placeholder-track-actions'>
+                        <menuitem action='lastfmstuff-action-ilovethistrack'/>
+                        <menuitem action='lastfmstuff-action-tagtrack'/>
+                        </placeholder>
+                     </menu>
+                </menubar>
+                </ui>
+        """
+
+        self.merge_id = None
+
+    def on_play_status_changed(self, player, status):
+
+        if status == mpx.PlayStatus.STOPPED:
+
+                self.actions["love"].set_sensitive(False)
+                self.actions["tagtrack"].set_sensitive(False)
+
+        elif status == mpx.PlayStatus.WAITING:
+
+                self.actions["love"].set_sensitive(False)
+                self.actions["tagtrack"].set_sensitive(False)
+
+    def on_metadata_updated(self, action):
+        
+        m = self.player.get_metadata() 
+
+        if (mpx.AttributeId.TITLE in m) and (mpx.AttributeId.ARTIST in m):
+
+                self.actions["love"].set_sensitive(True)
+                self.actions["tagtrack"].set_sensitive(True)
+
+        else:
+
+                self.actions["love"].set_sensitive(False)
+                self.actions["tagtrack"].set_sensitive(False)
+
+    def on_action_love(self, action):
+
+        d = LoveTrack(self.player.get_metadata(), self.mcs) 
+        d.run()
+        self.actions["love"].set_sensitive(False)
+
+    def on_action_tagtrack(self, action):
+
+        d = TagTrack(self.player.get_metadata(), self.mcs, self.lib)
+        d.run()
+

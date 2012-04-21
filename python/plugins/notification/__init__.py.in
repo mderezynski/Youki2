@@ -1,0 +1,180 @@
+#
+# -*- coding: utf-8 -*-
+# -*- mode:python ; tab-width:4 -*- ex:set tabstop=4 shiftwidth=4 expandtab: -*-
+#
+# MPX Notification plugin
+# (C) 2008 Jacek Wolszczak
+# (C) 2008 David Le Brun
+#
+
+import mpx
+import pynotify
+import pygtk
+pygtk.require('2.0')
+import gtk
+import gtk.glade
+
+APPLICATION="MPX"
+COVER_SIZE = 96
+ICON_SIZE = 48
+
+class Notification(mpx.Plugin):
+
+    """The Notification plugin displays a notification bubble with the currently played track and handles icons in the systray area."""
+
+    def __init__(self,id,player,mcs):
+
+        self.id = id
+        self.player = player
+        self.mcs = mcs
+
+        self.mcs.domain_register("MPX-notification-plugin")
+        self.mcs.key_register("MPX-notification-plugin", "notification-enabled", False)
+
+        self.xml = gtk.glade.XML("@PLUGIN_DIR@" + "/plugins-python/notification/notification.glade")
+
+        self.widget = self.xml.get_widget("widget")
+        self.widget.unparent()
+        self.widget.set_sensitive(False)
+
+        self.icon = self.xml.get_widget("cb-icon")
+        self.icon.connect("toggled", self.on_icon_toggled)
+
+        self.controls = self.xml.get_widget("cb-controls")
+        self.controls.connect("toggled", self.on_controls_toggled)
+
+        self.notification = self.xml.get_widget("cb-notification")
+        self.notification.connect("toggled", self.on_notification_toggled)
+
+    def activate(self):
+        self.widget.set_sensitive(True)
+        self.on_icon_toggled(self.icon)
+        self.on_notification_toggled(self.notification)
+        self.on_controls_toggled(self.controls)
+
+        self.player_new_track_handler_id = self.player.gobj().connect("metadata-updated", self.now_playing)
+        self.player_state_change_handler_id = self.player.gobj().connect("play-status-changed", self.on_state_change)
+        return True
+
+    def deactivate(self):
+        self.player.gobj().disconnect(self.player_state_change_handler_id)
+        self.player.gobj().disconnect(self.player_new_track_handler_id)
+        self.widget.set_sensitive(False)
+
+        try:
+            self.next.set_visible(False)
+            self.previous.set_visible(False)
+            self.playpause.set_visible(False)
+        except:
+            pass
+
+        try:
+            self.statusicon.set_visible(False)
+        except:
+            pass
+
+    def on_state_change(self, player, state):
+        if self.controls.get_active():
+            if state == mpx.PlayStatus.PLAYING:
+                self.playpause.set_from_stock(gtk.STOCK_MEDIA_PAUSE)
+            else:
+                self.playpause.set_from_stock(gtk.STOCK_MEDIA_PLAY)
+
+        if self.icon.get_active():
+            if state == mpx.PlayStatus.PLAYING:
+                self.statusicon.set_blinking(False)
+            if state == mpx.PlayStatus.PAUSED:
+                self.statusicon.set_blinking(True)
+            if state == mpx.PlayStatus.STOPPED:
+                self.statusicon.set_from_file("@DATA_DIR@" + "/icons/mpx_48.png")
+                self.statusicon.set_tooltip(APPLICATION)
+
+    def next_cb(self,widget, data = None):
+        self.player.next()
+
+    def previous_cb(self,widget, data = None):
+        self.player.prev()
+
+    def playpause_cb(self,widget, data = None):
+        self.player.pause()
+
+    def now_playing(self, blah):
+
+        m = self.player.get_metadata()
+        image = m.get_image()
+
+        if self.notification.get_active():
+            if m[mpx.AttributeId.ARTIST] and m[mpx.AttributeId.TITLE]: 
+                message = "<big><b>%s</b>\n%s</big>" % (m[mpx.AttributeId.ARTIST].get(), m[mpx.AttributeId.TITLE].get())
+                if message != self.previous_message:
+                    n = pynotify.Notification(APPLICATION + " is now playing...", message)
+                    n.set_urgency(pynotify.URGENCY_LOW)
+                    if(image):
+                        image = image.scale_simple(COVER_SIZE, COVER_SIZE, gtk.gdk.INTERP_NEAREST)
+                        n.set_icon_from_pixbuf(image)
+
+                    n.show()
+                    self.previous_message = message
+
+        if self.icon.get_active():
+            if(image):
+                image = image.scale_simple(ICON_SIZE, ICON_SIZE, gtk.gdk.INTERP_NEAREST)
+                self.statusicon.set_from_pixbuf(image)
+            else:
+                self.statusicon.set_from_file("@DATA_DIR@" + "/icons/mpx_48.png")
+            if m[mpx.AttributeId.ARTIST] and m[mpx.AttributeId.TITLE]: 
+                tooltip = "%s - %s" % (m[mpx.AttributeId.ARTIST].get(), m[mpx.AttributeId.TITLE].get())
+                self.statusicon.set_tooltip(tooltip)
+
+
+    def on_icon_toggled(self, cb):
+        if cb.get_active():
+            self.statusicon = gtk.StatusIcon()
+            self.statusicon.set_from_file("@DATA_DIR@" + "/icons/mpx_48.png")
+            self.statusicon.set_visible(True)
+            self.statusicon.set_tooltip(APPLICATION)
+
+            status = self.player.get_status()
+            if (status == mpx.PlayStatus.PLAYING) or (status == mpx.PlayStatus.PAUSED):
+                self.now_playing(self.player.gobj())
+        else:
+            try:
+                self.statusicon.set_visible(False)
+            except:
+                pass
+
+    def on_controls_toggled(self, cb):
+        if cb.get_active():
+            self.previous = gtk.StatusIcon()
+            self.previous.set_from_stock(gtk.STOCK_MEDIA_PREVIOUS)
+            self.previous.connect('activate', self.previous_cb)
+            self.previous.set_visible(True)
+
+            self.playpause = gtk.StatusIcon()
+            self.playpause.set_from_stock(gtk.STOCK_MEDIA_PLAY)
+            self.playpause.connect('activate', self.playpause_cb)
+            self.playpause.set_visible(True)
+
+            self.next = gtk.StatusIcon()
+            self.next.set_from_stock(gtk.STOCK_MEDIA_NEXT)
+            self.next.connect('activate', self.next_cb)
+            self.next.set_visible(True)
+        else:
+            try:
+                self.next.set_visible(False)
+                self.previous.set_visible(False)
+                self.playpause.set_visible(False)
+            except:
+                pass
+
+    def on_notification_toggled(self, cb):
+        if cb.get_active():
+            self.previous_message = u''
+            pynotify.init(APPLICATION)
+
+            status = self.player.get_status()
+            if (status == mpx.PlayStatus.PLAYING) or (status == mpx.PlayStatus.PAUSED):
+                self.now_playing(self.player.gobj())
+
+    def get_gui(self):
+        return self.widget

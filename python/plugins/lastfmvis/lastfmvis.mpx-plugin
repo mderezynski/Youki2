@@ -1,0 +1,8 @@
+[MPX Plugin]
+Loader=python
+Module=lastfmvis
+IAge=1
+Name=LastFM Visualizer
+Authors=Milosz Derezynski <milosz@backtrace.info>
+Copyright=Copyright © 2008 Milosz Derezynski 
+Website=http://mpx.backtrace.info/

@@ -1,0 +1,29 @@
+INCLUDE_DIRECTORIES(
+  ${PROJECT_BINARY_DIR}
+  ${PROJECT_SOURCE_DIR}
+  ${PROJECT_SOURCE_DIR}/include
+  ${ALSA_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIR}
+  ${GST_INCLUDE_DIRS}
+  ${GLADEMM_INCLUDE_DIRS}
+  ${GLIBMM_INCLUDE_DIRS}
+  ${GTKMM_INCLUDE_DIRS}
+)
+
+SET(cppmod_audioprefs_SOURCES
+  prefs-audio.hh
+  prefs-audio.cc
+)
+
+ADD_LIBRARY(cppmod-audioprefs MODULE ${cppmod_audioprefs_SOURCES})
+
+TARGET_LINK_LIBRARIES(cppmod-audioprefs
+  ${ALSA_LIBRARIES}
+  ${GST_LIBRARIES}
+  ${GLADEMM_LIBRARIES}
+  ${GLIBMM_LIBRARIES}
+  ${GTKMM_LIBRARIES}
+  mconfig
+)
+
+INSTALL(TARGETS cppmod-audioprefs LIBRARY DESTINATION ${PLUGIN_DIR}/cppmod)

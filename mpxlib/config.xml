@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mpx version="0.010000">
+  <domain id="Preferences-FileFormatPriorities">
+    <key id="Format0" type="string">audio/x-flac</key>
+    <key id="Format1" type="string">audio/x-ape</key>
+    <key id="Format2" type="string">audio/x-vorbis+ogg</key>
+    <key id="Format3" type="string">audio/x-musepack</key>
+    <key id="Format4" type="string">audio/mp4</key>
+    <key id="Format5" type="string">audio/mpeg</key>
+    <key id="Format6" type="string">audio/x-ms-wma</key>
+    <key id="prioritize-by-bitrate" type="boolean">FALSE</key>
+    <key id="prioritize-by-filetype" type="boolean">FALSE</key>
+  </domain>
+  <domain id="library">
+    <key id="quarantine-invalid" type="boolean">FALSE</key>
+    <key id="rescan-at-startup" type="boolean">TRUE</key>
+    <key id="rescan-in-intervals" type="boolean">TRUE</key>
+    <key id="rescan-interval" type="integer">30</key>
+    <key id="rootpath" type="string">/home/milosz/Music</key>
+    <key id="use-hal" type="boolean">TRUE</key>
+  </domain>
+  <domain id="mpx">
+    <key id="file-chooser-close-on-add" type="boolean">FALSE</key>
+    <key id="file-chooser-close-on-open" type="boolean">TRUE</key>
+    <key id="file-chooser-path" type="string">/home/milosz</key>
+    <key id="music-import-path" type="string">/home/milosz/Music</key>
+    <key id="music-quarantine-path" type="string">/home/milosz/Music Youki-Quarantined</key>
+    <key id="window-mlib-h" type="integer">400</key>
+    <key id="window-mlib-w" type="integer">600</key>
+    <key id="window-mlib-x" type="integer">100</key>
+    <key id="window-mlib-y" type="integer">100</key>
+  </domain>
+  <domain id="musicbrainz">
+    <key id="password" type="string"></key>
+    <key id="username" type="string"></key>
+  </domain>
+</mpx>

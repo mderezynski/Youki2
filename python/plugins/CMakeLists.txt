@@ -1,0 +1,2 @@
+ADD_SUBDIRECTORY(mpxdj)
+ADD_SUBDIRECTORY(tracktags)

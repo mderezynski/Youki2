@@ -1,0 +1,22 @@
+This package was debianized by unknown <internalerror@gmail.com> on
+Sun, 05 Apr 2009 15:30:18 +0200.
+
+It was downloaded from http://youki.mp 
+
+Upstream Author(s):
+
+    Milosz Derezynski, Siavash Safi, Chong Kai Xiong, David Le Brun
+
+Copyright:
+
+    (C) all of the above 2009
+
+License:
+
+    GPL and LGPL
+
+The Debian packaging is copyright 2009, unknown <internalerror@gmail.com> and
+is licensed under the GPL, see `/usr/share/common-licenses/GPL'.
+
+# Please also look if there are files or directories which have a
+# different copyright/license attached and list them here.

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+  <xs:element name="lfm">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="similarartists"/>
+      </xs:sequence>
+      <xs:attribute name="status" use="required" type="xs:NCName"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="similarartists">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element maxOccurs="unbounded" ref="artist"/>
+      </xs:sequence>
+      <xs:attribute name="artist" use="required" type="xs:NCName"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="artist">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="name"/>
+        <xs:element ref="mbid"/>
+        <xs:element ref="match"/>
+        <xs:element ref="url"/>
+        <xs:element maxOccurs="unbounded" ref="image"/>
+        <xs:element ref="streamable"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="name" type="xs:string"/>
+  <xs:element name="mbid" type="xs:string"/>
+  <xs:element name="match" type="xs:decimal"/>
+  <xs:element name="url" type="xs:string"/>
+  <xs:element name="image">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:anyURI">
+          <xs:attribute name="size" use="required" type="xs:NCName"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="streamable" type="xs:integer"/>
+</xs:schema>

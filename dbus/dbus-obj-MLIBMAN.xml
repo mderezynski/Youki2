@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<node name="/info/backtrace/Youki/MLibMan">
+
+  <interface name="info.backtrace.Youki.MLibMan">
+
+        <method name="Start"/>
+        <method name="Exit"/>
+        <method name="ShowWindow"/>
+        <signal name="ScanStart"/>
+        <signal name="ScanEnd"/>
+
+        <signal name="EntityUpdated">
+            <arg type="x" direction="out"/> 
+            <arg type="i" direction="out"/>
+        </signal>
+
+        <signal name="EntityDeleted">
+            <arg type="x" direction="out"/> 
+            <arg type="i" direction="out"/>
+        </signal>
+
+        <signal name="NewTrack">
+            <arg type="x" direction="out"/> 
+        </signal>
+
+        <signal name="NewAlbum">
+            <arg type="x" direction="out"/> 
+            <arg type="s" direction="out"/> 
+            <arg type="s" direction="out"/> 
+            <arg type="s" direction="out"/> 
+            <arg type="s" direction="out"/> 
+            <arg type="s" direction="out"/> 
+        </signal>
+
+        <signal name="NewArtist">
+            <arg type="x" direction="out"/> 
+        </signal>
+
+  </interface>
+</node>

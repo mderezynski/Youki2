@@ -1,0 +1,23 @@
+INCLUDE_DIRECTORIES(
+  ${PROJECT_BINARY_DIR}
+  ${PROJECT_SOURCE_DIR}
+  ${PROJECT_SOURCE_DIR}/include
+  ${TAGLIB_INCLUDE_DIRS}
+  ${GLIBMM_INCLUDE_DIRS}
+)
+
+SET(mpx_xiph_reader_SOURCES
+  reader.cc
+  reader.hh
+)
+
+ADD_LIBRARY(mpx_xiph_reader STATIC ${mpx_xiph_reader_SOURCES})
+
+SET_TARGET_PROPERTIES(mpx_xiph_reader
+  PROPERTIES COMPILE_FLAGS -fPIC
+)
+
+TARGET_LINK_LIBRARIES(mpx_xiph_reader
+  ${TAGLIB_LIBRARIES}
+  ${GLIBMM_LIBRARIES}
+)

@@ -1,0 +1,11 @@
+prefix=@MPX_PREFIX@
+exec_prefix=@MPX_EXEC_PREFIX@
+libdir=@MPX_LIBDIR@
+includedir=@MPX_INCLUDEDIR@
+
+Name: @PACKAGE@
+Description: MPX development requirements 
+Version: @PACKAGE_VERSION@
+Requires: dbus-1 dbus-glib-1 glib-2.0
+Libs: -L${libdir} -ldbus-1 -ldbus-glib-1
+Cflags: -I${includedir}/bmp-2.0

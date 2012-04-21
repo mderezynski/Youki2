@@ -1,0 +1,1888 @@
+# Swedish translations for audiosource package
+# Svenska översättningar för paket audiosource.
+# Copyright (C) 2008 Free Software Foundation, Inc.
+# This file is distributed under the same license as the audiosource package.
+# Carl Furstenberg <azatoth@gmail.com>, 2008.
+#
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: audiosource alpha6\n"
+"Report-Msgid-Bugs-To: http://mpx.backtrace.info/report\n"
+"POT-Creation-Date: 2009-04-05 15:52+0430\n"
+"PO-Revision-Date: 2009-01-05 23:46+0100\n"
+"Last-Translator: Carl Furstenberg <azatoth@gmail.com>\n"
+"Language-Team: Swedish <sv@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: python/plugins/lastfmstuff/__init__.py:139
+msgid "I Love this Track!"
+msgstr "Jag älskar detta spår!"
+
+#: python/plugins/lastfmstuff/__init__.py:140
+msgid "Tag Track"
+msgstr "Tagga spår"
+
+#: python/plugins/trackinfo-webkit/__init__.py:213
+msgid "Back"
+msgstr "Tillbaka"
+
+#: python/plugins/trackinfo-webkit/__init__.py:219
+msgid "Forward"
+msgstr "Framåt"
+
+#: python/plugins/trackinfo-webkit/__init__.py:226
+msgid "Stop and reload current page"
+msgstr "Stanna och ladda om sida"
+
+#: python/plugins/trackinfo-webkit/__init__.py:236
+msgid "Zoom in"
+msgstr "Zooma in"
+
+#: python/plugins/trackinfo-webkit/__init__.py:242
+msgid "Zoom out"
+msgstr "Zooma ut"
+
+#: python/plugins/trackinfo-webkit/__init__.py:248
+msgid "100% zoom"
+msgstr "100% zoom"
+
+#: python/plugins/trackinfo-webkit/__init__.py:282 src/mpx.cc:986
+msgid "Stop"
+msgstr "Stanna"
+
+#: python/plugins/trackinfo-webkit/__init__.py:285
+msgid "Reload"
+msgstr "Ladda om"
+
+#: python/plugins/trackinfo-webkit/__init__.py:429
+#, python-format
+msgid "%s%s loaded"
+msgstr "%s%s laddat"
+
+#: python/plugins/trackinfo-webkit/__init__.py:513
+msgid "Discogs"
+msgstr "Discogs"
+
+#: python/plugins/trackinfo-webkit/__init__.py:514
+msgid "Wikipedia"
+msgstr "Wikipedia"
+
+#: python/plugins/trackinfo-webkit/__init__.py:515
+msgid "Myspace"
+msgstr "Myspace"
+
+#: python/plugins/trackinfo-webkit/__init__.py:516
+msgid "Homepage"
+msgstr "Hemsida"
+
+#: python/plugins/trackinfo-webkit/__init__.py:594
+#: python/plugins/trackinfo-webkit/__init__.py:685
+#, python-format
+msgid "About %s"
+msgstr "Om %s"
+
+#: python/plugins/trackinfo-webkit/__init__.py:608
+#: python/plugins/trackinfo-webkit/__init__.py:697
+msgid "more"
+msgstr "mer"
+
+#: python/plugins/trackinfo-webkit/__init__.py:615
+#: python/plugins/trackinfo-webkit/__init__.py:826
+msgid "Track Artists"
+msgstr "Spårartister"
+
+#: python/plugins/trackinfo-webkit/__init__.py:738
+msgid "was composed by"
+msgstr "var hopsamlad av"
+
+#: python/plugins/trackinfo-webkit/__init__.py:739
+msgid "was remixed by"
+msgstr "var remixad av"
+
+#: python/plugins/trackinfo-webkit/__init__.py:740
+msgid "has lyrics by"
+msgstr "har text av"
+
+#: python/plugins/trackinfo-webkit/__init__.py:741
+msgid "was produced by"
+msgstr "var producerad av"
+
+#: python/plugins/trackinfo-webkit/__init__.py:742
+msgid "was performed by"
+msgstr "var framförd av"
+
+#: python/plugins/trackinfo-webkit/__init__.py:743
+msgid "was orchestrated by"
+msgstr "var iscensatt av"
+
+#: python/plugins/trackinfo-webkit/__init__.py:744
+msgid "was conducted by"
+msgstr "var dirigerad av"
+
+#: python/plugins/trackinfo-webkit/__init__.py:745
+msgid "has vocals performed by"
+msgstr "har stämmor framförda av"
+
+#: python/plugins/trackinfo-webkit/__init__.py:746
+msgid "was engineered by"
+msgstr "var arrangerad av"
+
+#: python/plugins/trackinfo-webkit/__init__.py:747
+msgid "was mixed by"
+msgstr "var mixad av"
+
+#: python/plugins/trackinfo-webkit/__init__.py:748
+msgid "was programmed by"
+msgstr "var programmerad av"
+
+#: python/plugins/trackinfo-webkit/__init__.py:749
+msgid "was recorded by"
+msgstr "var inspelad av"
+
+#: python/plugins/trackinfo-webkit/__init__.py:783
+msgid "This Track..."
+msgstr "Detta spår..."
+
+#: python/plugins/trackinfo-webkit/__init__.py:806
+msgid "Album Links"
+msgstr "Albumlänkar"
+
+#: python/plugins/trackinfo-webkit/__init__.py:874
+msgid "is a cover version of"
+msgstr "är en cover-version av"
+
+#: python/plugins/trackinfo-webkit/__init__.py:879
+#, python-format
+msgid "...has <b>%s</b> performed by <b>%s</b>"
+msgstr "... har <b>%s</b> framfört av <b>%s</b>"
+
+#: python/plugins/trackinfo-webkit/__init__.py:880
+#, python-format
+msgid "...has <b>%s %s</b> performed by <b>%s</b>"
+msgstr "...har <b>%s %s</b> framfört av <b>%s</b>"
+
+#: python/plugins/trackinfo-webkit/__init__.py:881
+#, python-format
+msgid "...has <b>%s %s %s</b> performed by <b>%s</b>"
+msgstr "...har <b>%s %s %s</b> framfört av <b>%s</b>"
+
+#: python/plugins/trackinfo-webkit/__init__.py:932
+msgid "contains samples from"
+msgstr "innehåller samplar av"
+
+#: python/plugins/trackinfo-webkit/__init__.py:1112
+msgid "LiveInfo"
+msgstr ""
+
+#: api/xml.cc:141
+msgid "Couldn't parse document"
+msgstr "Kunde inte tolka dokumentet"
+
+#: api/xml.cc:147
+msgid "Invalid XPath"
+msgstr "Felaktig XPath"
+
+#: api/xml.cc:154 api/xml.cc:161
+msgid "No nodes in XPath result"
+msgstr "Inga noder i XPath-resultat"
+
+#: com/album-info-window.cc:67 sources/musiclib/source-musiclib.cc:275
+msgid "Date"
+msgstr "Datum"
+
+#: com/album-info-window.cc:69 sources/musiclib/source-musiclib.cc:274
+#: sources/musiclib/source-musiclib.cc:2016
+msgid "Rating"
+msgstr "Värdering"
+
+#: com/album-info-window.cc:82
+msgid "Abstract"
+msgstr "Abstrakt"
+
+#: com/album-info-window.glade:9
+msgid "AudioSource: Album Details"
+msgstr "AudioSource: Albumdetaljer"
+
+#: com/album-info-window.glade:255
+msgid "<b>Release:</b>"
+msgstr "<b>Utgåva:</b>"
+
+#: com/album-info-window.glade:283
+msgid "<b>MBID:</b>"
+msgstr "<b>MBID:</b>"
+
+#: com/album-info-window.glade:311
+msgid "<b>Tracks:</b>"
+msgstr "<b>Spår:</b>"
+
+#: com/album-info-window.glade:489
+msgid "Delete Rating"
+msgstr "Radera utgåva"
+
+#: com/mb-import-album.cc:162
+msgid "Title"
+msgstr "Titel"
+
+#: com/mb-import-album.cc:167 com/view-albums.cc:153
+#: sources/musiclib/source-musiclib.cc:257
+#: sources/musiclib/source-musiclib.cc:610
+#: sources/musiclib/source-musiclib.cc:1752
+msgid "Album"
+msgstr "Album"
+
+#: com/mb-import-album.cc:172 sources/musiclib/source-musiclib.cc:254
+#: sources/musiclib/source-musiclib.cc:609
+#: sources/musiclib/source-musiclib.cc:1749
+msgid "Artist"
+msgstr "Artist"
+
+#: com/mb-import-album.cc:177 sources/musiclib/source-musiclib.cc:273
+#: sources/musiclib/source-musiclib.cc:600
+msgid "Time"
+msgstr "Tid"
+
+#: com/mb-import-album.cc:279
+msgid "AudioSource: Select Album Tracks to Import"
+msgstr "AudioSource: Välj albumspår att importera"
+
+#: com/mb-import-album.glade:8
+msgid "AudioSource: Import Album"
+msgstr "AudioSource: Importera album"
+
+#: com/mb-import-album.glade:71
+msgid "<b>_Artist</b>: "
+msgstr "<b>_Artist</b>: "
+
+#: com/mb-import-album.glade:99
+msgid "<b>Al_bum</b>: "
+msgstr "<b>Al_bum</b>: "
+
+#: com/mb-import-album.glade:127 com/mb-import-album.glade:144
+#: com/mb-import-album.glade:474
+msgid "dummy"
+msgstr ""
+
+#: com/mb-import-album.glade:162
+msgid "<b>Musicbrainz Album ID</b>: "
+msgstr "<b>Musicbrainz Album-ID</b>: "
+
+#: com/mb-import-album.glade:280
+msgid "_Search"
+msgstr "_Sök"
+
+#: com/mb-import-album.glade:427
+msgid "Release Event:"
+msgstr "Utgåvehändelse:"
+
+#: com/mb-import-album.glade:455
+msgid "\n"
+msgstr "\n"
+
+#: com/mb-import-album.glade:493
+msgid "Modify Genre:"
+msgstr "Modifiera genre:"
+
+#: com/mb-import-album.glade:576
+msgid "_Add Files"
+msgstr "_Lägg till filer"
+
+#: com/mb-import-album.glade:664
+msgid "_Import"
+msgstr "_Importera"
+
+#: com/mb-import-album.glade:738 glade/mlibmanager.glade:442
+msgid "_Cancel"
+msgstr "_Avbryt"
+
+#: com/view-albums.cc:99 com/view-collections.cc:95
+#: sources/musiclib/source-musiclib.cc:170
+msgid "Today"
+msgstr "Idag"
+
+#: com/view-albums.cc:153
+#, fuzzy
+msgid "Albums"
+msgstr "Album"
+
+#: com/view-albums.cc:156
+#, fuzzy
+msgid "Singles"
+msgstr "Singel"
+
+#: com/view-albums.cc:156
+msgid "Single"
+msgstr "Singel"
+
+#: com/view-albums.cc:159
+#, fuzzy
+msgid "Compilations"
+msgstr "Kompilering"
+
+#: com/view-albums.cc:159
+msgid "Compilation"
+msgstr "Kompilering"
+
+#: com/view-albums.cc:162
+msgid "EPs"
+msgstr "EP:er"
+
+#: com/view-albums.cc:162
+msgid "EP"
+msgstr "EP"
+
+#: com/view-albums.cc:165
+#, fuzzy
+msgid "Live Recordings"
+msgstr "Liveinspelning"
+
+#: com/view-albums.cc:165
+msgid "Live Recording"
+msgstr "Liveinspelning"
+
+#: com/view-albums.cc:168
+#, fuzzy
+msgid "Remixes"
+msgstr "remixer"
+
+#: com/view-albums.cc:168
+msgid "Remix"
+msgstr "Remix"
+
+#: com/view-albums.cc:171
+#, fuzzy
+msgid "Soundtracks"
+msgstr "Soundtrack"
+
+#: com/view-albums.cc:171
+msgid "Soundtrack"
+msgstr "Soundtrack"
+
+#: com/view-albums.cc:497
+msgid "Album _Info"
+msgstr "Albums_info"
+
+#: com/view-albums.cc:1751
+msgid ", highlighting played"
+msgstr ", framhäver spelade"
+
+#: com/view-albums.cc:1753
+msgid ", highlighting unplayed"
+msgstr ", framhäver ospelade"
+
+#: com/view-albums.cc:1760
+msgid "release"
+msgstr "släpp"
+
+#: com/view-albums.cc:1760
+msgid "releases of all kind"
+msgstr "utgåvor av alla dess slag"
+
+#: com/view-collections.cc:835 sources/musiclib/source-musiclib.cc:1835
+#, c-format
+msgid "%lld of %lld"
+msgstr "%lld av %lld"
+
+#: glade/mlibmanager.glade:7
+#, fuzzy
+msgid "Youki Music Library Management"
+msgstr "AudioSource: Musikbibliotekshandhavande"
+
+#: glade/mlibmanager.glade:89
+msgid "<b>Volumes</b>"
+msgstr "<b>Volymer</b>"
+
+#: glade/mlibmanager.glade:120 glade/mlibmanager.glade:226
+#: glade/mlibmanager.glade:520 glade/mlibmanager.glade:764
+#: glade/mlibmanager.glade:795 glade/mlibmanager.glade:947
+#: glade/mlibmanager.glade:978
+#: python/plugins/albumactions/albumactions.glade:298
+#: python/plugins/albumactions/albumactions.glade:387
+#: sources/musiclib/source-musiclib.glade:542
+#: sources/radio/source-radio.glade:129 sources/radio/source-radio.glade:245
+#: sources/radio/source-radio.glade:502
+msgid "  "
+msgstr ""
+
+#: glade/mlibmanager.glade:154
+msgid ""
+"Select a volume (partition, USB storage, etc) here to perform an action "
+"below. Double-click a volume to reread the tree."
+msgstr ""
+"Välj en volym (partition, USB-förvaring, etc...) här för att utföra en "
+"händelsenedanför. Dubbelklicka på en volym för att läsa om trädet."
+
+#: glade/mlibmanager.glade:195
+msgid "<b>Folders</b>"
+msgstr "<b>Kataloger</b>"
+
+#: glade/mlibmanager.glade:266
+msgid ""
+"Add or remove folders from the library by checking or unchecking them here."
+msgstr ""
+"Lägg till och ta bort kataloger från biblioteket genom att markera och "
+"avmarkera dem här."
+
+#: glade/mlibmanager.glade:367
+msgid "_Yes"
+msgstr "_Ja"
+
+#: glade/mlibmanager.glade:551
+msgid "Looks for new files and changes in already added files."
+msgstr "Leta efter nya filer, samt ändringar i redan tillagda filer."
+
+#: glade/mlibmanager.glade:595 src/mlibmanager.cc:454
+#, fuzzy
+msgid "_Rescan, Update & Clean Up Volume"
+msgstr "Rensa upp volym"
+
+#: glade/mlibmanager.glade:646
+msgid "Main"
+msgstr "Huvudsaklig"
+
+#: glade/mlibmanager.glade:688
+msgid "<b>File Type Statistics</b>"
+msgstr "<b>Filtypsstatistik</b>"
+
+#: glade/mlibmanager.glade:713
+msgid ""
+"<small>Here you can find a list of the file types present in the database, "
+"along with a track count for each type and additional information.</small>"
+msgstr ""
+"<small>Här kan du finna en lista filtyper som finns i databasen,samt antal "
+"spår för varje typ och övrig information</small>"
+
+#: glade/mlibmanager.glade:896
+msgid "<b>Miscellaneous Statistics</b>"
+msgstr "<b>Blandad information</b>"
+
+#: glade/mlibmanager.glade:1018
+msgid "<i>Library Playtime:</i>"
+msgstr "<i>Bibliotekets speltid:</i>"
+
+#: glade/mlibmanager.glade:1046
+msgid "<i>Number of Tracks:</i>"
+msgstr "<i>Antal spår:</i>"
+
+#: glade/mlibmanager.glade:1131
+msgid "<i>Number of Albums:</i>"
+msgstr "<i>Antal album:</i>"
+
+#: glade/mlibmanager.glade:1229
+msgid "Library Statistics"
+msgstr "Biblioteksstatistik"
+
+#: glade/mlibmanager.glade:1288
+msgid "Last Scan Details"
+msgstr "Senaste detaljer från genomläsningen"
+
+#: glade/preferences.glade:7
+#, fuzzy
+msgid "Youki Preferences"
+msgstr "AudioSource: Inställningar"
+
+#: src/dialog-about.cc:66
+msgid "<big>AudioSource is brought to you by</big>"
+msgstr ""
+
+#: src/dialog-about.cc:130
+msgid "About MPX"
+msgstr ""
+
+#: src/dialog-filebrowser.cc:77
+msgid "All Files"
+msgstr ""
+
+#: src/dialog-filebrowser.cc:84
+msgid "Audio Files"
+msgstr ""
+
+#: src/hal.cc:63
+msgid "<Unknown>"
+msgstr ""
+
+#: src/hal.cc:86
+msgid "Volume UDI"
+msgstr ""
+
+#: src/hal.cc:91
+msgid "Device UDI"
+msgstr ""
+
+#: src/hal.cc:96
+msgid "Mount Path"
+msgstr ""
+
+#: src/hal.cc:101
+msgid "Device Serial"
+msgstr ""
+
+#: src/hal.cc:106
+msgid "Volume Name"
+msgstr ""
+
+#: src/hal.cc:111
+msgid "Device File"
+msgstr ""
+
+#: src/hal.cc:116
+msgid "Drive Bus"
+msgstr ""
+
+#: src/hal.cc:121
+msgid "Drive Type"
+msgstr ""
+
+#: src/hal.cc:126
+msgid "Volume Size"
+msgstr ""
+
+#: src/hal.cc:131 src/hal.cc:136
+msgid "Drive Size"
+msgstr ""
+
+#: src/library-scanner-thread.cc:541
+#, c-format
+msgid "Checking Tracks: %lld"
+msgstr ""
+
+#: src/library-scanner-thread.cc:552 src/library-scanner-thread.cc:691
+msgid "Rescan: Done"
+msgstr ""
+
+#: src/library-scanner-thread.cc:678
+#, c-format
+msgid "Collecting Tracks: %lld of %lld"
+msgstr ""
+
+#: src/library-scanner-thread.cc:781
+#, c-format
+msgid "Checking Files for Presence: %lld / %lld"
+msgstr ""
+
+#: src/library-scanner-thread.cc:1166 src/library-scanner-thread.cc:1451
+msgid "(invalid UTF-8)"
+msgstr ""
+
+#: src/library-scanner-thread.cc:1166
+#, c-format
+msgid "Could not convert URI to UTF-8 for display: %s"
+msgstr ""
+
+#: src/library-scanner-thread.cc:1185
+msgid "An error ocurred trying to determine the file type"
+msgstr ""
+
+#: src/library-scanner-thread.cc:1191
+msgid "Could not acquire metadata (using taglib-gio)"
+msgstr ""
+
+#: src/library-scanner-thread.cc:1198 src/library-scanner-thread.cc:1203
+#: src/library-scanner-thread.cc:1462
+#, c-format
+msgid "Error inserting file: %s"
+msgstr ""
+
+#: src/library-scanner-thread.cc:1302
+msgid "Empty URI/no URI given"
+msgstr ""
+
+#: src/library-scanner-thread.cc:1319
+msgid "Insufficient Metadata (artist, album and title must be given)"
+msgstr ""
+
+#: src/library-scanner-thread.cc:1438
+#, c-format
+msgid "Inserting Tracks: %lld"
+msgstr ""
+
+#: src/library-scanner-thread.cc:1448
+msgid "Updated"
+msgstr ""
+
+#: src/library-scanner-thread.cc:1451
+msgid "Could not convert URI to UTF-8 for display"
+msgstr ""
+
+#: src/library-scanner-thread.cc:1642
+#, c-format
+msgid "Constraint error while trying to set new track data!: '%s'"
+msgstr ""
+
+#: src/library-scanner-thread.cc:1649
+msgid "Got track ID 0 for internal track! Highly supicious! Please report!"
+msgstr ""
+
+#: src/library-scanner-thread.cc:1655
+#, c-format
+msgid "SQL error while inserting/updating track: '%s'"
+msgstr ""
+
+#: src/library-scanner-thread.cc:1676
+msgid "Finding Lost Artists..."
+msgstr ""
+
+#: src/library-scanner-thread.cc:1702
+msgid "Finding Lost Albums..."
+msgstr ""
+
+#: src/library-scanner-thread.cc:1727
+msgid "Finding Lost Album Artists..."
+msgstr ""
+
+#: src/library-scanner-thread.cc:1751
+msgid "Cleanup: Done"
+msgstr ""
+
+#: src/library-scanner-thread.cc:1772 src/library-scanner-thread.cc:1826
+#, c-format
+msgid "Checking files for presence: %lld / %lld"
+msgstr ""
+
+#: src/library-scanner-thread.cc:1791
+msgid "Vacuum process done."
+msgstr ""
+
+#: src/library-scanner-thread.cc:1846
+msgid "Vacuum Process: Done"
+msgstr ""
+
+#: src/library-scanner-thread.cc:1864
+#, c-format
+msgid "Additional Metadata Update: %lld of %lld"
+msgstr ""
+
+#: src/library-scanner-thread.cc:1946
+#, c-format
+msgid "Updating Artist Life Spans: %lld / %lld"
+msgstr ""
+
+#: src/library-scanner-thread.cc:1954
+msgid "Additional Metadata Update: Done"
+msgstr ""
+
+#: src/main.cc:106
+msgid "Got SIGTERM: Exiting (It's all right!)"
+msgstr ""
+
+#: src/main.cc:318
+msgid " - run AudioSource Player"
+msgstr ""
+
+#: src/main.cc:351
+msgid "Starting HAL..."
+msgstr ""
+
+#: src/main.cc:354
+msgid "Starting Covers"
+msgstr ""
+
+#: src/main.cc:357
+msgid "Starting Library"
+msgstr ""
+
+#: src/main.cc:360
+msgid "Precaching covers..."
+msgstr ""
+
+#: src/main.cc:363
+msgid "Starting Playback engine..."
+msgstr ""
+
+#: src/main.cc:366
+msgid "Starting Preferences..."
+msgstr ""
+
+#: src/main.cc:369
+msgid "Starting Youki..."
+msgstr ""
+
+#: src/main.cc:372
+msgid "Starting Plugins..."
+msgstr ""
+
+#: src/main.cc:375
+#, fuzzy
+msgid "Starting Plugin Manager..."
+msgstr "AudioSource: Pluginhanterare"
+
+#: src/main.cc:381
+msgid "Startup complete!"
+msgstr ""
+
+#: src/minisoup.cc:292
+#, c-format
+msgid "Download of file '%s' was cancelled prematurely!"
+msgstr ""
+
+#: src/minisoup.cc:317
+#, c-format
+msgid "Target file ('%s') couldn't be opened for writing"
+msgstr ""
+
+#: src/minisoup.cc:372
+#, c-format
+msgid "%u: %s"
+msgstr ""
+
+#: src/mlibmanager.cc:169
+#, c-format
+msgid "%lld Days, %lld Hours, %lld Minutes, %lld Seconds"
+msgstr ""
+
+#: src/mlibmanager.cc:187
+msgid "Type"
+msgstr ""
+
+#: src/mlibmanager.cc:192
+msgid "Track Count"
+msgstr ""
+
+#: src/mlibmanager.cc:197
+msgid "Highest Bitrate"
+msgstr ""
+
+#: src/mlibmanager.cc:202
+msgid "Lowest Bitrate"
+msgstr ""
+
+#: src/mlibmanager.cc:274
+msgid "Device Name"
+msgstr ""
+
+#: src/mlibmanager.cc:281
+msgid "Mount Point"
+msgstr ""
+
+#: src/mlibmanager.cc:405
+msgid "_Music Library"
+msgstr ""
+
+#: src/mlibmanager.cc:411
+msgid "_Volume"
+msgstr ""
+
+#: src/mlibmanager.cc:417
+msgid "_Remove Duplicates"
+msgstr ""
+
+#: src/mlibmanager.cc:426
+msgid "_Rescan, Update & Clean Up"
+msgstr ""
+
+#: src/mlibmanager.cc:434
+msgid "Refresh _Covers"
+msgstr ""
+
+#: src/mlibmanager.cc:442
+msgid "Update Additional Metadata"
+msgstr ""
+
+#: src/mlibmanager.cc:466
+msgid "Import _Folder"
+msgstr ""
+
+#: src/mlibmanager.cc:474
+msgid "Import _Share"
+msgstr ""
+
+#: src/mlibmanager.cc:481
+msgid "_Close"
+msgstr ""
+
+#: src/mlibmanager.cc:503
+msgid "MLibMan Menubar"
+msgstr ""
+
+#: src/mlibmanager.cc:620
+msgid ""
+"Library Scan finished at %1% (%2% %3% scanned, %4% Files added, %5% Files up "
+"to date, %6% updated, %7% erroneous, see log)"
+msgstr ""
+
+#: src/mlibmanager.cc:623
+msgid "Files"
+msgstr ""
+
+#: src/mlibmanager.cc:778
+msgid "No duplicates have been found. Click OK to close this dialog."
+msgstr ""
+
+#: src/mlibmanager.cc:785 src/mlibmanager.cc:799
+msgid "AudioSource: Remove Duplicates"
+msgstr ""
+
+#: src/mlibmanager.cc:792
+#, c-format
+msgid ""
+"Please confirm the deletion of <b>%lld</b> tracks from the Library <b>and "
+"the filesystem</b>. <i>This can not be undone!</i>\n"
+"\n"
+"Click OK to proceed."
+msgstr ""
+
+#: src/mlibmanager.cc:841
+msgid "An error occured trying to display the volume"
+msgstr ""
+
+#: src/mlibmanager.cc:897
+msgid "An error occured trying to populate volumes"
+msgstr ""
+
+#: src/mlibmanager.cc:944
+msgid "AudioSource: Music Path is missing"
+msgstr ""
+
+#: src/mlibmanager.cc:945
+msgid "Music Path is missing"
+msgstr ""
+
+#: src/mlibmanager.cc:947
+#, c-format
+msgid ""
+"A path managed by AudioSource containing music can not be found.\n"
+"Perhaps the HAL data for the relevant volume has changed, or the path has "
+"been relocated.\n"
+"Your intervention is required.\n"
+"\n"
+"Path: %s"
+msgstr ""
+
+#: src/mlibmanager.cc:952
+msgid "Relocate Path"
+msgstr ""
+
+#: src/mlibmanager.cc:953
+msgid ""
+"The path has been moved somewhere else, and AudioSource needs to know the "
+"new location."
+msgstr ""
+
+#: src/mlibmanager.cc:959
+msgid "Delete Path from Library"
+msgstr ""
+
+#: src/mlibmanager.cc:960
+msgid ""
+"The path has been permanently deleted, and AudioSource should not manage it "
+"anymore."
+msgstr ""
+
+#: src/mlibmanager.cc:966
+msgid "Check Next Time"
+msgstr ""
+
+#: src/mlibmanager.cc:967
+msgid ""
+"The situation is different than described above, and deeper intervention is "
+"neccessary.\n"
+"AudioSource will check the path at the next rescan again."
+msgstr ""
+
+#: src/mlibmanager.cc:985
+msgid "AudioSource: Select relocated path target"
+msgstr ""
+
+#: src/mlibmanager.cc:1397
+msgid "Please confirm Cover Refresh"
+msgstr ""
+
+#: src/mlibmanager.cc:1398
+msgid ""
+"Are you sure you want to Refresh <b>all</b> covers at this time? (previous "
+"covers will be irrevocably lost)"
+msgstr ""
+
+#: src/mlibmanager.cc:1495
+msgid "The Share's name can not be empty"
+msgstr ""
+
+#: src/mlibmanager.cc:1503
+#, c-format
+msgid ""
+"An Error occcured getting a handle for the share '%s'\n"
+"Please veryify the share URI and credentials"
+msgstr ""
+
+#: src/mlibmanager.cc:1512
+#, c-format
+msgid "An Error occcured trying to mount the share '%s'"
+msgstr ""
+
+#: src/mlibmanager.cc:1536
+msgid "Please Enter the Username:"
+msgstr ""
+
+#: src/mlibmanager.cc:1552
+msgid "Please Enter the Domain:"
+msgstr ""
+
+#: src/mlibmanager.cc:1568
+msgid "Please Enter the Password:"
+msgstr ""
+
+#: src/mpx.cc:867
+msgid "_Music"
+msgstr ""
+
+#: src/mpx.cc:872
+msgid "_Edit"
+msgstr ""
+
+#: src/mpx.cc:877
+msgid "_View"
+msgstr ""
+
+#: src/mpx.cc:882
+msgid "_Track"
+msgstr ""
+
+#: src/mpx.cc:887
+msgid "_Help"
+msgstr ""
+
+#: src/mpx.cc:895
+msgid "_Play Files..."
+msgstr ""
+
+#: src/mpx.cc:906
+msgid "_Music Library..."
+msgstr ""
+
+#: src/mpx.cc:907
+msgid "Add/Remove Music, Perform various management Tasks"
+msgstr ""
+
+#: src/mpx.cc:916
+msgid "Import Album"
+msgstr ""
+
+#: src/mpx.cc:917
+msgid "Import an album using MusicBrainz"
+msgstr ""
+
+#: src/mpx.cc:925
+msgid "Plugins..."
+msgstr ""
+
+#: src/mpx.cc:926
+msgid "View and Enable or Disable Plugins"
+msgstr ""
+
+#: src/mpx.cc:934
+msgid "Equalizer..."
+msgstr ""
+
+#: src/mpx.cc:935
+msgid "Adjust audio bands"
+msgstr ""
+
+#: src/mpx.cc:944
+msgid "_Preferences..."
+msgstr ""
+
+#: src/mpx.cc:945
+msgid "Set up Audio and other Settings"
+msgstr ""
+
+#: src/mpx.cc:953
+msgid "_Quit"
+msgstr ""
+
+#: src/mpx.cc:962
+msgid "_About"
+msgstr ""
+
+#: src/mpx.cc:970 sources/musiclib/source-musiclib.cc:692
+msgid "Play"
+msgstr ""
+
+#: src/mpx.cc:978
+msgid "Pause"
+msgstr ""
+
+#: src/mpx.cc:994
+msgid "Next"
+msgstr ""
+
+#: src/mpx.cc:1002
+msgid "Prev"
+msgstr ""
+
+#: src/mpx.cc:1012
+msgid "Main Menubar"
+msgstr ""
+
+#: src/mpx.cc:1066
+msgid "Now Playing"
+msgstr ""
+
+#: src/mpx.cc:1079
+msgid "Plugins"
+msgstr ""
+
+#: src/mpx.cc:1555 src/mpx.cc:1560
+#, c-format
+msgid "Buffering: %d"
+msgstr ""
+
+#: src/mpx.cc:1882
+msgid "AudioSource: (Not Playing)"
+msgstr ""
+
+#: src/mpx.cc:2032
+msgid "AudioSource: [Untitled Track]"
+msgstr ""
+
+#: src/play.cc:58
+msgid "Raw Audio Format Converter"
+msgstr ""
+
+#: src/play.cc:59
+msgid "Volume Adjustment"
+msgstr ""
+
+#: src/play.cc:60
+msgid "Resampler"
+msgstr ""
+
+#: src/play.cc:61
+msgid "Equalizer"
+msgstr ""
+
+#: src/play.cc:62
+msgid "Spectrum"
+msgstr ""
+
+#: src/plugin-manager-gui.cc:103 sources/musiclib/source-musiclib.cc:283
+#: sources/musiclib/source-musiclib.cc:327
+msgid "Active"
+msgstr ""
+
+#: src/plugin-manager-gui.cc:104 sources/musiclib/source-musiclib.cc:248
+#: sources/musiclib/source-musiclib.cc:598
+#: sources/musiclib/source-musiclib.cc:1746
+msgid "Name"
+msgstr "Namn"
+
+#: src/plugin-manager-gui.cc:411
+msgid ""
+"%1%\n"
+"\n"
+"<b>Authors:</b> %2%\n"
+"<b>Copyright:</b> %3%\n"
+"<b>Website:</b> %4%"
+msgstr ""
+
+#: src/plugin-manager-gui.cc:461
+msgid "Failed to %1%: %2%"
+msgstr ""
+
+#: src/plugin-manager-gui.cc:462
+msgid "Plugin traceback - MPX"
+msgstr ""
+
+#: src/plugin-manager-gui.cc:480
+msgid "<b>Failed to %1%: %2%</b>"
+msgstr ""
+
+#: src/plugin-manager-gui.cc:484
+#, c-format
+msgid " (%d more errors)"
+msgstr ""
+
+#: src/sidebar.cc:129
+msgid "No active Id"
+msgstr ""
+
+#: src/splash-screen.cc:50
+msgid "Youki is starting!"
+msgstr ""
+
+#: src/util-ui.cc:52
+#, c-format
+msgid "An Error occured parsing the Menu markup for '%s'"
+msgstr ""
+
+#: python/plugins/albumactions/albumactions.glade:7
+msgid "AudioSource: Add to Collection"
+msgstr ""
+
+#: python/plugins/albumactions/albumactions.glade:82
+msgid "New Collection"
+msgstr ""
+
+#: python/plugins/albumactions/albumactions.glade:180
+msgid "AudioSource: New Collection"
+msgstr ""
+
+#: python/plugins/albumactions/albumactions.glade:261
+msgid "<b>Name</b>"
+msgstr ""
+
+#: python/plugins/albumactions/albumactions.glade:356
+msgid "<b>Description</b>"
+msgstr ""
+
+#: python/plugins/audioscrobbler/audioscrobbler.glade:7
+#: python/plugins/mtpplayer/mtpplayer.glade:7
+msgid "window1"
+msgstr ""
+
+#: python/plugins/audioscrobbler/audioscrobbler.glade:40
+msgid "<b>Last.fm Username:</b>"
+msgstr ""
+
+#: python/plugins/audioscrobbler/audioscrobbler.glade:68
+msgid "<b>Last.fm Password:</b>"
+msgstr ""
+
+#: python/plugins/lastfmstuff/tag-track.glade:7
+msgid "Tag Track - MPX"
+msgstr ""
+
+#: python/plugins/lastfmstuff/tag-track.glade:20
+#: python/plugins/lastfmstuff/tag-track.glade:89
+msgid "Tag"
+msgstr ""
+
+#: python/plugins/mpxdj/mpxdj.glade:127
+msgid "Range:"
+msgstr ""
+
+#: python/plugins/mpxdj/mpxdj.glade:185
+msgid "page 11"
+msgstr ""
+
+#: python/plugins/mpxdj/mpxdj.glade:243
+msgid "label4"
+msgstr ""
+
+#: python/plugins/mpxdj/mpxdj.glade:301
+msgid "label5"
+msgstr ""
+
+#: python/plugins/mpxdj/mpxdj.glade:359
+msgid "label6"
+msgstr ""
+
+#: python/plugins/mpxdj/mpxdj.glade:417
+msgid "label7"
+msgstr ""
+
+#: python/plugins/mpxdj/mpxdj.glade:446
+msgid "Decade:"
+msgstr ""
+
+#: python/plugins/mpxdj/mpxdj.glade:471
+msgid ""
+"1940ies\n"
+"1950ies\n"
+"1960ies\n"
+"1970ies\n"
+"1980ies\n"
+"1990ies\n"
+"2000's"
+msgstr ""
+
+#: python/plugins/mpxdj/mpxdj.glade:497
+msgid "label8"
+msgstr ""
+
+#: python/plugins/mpxdj/mpxdj.glade:555
+msgid "label9"
+msgstr ""
+
+#: python/plugins/mpxdj/mpxdj.glade:613
+msgid "label10"
+msgstr ""
+
+#: python/plugins/mpxdj/mpxdj.glade:642
+msgid "_Tag:"
+msgstr ""
+
+#: python/plugins/mpxdj/mpxdj.glade:693
+msgid "label11"
+msgstr ""
+
+#: python/plugins/mtpplayer/mtpplayer.glade:65
+msgid "Free Space:"
+msgstr ""
+
+#: python/plugins/mtpplayer/mtpplayer.glade:188
+msgid "Clear Player"
+msgstr ""
+
+#: python/plugins/mtpplayer/mtpplayer.glade:231
+msgid "AudioSource: Transmitting Files"
+msgstr ""
+
+#: python/plugins/trackinfo-webkit/trackinfo-webkit.glade:61
+msgid "label1"
+msgstr ""
+
+#: python/plugins/trackinfo-webkit/trackinfo-webkit.glade:90
+msgid "Loading"
+msgstr ""
+
+#: python/plugins/trackinfo-webkit/trackinfo-webkit.glade:136
+msgid "label2"
+msgstr ""
+
+#: remote/youki.cc:58
+msgid ""
+"\n"
+"Youki Copyright (c) 2009 MPX Project <http://mpx.backtrace.info>\n"
+"\n"
+msgstr ""
+
+#: remote/youki.cc:103
+msgid ""
+"\n"
+"       Youki seems to have crashed.\n"
+"\n"
+"       Please try starting it from a terminal using '"
+msgstr ""
+
+#: remote/youki.cc:105
+msgid ""
+"/libexec/mpx-bin --no-log'\n"
+"       for further information on what could have caused the crash\n"
+msgstr ""
+
+#: remote/youki.cc:106
+msgid ""
+"       and report it to our IRC channel, #mpx on irc.freenode.net\n"
+"\n"
+msgstr ""
+
+#: remote/youki.cc:196
+#, c-format
+msgid ""
+"Youki-Startup: Could not connect to session bus: %s\n"
+"\n"
+msgstr ""
+
+#: remote/youki.cc:202
+#, c-format
+msgid ""
+"<big><b>Youki-Startup DBus Error</b></big>\n"
+"\n"
+"Youki can not be started trough DBus activation.\n"
+"The following error occured trying to start up Youki:\n"
+"\n"
+"'<b>%s</b>'\n"
+"\n"
+"DBus might not be running at all or have even crashed, please consult "
+"further help with this problem from DBus or Youki"
+msgstr ""
+
+#: remote/youki.cc:215
+msgid "(Unknown error. Perhaps DBus is not running at all?)"
+msgstr ""
+
+#: remote/youki.cc:232
+msgid "Youki-Startup: DBus Error"
+msgstr ""
+
+#: sources/lastfm/source-lastfm.cc:88
+msgid "LastFM"
+msgstr ""
+
+#: sources/lastfm/source-lastfm.glade:65
+msgid "Play:"
+msgstr ""
+
+#: sources/lastfm/source-lastfm.glade:90
+msgid ""
+"Artist\n"
+"Tag\n"
+"User"
+msgstr ""
+
+#: sources/lastfm/source-lastfm.glade:163
+msgid "Hide"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:247
+msgid "File Location"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:249
+#: sources/radio/streams-shoutcast.cc:68
+msgid "Genre"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:250
+msgid "Comment"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:251
+msgid "MusicIP PUID"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:252
+msgid "File Hash"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:253
+msgid "MusicBrainz Track ID"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:255
+msgid "Artist Sort Name"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:256
+msgid "MusicBrainz Artist ID"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:258
+msgid "MusicBrainz Album ID"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:259
+msgid "Release Date"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:260
+msgid "Release Country"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:261
+msgid "Release Type"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:262
+msgid "Amazon ASIN"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:263
+msgid "Album Artist"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:264
+msgid "Album Artist Sort Name"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:265
+msgid "MusicBrainz Album Artist ID"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:266
+msgid "MIME Type"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:267
+msgid "HAL Volume UDI"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:268
+msgid "HAL Device UDI"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:269
+msgid "Volume-relative Path"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:270
+msgid "Insert Path"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:271
+msgid "Location Name"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:272
+#: sources/musiclib/source-musiclib.cc:611
+msgid "Track"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:276
+msgid "Change Time"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:277
+#: sources/radio/radio-directory-view-base.cc:187
+msgid "Bitrate"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:278
+msgid "Samplerate"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:279
+msgid "Play Count"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:280
+msgid "Play Date"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:281
+msgid "Insert Date"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:282
+msgid "Is MB Album Artist"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:284
+msgid "Audio Quality"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:285
+msgid "MPX Track ID"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:286
+msgid "MPX Album ID"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:338
+#: sources/musiclib/source-musiclib.cc:456
+msgid "Column"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:613
+msgid "My Rating"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:621
+msgid "Count"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:703
+msgid "Clear Playlist"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:715
+msgid "Remove selected Tracks"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:725
+msgid "Remove remaining Tracks"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:736
+msgid "Remove preceding Tracks"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:747
+msgid "Configure Columns..."
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:759
+msgid "<b>Play</b>"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:769
+msgid ""
+"Drag and drop albums, tracks and files here to add them to the playlist."
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:1956
+msgid "Music Library"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:2000
+msgid "Music _Library"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:2001
+msgid "Release Types..."
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:2002
+msgid "Highlight..."
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:2003
+msgid "Sort Albums By..."
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:2008
+msgid "Artist, Album by Year"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:2012
+msgid "Time of Adding"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:2020
+msgid "Artist, Album by Name"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:2024
+msgid "PlayScore"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:2028
+msgid "Show New Albums Only"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:2045
+msgid "_Albums"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:2062
+msgid "_Tracks"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:2079
+msgid "_Collections"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:2093
+msgid "Show All Release Types"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:2094
+msgid "Show Albums"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:2095
+msgid "Show Singles"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:2096
+msgid "Show Compilations"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:2097
+msgid "Show EPs"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:2098
+msgid "Show Live Recordings"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:2099
+msgid "Show Remixes"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:2100
+msgid "Show Soundtracks"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:2101
+msgid "Show Releases of Unknown Type"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:2131
+msgid "Do Not Highlight"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:2146
+msgid "Unplayed"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.cc:2161
+msgid "Played"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.glade:7
+msgid "window2"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.glade:54
+msgid ""
+"Search:\n"
+"Last.fm Tag:\n"
+"Similar Artists:"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.glade:177
+msgid "<b>_Albums</b>"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.glade:213
+#: sources/musiclib/source-musiclib.glade:376
+#: sources/radio/source-radio.cc:122
+msgid "_Search:"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.glade:259
+msgid "Highlight"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.glade:278
+msgid "Advanced"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.glade:340
+msgid "<b>_Tracks</b>"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.glade:475
+msgid "<b>_Collections</b>"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.glade:510
+msgid "<b>Playli_st</b>"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.glade:611
+msgid "AudioSource: Configure Columns"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.glade:697
+msgid "AudioSource: Rate and Comment Album"
+msgstr ""
+
+#: sources/musiclib/source-musiclib.glade:845
+msgid "_Send"
+msgstr ""
+
+#: sources/radio/radio-directory-view-base.cc:186
+msgid "Stream Name"
+msgstr ""
+
+#: sources/radio/radio-directory-view-base.cc:188
+msgid "Stream Genre"
+msgstr ""
+
+#: sources/radio/radio-directory-view-base.cc:189
+msgid "Current Song"
+msgstr ""
+
+#: sources/radio/source-radio.cc:105 sources/radio/source-radio.cc:173
+msgid "Radio"
+msgstr ""
+
+#: sources/radio/source-radio.cc:179
+msgid "Icecast: Update List"
+msgstr ""
+
+#: sources/radio/source-radio.cc:188
+msgid "SHOUTcast: Update List"
+msgstr ""
+
+#: sources/radio/source-radio.glade:97
+msgid "<b>_Genres</b>"
+msgstr ""
+
+#: sources/radio/source-radio.glade:204 sources/radio/source-radio.glade:471
+msgid "<b>_Streams</b>"
+msgstr ""
+
+#: sources/radio/source-radio.glade:306 sources/radio/source-radio.glade:570
+msgid "label269"
+msgstr ""
+
+#: sources/radio/source-radio.glade:352 sources/radio/source-radio.glade:616
+msgid "Building Stream List..."
+msgstr ""
+
+#: sources/radio/source-radio.glade:383 sources/radio/source-radio.glade:647
+msgid "label270"
+msgstr ""
+
+#: sources/radio/source-radio.glade:426
+msgid "Shoutcast"
+msgstr ""
+
+#: sources/radio/source-radio.glade:683
+msgid "Icecast"
+msgstr ""
+
+#: sources/radio/streams-shoutcast.cc:53
+msgid "Custom Search"
+msgstr ""
+
+#: sources/radio/streams-shoutcast.cc:169
+msgid "AudioSource: Custom Search (ShoutCast)"
+msgstr ""
+
+#: sources/radio/streams-shoutcast.cc:170
+msgid "Please enter search terms to search for stations:"
+msgstr ""
+
+#: widgets/youki-status-icon.c:132
+msgid "Pixbuf"
+msgstr ""
+
+#: widgets/youki-status-icon.c:133
+msgid "A GdkPixbuf to display"
+msgstr ""
+
+#: widgets/youki-status-icon.c:140
+msgid "Filename"
+msgstr ""
+
+#: widgets/youki-status-icon.c:141
+msgid "Filename to load and display"
+msgstr ""
+
+#: widgets/youki-status-icon.c:148
+msgid "Stock ID"
+msgstr ""
+
+#: widgets/youki-status-icon.c:149
+msgid "Stock ID for a stock image to display"
+msgstr ""
+
+#: widgets/youki-status-icon.c:156
+msgid "Icon Name"
+msgstr ""
+
+#: widgets/youki-status-icon.c:157
+msgid "The name of the icon from the icon theme"
+msgstr ""
+
+#: widgets/youki-status-icon.c:164
+msgid "Storage type"
+msgstr ""
+
+#: widgets/youki-status-icon.c:165
+msgid "The representation being used for image data"
+msgstr ""
+
+#: widgets/youki-status-icon.c:173
+#, fuzzy
+msgid "Size"
+msgstr "Singel"
+
+#: widgets/youki-status-icon.c:174
+msgid "The size of the icon"
+msgstr ""
+
+#: widgets/youki-status-icon.c:183
+msgid "Blinking"
+msgstr ""
+
+#: widgets/youki-status-icon.c:184
+msgid "Whether or not the status icon is blinking"
+msgstr ""
+
+#: widgets/youki-status-icon.c:191
+msgid "Visible"
+msgstr ""
+
+#: widgets/youki-status-icon.c:192
+msgid "Whether or not the status icon is visible"
+msgstr ""
+
+#~ msgid "Unable to Create New Track!"
+#~ msgstr "Oförmögen att skapa nytt spår"
+
+#~ msgid "Browser"
+#~ msgstr "Läsare"
+
+#~ msgid "AudioSource: Play Files"
+#~ msgstr "AudioSource: Spela filer"
+
+#~ msgid "AudioSource: Equalizer"
+#~ msgstr "AudioSource: Equalizer"
+
+#~ msgid "<small><b>29 Hz</b></small>"
+#~ msgstr "<small><b>29 Hz</b></small>"
+
+#~ msgid "<small><b>59 Hz</b></small>"
+#~ msgstr "<small><b>59 Hz</b></small>"
+
+#~ msgid "<small><b>119 Hz</b></small>"
+#~ msgstr "<small><b>119 Hz</b></small>"
+
+#~ msgid "<small><b>227 Hz</b></small>"
+#~ msgstr "<small><b>227 Hz</b></small>"
+
+#~ msgid "<small><b>474 Hz</b></small>"
+#~ msgstr "<small><b>474 Hz</b></small>"
+
+#~ msgid "<small><b>947 Hz</b></small>"
+#~ msgstr "<small><b>947 Hz</b></small>"
+
+#~ msgid "<small><b>1889 Hz</b></small>"
+#~ msgstr "<small><b>1889 Hz</b></small>"
+
+#~ msgid "<small><b>3770 Hz</b></small>"
+#~ msgstr "<small><b>3770 Hz</b></small>"
+
+#~ msgid "<small><b>7523 Hz</b></small>"
+#~ msgstr "<small><b>7523 Hz</b></small>"
+
+#~ msgid "<small><b>15011 Hz</b></small>"
+#~ msgstr "<small><b>15011 Hz</b></small>"
+
+#~ msgid "Import Folder (MPX)"
+#~ msgstr "Importera folder (MPX)"
+
+#~ msgid "Import"
+#~ msgstr "Importera"
+
+#~ msgid "<b>Please specify the Folder to import:</b>"
+#~ msgstr "<b>Vänligen specifiera katalog att importera:</b>"
+
+#~ msgid "Select Folder to Import"
+#~ msgstr "Välj folder att importera"
+
+#~ msgid "Import SMB Share (MPX)"
+#~ msgstr "Importera SMB-utdelning (MPX)"
+
+#~ msgid "<b>Please specify Details for the SMB Share to import:</b>"
+#~ msgstr ""
+#~ "<b>Vänligen specifiera detaljer för SMB-utdelningen some skall "
+#~ "importeras</b>"
+
+#~ msgid "Share Location:"
+#~ msgstr "UItdelningssökväg:"
+
+#~ msgid "Share Name:"
+#~ msgstr "Utdelningsnamn:"
+
+#~ msgid "Share Login:"
+#~ msgstr "Utdelningsinloggningsnamn:"
+
+#~ msgid "Share Password:"
+#~ msgstr "Utdelningsingoggningslösenord:"
+
+#~ msgid "_Show Credentials"
+#~ msgstr "_Visa kreditiv"
+
+#~ msgid "AudioSource"
+#~ msgstr "AudioSource"
+
+#~ msgid "AudioSource: Volume Control"
+#~ msgstr "AudioSource: Volymkontroll"
+
+#~ msgid "Playlist Plugin Manager - MPX"
+#~ msgstr "Spellistehanterade - MPX"
+
+#~ msgid ""
+#~ "The check box indicates whether a plugin is active. Plugins with a lock "
+#~ "symbol don't need to be activated."
+#~ msgstr ""
+#~ "Kryssrutan indikerar om ett plugin är aktiverat. Plugin med en låssymbol "
+#~ "behöver inte bli aktiverade."
+
+#~ msgid "Plugin Details"
+#~ msgstr "Plugindetaljer"
+
+#~ msgid "Plugin Controls"
+#~ msgstr "Pluginkontroller"
+
+#~ msgid "<b>Music Import Path</b>"
+#~ msgstr "<b>Sökväg för import av musik</b>"
+
+#~ msgid ""
+#~ "<small>Default Path at which MusicBrainz-imported music will be stored.</"
+#~ "small>"
+#~ msgstr ""
+#~ "<small>Standardsökväg med vilken importerad MusicBrainz musik kommer att "
+#~ "bli lagrad</small>"
+
+#~ msgid "Please select Music import Path"
+#~ msgstr "Vänligen välj sökväg för import av musik"
+
+#~ msgid "<b>Library Rescanning</b>"
+#~ msgstr "<b>Bibliotek scannas om</b>"
+
+#~ msgid "Contributor Links"
+#~ msgstr "Bidragande länkar"
+
+#~ msgid "Advanced Query"
+#~ msgstr "Avancerad förfrågan"

@@ -1,0 +1,65 @@
+[
+          {   "name"    : "background"
+            , "value"   : "#abababff"
+          }
+
+        , {   "name"    : "base"
+            , "value"   : "#f1f4f9ff"
+          }
+
+        , {   "name"    : "base-alternate"
+            , "value"   : "#ffffffff"
+          }
+
+        , {   "name"    : "text"
+            , "value"   : "#303030ff"
+          }
+
+        , {   "name"    : "text-selected"
+            , "value"   : "#ffffffff"
+          }
+
+        , {   "name"    : "drawer"
+            , "value"   : "#a0a0a040"
+          }
+
+        , {   "name"    : "window-border"
+            , "value"   : "#909090ff"
+          }
+
+        , {   "name"    : "entry-outline"
+            , "value"   : "#909090ff"
+          }
+
+        , {   "name"    : "treelines"
+            , "value"   : "#606060c0"
+          }
+
+        , {   "name"    : "info-area"
+            , "value"   : "#f8fae2ff"
+          }
+
+        , {   "name"    : "resize-grip"
+            , "value"   : "#808080ff"
+          }
+
+        , {   "name"    : "select"
+            , "value"   : "#537fe9ff"
+          }
+
+        , {   "name"    : "titlebar-1"
+            , "value"   : "#c2c2c0ea"
+          }
+
+        , {   "name"    : "titlebar-2"
+            , "value"   : "#aaaaaaea"
+          }
+
+        , {   "name"    : "titlebar-3"
+            , "value"   : "#989697ea"
+          }
+
+        , {   "name"    : "titlebar-top"
+            , "value"   : "#909090fa"
+          }
+]

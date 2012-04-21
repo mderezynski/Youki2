@@ -1,0 +1,202 @@
+
+# -*- coding: utf-8 -*-
+# -*- mode:python ; tab-width:4 -*- ex:set tabstop=4 shiftwidth=4 expandtab: -*-
+#
+# MPX Trackinfo
+# (C) 2008 M. Derezynski
+#
+
+import mpx
+import pygtk
+pygtk.require('2.0')
+import gtk
+import gobject
+import pango
+import pymtp
+import os
+
+mtp_actions_ui_string = """
+    <ui>
+        <menubar name='popup-albumlist-source-musiclib-treeview-albums'>
+            <menu name='menu-albumlist-source-musiclib-treeview-albums' action='dummy'>
+            <placeholder name='action-album-placeholder-source-musiclib-treeview-albums'>
+                <menuitem action='action-mtpplayer-send-to-player'/>
+            </placeholder>
+            </menu>
+        </menubar>
+    </ui>
+"""
+
+class AlbumActions(mpx.Plugin):
+
+    def __init__(self, id, player, mcs):
+
+        self.id = id
+        self.player = player
+        self.mcs = mcs
+		self.xml = gtk.glade.XML("@PLUGIN_DIR@" + "/plugins-python/mtpplayer/mtpplayer.glade")
+        self.mlib = player.get_source("36068e19-dfb3-49cd-85b4-52cea16fe0fd");
+        self.lib = self.player.get_library()
+        self.hal = self.player.get_hal()
+
+        # Actions
+        self.action = []
+        self.actiongroup = gtk.ActionGroup("MTPPlayer-Actions") 
+        action = gtk.Action("action-mtpplayer-send-to-player", "Send to...", "", gtk.STOCK_COPY)
+        action.connect("activate", self.on_action_add_cb)
+        self.action.append(action)
+        self.actiongroup.add_action(self.action[0])
+        self.action[0].set_sensitive(False)
+    
+
+        self.ui = self.player.ui()
+        self.ui.insert_action_group(action_group=self.actiongroup, pos=-1)
+        self.merge_id = 0
+
+        # GUI stuffs
+        self.widget = self.xml.get_widget("widget")
+        self.widget.unparent()
+        self.label = self.xml.get_widget("label-player-name")
+        self.label.set_property("use-markup", True)
+
+        self.window_progress = self.xml.get_widget("window-progress")
+        self.transfer_filename = self.xml.get_widget("transfer-filename")
+        self.transfer_progress = self.xml.get_widget("transfer-progress")
+        self.transfer_cancel = self.xml.get_widget("transfer-cancel")
+        self.transfer_cancel.connect("clicked", self.on_cancel_clicked)
+        self.clear_player = self.xml.get_widget("button-clear")
+        self.clear_player.connect("clicked", self.on_clear_clicked)
+
+        self.mtp = pymtp.MTP()
+
+    def get_gui(self):
+ 
+        return self.widget
+
+    def get_idv(self):
+
+        return idv
+
+    def on_clear_clicked(self, button):
+
+        list = self.mtp.get_tracklisting()
+
+        self.Cancel = False
+        self.action[0].set_sensitive(False)
+        self.transfer_cancel.set_sensitive(True)
+        self.window_progress.show_all()
+        self.window_progress.present()
+        self.position = 0
+
+        for item in list:
+
+            self.transfer_progress.set_text( "%s / %s" % ( self.position + 1, len(list) ) )
+            self.transfer_progress.set_fraction( float(self.position+1) / float(len(list)) )
+            self.mtp.delete_object( item.item_id )
+
+            while gtk.events_pending():
+                gtk.main_iteration()
+
+            self.position += 1
+
+        self.xml.get_widget("label-player-data-free-space").props.label = "%f MB" % (self.mtp.get_freespace() / 1048576.)
+
+    def on_cancel_clicked(self, button):
+
+        self.Cancel = True
+        self.transfer_cancel.set_sensitive(False)
+
+    def transfer_callback(self, sent, total):
+
+        percentage = (self.done_percentage * (float(sent)/float(total))) + (self.position * self.done_percentage)
+        self.transfer_progress.set_fraction(percentage)
+
+        while gtk.events_pending():
+            gtk.main_iteration()
+
+    def on_action_add_cb(self, action):
+
+        self.Cancel = False
+        self.action[0].set_sensitive(False)
+        self.transfer_cancel.set_sensitive(True)
+        self.window_progress.show_all()
+        self.window_progress.present()
+
+        path = self.mlib.get_albums_selected_path()
+        iter = self.mlib.get_albums_model().get_iter(path)
+        id   = self.mlib.get_albums_model().get(iter, 11)
+        rv   = mpx.SQLRowV()
+
+        self.lib.getSQL( rv, "SELECT * FROM track_view WHERE album_j = %d" % id )
+
+        self.position = 0
+        self.done_percentage = 1. / len(rv) 
+
+        for track in rv:
+
+            metadata = pymtp.LIBMTP_Track()
+
+            if "artist" in track:
+                metadata.artist = track["artist"].get() 
+            if "title" in track:
+                metadata.title = track["title"].get()
+            if "album" in track:
+                metadata.album = track["album"].get() 
+            if "track" in track:
+                metadata.tracknumber = track["track"].get()
+
+            volume_udi = track["hal_volume_udi"].get()
+            device_udi = track["hal_device_udi"].get()
+            vrp        = track["hal_vrp"].get()
+            path       = os.path.join( self.hal.get_mount_point_for_volume( volume_udi, device_udi) , vrp )
+            basename   = os.path.basename( vrp )
+
+            self.transfer_filename.set_text( basename )
+            self.transfer_progress.set_text( "%s / %s" % ( self.position + 1, len(rv) ) )
+
+            print "Sending file [%s]" % basename
+
+            try:
+                    track_id = self.mtp.send_track_from_file( path, basename, metadata, 0, callback=self.transfer_callback)
+                    print "Created new track [%s - %s - %s] with ID: %d" % (metadata.artist, metadata.album, metadata.title, track_id)
+
+                    self.position += 1
+                    self.xml.get_widget("label-player-data-free-space").props.label = "%f MB" % (self.mtp.get_freespace() / 1048576.)
+
+                    if self.Cancel: break
+            except:
+                    break
+
+        self.action[0].set_sensitive(True)
+        self.window_progress.hide()
+        self.transfer_filename.set_text( "" )
+
+    def activate(self):
+
+        self.merge_id = self.ui.add_ui_from_string(mtp_actions_ui_string)
+    
+        try:
+            self.mtp.connect() 
+            self.action[0].props.label = "Send Album to %s %s" % (self.mtp.get_manufacturer(), self.mtp.get_modelname())
+            self.action[0].set_sensitive(True)
+            self.label.props.label = "<big>%s %s [%s]</big>" % (self.mtp.get_manufacturer(), self.mtp.get_modelname(), self.mtp.get_serialnumber())
+            self.xml.get_widget("label-player-data-free-space").props.label = "%f MB" % (self.mtp.get_freespace() / 1048576.)
+            self.clear_player.set_sensitive(True)
+            return True
+        except:
+            return False
+
+    def deactivate(self):
+
+        self.ui.remove_ui(self.merge_id)
+
+        try:
+            self.mtp.disconnect()
+            self.action[0].set_sensitive(False)
+            self.label.props.label = ""
+            self.xml.get_widget("label-player-data-free-space").props.label = "" 
+            self.clear_player.set_sensitive(False)
+        except:
+            pass
+
+        return True

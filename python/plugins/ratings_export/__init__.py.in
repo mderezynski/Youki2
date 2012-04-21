@@ -1,0 +1,156 @@
+#
+# -*- coding: utf-8 -*-
+# -*- mode:python ; tab-width:4 -*- ex:set tabstop=4 shiftwidth=4 expandtab: -*-
+#
+# MPX Ratings Import/Export plugin
+# (C) 2008 D. Le Brun
+#
+
+import mpx
+import pygtk
+pygtk.require('2.0')
+import gtk
+import gtk.glade
+import gobject
+import csv
+import time
+
+class Ratings(mpx.Plugin):
+
+    """This Plugin allows you to save your ratings and playcounts out of the library so you can restore them in case you ever need to reload the library."""
+
+	def __init__(self, id, player, mcs): 
+
+        self.id = id
+        self.lib = player.get_library()
+        self.covers = player.get_covers()
+        self.mlib = player.get_source("36068e19-dfb3-49cd-85b4-52cea16fe0fd")
+
+		self.xml = gtk.glade.XML("@PLUGIN_DIR@" + "/plugins-python/ratings_export/ratings_export.glade")
+		self.dialog = self.xml.get_widget("dialog")
+		self.combo = self.xml.get_widget("combobox")
+		self.label = self.xml.get_widget("label")
+		self.fc = self.xml.get_widget("fcbutton")
+		self.go = self.xml.get_widget("button-go")
+		self.go.set_sensitive(False)
+		
+		try:
+			self.icon = gtk.gdk.pixbuf_new_from_file("@PLUGIN_DIR@" + "/plugins-python/ratings_export/rexp-icon.png")
+		except:
+            self.icon = None
+
+		operations = [
+				"Export ratings to file", 
+				"Import ratings from file"
+		]
+		self.callables = [
+				self.OPERATION_export,
+				self.OPERATION_import
+				
+		]
+		self.helptexts = [
+				"Export the ratings you set to your tracks into a file. It could be useful if the library is erased.",
+				"Import the ratings from a file you've previously exported."
+		]
+		cell = gtk.CellRendererText()
+		self.combo.pack_start(cell)
+		self.combo.add_attribute(cell, "text", 0)
+
+		self.store = gtk.ListStore(gobject.TYPE_STRING)
+		self.combo.set_model(self.store)
+	
+		for operation in operations:
+			self.store.append([operation])
+
+		self.combo.connect("changed", self.cbox_changed)
+		self.combo.set_active(0)
+
+	def cbox_changed(self, cbox):
+		self.label.set_text(self.helptexts[cbox.get_active()])		
+		self.go.set_sensitive(self.callables[self.combo.get_active()] is not None)
+
+	def OPERATION_export(self,lib,v):
+		path = self.fc.get_current_folder()
+		uxtime = str(int(time.time()))
+		filenames = ["%(path)s/mpx-ratings-track-%(unixtime)s.mre" % {'path': path, 'unixtime': uxtime},
+					 "%(path)s/mpx-ratings-album-%(unixtime)s.mre" % {'path': path, 'unixtime': uxtime}]
+
+		try:
+			csvwriter = csv.writer(open(filenames[0], "wb"))
+		except IOError:
+			print ">> Cannot open file " + filenames[0]
+			return
+
+		rv = mpx.SQLRowV()
+		lib.getSQL(rv, "SELECT mb_track_id, rating, pcount, pdate FROM track WHERE rating IS NOT NULL AND mb_track_id IS NOT NULL")
+
+		for row in rv:
+
+			vals = [ None, None, None, None ] 
+
+			try:
+				vals[0] = row["mb_track_id"]
+			except:
+				print "No MB Track ID"				
+
+			try:
+				vals[1] = row["rating"]
+			except:
+				print "No rating" 
+
+			try:
+				vals[2] = row["pcount"]
+			except:
+				print "No pcount" 
+
+			try:
+				vals[3] = row["pdate"]
+			except:
+				print "No pdate" 
+
+			csvwriter.writerow(vals)
+
+		try:
+			csvwriter = csv.writer(open(filenames[1], "wb"))
+		except IOError:
+			print ">> Cannot open file " + filenames[1]
+			return
+
+		rv = mpx.SQLRowV()
+		self.lib.getSQL(rv, "SELECT mb_album_id, album_rating FROM album WHERE mb_album_id AND album_rating IS NOT NULL")
+
+		for row in rv:
+
+			vals = [ None, None ] 
+
+			try:
+				vals[0] = row["mb_album_id"]
+			except:
+				print "No MB Album ID"				
+
+			try:
+				vals[1] = row["album_rating"]
+			except:
+				print "No rating" 
+
+			csvwriter.writerow(vals)
+
+
+	def OPERATION_import(self,lib,v):
+		path = self.fc.get_current_folder()
+		print ">> Import from " + path
+		try:
+			csvreader = csv.reader(open(path, "rb"))
+			line = 0
+			for row in csvreader:
+				self.lib.execSQL("UPDATE track SET rating = '" + row[1] + "' WHERE mb_track_id = '" + row[0] + "'")
+				line = line + 1
+			print ">> " + str(line) + " tracks updated"
+		except IOError:
+			print ">> Cannot open file or is not parsable" + file
+			return False
+
+	def run(self):
+		print ">> Ratings Import/Export Plugin running"
+		ret = self.dialog.run()
+		self.dialog.hide()

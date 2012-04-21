@@ -1,0 +1,172 @@
+#
+# -*- coding: utf-8 -*-
+# -*- mode:python ; tab-width:4 -*- ex:set tabstop=4 shiftwidth=4 expandtab: -*-
+#
+# MPX Trackinfo
+# (C) 2008 M. Derezynski
+#
+
+import mpx
+import time
+import pygtk
+pygtk.require('2.0')
+import gtk
+import gobject
+import gtk.glade
+import urllib
+import random
+import struct
+import math
+from Ft.Xml.XPath.Context import Context
+from Ft.Xml.XPath import Evaluate
+from Ft.Xml.Domlette import NonvalidatingReader
+from Ft.Xml import EMPTY_NAMESPACE
+from mpxapi import lasfm
+#import musicbrainz2
+#import musicbrainz2.webservice as ws
+
+class LastFMVis(mpx.Plugin):
+
+    """This plugin serves as a visualizer of Last.fm data belonging to library items (tracks, albums)."""
+
+    def __init__(self,id,player,mcs):
+
+        self.id = id
+        self.lib = player.get_library()
+        self.covers = player.get_covers()
+        self.mlib = player.get_source("36068e19-dfb3-49cd-85b4-52cea16fe0fd")
+
+        self.xml = gtk.glade.XML("@PLUGIN_DIR@" + "/plugins-python/lastfmvis/lastfmvis.glade")
+
+        self.widget = self.xml.get_widget("widget")
+        self.widget.unparent()
+
+        self.treeview = self.xml.get_widget("treeview")
+        self.treeview.set_reorderable(True)
+
+        self.clear = self.xml.get_widget("clear")
+        self.clear.connect("clicked", self.on_clear)
+
+        self.tagview = mpx.TagView()
+
+        self.alignment = self.xml.get_widget("alignment")
+        self.alignment.add(self.tagview.get_widget())
+
+        self.tagview.get_widget().show()
+
+        # Setup TreeView
+        tgts = [('mpx-album', 0, 0)]
+        self.treeview.drag_dest_set(gtk.DEST_DEFAULT_ALL, tgts, gtk.gdk.ACTION_COPY)
+        cell1 = gtk.CellRendererToggle()
+        cell1.connect("toggled", self.on_cell_toggled)
+        cell2 = gtk.CellRendererPixbuf()
+        cell3 = gtk.CellRendererText()
+        cell3.set_property("yalign", 0.)
+        col = gtk.TreeViewColumn('')
+        col.pack_start(cell1, False)
+        col.pack_start(cell2, False)
+        col.pack_start(cell3, True)
+        col.add_attribute(cell1, "active", 0)
+        col.add_attribute(cell2, "pixbuf", 1)
+        col.add_attribute(cell3, "markup", 2)
+        self.treeview.append_column(col)
+        self.model = gtk.ListStore(bool, gtk.gdk.Pixbuf, str, object)
+        self.treeview.set_model(self.model)
+        self.treeview.connect("drag-data-received", self.on_treeview_ddr)
+
+        self.tags = None
+
+    def on_cell_toggled(self, cell, path):
+
+        iter = self.model.get_iter(path)
+        active = self.model.get(iter, 0)[0]
+        self.model.set(iter, 0, not active)
+        self.traverse_model_and_intersect()
+        self.display_tags()
+
+    def on_clear(self, button):
+
+        self.model.clear()
+        self.tagview.clear()
+        self.tags = None
+
+    def traverse_model_and_intersect(self):
+   
+        self.tags = None 
+        iter = self.model.get_iter_first() 
+        if(iter):
+            active = self.model.get(iter, 0)[0]
+            if(active):
+                self.tags = self.model.get(iter, 3)[0]
+            iter = self.model.iter_next(iter)
+            while iter:
+                active = self.model.get(iter, 0)[0]
+                if(active):
+                    tags = self.model.get(iter, 3)[0]
+                    self.tags = self.intersect(self.tags, tags)
+                iter = self.model.iter_next(iter) 
+
+    def display_tags(self):
+
+        self.tagview.clear()
+        #random.shuffle(self.tags)
+
+        for lst in self.tags:
+            self.tagview.add_tag(lst[0], lst[1])
+
+    def intersect(self, tags_a, tags_b):
+
+        if(not tags_a):
+
+            return tags_b
+
+        tag_hash1 = {}
+        tag_hash2 = {}
+        for tag in tags_a: 
+                tag_hash1[tag[0]] = tag[1]
+        
+        for tag in tags_b:
+                tag_hash2[tag[0]] = tag[1]
+
+        result = []
+        for name, ampl in tag_hash2.items():
+            if name in tag_hash1:
+                result.append([name, (tag_hash1[name]+ampl)/2.])
+        
+        return result 
+
+    def get_album_tlst(self, artist):
+
+        r = lastfm.ArtistTopTags(artist) 
+        t = r.get()
+        return t
+
+    def on_treeview_ddr(self, widget, context, x, y, seldata, info, timestamp):
+       
+        album_id = struct.unpack("q", seldata.data)[0]
+        context.finish(True, False, timestamp)
+
+        rv = mpx.SQLRowV()
+        self.lib.getSQL(rv, "SELECT * FROM album JOIN album_artist ON album.album_artist_j = album_artist.id WHERE album.id = %d" % album_id)
+        row = rv[0]
+
+        if "mb_album_id" in row:
+            mbid  = row["mb_album_id"].get_string()
+            cover = self.covers.fetch(mbid)
+            if(cover):
+                cover = cover.scale_simple(72, 72, gtk.gdk.INTERP_BILINEAR)
+        else:
+            cover = None
+
+        album = row["album"].get_string()
+        artist = row["album_artist"].get_string()
+        self.model.append([True, cover, "<span size='12000'><b>%s</b></span>\n<span size='12000'>%s</span>" % (artist, album), self.get_album_tlst(artist)])
+
+        self.traverse_model_and_intersect()
+        self.display_tags()
+
+        return True
+
+    def get_gui(self):
+
+        return self.widget

@@ -1,0 +1,125 @@
+
+# -*- coding: utf-8 -*-
+# -*- mode:python ; tab-width:4 -*- ex:set tabstop=4 shiftwidth=4 expandtab: -*-
+#
+# MPX Trackinfo
+# (C) 2008 M. Derezynski
+#
+
+import mpx
+import pygtk
+pygtk.require('2.0')
+import gtk.glade
+import gobject
+import pango
+
+albumlist_actions_ui_string = """
+    <ui>
+        <menubar name='popup-albumlist-source-musiclib-treeview-albums'>
+            <menu name='menu-albumlist-source-musiclib-treeview-albums' action='dummy'>
+            <placeholder name='action-album-placeholder-source-musiclib-treeview-albums'>
+                <menuitem action='albumlist-actions-action-add-to-collection'/>
+            </placeholder>
+            </menu>
+        </menubar>
+    </ui>
+"""
+
+class AlbumActions(mpx.Plugin):
+
+    def __init__(self, id, player, mcs):
+
+        self.id = id
+        self.player = player
+        self.mcs = mcs
+		self.xml = gtk.glade.XML("@PLUGIN_DIR@" + "/plugins-python/albumactions/albumactions.glade")
+        self.mlib = player.get_source("36068e19-dfb3-49cd-85b4-52cea16fe0fd");
+
+        # Actions
+
+        self.action = []
+
+        self.actiongroup = gtk.ActionGroup("AlbumActions-Actions") 
+
+        action = gtk.Action("albumlist-actions-action-add-to-collection", "Add to Collection", "", gtk.STOCK_ADD)
+        action.connect("activate", self.on_action_add_cb)
+        self.action.append(action)
+
+        self.actiongroup.add_action(self.action[0])
+
+        self.ui = self.player.ui()
+        self.ui.insert_action_group(action_group=self.actiongroup, pos=-1)
+        self.merge_id = 0
+
+        # GUI stuffs
+
+        self.dialog = self.xml.get_widget("dialog")
+        self.dialog_enter_name = self.xml.get_widget("dialog-enter-name")
+        self.entry_collection = self.xml.get_widget("entry-collection")
+        self.textview_collection = self.xml.get_widget("textview-collection")
+
+        self.treeview = self.xml.get_widget("treeview")
+        cell = gtk.CellRendererText()
+        column = gtk.TreeViewColumn()
+        column.pack_start(cell, True)
+        column.add_attribute(cell, "text", 0)
+        self.treeview.append_column(column)
+
+        self.model = gtk.ListStore(gobject.TYPE_STRING, gobject.TYPE_INT)
+        self.treeview.set_model(self.model)
+
+    def get_idv(self):
+
+        return idv
+
+    def on_action_add_cb(self, action):
+
+        self.model.clear()
+
+        rv = mpx.SQLRowV()
+        self.player.get_library().getSQL(rv, str("SELECT id, name FROM collection")) 
+
+        for row in rv:
+                self.model.append([row["name"].get_string(), row["id"].get_int()]) 
+
+        response_id = self.dialog.run()
+        self.dialog.hide()
+
+        iter = self.treeview.get_selection().get_selected()[1]
+        name, id = self.model.get(iter, 0, 1)
+        path = self.mlib.get_albums_selected_path()
+        iter = self.mlib.get_albums_model().get_iter(path)
+        track_id = self.mlib.get_albums_model().get(iter, 21)
+        idv = mpx.IdVector()
+        idv.append(track_id[0])
+
+        if response_id == gtk.RESPONSE_OK:
+
+            self.player.get_library().collectionAppend(id, idv)
+
+        elif response_id == 0:
+    
+            self.textview_collection.props.buffer.text = ""
+            self.entry_collection.props.text = ""
+
+            response_id_name = self.dialog_enter_name.run()
+            self.dialog_enter_name.hide()
+
+            if response_id_name == gtk.RESPONSE_OK:
+
+                name = self.entry_collection.props.text
+                b = self.textview_collection.get_buffer()
+                text = b.get_text(b.get_start_iter(), b.get_end_iter())
+
+                id = self.player.get_library().collectionCreate( str(name), str(text) )
+                self.player.get_library().collectionAppend(id, idv) 
+
+    def activate(self):
+
+        self.merge_id = self.ui.add_ui_from_string(albumlist_actions_ui_string)
+        return True
+
+    def deactivate(self):
+
+        self.ui.remove_ui(self.merge_id)
+        return True

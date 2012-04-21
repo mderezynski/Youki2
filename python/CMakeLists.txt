@@ -1,0 +1,2 @@
+ADD_SUBDIRECTORY(pyapi)
+ADD_SUBDIRECTORY(plugins)

@@ -1,0 +1,97 @@
+# $Id$
+# -*- coding: utf-8 -*-
+# -*- mode:python ; tab-width:4 -*- ex:set tabstop=4 shiftwidth=4 expandtab: -*-
+
+import datetime, locale, md5, site, sys, time, urllib, urllib2, os, mpx, threading, gtk.glade, pickle
+import os, os.path, stat, sys, locale, codecs, time, getpass, urllib, urllib2, ConfigParser
+
+class MusicBrainzTools(mpx.Plugin):
+
+    """This plugin provides various MusicBrainz-related utilities"""
+
+    def __init__(self,id,player,mcs):
+
+        self.id = id
+        self.player = player
+        self.mcs = mcs
+        self.lib = self.player.get_library()
+
+        self.xml = gtk.glade.XML("@PLUGIN_DIR@" + "/plugins-python/musicbrainz-tools/musicbrainz-tools.glade")
+        self.widget = self.xml.get_widget("widget")
+        self.widget.unparent()
+
+        self.username = self.xml.get_widget("e-username")
+        self.password = self.xml.get_widget("e-password")
+
+        self.username.props.text = self.mcs.key_get_string("musicbrainz", "username")
+        self.password.props.text = self.mcs.key_get_string("musicbrainz", "password")
+
+        self.username.connect("changed", self.on_credentials_changed)
+        self.password.connect("changed", self.on_credentials_changed)
+
+        self.collection_submit = self.xml.get_widget("b-submit-collection")
+        self.collection_submit.connect("clicked", self.submit)
+
+    def on_credentials_changed(self, entry):
+
+        self.mcs.key_set_string("musicbrainz", "username", self.username.props.text)
+        self.mcs.key_set_string("musicbrainz", "password", self.password.props.text)
+
+    def get_gui(self):
+
+        return self.widget
+
+    def POST(self, url, data, user, passwd):
+        """ authenticated POST request. """
+
+        pm = urllib2.HTTPPasswordMgrWithDefaultRealm ()
+        pm.add_password (None, url, user, passwd)
+     
+        urllib2.install_opener (
+                urllib2.build_opener (urllib2.HTTPDigestAuthHandler (pm)))
+
+        return urllib2.urlopen (url, data).read ()
+     
+
+    def GET(self, url, data, user, passwd):
+        """ authenticated GET request. """
+
+        pm = urllib2.HTTPPasswordMgrWithDefaultRealm ()
+        pm.add_password (None, url, user, passwd)
+     
+        urllib2.install_opener (
+                urllib2.build_opener (urllib2.HTTPDigestAuthHandler (pm)))
+
+        return urllib2.urlopen (url + "?" +  data).read ()
+     
+     
+    def submit (self, blah):
+
+        req_url = 'http://musicbrainz.org/ws/1/collection/'
+
+        user = self.mcs.key_get_string("musicbrainz","username")
+        password = self.mcs.key_get_string("musicbrainz","password")
+
+        rv = mpx.SQLRowV()
+        self.lib.getSQL( rv, "SELECT DISTINCT mb_album_id FROM album WHERE mb_album_id NOT LIKE 'mpx-%'")
+        
+        print "Found", len(rv), "releases, submitting to", req_url
+
+        albums = []
+
+        for row in rv:
+            albums.append(row["mb_album_id"].get_string())
+
+        use_post = True
+        req_post = { "addalbums": ", ".join (albums) }
+        req_data = urllib.urlencode (req_post)
+
+        print "url: ", req_url
+        print "data: ", req_data
+
+        if use_post:
+            r = self.POST (req_url, req_data, user, password)
+        else:
+            r = self.GET (req_url, req_data, user, password)
+
+        print "response: ", r

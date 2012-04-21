@@ -1,0 +1,112 @@
+youki (0.05.3-2mpx1) jaunty; urgency=low
+
+  * Missing i-youki-library.hh from build
+
+ --  Milosz Derezynski (Youki Developer) <internalerror@gmail.com>  Sat, 18 Apr 2009 22:18:21 +0200
+
+youki (0.05.3-1mpx1) jaunty; urgency=low
+
+  * Fix problems with album list view
+  * Different, more meaningful rendering of the volume bar
+  * Make spectrum timeline based instead of event-based (it rocks!) 
+
+ --  Milosz Derezynski (Youki Developer) <internalerror@gmail.com>  Sat, 18 Apr 2009 21:45:15 +0200
+
+youki (0.05.2-1mpx1) jaunty; urgency=low
+
+  * Fix regression for handling model's changed signal of all models for all views
+
+ --  Milosz Derezynski (Youki Developer) <internalerror@gmail.com>  Fri, 17 Apr 2009 23:05:27 +0200
+
+youki (0.05.1-1mpx1) jaunty; urgency=low
+
+  * Fix all remaining FPE problems
+
+ --  Milosz Derezynski (Youki Developer) <internalerror@gmail.com>  Fri, 17 Apr 2009 23:04:29 +0200
+
+youki (0.05-3mpx1) jaunty; urgency=low
+
+  * Fixed another FPE 
+
+ -- Milosz Derezynski (Youki Developer) <internalerror@gmail.com>  Wed, 14 Apr 2009 17:59:45 +0200
+
+youki (0.05-2mpx1) jaunty; urgency=low
+
+  * Fixed a SIGFPE-generating bug in the list views 
+
+ -- Milosz Derezynski (Youki Developer) <internalerror@gmail.com>  Wed, 14 Apr 2009 17:03:51 +0200
+
+youki (0.05-1mpx1) jaunty; urgency=low
+
+  * PLAYSTATUS_WAITING breaks scrobbler plugin and we don't need it anyway
+  * Make scrolling in album list not cursored, and adapt selection key and button press algorithms
+  * Relayout album list for readability
+  * boost::python compilation fixes
+  * Minor fixes in the splashscreen
+  * Don't accept modifier keys as sole keypress (albumartist, album and track views)
+
+ -- Milosz Derezynski (Youki Developer) <internalerror@gmail.com>  Tue, 14 Apr 2009 17:47:04 +0200
+
+youki (0.04-4mpx1) jaunty; urgency=low
+
+  * Registered uninstalled stock icons 
+
+ -- Milosz Derezynski (Youki Developer) <internalerror@gmail.com>  Mon, 13 Apr 2009 17:03:00 +0200
+
+youki (0.04-3mpx1) jaunty; urgency=low
+
+  * Broken tarball #2
+
+ -- Milosz Derezynski (Youki Developer) <internalerror@gmail.com>  Mon, 13 Apr 2009 17:03:00 +0200
+
+youki (0.04-2mpx1) jaunty; urgency=low
+
+  * Broken tarball 
+
+ -- Milosz Derezynski (Youki Developer) <internalerror@gmail.com>  Mon, 13 Apr 2009 16:03:00 +0200
+
+youki (0.04-1mpx1) jaunty; urgency=low
+
+  * Fix services shutdown
+  * Fix erroneous behaviour of Interval and Limiter
+  * Don't activate media keys accidentally on shutdown, remove deprecated usage of hotkeys::enable key in MCS for mmkeys
+  * Create DB and tables in mlibmanager, start mlibmanager synchronously so all tables are properly created before main app starts 
+
+ -- Milosz Derezynski (Youki Developer) <internalerror@gmail.com>  Mon, 13 Apr 2009 16:03:00 +0200
+
+youki (0.03-6mpx1) jaunty; urgency=low
+
+  * Forgot dependency on pycairo 
+
+ -- Milosz Derezynski (Youki Developer) <internalerror@gmail.com>  Sun, 12 Apr 2009 12:47:00 +0200
+
+
+youki (0.03-5mpx1) jaunty; urgency=low
+
+  * Typo in control file 
+
+ -- Milosz Derezynski (Youki Developer) <internalerror@gmail.com>  Sun, 12 Apr 2009 12:47:00 +0200
+
+youki (0.03-4mpx1) jaunty; urgency=low
+
+  * Nothing, but LaunchPad won't reaccept the package (it was previously uploaded by me and accidentally deleted) 
+
+ -- Milosz Derezynski (Youki Developer) <internalerror@gmail.com>  Sun, 12 Apr 2009 12:47:00 +0200
+
+youki (0.03-3mpx1) jaunty; urgency=low
+
+  * Add boost::regex dependency 
+
+ -- Milosz Derezynski (Youki Developer) <internalerror@gmail.com>  Sun, 12 Apr 2009 12:35:00 +0200
+
+youki (0.03-2mpx1) jaunty; urgency=low
+
+  * Fix dependencies in debian/control 
+
+ -- Milosz Derezynski (Youki Developer) <internalerror@gmail.com>  Sun, 12 Apr 2009 12:14:00 +0200
+
+youki (0.03-1mpx1) jaunty; urgency=low
+
+  * Initial release
+
+ -- Milosz Derezynski (Youki Developer) <internalerror@gmail.com>  Fri, 10 Apr 2009 22:49:00 +0200

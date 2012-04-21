@@ -1,0 +1,244 @@
+
+# -*- coding: utf-8 -*-
+# -*- mode:python ; tab-width:4 -*- ex:set tabstop=4 shiftwidth=4 expandtab: -*-
+#
+# MPX Trackinfo
+# (C) 2008 M. Derezynski
+#
+
+import copy
+import gobject
+gobject.threads_init()
+import gst
+import gtk
+import httplib
+import mpx
+import musicbrainz2
+import musicbrainz2.webservice as ws
+from musicbrainz2.model import *
+import os
+import re
+import string
+import threading
+import time
+import urllib
+import urllib2
+import libxml2
+import logging
+import time
+from gettext import gettext as _
+
+def realId(entityId):
+
+    if (entityId[:7] == "http://"):
+        return string.split(entityId,"/")[-1]
+    else:
+        return entityId
+
+class PuidScan():
+
+    def __init__(self, track):
+
+        self.track = track
+        self.progress = 0.
+
+        self.query = ws.Query(musicbrainz2.webservice.WebService("www.uk.musicbrainz.org"))
+        self.wsinc = musicbrainz2.webservice.TrackIncludes(trackRelations=True,artist=True,puids=True,releases=True,artistRelations=True,releaseRelations=True,urlRelations=True)
+        self.wsinc_release = musicbrainz2.webservice.ReleaseIncludes(releaseEvents=True,releaseRelations=True,urlRelations=True)
+
+        self.player = gst.Pipeline("player")
+        self.source = gst.element_factory_make("giosrc", "file-source")
+        self.player.add(self.source)
+        self.demuxer = gst.element_factory_make("decodebin", "demuxer")
+        self.player.add(self.demuxer)
+        self.demuxer.connect("new-decoded-pad", self.demuxer_callback)
+        self.puid = gst.element_factory_make("puid", "puid")
+        self.player.add(self.puid)
+        self.finished = threading.Event() 
+        self.puid.set_property('musicdns-id', '234e8289d5a5fd4b29127bd114309954')
+        self.audiosink = gst.element_factory_make("fakesink", "audio-output")
+        self.player.add(self.audiosink)
+
+        gst.element_link_many(self.source, self.demuxer)
+        gst.element_link_many(self.puid, self.audiosink)
+
+        self.bus = self.player.get_bus()
+        self.bus.add_signal_watch()
+        self.bus.connect('message', self.on_gst_bus_message)
+    
+        self.puid_str = None
+        self.cover_tuple = None
+
+    def demuxer_callback(self, demuxer, pad, arg):
+
+        try:
+            dec_pad = self.puid.get_pad("sink")
+            pad.link(dec_pad)
+        except:
+            pass
+    
+    def update_pipeline_duration(self):
+
+        if self.finished.isSet():
+            return False
+
+        try:
+                position, format = self.player.query_position(gst.FORMAT_TIME)
+                frac = float(position) / float(135000000000)
+                if (frac >= 0.) and (frac <= 1.0): 
+                    self.progress = frac
+                return True
+        except:
+                self.finished.set()
+                return False
+
+        return True
+
+    def on_gst_bus_message(self, bus, message):    
+
+        t = message.type
+        if t == gst.MESSAGE_EOS:
+
+            puid = self.puid.get_property('puid')
+            gobject.idle_add(self.got_puid, puid)
+
+    def got_puid(self,puid):
+        
+        try:
+                req = urllib2.Request("http://ofa.musicdns.org/ofa/1/track/", data=puid)
+                req.add_header('Content-type', 'application/x-www-form-urlencoded')
+                handle = urllib2.urlopen(req)
+                response = "\n".join(handle.readlines())
+
+                doc = libxml2.parseMemory(response,len(response))
+                ctx = doc.xpathNewContext()
+
+                ctx.xpathRegisterNs("creativeCommons","http://backend.userland.com/creativeCommonsRssModule")
+                ctx.xpathRegisterNs("mip","http://musicip.com/ns/mip-1.0#")
+                ctx.xpathRegisterNs("mmd","http://musicbrainz.org/ns/mmd-1.0#")
+
+                res = ctx.xpathEval("//mmd:puid/@id")
+                puid = res[0].getContent() 
+
+                if puid and len(puid):
+
+                    result = ws.TrackFilter(puid=puid) 
+                    tracks = self.query.getTracks(result)
+
+                    if len(tracks) > 0:
+
+                        print "Got PUID+MB metadata"
+
+                        mbtrack = self.query.getTrackById(realId(tracks[0].getTrack().getId()), self.wsinc) 
+                        artist  = mbtrack.getArtist()
+                        release = self.query.getReleaseById(mbtrack.getReleases()[0].getId(), self.wsinc_release)
+                        asin    = ""
+
+                        relations = release.getRelations( Relation.TO_URL )
+                        for rel in relations:
+                                url, delim, type = rel.getType().partition("#")
+                                if type == "AmazonAsin":
+                                    asin = str(realId(rel.getTargetId()))
+                                    self.track[mpx.AttributeId.ASIN].set_string(asin)
+                                    print "Got ASIN: %s" % asin
+
+                        self.track[mpx.AttributeId.MB_TRACK_ID].set_string(str(realId(tracks[0].getTrack().getId())))
+                        self.track[mpx.AttributeId.MB_ARTIST_ID].set_string(str(realId(artist.getId())))
+                        self.track[mpx.AttributeId.MB_ALBUM_ID].set_string(str(realId(release.getId())))
+
+                        self.track[mpx.AttributeId.ARTIST].set_string(str(artist.getName()))
+                        self.track[mpx.AttributeId.TITLE].set_string(str(mbtrack.getTitle()))
+                        self.track[mpx.AttributeId.ALBUM].set_string(str(release.getTitle()))
+
+                        self.cover_tuple = [ str(realId(release.getId())), asin, str(artist.getName()), str(release.getTitle()) ]
+                else:
+                        print "Got PUID+MusicIP metadata"
+
+                        artist = ctx.xpathEval("//mmd:artist/mmd:name")[0].getContent()
+                        title  = ctx.xpathEval("//mmd:title")[0].getContent()
+                        self.track[mpx.AttributeId.ARTIST].set_string(artist)
+                        self.track[mpx.AttributeId.TITLE].set_string(title)
+
+        except Exception, e:
+                print "Error in PUID extraction handler: %s" % str(e)
+
+        self.finished.set()
+
+    def is_done(self):
+
+        return self.finished.isSet()
+
+    def run(self):
+
+        self.player.get_by_name("file-source").set_property('location', self.track.get(mpx.AttributeId.LOCATION).get())
+        self.player.set_state(gst.STATE_PLAYING)
+        gobject.timeout_add (500, self.update_pipeline_duration)
+
+    def dispose_pipeline(self):
+
+        self.player.set_state(gst.STATE_NULL)
+
+class PuidScanExec(mpx.Plugin):
+
+    """The PUID Scanner performs an audio analysis on the given file to retrieve metadata from MusicBrainz."""
+
+    def __init__(self, id, player, mcs):
+
+        self.player = player
+        self.id = id
+        self.mcs = mcs
+        self.newTrack = True
+
+    def activate(self):
+
+        self.metadata_prepare_id = self.player.gobj().connect("metadata-prepare", self.on_metadata_prepare)
+        self.new_track_id = self.player.gobj().connect("new-track", self.on_new_track)
+
+        return True
+
+    def deactivate(self):
+
+        self.player.gobj().disconnect(self.metadata_prepare_id)
+        self.player.gobj().disconnect(self.new_track_id)
+
+        return True
+
+    def on_new_track(self,blah):
+
+        self.newTrack = True
+
+    def on_metadata_prepare(self, blah):
+
+        m = self.player.get_metadata()
+        self.run(m)
+
+    def run(self,track):
+
+        if not self.newTrack:
+            return
+
+        if not track[mpx.AttributeId.MB_TRACK_ID] and track.get(mpx.AttributeId.LOCATION).get()[:7] == "file://":
+
+                self.newTrack = False
+
+                self.player.info_set("Analyzing File")
+
+                scan = PuidScan(track)
+                scan.run()
+        
+                ctx = gobject.main_context_default()
+                
+                while not scan.is_done():
+                    while ctx.pending():
+                        ctx.iteration(True)
+                    self.player.info_set("Analyzing File: %f" % scan.progress)
+
+                scan.dispose_pipeline()
+
+                if scan.cover_tuple:
+                    print scan.cover_tuple
+                    #self.player.get_covers().cache( scan.cover_tuple[0], scan.cover_tuple[1], "", scan.cover_tuple[2], scan.cover_tuple[3], True )
+
+                self.player.info_clear()
+                self.player.metadata_reparse()
+

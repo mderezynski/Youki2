@@ -1,0 +1,3 @@
+[D-BUS Service]
+Name=info.backtrace.Youki.App
+Exec=@MPX_LIBEXECDIR@/youki-bin

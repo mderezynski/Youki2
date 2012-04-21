@@ -1,0 +1,111 @@
+
+# -*- coding: utf-8 -*-
+# -*- mode:python ; tab-width:4 -*- ex:set tabstop=4 shiftwidth=4 expandtab: -*-
+#
+# MPX Trackinfo
+# (C) 2008 M. Derezynski
+#
+
+import mpx
+import pygtk
+pygtk.require('2.0')
+import gtk
+import gobject
+import pango
+import cairo
+
+class TrackCover(mpx.Plugin):
+
+    def __init__(self, id, player, mcs):
+
+        self.id = id
+        self.player = player
+        self.mcs = mcs
+        self.alignment = gtk.Alignment(xalign=0.5, yalign=0.5)
+        self.da = gtk.DrawingArea() 
+        self.da.set_size_request(435,398)
+        self.da.show_all()
+        self.alignment.add(self.da)
+        self.alignment.show_all()
+
+        self.image = None
+
+        self.da.connect("expose-event", self.on_da_expose_event)
+    
+        self.jewelcase_bot = gtk.gdk.pixbuf_new_from_file("@PLUGIN_DIR@" + "/plugins-python/trackcover/jewelcase_bot.png")
+        self.jewelcase_top = gtk.gdk.pixbuf_new_from_file("@PLUGIN_DIR@" + "/plugins-python/trackcover/jewelcase_top.png")
+
+    def on_da_expose_event(self, da, event):
+
+        context = self.da.window.cairo_create()
+
+        if not self.image:
+            context.set_operator(cairo.OPERATOR_CLEAR)
+            context.rectangle(0,0,435,398) 
+            context.fill()
+            return True
+
+        context.set_operator(cairo.OPERATOR_SOURCE)
+        context.set_source_pixbuf(self.jewelcase_bot, 0, 0)
+        context.rectangle(0,0, 435, 398)
+        context.fill()
+
+        if self.image:
+            context.set_operator(cairo.OPERATOR_ATOP)
+            context.set_source_pixbuf(self.image, 46, 7)
+            context.rectangle(46,7,383,383)
+            context.fill()
+
+        context.set_operator(cairo.OPERATOR_ATOP)
+        context.set_source_pixbuf(self.jewelcase_top, 45, 6)
+        context.rectangle(45,6, 383, 383)
+        context.fill()
+
+        return True
+
+    def activate(self):
+
+        self.player.add_info_widget(self.alignment, "Album Covers")
+
+        self.player_metadata_updated_handler_id     = self.player.gobj().connect("metadata-updated", self.metadata_updated)
+        self.player_new_coverart_handler_id         = self.player.gobj().connect("new-coverart", self.metadata_updated)
+        #self.player_new_track_handler_id            = self.player.gobj().connect("new-track", self.new_track)
+        self.player_playstatus_changed_handler_id   = self.player.gobj().connect("play-status-changed", self.pstate_changed)
+
+        self.metadata_updated(None)
+
+        return True
+
+    def deactivate(self):
+
+        self.player.remove_info_widget(self.alignment)
+        self.player.gobj().disconnect(self.player_metadata_updated_handler_id)
+        self.player.gobj().disconnect(self.player_new_coverart_handler_id)
+        #self.player.gobj().disconnect(self.player_new_track_handler_id)
+        self.player.gobj().disconnect(self.player_playstatus_changed_handler_id)
+
+        return True
+
+    def regen_box(self):
+
+        self.image = None
+        self.da.queue_draw()
+
+    def pstate_changed(self, blah, state):
+
+        if state == mpx.PlayStatus.STOPPED: self.regen_box()
+
+#    def new_track(self, blah):
+#
+#        self.regen_box()
+
+    def metadata_updated(self, blah):
+
+        try:
+            pixbuf = self.player.get_metadata().get_image()
+            if pixbuf:
+                self.regen_box()
+                self.image = pixbuf.scale_simple( 383, 383, gtk.gdk.INTERP_HYPER )
+                self.da.queue_draw()
+        except:
+            pass

@@ -1,0 +1,127 @@
+#
+# -*- coding: utf-8 -*-
+# -*- mode:python ; tab-width:4 -*- ex:set tabstop=4 shiftwidth=4 expandtab: -*-
+#
+# MPX Trackinfo
+# (C) 2008 M. Derezynski
+
+
+import mpx
+import gtkmm
+import time
+import pygtk
+pygtk.require('2.0')
+import gtk
+import gobject
+import gtk.glade
+import urllib
+import random
+import xml
+from Ft.Xml.XPath.Context import Context
+from Ft.Xml.XPath import Evaluate
+from Ft.Xml.Domlette import NonvalidatingReader
+from Ft.Xml import EMPTY_NAMESPACE
+
+class PlaylistDefaultTooltip(mpx.Plugin):
+        
+    """PLTD provides a tooltip for the playlist in the 'Music' component."""
+
+    def __init__(self,id,player,mcs):
+
+        self.id = id
+        f = open("@PLUGIN_DIR@" + "/plugins-python/pltd/pltd.glade")
+        self.xmldata = f.read() 
+        f.close()
+        
+        self.lib = player.get_library()
+        self.covers = player.get_covers()
+        self.player = player
+
+    def activate(self):
+
+        self.handler = self.player.get_source("36068e19-dfb3-49cd-85b4-52cea16fe0fd").gobj().connect("playlist-tooltip", self.on_playlist_tooltip)
+        return True
+
+    def deactivate(self):
+
+        self.player.get_source("36068e19-dfb3-49cd-85b4-52cea16fe0fd").gobj().disconnect(self.handler)
+
+    def on_playlist_tooltip(self, object, treemodel, iter):
+
+        self.xml = gtk.glade.xml_new_from_buffer(self.xmldata, len(self.xmldata))
+        self.widget = self.xml.get_widget("widget")
+        self.widget.unparent()
+        self.image = self.xml.get_widget("image")
+        self.labels = {} 
+
+        for l in ["artist", "album", "title", "bitrate", "samplerate", "type","mbartistid","mbalbumid","lfmtags"]:
+            self.labels[l] = self.xml.get_widget("label-%s" % l)
+
+        mpxtrack_boxed = treemodel.get(iter, 9)[0]
+        mpxtrack = mpx.unwrap_boxed_mpxtrack(mpxtrack_boxed)
+        artist = ""
+        title  = ""
+
+        if mpxtrack[mpx.AttributeId.ARTIST]:
+            artist = mpxtrack[mpx.AttributeId.ARTIST].get()
+            self.labels["artist"].set_text(artist)
+
+        if mpxtrack[mpx.AttributeId.ALBUM]:
+            self.labels["album"].set_text(mpxtrack[mpx.AttributeId.ALBUM].get())
+
+        if mpxtrack[mpx.AttributeId.TITLE]:
+            title  = mpxtrack[mpx.AttributeId.TITLE].get()
+            self.labels["title"].set_text(title)
+
+        if mpxtrack[mpx.AttributeId.BITRATE]:
+            self.labels["bitrate"].set_text(str(mpxtrack[mpx.AttributeId.BITRATE].get())+ " kbit/s")
+
+        if mpxtrack[mpx.AttributeId.SAMPLERATE]:
+            self.labels["samplerate"].set_text(str(mpxtrack[mpx.AttributeId.SAMPLERATE].get()/1000.)+ " KHz")
+
+        if mpxtrack[mpx.AttributeId.TYPE]:
+            self.labels["type"].set_text(mpxtrack[mpx.AttributeId.TYPE].get())
+
+        if mpxtrack[mpx.AttributeId.MB_ARTIST_ID]:
+            self.labels["mbartistid"].set_text(mpxtrack[mpx.AttributeId.MB_ARTIST_ID].get())
+
+        if mpxtrack[mpx.AttributeId.MB_ALBUM_ID]:
+
+            self.labels["mbalbumid"].set_text(mpxtrack[mpx.AttributeId.MB_ALBUM_ID].get())
+
+            mbid = mpxtrack[mpx.AttributeId.MB_ALBUM_ID].get()
+            cover = self.covers.fetch(mbid) 
+
+            if cover:
+                self.image.set_from_pixbuf(cover.scale_simple(192, 192, gtk.gdk.INTERP_BILINEAR))
+                self.image.show()
+            else:
+                self.image.hide()
+        else:
+                self.image.hide()
+
+
+        tags = []
+    
+        try:
+                uri         = u"http://ws.audioscrobbler.com/1.0/track/%s/%s/toptags.xml" % (urllib.quote(artist), urllib.quote(title))
+                lfmxml      = NonvalidatingReader.parseUri(uri)
+                ctx         = Context(lfmxml)
+                xml_names   = Evaluate("//name", context=ctx)
+
+                for name in xml_names:
+                    if name.firstChild:
+                        tags.append(name.firstChild.data) 
+
+                self.labels["lfmtags"].set_text(", ".join(tags[0:10]))
+
+        except:
+                print "Error in PLTD fetching Last.fm tags" 
+
+        self.widget.connect("destroy", self.widget_destroyed)
+
+        return self.widget
+
+    def widget_destroyed(self, widget):
+
+        print "*BOOM*"

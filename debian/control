@@ -1,0 +1,17 @@
+Source: youki
+Section: sound
+Priority: extra
+Maintainer: Milosz Derezynski <internalerror@gmail.com>
+Build-Depends: debhelper (>= 7), autotools-dev, libboost1.35-dev, libboost-filesystem1.35-dev, libboost-iostreams1.35-dev, libboost-python1.35-dev, libboost-regex1.35-dev, libglibmm-2.4-dev, libgtkmm-2.4-dev, python-gtk2-dev, libxml2-dev, libsoup2.4-dev, libsqlite3-dev, libglib2.0-dev, libsigc++-2.0-dev, libglademm-2.4-dev, libcairomm-1.0-dev, libxerces-c2-dev, libgstreamer0.10-dev, libgstreamer-plugins-base0.10-dev, libdbus-c++-dev, libhal-dev, libhal-storage-dev,  libstartup-notification0-dev, libofa0-dev, libsigx-2.0-dev, libgamin-dev, libasound2-dev, libcdparanoia-dev, libx11-dev, taglib-gio-dev, libcurl4-gnutls-dev, libdbus-1-dev, libdbus-glib-1-dev, python2.6-dev, python-cairo-dev
+Standards-Version: 3.8.0
+Homepage: http://youki.mp
+
+Package: youki
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libboost-filesystem1.35.0, libboost-iostreams1.35.0, libboost-python1.35.0, libboost-regex1.35.0, libglibmm-2.4-1c2a, libgtkmm-2.4-1c2a, python-gtk2, libxml2, libsqlite3-0, libsigc++-2.0-0c2a, libglademm-2.4-1c2a, libcairomm-1.0-1, libxerces-c28, libgstreamer0.10-0, libgstreamer-plugins-base0.10-0, gstreamer0.10-plugins-base, gstreamer0.10-plugins-good, gstreamer0.10-plugins-ugly, gstreamer0.10-plugins-bad, libdbus-c++1, libhal1, libhal-storage1, libstartup-notification0, libofa0, libsigx-2.0-2, gamin, libasound2, libcdparanoia0, xserver-xorg, taglib-gio1, libcurl3, libdbus-1-3, libdbus-glib-1-2, libpython2.6, python-cairo
+Description: An enjoyable music player 
+ Youki is a media player designed with the goal in mind to support a simple user experience, and provide a powerful engine under the hood. It supports MusicBrainz fully from the ground up, is extendable using C++ or Python, and has an appealing GUI.
+
+Package: youki-doc
+Architecture: all
+Description: documentation for youki

@@ -1,0 +1,50 @@
+.TH BMPx 1 "26 September 2007" "Version @PACKAGE_VERSION@" "BMPx Manual Page"
+.SH NAME
+BMP \- Media Player 
+.SH SYNOPSIS
+.B beep-media-player-2 [OPTIONS]
+.SH DESCRIPTION
+\fIBMP\fP is a media player
+.SH OPTIONS
+.TP
+.B \-?, \--help
+Show help options
+.TP
+.B \-v, \-\-version
+Display version and paths/files used by the current BMPx installation
+.TP
+.B \-c, \-\-configure
+Prints the arguments passed to configure for the installed version of BMPx
+.TP
+.B \-n, \-\-no-network
+Start BMPx in "offline" mode, that is, don't enable network dependent sources (Last.fm, Radios), and don't use network dependent services (Musicbrainz)
+.TP
+.B \-u, \-\-uris
+Parse the command line arguments as URIs to play (this is the default anyway so this option shouldn't be really needed; legacy reasons)
+.TP
+.B \-f, \-\-files
+By default, beep-media-player-2 will expect the arguments passed to it on the commandline without options to be URIs (e.g. file:///music/file.ogg, or http://somehost.com/stream.ogg); using this switch will make it treat the arguments as filenames of locally (on this host) acecssible files instead
+.TP
+.B \-\-ppaus
+Pause/Resume Playback
+.TP
+.B \-\-ppnext
+Skip to the next Track/Item
+.TP
+.B \-\-pprev
+Skip to the previous Track/Item
+.SH FILES/PATHS
+.TP
+~/.config/bmpx/logs/
+Log directory, to which all log files are written to unless \-\-no\-log is used.
+.TP
+~/.config/bmpx/config.xml
+Configuration file (please run beep-media-player-2 --version for a full list of paths and files used by BMP)
+.TP
+~/.config/bmpx/feedlist.opml
+Podcast feedlist in OPML format (adding a feed there while BMP isn't running will make it load the feed when started up the next time)
+.TP
+~/.local/share/bmpx/library-N-N-N.mlib
+SQlite library file
+.SH OTHER INFO
+The BMPx web site is http://bmpx.beep-media-player.org

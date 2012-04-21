@@ -1,0 +1,8 @@
+[MPX Plugin]
+Loader=python
+Module=audiorecord
+IAge=1
+Name=Record Audio
+Authors=Milosz Derezynski <milosz@backtrace.info>
+Copyright=Copyright © 2008 Milosz Derezynski 
+Website=http://mpx.backtrace.info/

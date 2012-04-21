@@ -1,0 +1,3 @@
+[D-BUS Service]
+Name=info.backtrace.Youki.Sentinel
+Exec=@MPX_LIBEXECDIR@/youki-sentinel-bin

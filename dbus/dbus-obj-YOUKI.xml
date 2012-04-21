@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<node name="/info/backtrace/Youki/App">
+
+  <interface name="info.backtrace.Youki.App">
+
+        <method name="Present"/>
+
+        <method name="Startup"/>
+        <method name="Quit" />
+
+        <method name="GetMetadata">
+              <arg type="a{sv}" direction="out" />
+        </method>
+
+        <method name="Next"/>
+        <method name="Prev"/>
+        <method name="Pause"/>
+
+        <!---->
+
+        <signal name="NewTrack"/>
+        <signal name="MetadataUpdated"/>
+        <signal name="NewCoverart"/>
+        <signal name="PlayStatusChanged">
+            <arg type="i"/>
+        </signal>
+        <signal name="StartupComplete" />
+        <signal name="ShutdownComplete" />
+
+  </interface>
+</node>

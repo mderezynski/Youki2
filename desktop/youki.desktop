@@ -1,0 +1,21 @@
+[Desktop Entry]
+Name=Youki
+Comment=Audio Player
+Comment[cs]=Přehrávač audia
+Comment[de]=Audio-Player
+Comment[es]=Reproductor de audio
+Comment[fr]=Lecteur audio
+Comment[it]=Riproduttore Audio
+Comment[lt]=Garso leistuvė
+Comment[pl]=Odtwarzacz dźwięku
+Comment[ro]=Player audio
+Comment[dk]=Lyd afspiller
+TryExec=youki
+Exec=youki
+Icon=youki
+MimeType=
+Categories=GTK;AudioVideo;Player;
+Terminal=false
+Type=Application
+Encoding=UTF-8
+StartupNotify=false
