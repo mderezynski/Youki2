@@ -30,7 +30,7 @@ namespace Hal
       HALCC_EXCEPTION(HALGenericError)
 
   class Device;
-  class Context 
+  class Context
   {
     public:
 
@@ -42,10 +42,10 @@ namespace Hal
         */
       static Hal::RefPtr<Context> create (DBusConnection  * conn);
 
-      /** Wraps a C LibHalContext, and optionally takes ownership of it 
+      /** Wraps a C LibHalContext, and optionally takes ownership of it
         * NOTE: This will fail/not work right when used with a context created using libhal_ctx_init_direct() !
         *
-        * @param ctx The C LibHalContext to wrap 
+        * @param ctx The C LibHalContext to wrap
         * @param ownership Whether to take ownership of the C instance or not
         */
       static Hal::RefPtr<Context> wrap (LibHalContext * ctx, bool ownership = false);
@@ -55,12 +55,12 @@ namespace Hal
 
       bool
       device_exists (std::string const& udi) throw (UnableToProbeDeviceError);
-         
+
 
       bool
       device_query_capability (std::string const& udi, std::string const& capability) throw (UnableToProbeDeviceError);
-         
-       
+
+
 
       // Methods for device lookups
 
@@ -89,7 +89,7 @@ namespace Hal
 
       LibHalContext * cobj () { return _cobj; }
 
-    private:    
+    private:
 
       friend class Hal::RefPtr<Context>;
       friend class Hal::Device;
@@ -97,7 +97,7 @@ namespace Hal
       LibHalContext * _cobj;
       void connect_context ();
       bool m_ownership;
-      
+
       explicit Context (DBusConnection  * conn);
       explicit Context (LibHalContext   * ctx, bool ownership = false);
       explicit Context () {}
@@ -130,26 +130,26 @@ namespace Hal
       static void * device_destroyed      (void * data); // sigc::trackable::internal::func_destroy_notify
 
       static void _ccallback_libhal_device_added
-        (LibHalContext *ctx, const char * udi);  
+        (LibHalContext *ctx, const char * udi);
 
       static void _ccallback_libhal_device_removed
-        (LibHalContext *ctx, const char * udi);  
+        (LibHalContext *ctx, const char * udi);
 
       // We use these to invoke the callbacks on the devices
 
       static void _ccallback_libhal_device_new_capability
-        (LibHalContext *ctx, const char * udi, const char * capability);  
+        (LibHalContext *ctx, const char * udi, const char * capability);
 
       static void _ccallback_libhal_device_lost_capability
-        (LibHalContext *ctx, const char * udi, const char * capability);  
+        (LibHalContext *ctx, const char * udi, const char * capability);
 
       static void _ccallback_libhal_device_property_modified
         (LibHalContext *ctx, const char * udi, const char * key,
-          dbus_bool_t is_removed, dbus_bool_t is_added);  
+          dbus_bool_t is_removed, dbus_bool_t is_added);
 
       static void _ccallback_libhal_device_condition
         (LibHalContext *ctx, const char * udi, const char * condition_name,
-          const char * condition_detail); 
+          const char * condition_detail);
 
       SignalUDI  signal_device_added_;
       SignalUDI  signal_device_removed_;
@@ -169,27 +169,34 @@ namespace Hal
 
   template<>
   void    Context::filter_device_list
-            (StrV & in, std::string const& property, std::string value);
+            (StrV & in, std::string const& property, std::string value)
+      throw (HALGenericError);
 
   template<>
   void    Context::filter_device_list
-            (StrV & in, std::string const& property, dbus_int32_t value);
+            (StrV & in, std::string const& property, dbus_int32_t value)
+      throw (HALGenericError);
 
   template<>
   void    Context::filter_device_list
-            (StrV & in, std::string const& property, dbus_uint64_t& value);
+            (StrV & in, std::string const& property, dbus_uint64_t& value)
+      throw (HALGenericError);
 
   template<>
   void    Context::filter_device_list
-            (StrV & in, std::string const& property, double value);
+            (StrV & in, std::string const& property, double value)
+      throw (HALGenericError);
 
   template<>
   void    Context::filter_device_list
-            (StrV & in, std::string const& property, bool value);
+            (StrV & in, std::string const& property, bool value)
+      throw (HALGenericError);
 
   template<>
   void    Context::filter_device_list
-            (StrV & in, std::string const& property, StrV const& value);
+            (StrV & in, std::string const& property, StrV const& value)
+      throw (HALGenericError);
+
 }
 
 #endif //!_HAL_CC_CONTEXT_HH
