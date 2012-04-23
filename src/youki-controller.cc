@@ -1463,14 +1463,8 @@ namespace MPX
           unsigned int position
     )
     {
-        if( position < 0 )
-            return ;
-
         unsigned int duration = m_play->property_duration().get_value() ;
     
-        if( duration < 0 )
-            return ;
-
         if( m_seek_position && guint64(position) < m_seek_position.get() ) 
         {
             return ;
