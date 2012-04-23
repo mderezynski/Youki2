@@ -908,7 +908,7 @@ namespace Artist
 			if( m_selection && boost::get<2>(m_selection.get()) == row2 )
 			    return true ;
 
-			if( row2 >= 0 && row2 < m_model->size() ) 
+			if( row2 < m_model->size() ) 
 			{
 			    if( row2 >= (row + m_height__current_viewport/m_height__row))
 			    {
@@ -922,7 +922,7 @@ namespace Artist
 			if( m_selection && boost::get<2>(m_selection.get()) == row )
 			    return false ;
 
-			if( row >= 0 && row < m_model->size()) 
+			if(row < m_model->size())
 			{
 			    select_row( row ) ;
 			}
