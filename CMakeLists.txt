@@ -241,20 +241,20 @@ ELSE(${CMAKE_CXX_COMPILER_ID} MATCHES "GNU")
   SET(C_COMMON_FLAGS "${C_COMMON_FLAGS} -Wall -D_FORTIFY_SOURCE=2")
 ENDIF(${CMAKE_CXX_COMPILER_ID} MATCHES "GNU")
 
-SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${C_COMMON_FLAGS} -ggdb3")
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${C_COMMON_FLAGS} -ggdb3")
+SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${C_COMMON_FLAGS} -Wno-mismatched-tags")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${C_COMMON_FLAGS} -Wno-mismatched-tags")
 
 # Profile build C/C++ flags
-SET(CMAKE_C_FLAGS_PROFILE "-g3 -fno-inline -pg -fprofile-arcs -ftest-coverage")
-SET(CMAKE_CXX_FLAGS_PROFILE "-g3 -fno-inline -pg -fprofile-arcs -ftest-coverage")
+SET(CMAKE_C_FLAGS_PROFILE "-ggdb3 -pg -fprofile-arcs -ftest-coverage")
+SET(CMAKE_CXX_FLAGS_PROFILE "-ggdb3 -pg -fprofile-arcs -ftest-coverage")
 
 # Debug build C/C++ flags
 SET(CMAKE_C_FLAGS_DEBUG "-ggdb3 -fno-inline")
 SET(CMAKE_CXX_FLAGS_DEBUG "-ggdb3 -fno-inline")
 
 # Release build C/C++ flags
-SET(CMAKE_C_FLAGS_RELEASE "-O2 -ggdb3 -fno-inline")
-SET(CMAKE_CXX_FLAGS_RELEASE "-O2 -ggdb3 -fno-inline")
+SET(CMAKE_C_FLAGS_RELEASE "-O2")
+SET(CMAKE_CXX_FLAGS_RELEASE "-O2")
 
 ADD_DEFINITIONS(-DHAVE_CONFIG_H)
 
