@@ -20,12 +20,10 @@
 #ifndef __widgetloader_include__
 #define __widgetloader_include__
 
-#include <libglademm/xml.h>
-#include <glade/glade-xml.h>
+#include <gtkmm/builder.h>
+#include <stdexcept>
 
-namespace Gnome {
-namespace Glade {
-
+namespace MPX {
 
 /*
 * WidgetLoader template class
@@ -33,20 +31,20 @@ namespace Glade {
 template <class T_WIDGET> class WidgetLoader : public T_WIDGET {
 public:
 	/*
-	* constructor takes a RefPtr<Xml> to the glade data
+	* constructor takes a RefPtr<Builder> to the glade data
 	* and the glade name of the widget (of type T_WIDGET) 
 	* to load.
 	*/
-	WidgetLoader(const Glib::RefPtr<Xml>& refxml, const Glib::ustring& widgetname) : 
+	WidgetLoader(const Glib::RefPtr<Gtk::Builder>& refbuilder, const Glib::ustring& widgetname) : 
 		/*
 		* with help of get_widget the underlying
 		* T_WIDGET class is initialized 
 		*/
-		T_WIDGET( get_widget(refxml, widgetname))
-    ,   m_Xml(refxml)
+		T_WIDGET( get_widget(refbuilder, widgetname))
+    ,   m_Builder(refbuilder)
 	{}
 protected:
-    Glib::RefPtr<Gnome::Glade::Xml> m_Xml;
+    Glib::RefPtr<Gtk::Builder> m_Builder;
 private:
 	typedef typename T_WIDGET::BaseObjectType widget_type;
 
@@ -55,23 +53,22 @@ private:
 	* returns pointer to GtkWidget object
 	* (if widgetname exists in glade xml)
 	*/
-	static widget_type *get_widget(const Glib::RefPtr<Xml>& _refxml, 
+	static widget_type *get_widget(const Glib::RefPtr<Gtk::Builder>& _refbuilder, 
 			const Glib::ustring& widgetname) 
 	{
 		//get pointer from glade 
-		widget_type *base_widget = (widget_type *)glade_xml_get_widget(
-				_refxml->gobj(), widgetname.c_str() );
+		widget_type *base_widget = (widget_type *)gtk_builder_get_object(
+				_refbuilder->gobj(), widgetname.c_str() );
 		if (!base_widget) 
-			throw XmlError("Base widget \"" + widgetname +
-					"not found in glade file \"" +
-					_refxml->get_filename() + "\".");
+			throw std::runtime_error("Base widget \"" + widgetname +
+					"not found in builder.");
 		//check reference count
 		Glib::ObjectBase *object_base = Glib::ObjectBase::_get_current_wrapper( 
 				(GObject*) base_widget );
 		if (object_base) {
-			throw XmlError("oject already exists.");
+			throw std::runtime_error("Object already exists.");
 		} else {
-			Glib::RefPtr<Xml> refThis(_refxml);
+			Glib::RefPtr<Gtk::Builder> refThis(_refbuilder);
 			//increase reference count
 			refThis->reference(); 
 		}
@@ -79,7 +76,6 @@ private:
 	};
 };
 
-}
-}
+} // MPX namespace
 
 #endif
