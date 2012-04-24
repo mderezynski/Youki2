@@ -220,33 +220,32 @@ SET(HAVE_GTK yes)
 SET(HAVE_XML yes)
 
 # Standard flags
+# NOTE: We cannot use -pedantic with g++ because long long (needed
+# for 64-bit integers on 32-bit platforms) is not defined in C++98
+SET(COMMON_FLAGS "-Wall -D_FORTIFY_SOURCE=2")
 IF(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-  # NOTE: We cannot use -pedantic with g++ because long long (needed
-  # for 64-bit integers on 32-bit platforms) is not defined in C++98
-  SET(C_COMMON_FLAGS "${C_COMMON_FLAGS} -pipe -fno-strict-aliasing -fmessage-length=0 -Wall -D_FORTIFY_SOURCE=2")
-  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -pedantic")
-ELSE()
-  SET(C_COMMON_FLAGS "${C_COMMON_FLAGS} -Wall -D_FORTIFY_SOURCE=2")
-ENDIF()
-
-# Compiler specific flags
-IF(CMAKE_C_COMPILER_ID STREQUAL "Clang")
+  SET(COMPILER_FLAGS "-pipe -fno-strict-aliasing -fmessage-length=0")
+  SET(C_LANG_FLAGS   "-std=c99 -pedantic")
+  SET(CXX_LANG_FLAGS "-std=c++98")
+ELSEIF(CMAKE_C_COMPILER_ID STREQUAL "Clang")
   SET(COMPILER_FLAGS "-Wno-mismatched-tags")
+  SET(C_LANG_FLAGS   "-pedantic") # Clang defaults to C99
+  SET(CXX_LANG_FLAGS "-std=c++98")
 ENDIF()
 
-SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${C_COMMON_FLAGS} ${COMPILER_FLAGS}")
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${C_COMMON_FLAGS} ${COMPILER_FLAGS}")
+SET(CMAKE_C_FLAGS   "${COMMON_FLAGS} ${C_LANG_FLAGS} ${COMPILER_FLAGS}")
+SET(CMAKE_CXX_FLAGS "${COMMON_FLAGS} ${CXX_LANG_FLAGS} ${COMPILER_FLAGS}")
 
 # Profile build C/C++ flags
-SET(CMAKE_C_FLAGS_PROFILE "-ggdb3 -pg -fprofile-arcs -ftest-coverage")
+SET(CMAKE_C_FLAGS_PROFILE   "-ggdb3 -pg -fprofile-arcs -ftest-coverage")
 SET(CMAKE_CXX_FLAGS_PROFILE "-ggdb3 -pg -fprofile-arcs -ftest-coverage")
 
 # Debug build C/C++ flags
-SET(CMAKE_C_FLAGS_DEBUG "-ggdb3 -fno-inline")
+SET(CMAKE_C_FLAGS_DEBUG   "-ggdb3 -fno-inline")
 SET(CMAKE_CXX_FLAGS_DEBUG "-ggdb3 -fno-inline")
 
 # Release build C/C++ flags
-SET(CMAKE_C_FLAGS_RELEASE "-O2")
+SET(CMAKE_C_FLAGS_RELEASE   "-O2")
 SET(CMAKE_CXX_FLAGS_RELEASE "-O2")
 
 # Add RPATHs where necessary
