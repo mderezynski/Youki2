@@ -31,7 +31,7 @@ class Notification(mpx.Plugin):
         self.mcs.domain_register("MPX-notification-plugin")
         self.mcs.key_register("MPX-notification-plugin", "notification-enabled", False)
 
-        self.xml = gtk.glade.XML("@PLUGIN_DIR@" + "/plugins-python/notification/notification.glade")
+        self.xml = gtk.glade.XML("@MPX_PLUGIN_DIR_FULL@/plugins-python/notification/notification.glade")
 
         self.widget = self.xml.get_widget("widget")
         self.widget.unparent()
@@ -86,7 +86,7 @@ class Notification(mpx.Plugin):
             if state == mpx.PlayStatus.PAUSED:
                 self.statusicon.set_blinking(True)
             if state == mpx.PlayStatus.STOPPED:
-                self.statusicon.set_from_file("@DATA_DIR@" + "/icons/mpx_48.png")
+                self.statusicon.set_from_file("@MPX_PKGDATA_DIR_FULL@/icons/mpx_48.png")
                 self.statusicon.set_tooltip(APPLICATION)
 
     def next_cb(self,widget, data = None):
@@ -121,7 +121,7 @@ class Notification(mpx.Plugin):
                 image = image.scale_simple(ICON_SIZE, ICON_SIZE, gtk.gdk.INTERP_NEAREST)
                 self.statusicon.set_from_pixbuf(image)
             else:
-                self.statusicon.set_from_file("@DATA_DIR@" + "/icons/mpx_48.png")
+                self.statusicon.set_from_file("@MPX_PKGDATA_DIR_FULL@/icons/mpx_48.png")
             if m[mpx.AttributeId.ARTIST] and m[mpx.AttributeId.TITLE]: 
                 tooltip = "%s - %s" % (m[mpx.AttributeId.ARTIST].get(), m[mpx.AttributeId.TITLE].get())
                 self.statusicon.set_tooltip(tooltip)
@@ -130,7 +130,7 @@ class Notification(mpx.Plugin):
     def on_icon_toggled(self, cb):
         if cb.get_active():
             self.statusicon = gtk.StatusIcon()
-            self.statusicon.set_from_file("@DATA_DIR@" + "/icons/mpx_48.png")
+            self.statusicon.set_from_file("@MPX_PKGDATA_DIR_FULL@/icons/mpx_48.png")
             self.statusicon.set_visible(True)
             self.statusicon.set_tooltip(APPLICATION)
 

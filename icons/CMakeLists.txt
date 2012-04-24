@@ -2,10 +2,10 @@ ADD_SUBDIRECTORY(hicolor)
 
 INSTALL(
   FILES youki.png
-  DESTINATION ${MPX_PKGDATADIR}/icons
+  DESTINATION ${MPX_PKGDATA_DIR}/icons
 )
 
 INSTALL(
   FILES youki.png
-  DESTINATION ${MPX_DATADIR}/icons/hicolor/128x128/apps
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/128x128/apps
 )

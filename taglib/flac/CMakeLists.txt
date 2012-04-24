@@ -21,4 +21,4 @@ TARGET_LINK_LIBRARIES(taglib_plugin_flac
   mpx_common_reader
 )
 
-INSTALL(TARGETS taglib_plugin_flac LIBRARY DESTINATION ${PLUGIN_DIR}/taglib)
+INSTALL(TARGETS taglib_plugin_flac LIBRARY DESTINATION ${MPX_PLUGIN_DIR}/taglib)

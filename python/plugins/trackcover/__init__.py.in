@@ -32,8 +32,8 @@ class TrackCover(mpx.Plugin):
 
         self.da.connect("expose-event", self.on_da_expose_event)
     
-        self.jewelcase_bot = gtk.gdk.pixbuf_new_from_file("@PLUGIN_DIR@" + "/plugins-python/trackcover/jewelcase_bot.png")
-        self.jewelcase_top = gtk.gdk.pixbuf_new_from_file("@PLUGIN_DIR@" + "/plugins-python/trackcover/jewelcase_top.png")
+        self.jewelcase_bot = gtk.gdk.pixbuf_new_from_file("@MPX_PLUGIN_DIR_FULL@/plugins-python/trackcover/jewelcase_bot.png")
+        self.jewelcase_top = gtk.gdk.pixbuf_new_from_file("@MPX_PLUGIN_DIR_FULL@/plugins-python/trackcover/jewelcase_top.png")
 
     def on_da_expose_event(self, da, event):
 

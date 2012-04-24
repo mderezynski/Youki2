@@ -27,4 +27,4 @@ TARGET_LINK_LIBRARIES(taglib_plugin_mod
   ${MOD_LIBRARIES}
 )
 
-INSTALL(TARGETS taglib_plugin_moddir LIBRARY DESTINATION ${PLUGIN_DIR}/taglib)
+INSTALL(TARGETS taglib_plugin_moddir LIBRARY DESTINATION ${MPX_PLUGIN_DIR}/taglib)

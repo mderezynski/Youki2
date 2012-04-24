@@ -19,4 +19,4 @@ TARGET_LINK_LIBRARIES(taglib_plugin_ogg
   mpx_common_reader
 )
 
-INSTALL(TARGETS taglib_plugin_ogg LIBRARY DESTINATION ${PLUGIN_DIR}/taglib)
+INSTALL(TARGETS taglib_plugin_ogg LIBRARY DESTINATION ${MPX_PLUGIN_DIR}/taglib)

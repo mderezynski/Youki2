@@ -25,4 +25,4 @@ TARGET_LINK_LIBRARIES(cppmod-libraryprefs
   mconfig
 )
 
-INSTALL(TARGETS cppmod-libraryprefs LIBRARY DESTINATION ${PLUGIN_DIR}/cppmod)
+INSTALL(TARGETS cppmod-libraryprefs LIBRARY DESTINATION ${MPX_PLUGIN_DIR}/cppmod)

@@ -1,3 +1,3 @@
 [D-BUS Service]
 Name=info.backtrace.Youki.MLibMan
-Exec=@MPX_LIBEXECDIR@/youki-mlibman-bin
+Exec=@CMAKE_INSTALL_FULL_LIBEXECDIR@/youki-mlibman-bin

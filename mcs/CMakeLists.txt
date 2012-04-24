@@ -9,7 +9,7 @@ INCLUDE_DIRECTORIES(
 
 SET(mconfig_SOURCES
   base.h
-  gtk-bind.h	  
+  gtk-bind.h
   key.h
   key.cpp
   mcs.cpp

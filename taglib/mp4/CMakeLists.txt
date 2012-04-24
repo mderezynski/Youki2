@@ -33,4 +33,4 @@ TARGET_LINK_LIBRARIES(taglib_plugin_mp4
   mpx_common_reader
 )
 
-INSTALL(TARGETS taglib_plugin_mp4 LIBRARY DESTINATION ${PLUGIN_DIR}/taglib)
+INSTALL(TARGETS taglib_plugin_mp4 LIBRARY DESTINATION ${MPX_PLUGIN_DIR}/taglib)

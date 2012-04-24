@@ -967,7 +967,7 @@ class TrackInfo:
         self.alignment.add_with_viewport(self.browser.get_gui())
 
         self.throb = xml.get_widget("throbber")
-        self.throb.set_from_file("@DATA_DIR@" + "/images/animated-throbber.gif")
+        self.throb.set_from_file("@MPX_PKGDATA_DIR_FULL@/images/animated-throbber.gif")
         self.notebook.set_current_page(0)
 
         self.artist_cached = {}
@@ -1101,7 +1101,7 @@ class LiveInfo(mpx.Plugin):
     
         self.id = id
         self.youki = youki
-        self.xml = gtk.glade.XML( "@PLUGIN_DIR@" + "/plugins-python/trackinfo-webkit/trackinfo-webkit.glade" )
+        self.xml = gtk.glade.XML( "@MPX_PLUGIN_DIR_FULL@/plugins-python/trackinfo-webkit/trackinfo-webkit.glade" )
         self.vbox = self.xml.get_widget( "vbox" )
         self.vbox.unparent()
         self.info = TrackInfo( self.xml )

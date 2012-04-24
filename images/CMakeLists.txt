@@ -33,5 +33,5 @@ INSTALL(
         youki32x32.png
         youki16x16.png
 
-  DESTINATION ${MPX_PKGDATADIR}/images
+  DESTINATION ${MPX_PKGDATA_DIR}/images
 )

@@ -29,7 +29,7 @@ SET(jnetlib_SOURCES
   util.h
 )
 
-# FIXME: Do we need to include this? -pthread 
+# FIXME: Do we need to include this? -pthread
 ADD_LIBRARY(jnetlib STATIC ${jnetlib_SOURCES})
 
 TARGET_LINK_LIBRARIES(jnetlib

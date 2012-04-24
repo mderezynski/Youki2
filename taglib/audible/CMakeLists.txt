@@ -6,7 +6,7 @@ INCLUDE_DIRECTORIES(
   ${GLIBMM_INCLUDE_DIRS}
 )
 
-SET(taglib_plugin_audible_SOURCES 
+SET(taglib_plugin_audible_SOURCES
   plugin.cc
   audibleproperties.cpp
   audibleproperties.h
@@ -25,4 +25,4 @@ TARGET_LINK_LIBRARIES(taglib_plugin_audible
   ${GLIBMM_LIBARIES}
 )
 
-INSTALL(TARGETS taglib_plugin_audible LIBRARY DESTINATION ${PLUGIN_DIR}/taglib)
+INSTALL(TARGETS taglib_plugin_audible LIBRARY DESTINATION ${MPX_PLUGIN_DIR}/taglib)

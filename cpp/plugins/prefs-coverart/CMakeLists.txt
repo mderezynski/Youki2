@@ -22,4 +22,4 @@ TARGET_LINK_LIBRARIES(cppmod-coverartprefs
   mconfig
 )
 
-INSTALL(TARGETS cppmod-coverartprefs LIBRARY DESTINATION ${PLUGIN_DIR}/cppmod)
+INSTALL(TARGETS cppmod-coverartprefs LIBRARY DESTINATION ${MPX_PLUGIN_DIR}/cppmod)
