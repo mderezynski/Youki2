@@ -1124,12 +1124,13 @@ namespace MPX
     void
     YoukiController::initiate_quit ()
     {
-	Gtk::Main::quit() ;
+        Gtk::Main::quit() ;
     }
 
     bool
     YoukiController::quit_timeout ()
     {
+        return false;
     }
 
     void
@@ -2081,7 +2082,7 @@ namespace MPX
     bool
     YoukiController::on_main_window_key_press_event_after(
           GdkEventKey* event
-    ) 
+    )
     {
 /*
         switch( event->keyval )
@@ -2092,9 +2093,8 @@ namespace MPX
 
             default: break ;
         }
-
-        return false ;
 */
+        return false ;
     }
 
     bool
