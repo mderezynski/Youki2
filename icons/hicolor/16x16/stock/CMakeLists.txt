@@ -9,5 +9,5 @@ INSTALL(
         heart-black.png
         heart-redblack.png
         heart-red.png
-  DESTINATION ${MPX_PKGDATADIR}/icons/hicolor/16x16/stock
+  DESTINATION ${MPX_PKGDATA_DIR}/icons/hicolor/16x16/stock
 )
