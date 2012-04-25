@@ -1149,11 +1149,7 @@ namespace MPX
     bool
     YoukiController::quit_timeout ()
     {
-<<<<<<< HEAD
 	return false ;
-=======
-        return false;
->>>>>>> 70b64ece6b1b7021065f055555291a32afb66b28
     }
 
     void
@@ -2139,10 +2135,6 @@ namespace MPX
             default: break ;
         }
 */
-<<<<<<< HEAD
-
-=======
->>>>>>> 70b64ece6b1b7021065f055555291a32afb66b28
         return false ;
     }
 

@@ -744,12 +744,7 @@ namespace Albums
 		    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 
 		    cairo->set_source(
-<<<<<<< HEAD
 			  album->coverart ? album->coverart : m_image_disc
-			, 2 
-=======
-			  album->coverart ? album->coverart : disc
->>>>>>> 70b64ece6b1b7021065f055555291a32afb66b28
 			, 2
 			, 2
 		    ) ;
@@ -962,13 +957,8 @@ namespace Albums
 
 			if( !album->caching )
 			{
-<<<<<<< HEAD
 			    if( !album->surfacecache ) 
 				    album->surfacecache = render_icon( album, widget, m_rt_viewmode ) ;
-=======
-			    if( !album->surfacecache )
-				    album->surfacecache = render_icon( m_image_disc, album, widget, m_rt_viewmode ) ;
->>>>>>> 70b64ece6b1b7021065f055555291a32afb66b28
 
 			    cairo->set_source( album->surfacecache, r.x, r.y ) ;
 			    cairo->rectangle( r.x, r.y , 68, 68 ) ;
@@ -1168,11 +1158,7 @@ namespace Albums
 				layout[L3]->get_pixel_size( width, height ) ;
 
 				cairo->move_to(
-<<<<<<< HEAD
 				      m_width - width - 8 
-=======
-				      m_width - width - 12
->>>>>>> 70b64ece6b1b7021065f055555291a32afb66b28
 				    , r.y + row_height - height - 14
 				) ;
 				cairo->set_source_rgba(
@@ -1187,11 +1173,7 @@ namespace Albums
 				layout[L3]->get_pixel_size( width, height ) ;
 
 				cairo->move_to(
-<<<<<<< HEAD
 				      m_width - width - 8 
-=======
-				      m_width - width - 12
->>>>>>> 70b64ece6b1b7021065f055555291a32afb66b28
 				    , r.y + row_height - height - 28
 				) ;
 				cairo->set_source_rgba(
@@ -1837,20 +1819,8 @@ namespace Albums
                     std::size_t xpos    = 0 ;
                     std::size_t limit   = Limiter<std::size_t>( Limiter<std::size_t>::ABS_ABS, 0, m_model->size(), m_height__current_viewport / m_height__row + 2 ) ;
                     int offset = m_prop_vadj.get_value()->get_value() - (row*m_height__row) ;
-<<<<<<< HEAD
-		    
-                    if( offset ) 
-=======
-
-		    std::size_t clip_pad = 0 ;
-
-		    if( m_prop_vadj.get_value()->get_value() > 0 && m_prop_vadj.get_value()->get_value() < (m_prop_vadj.get_value()->get_upper() - m_prop_vadj.get_value()->get_page_size()))
-		    {
-			clip_pad = 1 ;
-		    }
 
                     if( offset )
->>>>>>> 70b64ece6b1b7021065f055555291a32afb66b28
                     {
                         ypos -= offset ;
                     }
@@ -1896,10 +1866,6 @@ namespace Albums
 			, c_base.b
 			, c_base.a
 		    ) ;
-<<<<<<< HEAD
-		    cairo->paint() ;
-=======
-
 		    RoundedRectangle(
 			  cairo
 			, 1
@@ -1913,13 +1879,12 @@ namespace Albums
 		    RoundedRectangle(
 			  cairo
 			, 1
-			, 1 + clip_pad
+			, 1 
 			, a.get_width() - 7
-			, a.get_height() - (2 + 2*clip_pad)
+			, a.get_height() - 2 
 			, rounding
 		    ) ;
 		    cairo->clip() ;
->>>>>>> 70b64ece6b1b7021065f055555291a32afb66b28
 
 #if 0
 		    if( !(m_model->size() * m_height__row < m_height__current_viewport))
@@ -1946,15 +1911,9 @@ namespace Albums
                         {
                             GdkRectangle r ;
 
-<<<<<<< HEAD
                             r.x         = 0 ; 
                             r.y         = ypos ; 
                             r.width     = a.get_width() ;
-=======
-                            r.x         = 1 ;
-                            r.y         = ypos ;
-                            r.width     = a.get_width() - 8 ;
->>>>>>> 70b64ece6b1b7021065f055555291a32afb66b28
                             r.height    = m_height__row ;
 
 			    if( m_prop_vadj.get_value()->get_value() == 0 && (row+n == 0))
@@ -1973,17 +1932,10 @@ namespace Albums
 			{
                             GdkRectangle r ;
 
-<<<<<<< HEAD
                             r.x         = 0 ; 
                             r.y         = ypos ; 
                             r.width     = a.get_width() ; 
                             r.height    = m_height__row ; 
-=======
-                            r.x         = 1 ;
-                            r.y         = ypos ;
-                            r.width     = a.get_width() - 8 ;
-                            r.height    = m_height__row ;
->>>>>>> 70b64ece6b1b7021065f055555291a32afb66b28
 
                             RoundedRectangle(
                                   cairo
@@ -2080,13 +2032,7 @@ namespace Albums
 			frac_l = 1 ;
 		    }
 
-<<<<<<< HEAD
-		    int w = get_allocation().get_width(), h = get_allocation().get_height() ;
-
-		    Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create( w/2., 0, w/2., h ) ; 
-=======
 		    Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create( w/2., 0, w/2., h ) ;
->>>>>>> 70b64ece6b1b7021065f055555291a32afb66b28
 
 		    if( frac_u > 0. )
 		    {
@@ -2108,38 +2054,6 @@ namespace Albums
 #endif
 		    cairo->reset_clip() ;
 
-<<<<<<< HEAD
-=======
-		    cairo->save() ;
-		    RoundedRectangle(
-			  cairo
-			, 1
-			, 1
-			, a.get_width() - 7
-			, a.get_height() - 2
-			, rounding
-		    ) ;
-
-		   cairo->set_source_rgba(
-			  c_outline.r
-			, c_outline.g
-			, c_outline.b
-			, c_outline.a
-		    ) ;
-
-		    cairo->set_line_width( 1. ) ;
-		    cairo->stroke() ;
-		    cairo->restore() ;
-
-		    GtkWidget * widget = GTK_WIDGET(gobj()) ;
-
-	            if( has_focus() )
-			    gtk_paint_focus (widget->style, widget->window,
-			       gtk_widget_get_state (widget),
-			       &event->area, widget, NULL,
-			       2, 2, a.get_width() - 9 , a.get_height() - 4);
-
->>>>>>> 70b64ece6b1b7021065f055555291a32afb66b28
                     return true;
                 }
 
