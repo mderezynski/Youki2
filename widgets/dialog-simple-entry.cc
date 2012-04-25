@@ -35,11 +35,12 @@
 #include <cstring>
 #include <string>
 
-using namespace Gtk;
-using namespace Glib;
-
 namespace MPX
 {
+  namespace
+  {
+    const std::string ui_path = DATA_DIR G_DIR_SEPARATOR_S "ui" G_DIR_SEPARATOR_S "dialog-simple-entry.ui";
+  }
 
   DialogSimpleEntry::~DialogSimpleEntry ()
   {
@@ -48,17 +49,16 @@ namespace MPX
   DialogSimpleEntry*
   DialogSimpleEntry::create ()
   {
-    const std::string path = DATA_DIR G_DIR_SEPARATOR_S "glade" G_DIR_SEPARATOR_S "dialog-simple-entry.glade";
-    Glib::RefPtr<Gnome::Glade::Xml> glade_xml = Gnome::Glade::Xml::create (path);
+    Glib::RefPtr<Gtk::Builder> builder = Gtk::Builder::create_from_file (ui_path);
     DialogSimpleEntry * p = 0;
-    glade_xml->get_widget_derived ("dialog", p);
+    builder->get_widget_derived ("dialog", p);
     return p;
   }
 
-  DialogSimpleEntry::DialogSimpleEntry (BaseObjectType                 * cobj,
-                                        RefPtr<Gnome::Glade::Xml> const& xml)
-  : Dialog    (cobj)
-  , m_ref_xml (xml)
+  DialogSimpleEntry::DialogSimpleEntry (BaseObjectType                  * cobj,
+                                        Glib::RefPtr<Gtk::Builder> const& builder)
+  : Dialog        (cobj)
+  , m_ref_builder (builder)
   {
   }
 
@@ -66,14 +66,21 @@ namespace MPX
   DialogSimpleEntry::run (Glib::ustring & text)
   {
     int response = Dialog::run ();
-    text = dynamic_cast<Entry *>(m_ref_xml->get_widget("entry"))->get_text();
+
+    Gtk::Entry* entry = 0;
+    m_ref_builder->get_widget("entry", entry);
+
+    text = entry->get_text();
     return response;
   }
 
   void
   DialogSimpleEntry::set_heading (Glib::ustring const& heading)
   {
-    dynamic_cast<Label *>(m_ref_xml->get_widget("heading"))->set_text (heading);
+    Gtk::Label* label = 0;
+    m_ref_builder->get_widget("heading", label);
+
+    label->set_text (heading);
   }
 
 } // namespace MPX

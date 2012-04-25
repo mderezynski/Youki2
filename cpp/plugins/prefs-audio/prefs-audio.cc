@@ -32,7 +32,6 @@
 #include <gtk/gtkstock.h>
 #include <gst/gst.h>
 #include <gtkmm.h>
-#include <libglademm.h>
 
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
@@ -64,7 +63,9 @@ namespace MPX
 {
     namespace
     {
-        //// VARIOUS TOGGLE BUTTONS 
+        const char *ui_path = DATA_DIR G_DIR_SEPARATOR_S "ui" G_DIR_SEPARATOR_S "cppmod-prefs-audio.ui";
+
+        //// VARIOUS TOGGLE BUTTONS
         struct DomainKeyPair
         {
             char const* domain;
@@ -199,20 +200,12 @@ namespace MPX
         }
     } // namespace
 
-    using namespace Gnome::Glade;
-
     PrefsAudio*
         PrefsAudio::create(
               gint64 id
         )
     {
-        return new PrefsAudio(
-                Gnome::Glade::Xml::create(
-                    build_filename(
-                          DATA_DIR
-                        , "glade" G_DIR_SEPARATOR_S "cppmod-prefs-audio.glade"
-                ))
-                , id);
+        return new PrefsAudio(Gtk::Builder::create_from_file(ui_path), id);
     }
 
     PrefsAudio::~PrefsAudio ()
@@ -221,10 +214,10 @@ namespace MPX
 
 
     PrefsAudio::PrefsAudio(
-          const Glib::RefPtr<Gnome::Glade::Xml>&    xml
-        , gint64                                    id
+          const Glib::RefPtr<Gtk::Builder>& builder
+        , gint64                            id
     )
-        : Gnome::Glade::WidgetLoader<Gtk::VBox>(xml, "cppmod-prefs-audio")
+        : WidgetLoader<Gtk::VBox>(builder, "cppmod-prefs-audio")
         , PluginHolderBase()
     {
         show() ;
@@ -250,41 +243,41 @@ namespace MPX
 
         // Audio
 
-        m_Xml->get_widget ("cbox_audio_system", m_cbox_audio_system);
+        m_Builder->get_widget ("cbox_audio_system", m_cbox_audio_system);
 
 #ifdef HAVE_ALSA
-        m_Xml->get_widget ("cbox_alsa_card", m_cbox_alsa_card);
-        m_Xml->get_widget ("cbox_alsa_device", m_cbox_alsa_device);
-        m_Xml->get_widget ("alsa_buffer_time", m_alsa_buffer_time);
-        m_Xml->get_widget ("alsa_device_string", m_alsa_device_string);
+        m_Builder->get_widget ("cbox_alsa_card", m_cbox_alsa_card);
+        m_Builder->get_widget ("cbox_alsa_device", m_cbox_alsa_device);
+        m_Builder->get_widget ("alsa_buffer_time", m_alsa_buffer_time);
+        m_Builder->get_widget ("alsa_device_string", m_alsa_device_string);
 #endif //// ALSA
 
 #ifdef HAVE_SUN
-        m_Xml->get_widget ("sun_cbe_device",  m_sun_cbe_device);
-        m_Xml->get_widget ("sun_buffer_time", m_sun_buffer_time);
+        m_Builder->get_widget ("sun_cbe_device",  m_sun_cbe_device);
+        m_Builder->get_widget ("sun_buffer_time", m_sun_buffer_time);
 #endif //// SUN
 
-        m_Xml->get_widget ("oss_cbe_device", m_oss_cbe_device);
-        m_Xml->get_widget ("oss_buffer_time", m_oss_buffer_time);
+        m_Builder->get_widget ("oss_cbe_device", m_oss_cbe_device);
+        m_Builder->get_widget ("oss_buffer_time", m_oss_buffer_time);
 
-        m_Xml->get_widget ("esd_host", m_esd_host);
-        m_Xml->get_widget ("esd_buffer_time", m_esd_buffer_time);
+        m_Builder->get_widget ("esd_host", m_esd_host);
+        m_Builder->get_widget ("esd_buffer_time", m_esd_buffer_time);
 
-        m_Xml->get_widget ("pulse_server", m_pulse_server);
-        m_Xml->get_widget ("pulse_device", m_pulse_device);
-        m_Xml->get_widget ("pulse_buffer_time", m_pulse_buffer_time);
+        m_Builder->get_widget ("pulse_server", m_pulse_server);
+        m_Builder->get_widget ("pulse_device", m_pulse_device);
+        m_Builder->get_widget ("pulse_buffer_time", m_pulse_buffer_time);
 
-        m_Xml->get_widget ("jack_server", m_jack_server);
-        m_Xml->get_widget ("jack_buffer_time", m_jack_buffer_time);
+        m_Builder->get_widget ("jack_server", m_jack_server);
+        m_Builder->get_widget ("jack_buffer_time", m_jack_buffer_time);
 
-        m_Xml->get_widget ("notebook_audio_system", m_notebook_audio_system);
-        m_Xml->get_widget ("audio-system-apply-changes", m_button_audio_system_apply);
-        m_Xml->get_widget ("audio-system-reset-changes", m_button_audio_system_reset);
-        m_Xml->get_widget ("audio-system-changed-warning", m_warning_audio_system_changed);
+        m_Builder->get_widget ("notebook_audio_system", m_notebook_audio_system);
+        m_Builder->get_widget ("audio-system-apply-changes", m_button_audio_system_apply);
+        m_Builder->get_widget ("audio-system-reset-changes", m_button_audio_system_reset);
+        m_Builder->get_widget ("audio-system-changed-warning", m_warning_audio_system_changed);
 
         for (unsigned n = 0; n < G_N_ELEMENTS( buttons ); ++n)
         {
-            ToggleButton* button = dynamic_cast<ToggleButton*>( m_Xml->get_widget( buttons[n].widget ));
+            ToggleButton* button = dynamic_cast<ToggleButton*>( m_Builder->get_widget( buttons[n].widget ));
 
             if( button )
             {
@@ -305,7 +298,7 @@ namespace MPX
             }
             else
             {
-                g_warning( "%s: Widget '%s' not found in Glade::Xml", G_STRLOC, buttons[n].widget );
+                g_warning( "%s: Widget '%s' not found", G_STRLOC, buttons[n].widget );
             }
         }
 
@@ -743,7 +736,7 @@ namespace MPX
         #ifdef HAVE_HAL
         if (PRESENT_SINK("halaudiosink"))
         {
-            m_Xml->get_widget("halaudio_udi", m_halaudio_udi);
+            m_Builder->get_widget("halaudio_udi", m_halaudio_udi);
             mcs_bind->bind_entry (*m_halaudio_udi, "audio", "hal-udi");
             m_halaudio_udi->signal_changed ().connect
                 (sigc::mem_fun (*this, &PrefsAudio::audio_system_apply_set_sensitive));

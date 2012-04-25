@@ -28,24 +28,19 @@
 
 #include <glibmm/ustring.h>
 #include <gtkmm/dialog.h>
-#include <libglademm/xml.h>
 
 namespace MPX
 {
   class DialogImportFolder
-      : public Gnome::Glade::WidgetLoader<Gtk::Dialog>
+      : public WidgetLoader<Gtk::Dialog>
   {
       public:
-          DialogImportFolder (Glib::RefPtr<Gnome::Glade::Xml> const& xml);
+          DialogImportFolder (Glib::RefPtr<Gtk::Builder> const& builder);
           static DialogImportFolder* create ();
           virtual ~DialogImportFolder ();
 
           void
           get_folder_infos(Glib::ustring& uri);
-
-      private:
-
-        Glib::RefPtr<Gnome::Glade::Xml>	m_ref_xml;
   };
 } // namespace MPX
 

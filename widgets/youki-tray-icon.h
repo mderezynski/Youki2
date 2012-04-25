@@ -20,7 +20,7 @@
 #ifndef YOUKI_TRAY_ICON_H
 #define YOUKI_TRAY_ICON_H
 
-#include <gtk/gtkplug.h>
+#include <gtk/gtkx.h>
 
 G_BEGIN_DECLS
 

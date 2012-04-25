@@ -29,7 +29,6 @@
 #include <glibmm/i18n.h>
 #include <gtkmm.h>
 #include <glib.h>
-#include <libglademm.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
@@ -43,19 +42,12 @@
 #include "mpx/util-string.hh"
 #include "mpx/widgets/widgetloader.hh"
 
-using namespace Gtk;
-using namespace Glib;
-using namespace Gnome::Glade;
-using namespace MPX;
-using boost::get;
-using boost::algorithm::trim;
-
 namespace MPX
 {
         // Album Details Window
 
         typedef boost::optional<gint64> OptionalId_t;
-        class AlbumRatingsList : public Gnome::Glade::WidgetLoader<Gtk::TreeView>
+        class AlbumRatingsList : public WidgetLoader<Gtk::TreeView>
         {
                 public:
 
@@ -85,7 +77,7 @@ namespace MPX
                 Glib::RefPtr<Gtk::TextBuffer>   Buffer;
 
                 AlbumRatingsList(
-                    const Glib::RefPtr<Gnome::Glade::Xml>&
+                    const Glib::RefPtr<Gtk::Builder>&
                 );
 
                 void
@@ -99,7 +91,7 @@ namespace MPX
 
         };
 
-        class AlbumInfoWindow : public Gnome::Glade::WidgetLoader<Gtk::Window>
+        class AlbumInfoWindow : public WidgetLoader<Gtk::Window>
         {
                 gint64                    m_Id;
                 MPX::Library            & m_Lib;
@@ -121,10 +113,10 @@ namespace MPX
 
 
                 AlbumInfoWindow(
-                    const Glib::RefPtr<Gnome::Glade::Xml>&  xml,
-                    gint64                                  id,
-                    MPX::Library                          & obj_library,    
-                    MPX::Covers                           & obj_covers
+                    const Glib::RefPtr<Gtk::Builder>& builder,
+                    gint64                            id,
+                    MPX::Library                    & obj_library,
+                    MPX::Covers                     & obj_covers
                 );
 
                 void

@@ -45,7 +45,6 @@
 
 
 using namespace MPX::AQE;
-using namespace Gnome::Glade;
 using namespace Gtk;
 using namespace Glib;
 using boost::get;

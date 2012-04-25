@@ -11,7 +11,7 @@
 namespace MPX
 {
 class TimedConfirmation
-: public Gnome::Glade::WidgetLoader<Gtk::Dialog>
+: public WidgetLoader<Gtk::Dialog>
 {
     public:
 

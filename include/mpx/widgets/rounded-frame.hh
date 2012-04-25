@@ -7,7 +7,7 @@
 namespace MPX
 {
     class RoundedFrame
-    : public Gtk::Bin 
+    : public Gtk::Bin
     {
         protected:
 

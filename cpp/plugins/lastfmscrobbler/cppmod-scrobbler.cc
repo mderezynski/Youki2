@@ -43,11 +43,13 @@ using namespace Gtk;
 
 namespace MPX
 {
+    const char* ui_path = DATA_DIR G_DIR_SEPARATOR_S "ui" G_DIR_SEPARATOR_S "cppmod-scrobbler.ui";
+
     //// CPPModLastFmScrobbler
     CPPModLastFmScrobbler*
         CPPModLastFmScrobbler::create(guint id)
     {
-        return new CPPModLastFmScrobbler (Gnome::Glade::Xml::create (build_filename(DATA_DIR, "glade" G_DIR_SEPARATOR_S "cppmod-scrobbler.glade")), id );
+        return new CPPModLastFmScrobbler (Gtk::Builder::create_from_file (ui_path), id );
     }
 
     CPPModLastFmScrobbler::~CPPModLastFmScrobbler ()
@@ -56,10 +58,10 @@ namespace MPX
     }
 
     CPPModLastFmScrobbler::CPPModLastFmScrobbler(
-          const Glib::RefPtr<Gnome::Glade::Xml>&    xml
-        , guint                                    id
+          const Glib::RefPtr<Gtk::Builder>& builder
+        , guint                             id
     )
-        : Gnome::Glade::WidgetLoader<Gtk::VBox>(xml, "cppmod-scrobbler")
+        : WidgetLoader<Gtk::VBox>(builder, "cppmod-scrobbler")
         , PluginHolderBase()
     {
         m_Name = "Last.fm Scrobbler" ;
@@ -74,8 +76,8 @@ namespace MPX
         m_Hidden = false ;
         m_Id = id ;
 
-        xml->get_widget("lastfm-entry-username", m_Entry_Username ) ;
-        xml->get_widget("lastfm-entry-password", m_Entry_Password ) ;
+        builder->get_widget("lastfm-entry-username", m_Entry_Username ) ;
+        builder->get_widget("lastfm-entry-password", m_Entry_Password ) ;
 
         mcs->domain_register( "lastfm" ) ;
 
@@ -106,7 +108,7 @@ namespace MPX
                     , &CPPModLastFmScrobbler::on_entry_changed
         )) ;
 
-        m_Log = new TextViewLog( xml ) ;
+        m_Log = new TextViewLog( builder ) ;
 
         m_LastFmScrobbler = new LastFmScrobbler( false, *m_Log ) ;
 

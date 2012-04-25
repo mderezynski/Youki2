@@ -31,7 +31,6 @@
 #include <boost/algorithm/string.hpp>
 #include <giomm.h>
 #include <gtkmm.h>
-#include <libglademm/xml.h>
 #include <sigx/sigx.h>
 
 using namespace boost::algorithm;

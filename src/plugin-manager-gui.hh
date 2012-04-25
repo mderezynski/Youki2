@@ -28,7 +28,6 @@
 #include <config.h>
 #endif
 
-#include <libglademm/xml.h>
 #include <boost/python.hpp>
 
 #include "mpx/widgets/widgetloader.hh"
@@ -39,7 +38,7 @@ namespace MPX
 {
     class PluginTreeView;
     class PluginManagerGUI
-      : public Gnome::Glade::WidgetLoader<Gtk::Window>
+      : public WidgetLoader<Gtk::Window>
       , public Service::Base
     {
 		public:
@@ -48,7 +47,7 @@ namespace MPX
 
 		protected:
 
-			PluginManagerGUI (const Glib::RefPtr<Gnome::Glade::Xml>&);
+			PluginManagerGUI (const Glib::RefPtr<Gtk::Builder>&);
 			virtual bool on_delete_event (GdkEventAny* G_GNUC_UNUSED);
 
 		public:

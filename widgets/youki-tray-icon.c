@@ -27,7 +27,6 @@
 #endif //HAVE_CONFIG_H
 
 #include <string.h>
-#include <gtk/gtkprivate.h>
 #include <X11/Xatom.h>
 #include <gdk/gdkx.h>
 
@@ -73,9 +72,9 @@ static void youki_tray_icon_get_property  (GObject     *object,
 static void     youki_tray_icon_realize   (GtkWidget   *widget);
 static void     youki_tray_icon_unrealize (GtkWidget   *widget);
 static gboolean youki_tray_icon_delete    (GtkWidget   *widget,
-					 GdkEventAny *event);
-static gboolean youki_tray_icon_expose    (GtkWidget      *widget, 
-					 GdkEventExpose *event);
+                                           GdkEventAny *event);
+static gboolean youki_tray_icon_draw    (GtkWidget *widget,
+                                         cairo_t   *cr);
 
 static void youki_tray_icon_update_manager_window    (YoukiTrayIcon *icon,
 						    gboolean     dock_if_realized);
@@ -94,7 +93,7 @@ youki_tray_icon_class_init (YoukiTrayIconClass *class)
   widget_class->realize   = youki_tray_icon_realize;
   widget_class->unrealize = youki_tray_icon_unrealize;
   widget_class->delete_event = youki_tray_icon_delete;
-  widget_class->expose_event = youki_tray_icon_expose;
+  widget_class->draw = youki_tray_icon_draw;
 
   g_object_class_install_property (gobject_class,
 				   PROP_ORIENTATION,
@@ -103,7 +102,7 @@ youki_tray_icon_class_init (YoukiTrayIconClass *class)
 						      "The orientation of the tray",
 						      GTK_TYPE_ORIENTATION,
 						      GTK_ORIENTATION_HORIZONTAL,
-						      GTK_PARAM_READABLE));
+						      G_PARAM_READABLE));
 
   tray_signals[DESTROYED] =
     g_signal_new ("destroyed",
@@ -120,14 +119,15 @@ youki_tray_icon_class_init (YoukiTrayIconClass *class)
 static void
 make_transparent_again (GtkWidget *widget, GtkStyle *previous_style, gpointer data)
 {
-  gdk_window_set_back_pixmap (widget->window, NULL, TRUE);
+  /* FIXME: No direct replacement for the following */
+  /*gdk_window_set_back_pixmap (gtk_widget_get_window (widget), NULL, TRUE);*/
 }
 
 static gboolean
-transparent_expose_event (GtkWidget *widget, GdkEventExpose *event, gpointer user_data)
+transparent_draw (GtkWidget *widget, cairo_t *cr, gpointer user_data)
 {
-  gdk_window_clear_area (widget->window, event->area.x, event->area.y,
-      event->area.width, event->area.height);
+  cairo_set_source_rgb (cr, 0.0, 0.0, 0.0);
+  cairo_fill (cr);
   return FALSE;
 }
 
@@ -136,9 +136,10 @@ make_transparent (GtkWidget *widget, gpointer data)
 {
   gtk_widget_set_app_paintable (widget, TRUE);
   gtk_widget_set_double_buffered (widget, FALSE);
-  gdk_window_set_back_pixmap (widget->window, NULL, TRUE);
-  g_signal_connect (widget, "expose_event",
-       G_CALLBACK (transparent_expose_event), NULL);
+  /* FIXME: No direct replacement for the following */
+  /*gdk_window_set_back_pixmap (gtk_widget_get_window (widget), NULL, TRUE);*/
+  g_signal_connect (widget, "draw",
+       G_CALLBACK (transparent_draw), NULL);
   g_signal_connect_after (widget, "style_set",
        G_CALLBACK (make_transparent_again), NULL);
 }  
@@ -177,14 +178,14 @@ youki_tray_icon_get_property (GObject    *object,
 }
 
 static gboolean
-youki_tray_icon_expose (GtkWidget      *widget, 
-		      GdkEventExpose *event)
+youki_tray_icon_draw (GtkWidget *widget,
+                      cairo_t   *cr)
 {
-  gdk_window_clear_area (widget->window, event->area.x, event->area.y,
-			 event->area.width, event->area.height);
+  cairo_set_source_rgb (cr, 0.0, 0.0, 0.0);
+  cairo_fill (cr);
 
-  if (GTK_WIDGET_CLASS (youki_tray_icon_parent_class)->expose_event)  
-    return GTK_WIDGET_CLASS (youki_tray_icon_parent_class)->expose_event (widget, event);
+  if (GTK_WIDGET_CLASS (youki_tray_icon_parent_class)->draw)
+    return GTK_WIDGET_CLASS (youki_tray_icon_parent_class)->draw (widget, cr);
 
   return FALSE;
 }
@@ -285,8 +286,8 @@ youki_tray_icon_unrealize (GtkWidget *widget)
     {
       GdkWindow *gdkwin;
 
-      gdkwin = gdk_window_lookup_for_display (gtk_widget_get_display (widget),
-                                              icon->priv->manager_window);
+      gdkwin = gdk_x11_window_lookup_for_display (gtk_widget_get_display (widget),
+                                                  icon->priv->manager_window);
       
       gdk_window_remove_filter (gdkwin, youki_tray_icon_manager_filter, icon);
     }
@@ -315,7 +316,7 @@ youki_tray_icon_send_manager_message (YoukiTrayIcon *icon,
   ev.window = window;
   ev.message_type = icon->priv->system_tray_opcode_atom;
   ev.format = 32;
-  ev.data.l[0] = gdk_x11_get_server_time (GTK_WIDGET (icon)->window);
+  ev.data.l[0] = gdk_x11_get_server_time (gtk_widget_get_window (GTK_WIDGET (icon)));
   ev.data.l[1] = message;
   ev.data.l[2] = data1;
   ev.data.l[3] = data2;
@@ -367,12 +368,12 @@ youki_tray_icon_update_manager_window (YoukiTrayIcon *icon,
     {
       GdkWindow *gdkwin;
 
-      gdkwin = gdk_window_lookup_for_display (gtk_widget_get_display (GTK_WIDGET (icon)),
-					      icon->priv->manager_window);
+      gdkwin = gdk_x11_window_lookup_for_display (gtk_widget_get_display (GTK_WIDGET (icon)),
+                                                  icon->priv->manager_window);
       
       gdk_window_add_filter (gdkwin, youki_tray_icon_manager_filter, icon);
 
-      if (dock_if_realized && GTK_WIDGET_REALIZED (icon))
+      if (dock_if_realized && gtk_widget_get_realized (GTK_WIDGET (icon)))
         youki_tray_icon_send_dock_request (icon);
 
       youki_tray_icon_get_orientation_property (icon);
@@ -386,8 +387,8 @@ youki_tray_icon_manager_window_destroyed (YoukiTrayIcon *icon)
   
   g_return_if_fail (icon->priv->manager_window != None);
 
-  gdkwin = gdk_window_lookup_for_display (gtk_widget_get_display (GTK_WIDGET (icon)),
-					  icon->priv->manager_window);
+  gdkwin = gdk_x11_window_lookup_for_display (gtk_widget_get_display (GTK_WIDGET (icon)),
+                                              icon->priv->manager_window);
       
   gdk_window_remove_filter (gdkwin, youki_tray_icon_manager_filter, icon);
 
@@ -405,8 +406,8 @@ youki_tray_icon_delete (GtkWidget   *widget,
 
   if (icon->priv->manager_window != None)
     {  
-      gdkwin = gdk_window_lookup_for_display (gtk_widget_get_display (GTK_WIDGET (icon)),
-					      icon->priv->manager_window);
+      gdkwin = gdk_x11_window_lookup_for_display (gtk_widget_get_display (GTK_WIDGET (icon)),
+                                                  icon->priv->manager_window);
       
       gdk_window_remove_filter (gdkwin, youki_tray_icon_manager_filter, icon);
       

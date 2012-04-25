@@ -30,7 +30,6 @@
 #endif //HAVE_CONFIG_H
 
 #include <gtkmm/window.h>
-#include <libglademm/xml.h>
 
 namespace MPX
 {
@@ -46,8 +45,8 @@ namespace MPX
 
   public:
 
-    Equalizer (BaseObjectType*                        obj,
-               Glib::RefPtr<Gnome::Glade::Xml> const& xml);
+    Equalizer (BaseObjectType*                   obj,
+               Glib::RefPtr<Gtk::Builder> const& builder);
 
     virtual ~Equalizer () {}
 
@@ -65,7 +64,7 @@ namespace MPX
 
   private:
 
-    Glib::RefPtr<Gnome::Glade::Xml> m_ref_xml;
+    Glib::RefPtr<Gtk::Builder> m_ref_builder;
 
     void
     reset ();

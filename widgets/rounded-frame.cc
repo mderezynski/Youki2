@@ -18,7 +18,7 @@ namespace MPX
     {
         if( !signal_added )
         {
-            ((GtkWidgetClass*)(G_OBJECT_GET_CLASS(G_OBJECT(gobj()))))->set_scroll_adjustments_signal = 
+            GTK_WIDGET_GET_CLASS(gobj())->set_scroll_adjustments_signal =
                     g_signal_new ("set-scroll-adjustments",
                               G_OBJECT_CLASS_TYPE (G_OBJECT_CLASS (G_OBJECT_GET_CLASS(G_OBJECT(gobj())))),
                               GSignalFlags (G_SIGNAL_RUN_FIRST),
@@ -63,7 +63,7 @@ namespace MPX
           Gtk::Requisition * req
     )
     {
-        if( get_child() && get_child()->is_visible() )
+        if( get_child() && get_child()->get_visible() )
         {
             Gtk::Requisition child_r = get_child()->size_request() ;
             req->width = std::max( 0, child_r.width ) ;
@@ -84,7 +84,7 @@ namespace MPX
           Gtk::Allocation&  alloc
     ) 
     {
-        if( !get_child() || !get_child()->is_visible() )
+        if( !get_child() || !get_child()->get_visible() )
         {
             return ;
         }

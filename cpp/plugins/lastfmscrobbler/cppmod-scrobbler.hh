@@ -45,7 +45,7 @@
 namespace MPX
 {
     class TextViewLog
-    : public Gnome::Glade::WidgetLoader<Gtk::TextView>
+    : public WidgetLoader<Gtk::TextView>
     , public ILog
     {
         private:
@@ -58,9 +58,9 @@ namespace MPX
         public:
 
             TextViewLog(
-                const Glib::RefPtr<Gnome::Glade::Xml>& xml
+                const Glib::RefPtr<Gtk::Builder>& builder
             )
-            : Gnome::Glade::WidgetLoader<Gtk::TextView>( xml, "lastfm-log" )
+                : WidgetLoader<Gtk::TextView>(builder, "lastfm-log")
             {
                  m_disp.connect( 
                       sigc::mem_fun(
@@ -104,13 +104,13 @@ namespace MPX
     } ;
 
     class CPPModLastFmScrobbler
-    : public Gnome::Glade::WidgetLoader<Gtk::VBox>
+    : public WidgetLoader<Gtk::VBox>
     , public PluginHolderBase 
     {
       public:
 
           CPPModLastFmScrobbler(
-                const Glib::RefPtr<Gnome::Glade::Xml>&
+                const Glib::RefPtr<Gtk::Builder>&
               , guint
           ) ;
 

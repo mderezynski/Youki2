@@ -28,15 +28,14 @@
 #include "mpx/widgets/widgetloader.hh"
 
 #include <gtkmm/dialog.h>
-#include <libglademm/xml.h>
 
 namespace MPX
 {
   class RequestValue
-    : public Gnome::Glade::WidgetLoader<Gtk::Dialog>
+    : public WidgetLoader<Gtk::Dialog>
   {
       public:
-          RequestValue (Glib::RefPtr<Gnome::Glade::Xml> const& xml);
+          RequestValue (Glib::RefPtr<Gtk::Builder> const& builder);
           static RequestValue* create ();
           virtual ~RequestValue ();
 
@@ -45,10 +44,6 @@ namespace MPX
 
           void
           set_question(const Glib::ustring&);
-
-      private:
-
-        Glib::RefPtr<Gnome::Glade::Xml>	m_ref_xml;
   };
 } // namespace MPX
 

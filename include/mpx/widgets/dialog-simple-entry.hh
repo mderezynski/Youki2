@@ -26,7 +26,7 @@
 #define MPX_RADIO_SIMPLE_ENTRY_HH
 
 #include <gtkmm/dialog.h>
-#include <libglademm.h>
+#include <gtkmm/builder.h>
 
 namespace MPX
 {
@@ -35,8 +35,8 @@ namespace MPX
   {
       public:
 
-          DialogSimpleEntry (BaseObjectType                       * cobj,
-                             Glib::RefPtr<Gnome::Glade::Xml> const& xml);
+          DialogSimpleEntry (BaseObjectType *                  cobj,
+                             Glib::RefPtr<Gtk::Builder> const& builder);
           static DialogSimpleEntry * create ();
           virtual ~DialogSimpleEntry ();
 
@@ -46,7 +46,7 @@ namespace MPX
 
       private:
 
-          Glib::RefPtr<Gnome::Glade::Xml> m_ref_xml;
+          Glib::RefPtr<Gtk::Builder> m_ref_builder;
   };
 } // namespace MPX
 

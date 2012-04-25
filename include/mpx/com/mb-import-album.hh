@@ -26,7 +26,6 @@
 #include <glibmm/i18n.h>
 #include <gtkmm.h>
 #include <glib.h>
-#include <libglademm.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
@@ -42,13 +41,6 @@
 #include "mpx/widgets/widgetloader.hh"
 
 #include "musicbrainz/mbxml-v2.hh"
-
-using namespace Gtk;
-using namespace Glib;
-using namespace Gnome::Glade;
-using namespace MPX;
-using boost::get;
-using boost::algorithm::trim;
 
 namespace MPX
 {
@@ -78,7 +70,7 @@ namespace MPX
         typedef std::map<std::string, MusicBrainzXml::MusicBrainzRelease> ReleaseIdToReleaseMap;
         typedef std::map<std::string, Uris_t>                             ArtistIdToReleasesMap;
 
-        class MB_ImportAlbum : public Gnome::Glade::WidgetLoader<Gtk::Window>, public Service::Base
+        class MB_ImportAlbum : public WidgetLoader<Gtk::Window>, public Service::Base
         {
                 enum Columns
                 {
@@ -160,7 +152,7 @@ namespace MPX
                 );
 
                 MB_ImportAlbum(
-                    const Glib::RefPtr<Gnome::Glade::Xml>& xml
+                    const Glib::RefPtr<Gtk::Builder>& builder
                 );
 
                 void

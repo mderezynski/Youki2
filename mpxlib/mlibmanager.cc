@@ -58,35 +58,31 @@ using boost::get;
 
 namespace
 {
-        char MenubarMLibMan [] =
+    const std::string path (DATA_DIR G_DIR_SEPARATOR_S "ui" G_DIR_SEPARATOR_S "mlibmanager.ui");
 
-                "<ui>"
-                "<menubar name='MenubarMLibMan'>"
-                "   <menu action='MenuMLib'>"
-                "         <menuitem action='action-mlib-rescan'/>"
-                "         <menuitem action='action-import-folder'/>"
-                "         <menuitem action='action-import-share'/>"
-                "         <menuitem action='action-close'/>"
-                "   </menu>"
-                "</menubar>"
-                "</ui>"
-                "";
+    const char MenubarMLibMan [] =
+        "<ui>"
+        "<menubar name='MenubarMLibMan'>"
+        "   <menu action='MenuMLib'>"
+        "         <menuitem action='action-mlib-rescan'/>"
+        "         <menuitem action='action-import-folder'/>"
+        "         <menuitem action='action-import-share'/>"
+        "         <menuitem action='action-close'/>"
+        "   </menu>"
+        "</menubar>"
+        "</ui>"
+        "";
 }
 
 namespace MPX
 {
+
     MLibManager*
     MLibManager::create(
         DBus::Connection& conn
     )
     {
-        const std::string path (build_filename (DATA_DIR, "glade" G_DIR_SEPARATOR_S "mlibmanager.glade"));
-
-        MLibManager *p = new MLibManager(
-              Gnome::Glade::Xml::create(path)
-            , conn
-        ) ;
-
+        MLibManager *p = new MLibManager(Gtk::Builder::create_from_file(ui_path), conn);
         return p ;
     }
 
@@ -117,7 +113,7 @@ namespace MPX
             (*iter)[m_FileStats_Columns.Type]       = get<std::string>((*i)["type"]);
             (*iter)[m_FileStats_Columns.Count]      = get<guint>((*i)["cnt"]);
 
-            RowV v2; 
+            RowV v2;
             library->getSQL(
                   v2
                 , (boost::format("SELECT bitrate AS rate FROM track WHERE type = '%s' AND bitrate != '0' ORDER BY bitrate DESC LIMIT 1") % get<std::string>((*i)["type"])).str()
@@ -140,7 +136,7 @@ namespace MPX
 
         Gtk::Label * label;
 
-        m_Xml->get_widget( "label-count-of-tracks", label );
+        m_Builder->get_widget( "label-count-of-tracks", label );
         v1.clear();
         library->getSQL(
               v1
@@ -148,7 +144,7 @@ namespace MPX
         );
         label->set_text((boost::format("%u") % get<guint>(v1[0]["cnt"])).str());
 
-        m_Xml->get_widget( "label-count-of-albums", label );
+        m_Builder->get_widget( "label-count-of-albums", label );
         v1.clear();
         library->getSQL(
               v1
@@ -156,7 +152,7 @@ namespace MPX
         );
         label->set_text((boost::format("%u") % get<guint>(v1[0]["cnt"])).str());
 
-        m_Xml->get_widget( "label-library-playtime", label );
+        m_Builder->get_widget( "label-library-playtime", label );
         v1.clear();
         library->getSQL(
               v1
@@ -171,11 +167,11 @@ namespace MPX
     }
 
     MLibManager::MLibManager(
-          const RefPtr<Gnome::Glade::Xml>&  xml
+          const Glib::RefPtr<Gtk::Builder>& builder
         , DBus::Connection&                 conn
     )
     : DBus::ObjectAdaptor( conn, "/info/backtrace/Youki/MLibMan" )
-    , Gnome::Glade::WidgetLoader<Gtk::Window>(xml, "window")
+    , WidgetLoader<Gtk::Window>(builder, "window")
     , sigx::glib_auto_dispatchable()
     , Service::Base("mpx-service-mlibman")
     , m_InnerdialogMainloop(0)
@@ -184,9 +180,9 @@ namespace MPX
         m_HAL = services->get<IHAL>("mpx-service-hal") ;
 #endif // HAVE_HAL
 
-       /*- Widgets -------------------------------------------------------*/ 
+       /*- Widgets -------------------------------------------------------*/
 
-        m_Xml->get_widget("treeview-filestats", m_FileStats_View );
+        m_Builder->get_widget("treeview-filestats", m_FileStats_View );
 
         m_FileStats_Store = Gtk::ListStore::create( m_FileStats_Columns ) ;
 
@@ -213,13 +209,13 @@ namespace MPX
 
         m_FileStats_View->set_model( m_FileStats_Store );
 
-        m_Xml->get_widget("statusbar", m_Statusbar );
-        m_Xml->get_widget("vbox-inner", m_VboxInner );
+        m_Builder->get_widget("statusbar", m_Statusbar );
+        m_Builder->get_widget("vbox-inner", m_VboxInner );
 
-        m_Xml->get_widget("innerdialog-hbox", m_InnerdialogHBox );
-        m_Xml->get_widget("innerdialog-label", m_InnerdialogLabel );
-        m_Xml->get_widget("innerdialog-yes", m_InnerdialogYes );
-        m_Xml->get_widget("innerdialog-cancel", m_InnerdialogCancel );
+        m_Builder->get_widget("innerdialog-hbox", m_InnerdialogHBox );
+        m_Builder->get_widget("innerdialog-label", m_InnerdialogLabel );
+        m_Builder->get_widget("innerdialog-yes", m_InnerdialogYes );
+        m_Builder->get_widget("innerdialog-cancel", m_InnerdialogCancel );
 
         m_InnerdialogYes->signal_clicked().connect(
             sigc::bind(
@@ -240,15 +236,15 @@ namespace MPX
                 GTK_RESPONSE_CANCEL
         ));
 
-        /*- Details Textview/Buffer ---------------------------------------*/ 
+        /*- Details Textview/Buffer ---------------------------------------*/
 
-        m_TextBufferDetails = (dynamic_cast<Gtk::TextView*>(m_Xml->get_widget("textview-details")))->get_buffer();
+        m_TextBufferDetails = (dynamic_cast<Gtk::TextView*>(m_Builder->get_widget("textview-details")))->get_buffer();
 
 #ifdef HAVE_HAL
-        /*- Volumes View --------------------------------------------------*/ 
+        /*- Volumes View --------------------------------------------------*/
 
-        Gtk::CellRendererText * cell = 0; 
-        Gtk::TreeViewColumn * col = 0; 
+        Gtk::CellRendererText * cell = 0;
+        Gtk::TreeViewColumn * col = 0;
 
         services->get<Library_MLibMan>("mpx-service-library")->scanner()->connect().signal_scan_start().connect(
             sigc::mem_fun(
@@ -272,9 +268,9 @@ namespace MPX
 #endif
 
 #ifdef HAVE_HAL
-        /*- FSTree --------------------------------------------------------*/ 
+        /*- FSTree --------------------------------------------------------*/
 
-        m_Xml->get_widget("fstree-view", m_FSTree);
+        m_Builder->get_widget("fstree-view", m_FSTree);
 
         cell = manage (new Gtk::CellRendererText());
         Gtk::CellRendererToggle * cell2 = manage (new Gtk::CellRendererToggle());
@@ -315,33 +311,32 @@ namespace MPX
         FSTreeStore->set_sort_column(
             -1,
             Gtk::SORT_ASCENDING
-        ); 
+        );
 
         m_FSTree->signal_row_expanded().connect(
             sigc::mem_fun(
                 *this,
                 &MLibManager::on_fstree_row_expanded
-        )); 
+        ));
 
         m_FSTree->get_selection()->set_mode(
             Gtk::SELECTION_NONE
-        ); 
+        );
 
         m_FSTree->set_model(FSTreeStore);
 #endif
 
-        /*- Buttons -------------------------------------------------------*/ 
+        /*- Buttons -------------------------------------------------------*/
 
-        m_Xml->get_widget("b-close", m_Close);
-	Gtk::Button * b  ;
-	m_Xml->get_widget("b-scan", b ) ;
-	m_Xml->get_widget("b-pause", m_ButtonPauseRescan ) ;
+        m_Builder->get_widget("b-close", m_Close);
 
-	m_Xml->get_widget("label-scan", m_RescanTimeoutLabel ) ;
+        m_Builder->get_widget("b-scan", m_ButtonScan ) ;
+        m_Builder->get_widget("b-pause", m_ButtonPauseRescan ) ;
+        m_Builder->get_widget("label-scan", m_RescanTimeoutLabel ) ;
 
-	m_ButtonPauseRescan->signal_toggled().connect( sigc::mem_fun( *this, &MLibManager::handle_pause )) ;
+        m_ButtonPauseRescan->signal_toggled().connect( sigc::mem_fun( *this, &MLibManager::handle_pause )) ;
 
-        /*- Rescanning ----------------------------------------------------*/ 
+        /*- Rescanning ----------------------------------------------------*/
 
         if( mcs->key_get<bool>("library","rescan-at-startup") )
         {
@@ -371,7 +366,7 @@ namespace MPX
 
 	m_ButtonPauseRescan->set_sensitive( mcs->key_get<bool>("library","rescan-in-intervals")) ;
 
-        /*- Actions -------------------------------------------------------*/ 
+        /*- Actions -------------------------------------------------------*/
 
         m_UIManager    = UIManager::create ();
         m_Actions      = ActionGroup::create ("Actions_MLibMan");
@@ -408,7 +403,7 @@ namespace MPX
                           _("Import _Folder")),
                           sigc::mem_fun (*this, &MLibManager::on_import_folder));
 
-        m_Actions->add( Action::create( 
+        m_Actions->add( Action::create(
 
                           "action-import-share",
 
@@ -443,7 +438,7 @@ namespace MPX
         )
         {
             dynamic_cast<Alignment*>(
-                m_Xml->get_widget("alignment-menu")
+                m_Builder->get_widget("alignment-menu")
             )->add(
                 *(m_UIManager->get_widget ("/MenubarMLibMan"))
             );
@@ -451,7 +446,7 @@ namespace MPX
             update_filestats();
         }
 
-        /*- Init the UI ---------------------------------------------------*/ 
+        /*- Init the UI ---------------------------------------------------*/
 
 #ifdef HAVE_HAL
         if( mcs->key_get<bool>("library", "use-hal"))
@@ -463,7 +458,7 @@ namespace MPX
         else
 #endif
         {
-            m_Xml->get_widget("notebook1")->hide();
+            m_Builder->get_widget("notebook1")->hide();
         }
 
         boost::shared_ptr<Library_MLibMan> library = services->get<Library_MLibMan>("mpx-service-library");
@@ -517,8 +512,8 @@ namespace MPX
 
         set_icon_from_file( Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "youki-mlibman128x128.png" )) ;
 
-        /*- Setup Window Geometry -----------------------------------------*/ 
-    
+        /*- Setup Window Geometry -----------------------------------------*/
+
         gtk_widget_realize(GTK_WIDGET(gobj()));
 
         resize(
@@ -532,7 +527,7 @@ namespace MPX
         );
     }
 
-    void 
+    void
     MLibManager::ShowWindow ()
     {
         present () ;
@@ -559,8 +554,8 @@ namespace MPX
 
         if( use_hal )
         {
-            populate_volumes(); 
-            m_Xml->get_widget("notebook1")->show();
+            populate_volumes();
+            m_Builder->get_widget("notebook1")->show();
             m_Actions->get_action("action-import-folder")->set_visible( false );
             m_Actions->get_action("action-import-share")->set_visible( false );
             set_resizable( true );
@@ -568,13 +563,13 @@ namespace MPX
         else
         {
             clear_volumes();
-            m_Xml->get_widget("notebook1")->hide();
+            m_Builder->get_widget("notebook1")->hide();
             m_Actions->get_action("action-import-folder")->set_visible( true );
             m_Actions->get_action("action-import-share")->set_visible( true );
             set_resizable( false );
         }
 
-        m_Actions->get_action("MenuVolume")->set_sensitive( use_hal ); 
+        m_Actions->get_action("MenuVolume")->set_sensitive( use_hal );
         m_Actions->get_action("action-mlib-rescan")->set_visible( use_hal );
     }
 #endif
@@ -603,7 +598,7 @@ namespace MPX
         m_Actions->set_sensitive(false);
         m_TextBufferDetails->set_text("");
 
-        ScanStart () ; 
+        ScanStart () ;
     }
 
     void
@@ -628,10 +623,10 @@ namespace MPX
         char bdate[64];
         strftime(bdate, 64, "%H:%M:%S", &ctm);
 
-        m_Statusbar->pop();        
+        m_Statusbar->pop();
         m_Statusbar->push((boost::format(
             _("Library Scan finished at %1% (%2% %3% scanned, %4% Files added, %5% Files up to date, %6% updated, %7% erroneous, see log)"))
-            % bdate 
+            % bdate
             % summary.FilesTotal
             % _("Files")
             % summary.FilesAdded
@@ -646,7 +641,7 @@ namespace MPX
         if( !summary.FileListErroneous.empty() )
         {
                 text.append("Erroneous Files:\n");
-                for(std::vector<SSFileInfo>::const_iterator i = summary.FileListErroneous.begin(); i != summary.FileListErroneous.end(); ++i) 
+                for(std::vector<SSFileInfo>::const_iterator i = summary.FileListErroneous.begin(); i != summary.FileListErroneous.end(); ++i)
                 {
                     text.append((boost::format ("\t%1%:  %2%\n") % (*i).second % (*i).first).str());
                 }
@@ -655,7 +650,7 @@ namespace MPX
         if( !summary.FileListUpdated.empty() )
         {
                 text.append("\nUpdated Files:\n");
-                for(std::vector<SSFileInfo>::const_iterator i = summary.FileListUpdated.begin(); i != summary.FileListUpdated.end(); ++i) 
+                for(std::vector<SSFileInfo>::const_iterator i = summary.FileListUpdated.begin(); i != summary.FileListUpdated.end(); ++i)
                 {
                     text.append((boost::format ("\t%1%:  %2%\n") % (*i).second % (*i).first).str());
                 }
@@ -676,7 +671,7 @@ namespace MPX
     )
     {
         NewAlbum( id, s1, s2, s3, s4, s5 ) ;
-    } 
+    }
 
     void
     MLibManager::new_artist(
@@ -720,7 +715,7 @@ namespace MPX
         hide();
         return true;
     }
-    
+
     void
     MLibManager::hide ()
     {
@@ -767,7 +762,7 @@ namespace MPX
         {
             Gtk::TreeModel::Children children = VolumeStore->children();
 
-            if( children.empty() ) 
+            if( children.empty() )
                 return;
 
             for( Gtk::TreeModel::iterator iter = children.begin(); iter != children.end(); ++iter )
@@ -789,7 +784,7 @@ namespace MPX
                         ).str()
                 );
 
-                StrSetT ManagedPaths; 
+                StrSetT ManagedPaths;
                 for(SQL::RowV::iterator i = v.begin(); i != v.end(); ++i)
                 {
                     ManagedPaths.insert(build_filename(MountPoint, boost::get<std::string>((*i)["insert_path"])));
@@ -813,14 +808,14 @@ namespace MPX
                                 goto reread_paths;
                         }
                     }
-                    services->get<Library_MLibMan>("mpx-service-library")->initScan(v);                  
+                    services->get<Library_MLibMan>("mpx-service-library")->initScan(v);
                 }
             }
         }
         else
 #endif
         {
-            services->get<Library_MLibMan>("mpx-service-library")->initScanAll();                  
+            services->get<Library_MLibMan>("mpx-service-library")->initScanAll();
         }
     }
 
@@ -830,14 +825,14 @@ namespace MPX
         SQL::RowV rows;
         services->get<Library_MLibMan>("mpx-service-library")->getSQL(
             rows,
-            "SELECT id, artist, title, album FROM (track_view NATURAL JOIN (SELECT artist, album, title, track FROM track_view GROUP BY artist, album, title, track HAVING count(title) > 1)) EXCEPT SELECT id, artist, title, album FROM track_view GROUP BY artist, album, title, track HAVING count(title) > 1" 
+            "SELECT id, artist, title, album FROM (track_view NATURAL JOIN (SELECT artist, album, title, track FROM track_view GROUP BY artist, album, title, track HAVING count(title) > 1)) EXCEPT SELECT id, artist, title, album FROM track_view GROUP BY artist, album, title, track HAVING count(title) > 1"
         );
 
         if( rows.empty() )
         {
                 MessageDialog dialog (
                       *this
-                    , _("No duplicates have been found. Click OK to close this dialog.") 
+                    , _("No duplicates have been found. Click OK to close this dialog.")
                     , false
                     , MESSAGE_INFO
                     , BUTTONS_OK
@@ -871,7 +866,7 @@ namespace MPX
 
         int response = dialog.run();
         dialog.hide();
-    
+
         if( response == GTK_RESPONSE_OK )
         {
             services->get<Library_MLibMan>("mpx-service-library")->removeDupes();
@@ -884,7 +879,7 @@ namespace MPX
     {
         VolumeStore->clear();
         FSTreeStore->clear();
-        m_ManagedPaths.clear() ; 
+        m_ManagedPaths.clear() ;
     }
 
     void
@@ -892,9 +887,9 @@ namespace MPX
     {
         static boost::format volume_label_f1 ("%1%: %2%");
 
-        clear_volumes() ;        
+        clear_volumes() ;
 
-        try { 
+        try {
                 Hal::RefPtr<Hal::Context> Ctx = m_HAL->get_context();
                 VolumesHALCC_v volumes;
                 m_HAL->volumes(volumes);
@@ -904,19 +899,19 @@ namespace MPX
                     Hal::RefPtr<Hal::Volume> Vol = *i;
                     std::string vol_label = Vol->get_partition_label();
                     std::string vol_mount = Vol->get_mount_point();
-                    
-                    Hal::RefPtr<Hal::Drive> Drive = Hal::Drive::create_from_udi(Ctx, Vol->get_storage_device_udi()); 
+
+                    Hal::RefPtr<Hal::Drive> Drive = Hal::Drive::create_from_udi(Ctx, Vol->get_storage_device_udi());
                     std::string drive_model  = Drive->get_model();
                     std::string drive_vendor = Drive->get_vendor();
-                    
-                    TreeIter iter = VolumeStore->append(); 
+
+                    TreeIter iter = VolumeStore->append();
 
                     if(!vol_label.empty())
                         (*iter)[VolumeColumns.Name] = (volume_label_f1 % drive_model % vol_label).str();
                     else
-                        (*iter)[VolumeColumns.Name] = drive_model; 
-                    
-                    (*iter)[VolumeColumns.Mountpoint] = vol_mount; 
+                        (*iter)[VolumeColumns.Name] = drive_model;
+
+                    (*iter)[VolumeColumns.Mountpoint] = vol_mount;
                     (*iter)[VolumeColumns.Volume] = Vol;
                 }
         } catch(...) {
@@ -952,11 +947,11 @@ namespace MPX
             } catch( MPX::IHAL::NoVolumeForUriError & cxe ) {
                 std::abort();
             }
-            
+
             std::string current_volume_udi =
                 volume.volume_udi ;
 
-            std::string current_device_udi =  
+            std::string current_device_udi =
                 volume.device_udi ;
 
             if( device_udi == current_device_udi && volume_udi == current_volume_udi )
@@ -980,7 +975,7 @@ namespace MPX
               Gtk::Stock::HARDDISK,
               0
         );
-      
+
         dialog.add_button(
               _("Delete Path from Library"),
               _("The path has been permanently deleted, and Youki should not manage it anymore."),
@@ -1043,7 +1038,7 @@ namespace MPX
                 response = fcdialog.run();
                 fcdialog.hide();
 
-                if( response == Gtk::RESPONSE_CANCEL ) 
+                if( response == Gtk::RESPONSE_CANCEL )
                 {
                     goto rerun_taskdialog ;
                 }
@@ -1054,9 +1049,9 @@ namespace MPX
 
                 volume_udi_source =
                     volume_source.volume_udi ;
-                device_udi_source =  
+                device_udi_source =
                     volume_source.device_udi ;
-                vrp_source = 
+                vrp_source =
                     path.substr(volume_source.mount_point.length()) ;
                 device_id_source =
                     m_HAL->get_id_for_volume( volume_udi_source, device_udi_source ) ;
@@ -1066,9 +1061,9 @@ namespace MPX
 
                 volume_udi_target =
                     volume_target.volume_udi ;
-                device_udi_target =  
+                device_udi_target =
                     volume_target.device_udi ;
-                vrp_target = 
+                vrp_target =
                     Glib::filename_from_uri(uri).substr(volume_target.mount_point.length()) ;
                 device_id_target =
                     m_HAL->get_id_for_volume( volume_udi_target, device_udi_target ) ;
@@ -1091,10 +1086,10 @@ namespace MPX
                 volume_udi_target =
                     volume_target.volume_udi ;
 
-                device_udi_target =  
+                device_udi_target =
                     volume_target.device_udi ;
 
-                vrp_target = 
+                vrp_target =
                     path.substr(volume_target.mount_point.length()) ;
 
                 device_id_target =
@@ -1109,7 +1104,7 @@ namespace MPX
                 /* FIXME: Can't do it here because it's async
                 services->get<Library_MLibMan>("mpx-service-library")->vacuumVolume(
                     device_udi_target,
-                    volume_udi_target 
+                    volume_udi_target
                 );*/
 
                 return DELETED ;
@@ -1143,7 +1138,7 @@ namespace MPX
                 }
         } catch( Glib::FileError ) {
         }
-    } 
+    }
 
     void
     MLibManager::append_path (std::string const& root_path, TreeIter & root_iter)
@@ -1161,7 +1156,7 @@ namespace MPX
                             if(file_test(path, FILE_TEST_IS_DIR))
                             {
                                     TreeIter iter = FSTreeStore->append(root_iter->children());
-                                    (*iter)[FSTreeColumns.SegName] = *i; 
+                                    (*iter)[FSTreeColumns.SegName] = *i;
                                     (*iter)[FSTreeColumns.FullPath] = path;
                                     (*iter)[FSTreeColumns.WasExpanded] = false;
                                     prescan_path (path, iter);
@@ -1196,7 +1191,7 @@ namespace MPX
         while(path.up() && path[0] >= 0 && path.size() )
         {
             iter = FSTreeStore->get_iter(path);
-    
+
             if( iter )
             {
                     std::string FullPath = std::string((*iter)[FSTreeColumns.FullPath])+"/";
@@ -1277,10 +1272,10 @@ namespace MPX
 	    dialog_showing = false ;
             return;
 	}
-        
+
         if(m_ManagedPaths.count(FullPath))
         {
-            dynamic_cast<Gtk::Label*>(m_Xml->get_widget("innerdialog-label-yes"))->set_text_with_mnemonic("_Remove");
+            dynamic_cast<Gtk::Label*>(m_Builder->get_widget("innerdialog-label-yes"))->set_text_with_mnemonic("_Remove");
             m_InnerdialogLabel->set_markup((
                 boost::format(
                     "<b>Remove</b> %s <b>?</b>")
@@ -1294,7 +1289,7 @@ namespace MPX
             GDK_THREADS_LEAVE();
             m_InnerdialogMainloop->run();
             GDK_THREADS_ENTER();
-            
+
             m_InnerdialogHBox->hide();
             m_InnerdialogLabel->set_text("");
 
@@ -1306,14 +1301,14 @@ namespace MPX
 		Volume volume ;
                 volume = m_HAL->get_volume_for_uri(Glib::filename_to_uri(FullPath)) ;
 
-                std::string FullPath_Sub = FullPath.substr(volume.mount_point.length()) ; 
- 
+                std::string FullPath_Sub = FullPath.substr(volume.mount_point.length()) ;
+
                 services->get<Library_MLibMan>("mpx-service-library")->deletePath( volume.device_udi, volume.volume_udi, FullPath_Sub.substr( 0, FullPath_Sub.size() - 1 ) );
 
                 m_ManagedPaths.erase( FullPath );
                 recreate_path_frags();
 
-                TreePath path = FSTreeStore->get_path(iter_copy); 
+                TreePath path = FSTreeStore->get_path(iter_copy);
                 FSTreeStore->row_changed(path, iter_copy);
 
                 m_VboxInner->set_sensitive( true );
@@ -1324,7 +1319,7 @@ namespace MPX
         }
         else
         {
-            dynamic_cast<Gtk::Label*>(m_Xml->get_widget("innerdialog-label-yes"))->set_text_with_mnemonic("_Add");
+            dynamic_cast<Gtk::Label*>(m_Builder->get_widget("innerdialog-label-yes"))->set_text_with_mnemonic("_Add");
             m_InnerdialogLabel->set_markup((
                 boost::format(
                     "<b>Add</b> %s <b>?</b>")
@@ -1339,8 +1334,8 @@ namespace MPX
             m_InnerdialogMainloop->run();
             GDK_THREADS_ENTER();
 
-            m_InnerdialogMainloop.reset(); 
-            
+            m_InnerdialogMainloop.reset();
+
             m_InnerdialogHBox->hide();
             m_InnerdialogLabel->set_text("");
 
@@ -1349,7 +1344,7 @@ namespace MPX
                 m_ManagedPaths.insert(FullPath);
 
                 recreate_path_frags ();
-                TreePath path = FSTreeStore->get_path(iter_copy); 
+                TreePath path = FSTreeStore->get_path(iter_copy);
                 FSTreeStore->row_changed(path, iter_copy);
 
                 StrV v;
@@ -1373,7 +1368,7 @@ namespace MPX
     void
     MLibManager::cell_data_func_text (CellRenderer * basecell, TreeIter const& iter)
     {
-        TreePath path = FSTreeStore->get_path(iter); 
+        TreePath path = FSTreeStore->get_path(iter);
 
         if( path.size() < 1 )
         {
@@ -1386,8 +1381,8 @@ namespace MPX
         CellRendererText & cell = *(dynamic_cast<CellRendererText*>(basecell));
 
         for(StrSetT::const_iterator i = m_ManagedPaths.begin(); i != m_ManagedPaths.end(); ++i)
-        { 
-            if( ((*i).substr( 0, FullPath.size() ) == FullPath) ) 
+        {
+            if( ((*i).substr( 0, FullPath.size() ) == FullPath) )
             {
                 cell.property_markup() = (boost::format("<span foreground='#0000ff'><b>%s</b></span>") % Markup::escape_text(SegName)).str();
                 return;
@@ -1398,7 +1393,7 @@ namespace MPX
         if(has_active_parent(iter_copy))
             cell.property_markup() = (boost::format("<span foreground='#a0a0a0'>%s</span>") % Markup::escape_text(SegName)).str();
         else
-            cell.property_text() = SegName; 
+            cell.property_text() = SegName;
     }
 
     bool
@@ -1414,7 +1409,7 @@ namespace MPX
             {
 		int min = 0, sec = 0 ;
 
-		if( mcs->key_get<bool>("library","rescan-in-intervals") ) 
+		if( mcs->key_get<bool>("library","rescan-in-intervals") )
 		{
 		    int elapsed = (mcs->key_get<int>("library","rescan-interval")*60) - m_RescanTimer.elapsed() ;
 
@@ -1422,7 +1417,7 @@ namespace MPX
 		    sec = elapsed % 60 ;
 
 		    m_RescanTimeoutLabel->set_text( (boost::format("Time to next Refresh: %02d:%02d") % min % sec).str()) ;
-    
+
 		    if( m_RescanTimer.elapsed() >= mcs->key_get<int>("library","rescan-interval") * 60)
 		    {
 			rescan_volumes();
@@ -1436,7 +1431,7 @@ namespace MPX
     void
 	    MLibManager::handle_pause()
 	    {
-		if( m_ButtonPauseRescan->get_active() )	
+		if( m_ButtonPauseRescan->get_active() )
 		{
 			m_RescanTimer.stop() ;
 		}
@@ -1459,7 +1454,7 @@ namespace MPX
 
                     if(d->run() == 0) // Import
                     {
-                            Glib::ustring uri; 
+                            Glib::ustring uri;
                             d->get_folder_infos(uri);
                             d->hide();
                             StrV v;
@@ -1502,7 +1497,7 @@ rerun_import_share_dialog:
                             {
                                     MessageDialog dialog (*this, (boost::format (_("An Error occcured trying to mount the share '%s'")) % m_Share.c_str()).str());
                                     dialog.run();
-                                    return; 
+                                    return;
                             }
 
                             m_MountOperation->set_username(login);

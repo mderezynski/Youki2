@@ -25,7 +25,6 @@
 #include <gtkmm.h>
 #include <glib.h>
 #include <giomm.h>
-#include <libglademm.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
@@ -53,7 +52,6 @@
 
 using namespace Gtk;
 using namespace Glib;
-using namespace Gnome::Glade;
 using namespace MPX;
 using boost::get;
 using boost::algorithm::trim;
@@ -175,15 +173,15 @@ namespace
 namespace MPX
 {
                 AlbumTreeView::AlbumTreeView(
-                          const Glib::RefPtr<Gnome::Glade::Xml>&  xml
-                        , const std::string&                      name
-                        , const std::string&                      name_showing_label
-                        , const std::string&                      name_search_entry
-                        , const std::string&                      name_search_plugin_ui_alignment
-                        , const std::string&                      name_search_plugin_choice_cbox
-                        , Glib::RefPtr<Gtk::UIManager>            ui_manager
+                          const Glib::RefPtr<Gtk::Builder>& builder
+                        , const std::string&                name
+                        , const std::string&                name_showing_label
+                        , const std::string&                name_search_entry
+                        , const std::string&                name_search_plugin_ui_alignment
+                        , const std::string&                name_search_plugin_choice_cbox
+                        , Glib::RefPtr<Gtk::UIManager>      ui_manager
                 )
-                : WidgetLoader<Gtk::TreeView>(xml,name)
+                : WidgetLoader<Gtk::TreeView>(builder, name)
                 , m_Name(name)
                 , m_ButtonPressed(false)
                 {
@@ -199,13 +197,13 @@ namespace MPX
                         m_Emblem[EM_COMPILATION] = Gdk::Pixbuf::create_from_file(
                                         build_filename(
                                                image_base_path,
-                                               "emblem-compilation.png" 
+                                               "emblem-compilation.png"
                         ));
 
                         m_Emblem[EM_SOUNDTRACK] = Gdk::Pixbuf::create_from_file(
                                         build_filename(
                                                image_base_path,
-                                               "emblem-soundtrack.png" 
+                                               "emblem-soundtrack.png"
                         ));
 
 /*

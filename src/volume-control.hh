@@ -26,7 +26,6 @@
 #define MPX_UI_VOLUME_CONTROL_HH
 
 #include <gtkmm.h>
-#include <libglademm.h>
 
 namespace MPX
 {
@@ -36,7 +35,7 @@ namespace MPX
 
         typedef sigc::signal<void, double> SignalValueChanged;
 
-        VolumeControl(const Glib::RefPtr<Gnome::Glade::Xml>&);
+        VolumeControl(const Glib::RefPtr<Gtk::Builder>&);
 
         virtual ~VolumeControl () {}
 

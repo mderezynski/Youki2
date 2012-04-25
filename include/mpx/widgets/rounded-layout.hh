@@ -7,7 +7,7 @@
 
 namespace MPX
 {
-    class RoundedLayout : public Gnome::Glade::WidgetLoader<Gtk::DrawingArea>
+    class RoundedLayout : public WidgetLoader<Gtk::DrawingArea>
     {
         private:
 
@@ -26,7 +26,7 @@ namespace MPX
         public:
 
                 RoundedLayout(
-                      const Glib::RefPtr<Gnome::Glade::Xml>& xml
+                      const Glib::RefPtr<Gtk::Builder>& builder
                     , const std::string&                     name
                     , CairoCorners::CORNERS = CairoCorners::ALL
                     , double = 2.

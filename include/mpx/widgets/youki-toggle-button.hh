@@ -25,9 +25,8 @@
 #ifndef _YOUKI_TOGGLE_BUTTON__HH
 #define _YOUKI_TOGGLE_BUTTON__HH
 
-#include <glibmm/timer.h>
 #include <gdkmm/pixbuf.h>
-#include <gtkmm/button.h>
+#include <gtkmm/togglebutton.h>
 #include <sigc++/connection.h>
 
 namespace MPX
@@ -42,7 +41,7 @@ namespace MPX
 
     class YoukiToggleButton
 
-        : public Gtk::Button
+        : public Gtk::ToggleButton
 
     {
         public:

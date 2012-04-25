@@ -45,13 +45,13 @@ namespace MPX
    */
   class Preferences
   : public IPreferences
-  , public Gnome::Glade::WidgetLoader<Gtk::Window>
+  , public WidgetLoader<Gtk::Window>
   , public Service::Base
   {
     public:
 
         Preferences(
-            const Glib::RefPtr<Gnome::Glade::Xml>&
+            const Glib::RefPtr<Gtk::Builder>&
         ) ;
 
         static Preferences*

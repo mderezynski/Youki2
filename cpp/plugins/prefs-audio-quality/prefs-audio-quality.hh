@@ -48,13 +48,13 @@ namespace MPX
    * file.
    */
   class PrefsAudioQuality
-  : public Gnome::Glade::WidgetLoader<Gtk::VBox>
+  : public WidgetLoader<Gtk::VBox>
   , public PluginHolderBase 
   {
     public:
 
         PrefsAudioQuality(
-              const Glib::RefPtr<Gnome::Glade::Xml>&
+              const Glib::RefPtr<Gtk::Builder>&
             , gint64
         ) ;
 

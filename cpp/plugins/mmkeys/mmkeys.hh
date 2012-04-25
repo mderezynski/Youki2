@@ -44,13 +44,13 @@
 namespace MPX
 {
   class MMKeys
-  : public Gnome::Glade::WidgetLoader<Gtk::VBox>
+  : public WidgetLoader<Gtk::VBox>
   , public PluginHolderBase
   {
     public:
 
         MMKeys(
-              const Glib::RefPtr<Gnome::Glade::Xml>&
+              const Glib::RefPtr<Gtk::Builder>&
             , gint64
         ) ;
 

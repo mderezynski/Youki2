@@ -35,24 +35,21 @@
 #include "mpx/util-file.hh"
 #include "mpx/util-string.hh"
 
-using namespace Glib;
-using namespace Gtk;
-
 namespace MPX
 {
     FileSystemTree::FileSystemTree(
-        RefPtr<Gnome::Glade::Xml> const&    xml,
-        std::string const&                  name 
+        Glib::RefPtr<Gtk::Builder> const& builder,
+        std::string const&                name
     )
-    : Gnome::Glade::WidgetLoader<Gtk::TreeView>(xml, name)
-    , sigx::glib_auto_dispatchable()
+        : WidgetLoader<Gtk::TreeView>(builder, name)
+        , sigx::glib_auto_dispatchable()
     {
         std::vector<Gtk::TargetEntry> entries;
         drag_source_set(entries);
         drag_source_add_uri_targets();
 
-        Gtk::CellRendererText * cell = 0; 
-        Gtk::TreeViewColumn * col = 0; 
+        Gtk::CellRendererText * cell = 0;
+        Gtk::TreeViewColumn * col = 0;
 
         cell = manage (new Gtk::CellRendererText());
         col = manage (new Gtk::TreeViewColumn());

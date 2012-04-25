@@ -52,23 +52,18 @@
 #include "mmkeys.hh"
 #include "mpx/i-youki-controller.hh"
 
-using namespace Glib;
-using namespace Gtk;
-
 namespace MPX
 {
+    namespace
+    {
+        const char *ui_path = DATA_DIR G_DIR_SEPARATOR_S "ui" G_DIR_SEPARATOR_S "cppmod-mmkeys.ui";
+    }
+
     //// MMKeys
     MMKeys*
     MMKeys::create(gint64 id)
     {
-        return new MMKeys(
-            Gnome::Glade::Xml::create(
-                build_filename(
-                      DATA_DIR
-                    , "glade" G_DIR_SEPARATOR_S "cppmod-mmkeys.glade"
-            ))
-          , id
-       );
+        return new MMKeys(Gtk::Builder::create_from_file(ui_path), id);
     }
 
     MMKeys::~MMKeys ()
@@ -76,10 +71,10 @@ namespace MPX
     }
 
     MMKeys::MMKeys(
-          const Glib::RefPtr<Gnome::Glade::Xml>&    xml
-        , gint64                                    id
+          const Glib::RefPtr<Gtk::Builder>& builder
+        , gint64                            id
     )
-        : Gnome::Glade::WidgetLoader<Gtk::VBox>(xml, "mmkeys-vbox")
+        : WidgetLoader<Gtk::VBox>(builder, "mmkeys-vbox")
         , m_active( false )
         , m_mmkeys_dbusproxy( 0 )
     {
@@ -119,7 +114,7 @@ namespace MPX
 
         for( int n = 1; n <= N_MM_KEYS; ++n)
         {
-            Gtk::Widget * entry = m_Xml->get_widget((boost::format ("mm-entry-%d") % n).str());
+            Gtk::Widget * entry = m_Builder->get_widget((boost::format ("mm-entry-%d") % n).str());
 
             entry->signal_key_press_event().connect(
                 sigc::bind(
@@ -139,7 +134,7 @@ namespace MPX
                 n
                 ));
 
-            Gtk::Button * button = dynamic_cast<Gtk::Button*>(m_Xml->get_widget ((boost::format ("mm-clear-%d") % n).str()));
+            Gtk::Button * button = dynamic_cast<Gtk::Button*>(m_Builder->get_widget ((boost::format ("mm-clear-%d") % n).str()));
 
             button->signal_clicked().connect(
                 sigc::bind(
@@ -157,7 +152,7 @@ namespace MPX
 
         for( int n = 1; n <= N_MM_KEY_SYSTEMS; ++n )
         {
-            Gtk::RadioButton * button = dynamic_cast<Gtk::RadioButton*>(m_Xml->get_widget ((boost::format ("mm-rb-%d") % n).str(), button));
+            Gtk::RadioButton * button = dynamic_cast<Gtk::RadioButton*>(m_Builder->get_widget ((boost::format ("mm-rb-%d") % n).str(), button));
 
             button->signal_toggled().connect(
                 sigc::bind(
@@ -174,9 +169,9 @@ namespace MPX
             }
         }
 
-        dynamic_cast<Gtk::Button*>(m_Xml->get_widget ("mm-revert"))->signal_clicked().connect(
+        dynamic_cast<Gtk::Button*>(m_Builder->get_widget ("mm-revert"))->signal_clicked().connect(
             sigc::mem_fun( *this, &MMKeys::mm_load ));
-        dynamic_cast<Gtk::Button*>(m_Xml->get_widget ("mm-apply"))->signal_clicked().connect(
+        dynamic_cast<Gtk::Button*>(m_Builder->get_widget ("mm-apply"))->signal_clicked().connect(
             sigc::mem_fun( *this, &MMKeys::mm_apply ));
 
         mm_load ();
@@ -188,7 +183,7 @@ namespace MPX
             bool active
         )
     {
-        m_Xml->get_widget("mm-vbox")->set_sensitive( active );
+        m_Builder->get_widget("mm-vbox")->set_sensitive( active );
         on_mm_edit_done() ;
     }
 
@@ -204,8 +199,8 @@ namespace MPX
             mcs->key_set<int>("hotkeys", (boost::format ("key-%d-mask") % n).str(), c.mask);
         }
 
-        m_Xml->get_widget ("mm-apply")->set_sensitive (false);
-        m_Xml->get_widget ("mm-revert")->set_sensitive (false);
+        m_Builder->get_widget ("mm-apply")->set_sensitive (false);
+        m_Builder->get_widget ("mm-revert")->set_sensitive (false);
 
         on_mm_edit_done() ;
     }
@@ -224,10 +219,10 @@ namespace MPX
 
         int sys = mcs->key_get<int>("hotkeys","system");
         if( sys < 0 || sys > 2) sys = 1;
-        dynamic_cast<Gtk::RadioButton*>(m_Xml->get_widget ((boost::format ("mm-rb-%d") % (sys+1)).str()))->set_active();
+        dynamic_cast<Gtk::RadioButton*>(m_Builder->get_widget ((boost::format ("mm-rb-%d") % (sys+1)).str()))->set_active();
 
-        m_Xml->get_widget ("mm-apply")->set_sensitive (false);
-        m_Xml->get_widget ("mm-revert")->set_sensitive (false);
+        m_Builder->get_widget ("mm-apply")->set_sensitive (false);
+        m_Builder->get_widget ("mm-revert")->set_sensitive (false);
 
         on_mm_edit_done() ;
     }
@@ -281,7 +276,7 @@ namespace MPX
         }
 
         Gtk::Entry * entry;
-        m_Xml->get_widget ((boost::format ("mm-entry-%d") % entry_id).str(), entry);
+        m_Builder->get_widget ((boost::format ("mm-entry-%d") % entry_id).str(), entry);
 
         entry->set_text (text);
         entry->set_position(-1);
@@ -320,8 +315,8 @@ namespace MPX
         } else controls.key = 0;
 
         set_keytext (entry_id, is_mod ? 0 : event->hardware_keycode, mod);
-        m_Xml->get_widget ("mm-apply")->set_sensitive (true);
-        m_Xml->get_widget ("mm-revert")->set_sensitive (true);
+        m_Builder->get_widget ("mm-apply")->set_sensitive (true);
+        m_Builder->get_widget ("mm-revert")->set_sensitive (true);
         return false;
     }
 
@@ -334,8 +329,8 @@ namespace MPX
             controls.mask = 0;
         }
         set_keytext (entry_id, controls.key, controls.mask);
-        m_Xml->get_widget ("mm-apply")->set_sensitive (true);
-        m_Xml->get_widget ("mm-revert")->set_sensitive (true);
+        m_Builder->get_widget ("mm-apply")->set_sensitive (true);
+        m_Builder->get_widget ("mm-revert")->set_sensitive (true);
         return false;
     }
 
@@ -346,8 +341,8 @@ namespace MPX
         controls.key = 0;
         controls.mask = 0;
         set_keytext(entry_id, 0, 0);
-        m_Xml->get_widget ("mm-apply")->set_sensitive (true);
-        m_Xml->get_widget ("mm-revert")->set_sensitive (true);
+        m_Builder->get_widget ("mm-apply")->set_sensitive (true);
+        m_Builder->get_widget ("mm-revert")->set_sensitive (true);
     }
 
     void
@@ -359,15 +354,15 @@ namespace MPX
         {
             case 1:
             case 2:
-                m_Xml->get_widget ("mm-table")->set_sensitive (false);
+                m_Builder->get_widget ("mm-table")->set_sensitive (false);
                 break;
 
             case 3:
-                m_Xml->get_widget ("mm-table")->set_sensitive (true);
+                m_Builder->get_widget ("mm-table")->set_sensitive (true);
                 break;
         }
         m_mm_option = option - 1;
-        m_Xml->get_widget ("mm-apply")->set_sensitive (true);
+        m_Builder->get_widget ("mm-apply")->set_sensitive (true);
     }
 
     void

@@ -31,7 +31,6 @@
 #include <glib/gi18n.h>
 #include <gtk/gtkstock.h>
 #include <gtkmm.h>
-#include <libglademm.h>
 
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
@@ -49,10 +48,15 @@ using namespace Gtk;
 
 namespace MPX
 {
+    namespace
+    {
+        const char *ui_path = DATA_DIR G_DIR_SEPARATOR_S "ui" G_DIR_SEPARATOR_S "cppmod-prefs-library.ui";
+    }
+
     PrefsLibrary*
         PrefsLibrary::create(gint64 id)
     {
-        return new PrefsLibrary (Gnome::Glade::Xml::create (build_filename(DATA_DIR, "glade" G_DIR_SEPARATOR_S "cppmod-prefs-library.glade")), id );
+        return new PrefsLibrary (Gtk::Builder::create_from_file (ui_path), id);
     }
 
     PrefsLibrary::~PrefsLibrary ()
@@ -60,10 +64,10 @@ namespace MPX
     }
 
     PrefsLibrary::PrefsLibrary(
-          const Glib::RefPtr<Gnome::Glade::Xml>&    xml
-        , gint64                                    id
+          const Glib::RefPtr<Gtk::Builder>& builder
+        , gint64                            id
     )
-        : Gnome::Glade::WidgetLoader<Gtk::VBox>(xml, "cppmod-prefs-library")
+        : WidgetLoader<Gtk::VBox>(builder, "cppmod-prefs-library")
         , PluginHolderBase()
     {
         show() ;
@@ -89,19 +93,19 @@ namespace MPX
 
         //// LIBRARY
         mcs_bind->bind_filechooser(
-            *dynamic_cast<Gtk::FileChooser*>( m_Xml->get_widget( "fc-music-import-path" ))
+            *dynamic_cast<Gtk::FileChooser*>( m_Builder->get_widget( "fc-music-import-path" ))
             , "mpx"
             , "music-import-path"
             );
 
         mcs_bind->bind_filechooser(
-            *dynamic_cast<Gtk::FileChooser*>( m_Xml->get_widget( "fc-quarantine-path" ))
+            *dynamic_cast<Gtk::FileChooser*>( m_Builder->get_widget( "fc-quarantine-path" ))
             , "mpx"
             , "music-quarantine-path"
             );
 
         Glib::RefPtr<Gio::File> quarantine_path = Gio::File::create_for_path( mcs->key_get<std::string>("mpx","music-quarantine-path")) ;
-    
+
         try{
             quarantine_path->make_directory() ;
         } catch( Glib::Error & cxe )
@@ -110,13 +114,13 @@ namespace MPX
         }
 
 
-        m_Xml->get_widget( "rescan-at-startup", m_Library_RescanAtStartup ) ;
-        m_Xml->get_widget( "rescan-in-intervals", m_Library_RescanInIntervals) ;
-        m_Xml->get_widget( "rescan-interval", m_Library_RescanInterval ) ;
-        m_Xml->get_widget( "quarantine-files", m_Library_QuarantineInvalid ) ;
+        m_Builder->get_widget( "rescan-at-startup", m_Library_RescanAtStartup ) ;
+        m_Builder->get_widget( "rescan-in-intervals", m_Library_RescanInIntervals) ;
+        m_Builder->get_widget( "rescan-interval", m_Library_RescanInterval ) ;
+        m_Builder->get_widget( "quarantine-files", m_Library_QuarantineInvalid ) ;
 
-        m_Xml->get_widget( "hbox-rescan-interval", m_Library_RescanIntervalBox ) ;
-        m_Xml->get_widget( "hbox-quarantine", m_Library_QuarantineBox ) ;
+        m_Builder->get_widget( "hbox-rescan-interval", m_Library_RescanIntervalBox ) ;
+        m_Builder->get_widget( "hbox-quarantine", m_Library_QuarantineBox ) ;
 
         mcs_bind->bind_spin_button(
             *m_Library_RescanInterval
@@ -155,8 +159,8 @@ namespace MPX
             ));
 
 #ifdef HAVE_HAL
-        m_Xml->get_widget("lib-use-hal-rb1", m_Library_UseHAL_Yes);
-        m_Xml->get_widget("lib-use-hal-rb2", m_Library_UseHAL_No);
+        m_Builder->get_widget("lib-use-hal-rb1", m_Library_UseHAL_Yes);
+        m_Builder->get_widget("lib-use-hal-rb2", m_Library_UseHAL_No);
 
         if( mcs->key_get<bool>("library","use-hal") )
             m_Library_UseHAL_Yes->set_active();
@@ -170,7 +174,7 @@ namespace MPX
             ));
 
 #else
-        m_Xml->get_widget("vbox135")->hide();
+        m_Builder->get_widget("vbox135")->hide();
 #endif // HAVE_HAL
     }
 
@@ -183,20 +187,20 @@ namespace MPX
 
         if( m_Library_UseHAL_Yes->get_active() )
         {
-            m_Xml->get_widget("vbox135")->set_sensitive( false );
+            m_Builder->get_widget("vbox135")->set_sensitive( false );
             g_message("%s: Switching to HAL mode", G_STRLOC);
             l->switch_mode( true );
             mcs->key_set("library","use-hal", true);
-            m_Xml->get_widget("vbox135")->set_sensitive( true );
+            m_Builder->get_widget("vbox135")->set_sensitive( true );
         }
         else
         if( m_Library_UseHAL_No->get_active() )
         {
-            m_Xml->get_widget("vbox135")->set_sensitive( false );
+            m_Builder->get_widget("vbox135")->set_sensitive( false );
             g_message("%s: Switching to NO HAL mode", G_STRLOC);
             l->switch_mode( false );
             mcs->key_set("library","use-hal", false);
-            m_Xml->get_widget("vbox135")->set_sensitive( true );
+            m_Builder->get_widget("vbox135")->set_sensitive( true );
         }
 */
     }

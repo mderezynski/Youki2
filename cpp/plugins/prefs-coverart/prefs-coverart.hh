@@ -50,13 +50,13 @@ namespace MPX
    * file.
    */
   class PrefsCoverart
-  : public Gnome::Glade::WidgetLoader<Gtk::VBox>
+  : public WidgetLoader<Gtk::VBox>
   , public PluginHolderBase 
   {
     public:
 
         PrefsCoverart(
-              const Glib::RefPtr<Gnome::Glade::Xml>&
+              const Glib::RefPtr<Gtk::Builder>&
             , gint64
         ) ;
 

@@ -40,7 +40,9 @@ namespace MPX
 {
     namespace
     {
-       struct FileFormatInfo
+        const char *ui_path = DATA_DIR G_DIR_SEPARATOR_S "ui" G_DIR_SEPARATOR_S "cppmod-prefs-audio-quality.ui";
+
+        struct FileFormatInfo
         {
             std::string     MIME;
             std::string     Name;
@@ -94,8 +96,6 @@ namespace MPX
 
     }                            // namespace
 
-    using namespace Gnome::Glade;
-
     typedef sigc::signal<void, int, bool> SignalColumnState;
 
     class FileFormatPrioritiesView
@@ -129,8 +129,8 @@ namespace MPX
             Columns_t                       Columns;
             Glib::RefPtr<Gtk::ListStore>    Store;
 
-            FileFormatPrioritiesView (const Glib::RefPtr<Gnome::Glade::Xml>& xml)
-                : WidgetLoader<Gtk::TreeView>(xml, "preferences-treeview-fileformatprefs")
+            FileFormatPrioritiesView (const Glib::RefPtr<Gtk::Builder>& builder)
+                : WidgetLoader<Gtk::TreeView>(builder, "preferences-treeview-fileformatprefs")
             {
                 Store = Gtk::ListStore::create(Columns);
                 set_model(Store);
@@ -195,7 +195,7 @@ namespace MPX
               gint64 id
         )
     {
-        return new PrefsAudioQuality (Gnome::Glade::Xml::create (build_filename(DATA_DIR, "glade" G_DIR_SEPARATOR_S "cppmod-prefs-audio-quality.glade")), id );
+        return new PrefsAudioQuality (Gtk::Builder::create_from_file (ui_path), id );
     }
 
     PrefsAudioQuality::~PrefsAudioQuality ()
@@ -203,10 +203,10 @@ namespace MPX
     }
 
     PrefsAudioQuality::PrefsAudioQuality(
-          const Glib::RefPtr<Gnome::Glade::Xml>&    xml
-        , gint64                                    id    
+          const Glib::RefPtr<Gtk::Builder>& builder
+        , gint64                            id
     )
-        : Gnome::Glade::WidgetLoader<Gtk::VBox>(xml, "cppmod-prefs-audio-quality")
+        : WidgetLoader<Gtk::VBox>(builder, "cppmod-prefs-audio-quality")
         , PluginHolderBase()
     {
         show() ;
@@ -231,9 +231,9 @@ namespace MPX
         ) ;
 
         // File Format Priorities
-        m_Fmts_PrioritiesView = new FileFormatPrioritiesView(m_Xml);
-        m_Xml->get_widget("cb-prioritize-by-filetype", m_Fmts_PrioritizeByFileType);
-        m_Xml->get_widget("cb-prioritize-by-bitrate", m_Fmts_PrioritizeByBitrate);
+        m_Fmts_PrioritiesView = new FileFormatPrioritiesView(m_Builder);
+        m_Builder->get_widget("cb-prioritize-by-filetype", m_Fmts_PrioritizeByFileType);
+        m_Builder->get_widget("cb-prioritize-by-bitrate", m_Fmts_PrioritizeByBitrate);
 
         m_Fmts_PrioritizeByFileType->signal_toggled().connect(
             sigc::compose(

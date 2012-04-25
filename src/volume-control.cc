@@ -48,31 +48,31 @@ namespace
 namespace MPX
 {
         VolumeControl::VolumeControl(
-            const Glib::RefPtr<Gnome::Glade::Xml>& xml
-        ) 
-        : m_inside( 0 )
+            const Glib::RefPtr<Gtk::Builder>& builder
+        )
+            : m_inside( 0 )
         {
-            xml->get_widget( "volume-button", m_volume_toggle ) ;
-            xml->get_widget( "volume-range",  m_volume_range ) ;
-            xml->get_widget( "volume-window", m_volume_window ) ;
-            xml->get_widget( "volume-image",  m_volume_image ) ;
+            builder->get_widget( "volume-button", m_volume_toggle ) ;
+            builder->get_widget( "volume-range",  m_volume_range ) ;
+            builder->get_widget( "volume-window", m_volume_window ) ;
+            builder->get_widget( "volume-image",  m_volume_image ) ;
 
-            m_volume_pixbufs[0] = m_volume_toggle->render_icon( 
+            m_volume_pixbufs[0] = m_volume_toggle->render_icon(
                 Gtk::StockID( "audio-volume-muted" ),
                 Gtk::ICON_SIZE_MENU
             );
 
-            m_volume_pixbufs[1] = m_volume_toggle->render_icon( 
+            m_volume_pixbufs[1] = m_volume_toggle->render_icon(
                 Gtk::StockID( "audio-volume-low" ),
                 Gtk::ICON_SIZE_MENU
             );
 
-            m_volume_pixbufs[2] = m_volume_toggle->render_icon( 
+            m_volume_pixbufs[2] = m_volume_toggle->render_icon(
                 Gtk::StockID( "audio-volume-medium" ),
                 Gtk::ICON_SIZE_MENU
             );
 
-            m_volume_pixbufs[3] = m_volume_toggle->render_icon( 
+            m_volume_pixbufs[3] = m_volume_toggle->render_icon(
                 Gtk::StockID( "audio-volume-high" ),
                 Gtk::ICON_SIZE_MENU
             );
@@ -100,7 +100,7 @@ namespace MPX
                         *this,
                         &VolumeControl::volume_toggle_clicked_cb
             ));
-                    
+
             m_volume_toggle->signal_key_press_event().connect(
                     sigc::mem_fun(
                         *this,
@@ -310,7 +310,7 @@ namespace MPX
         )
         {
             int offset;
-                    
+
 
             if(
                 (event->keyval == GDK_Page_Up)
@@ -361,7 +361,7 @@ namespace MPX
         )
         {
             int offset;
-                    
+
             switch( event->direction )
             {
                     case GDK_SCROLL_UP:

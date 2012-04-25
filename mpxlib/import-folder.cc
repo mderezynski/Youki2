@@ -29,37 +29,40 @@
 #include <glibmm.h>
 #include <glibmm/i18n.h>
 #include <gtkmm.h>
-#include <libglademm.h>
 #include <cstring>
 #include <string>
 #include "import-folder.hh"
 
-using namespace Glib;
-using namespace Gtk;
-
 namespace MPX
 {
+    namespace
+    {
+        const std::string ui_path = DATA_DIR G_SEPARATOR_S "ui" G_SEPARATOR_S "import-folder.ui";
+    }
+
     DialogImportFolder*
     DialogImportFolder::create ()
     {
-      const std::string path (build_filename(DATA_DIR, build_filename("glade","import-folder.glade")));
-      DialogImportFolder *p = new DialogImportFolder(Gnome::Glade::Xml::create (path));
-      return p;
+        DialogImportFolder *p = new DialogImportFolder(Gtk::Builder::create_from_file (ui_path));
+        return p;
     }
 
-    DialogImportFolder::DialogImportFolder(const Glib::RefPtr<Gnome::Glade::Xml>& xml)
-    : Gnome::Glade::WidgetLoader<Gtk::Dialog>(xml, "import-folder")
-    , m_ref_xml(xml)
+    DialogImportFolder::DialogImportFolder(const Glib::RefPtr<Gtk::Builder>& builder)
+        : WidgetLoader<Gtk::Dialog>(xml, "import-folder")
     {
     }
 
     void
     DialogImportFolder::get_folder_infos(Glib::ustring& uri)
     {
-        uri = dynamic_cast<FileChooser*>(m_ref_xml->get_widget("fcbutton"))->get_current_folder_uri();
+        Gtk::FileChooserButton* button = 0;
+        m_ref_xml->get_widget("fcbutton", button);
+
+        uri = button->->get_current_folder_uri();
     }
 
     DialogImportFolder::~DialogImportFolder ()
     {
     }
+
 } // namespace MPX

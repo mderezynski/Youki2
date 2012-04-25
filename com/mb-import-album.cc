@@ -25,7 +25,6 @@
 #include <glibmm/i18n.h>
 #include <gtkmm.h>
 #include <glib.h>
-#include <libglademm.h>
 
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
@@ -44,7 +43,6 @@
 
 using namespace Gtk;
 using namespace Glib;
-using namespace Gnome::Glade;
 using namespace MPX;
 using namespace MusicBrainzXml;
 using boost::get;
@@ -52,6 +50,8 @@ using boost::algorithm::trim;
 
 namespace
 {
+    const std::string ui_path = DATA_DIR G_DIR_SEPARATOR_S "ui" G_DIR_SEPARATOR_S "mb-import-album.ui";
+
     const int N_STARS = 6;
 }
 
@@ -61,36 +61,35 @@ namespace MPX
                 MB_ImportAlbum::create(
                 )
                 {
-                        const std::string path = DATA_DIR G_DIR_SEPARATOR_S "glade" G_DIR_SEPARATOR_S "mb-import-album.glade";
-                        Glib::RefPtr<Gnome::Glade::Xml> glade_xml = Gnome::Glade::Xml::create (path);
-                        MB_ImportAlbum * p = new MB_ImportAlbum(glade_xml); 
+                        Glib::RefPtr<Gtk::Builder> builder = Gtk::Builder::create_from_file (ui_path);
+                        MB_ImportAlbum * p = new MB_ImportAlbum(builder);
                         return p;
                 }
 
 
                 MB_ImportAlbum::MB_ImportAlbum(
-                    const Glib::RefPtr<Gnome::Glade::Xml>& xml
+                    const Glib::RefPtr<Gtk::Builder>& builder
                 )
-                : WidgetLoader<Gtk::Window>(xml, "mb-import-album")
+                : WidgetLoader<Gtk::Window>(builder, "mb-import-album")
                 , Service::Base("mpx-service-mbimport")
                 {
                         m_Lib = services->get<Library>("mpx-service-library");
                         m_Covers = services->get<Covers>("mpx-service-covers");
     
-                        glade_xml_signal_autoconnect(xml->gobj());
+                        //glade_xml_signal_autoconnect(xml->gobj());
 
-                        m_Xml->get_widget("mbrel-cover", m_iCover); 
-                        m_Xml->get_widget("button-search", m_bSearch);
-                        m_Xml->get_widget("button-import", m_bImport);
-                        m_Xml->get_widget("button-cancel", m_bCancel);
-                        m_Xml->get_widget("button-add-files", m_bAddFiles);
-                        m_Xml->get_widget("treeview-tracks", m_tTracks);
-                        m_Xml->get_widget("treeview-release", m_tRelease);
+                        m_Builder->get_widget("mbrel-cover", m_iCover); 
+                        m_Builder->get_widget("button-search", m_bSearch);
+                        m_Builder->get_widget("button-import", m_bImport);
+                        m_Builder->get_widget("button-cancel", m_bCancel);
+                        m_Builder->get_widget("button-add-files", m_bAddFiles);
+                        m_Builder->get_widget("treeview-tracks", m_tTracks);
+                        m_Builder->get_widget("treeview-release", m_tRelease);
 
-                        m_Xml->get_widget("cbe-artist", m_CBE_Artist);
-                        m_Xml->get_widget("cbe-album", m_CBE_Album);
-                        m_Xml->get_widget("cbe-genre", m_CBE_Genre);
-                        m_Xml->get_widget("e-mbid", m_eMBID);
+                        m_Builder->get_widget("cbe-artist", m_CBE_Artist);
+                        m_Builder->get_widget("cbe-album", m_CBE_Album);
+                        m_Builder->get_widget("cbe-genre", m_CBE_Genre);
+                        m_Builder->get_widget("e-mbid", m_eMBID);
 
                         m_Model_CBE_Artist = Gtk::ListStore::create( m_Columns_CBE );
                         m_Model_CBE_Album  = Gtk::ListStore::create( m_Columns_CBE );

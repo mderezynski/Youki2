@@ -42,13 +42,13 @@
 namespace MPX
 {
   class PrefsLibrary
-  : public Gnome::Glade::WidgetLoader<Gtk::VBox>
+  : public WidgetLoader<Gtk::VBox>
   , public PluginHolderBase
   {
     public:
 
         PrefsLibrary(
-              const Glib::RefPtr<Gnome::Glade::Xml>&
+              const Glib::RefPtr<Gtk::Builder>&
             , gint64
         ) ;
 
@@ -84,7 +84,7 @@ namespace MPX
         // Library
         Gtk::CheckButton            * m_Library_RescanAtStartup ;
         Gtk::CheckButton            * m_Library_RescanInIntervals ;
-        Gtk::SpinButton             * m_Library_RescanInterval ; 
+        Gtk::SpinButton             * m_Library_RescanInterval ;
         Gtk::ToggleButton           * m_Library_RescanAlwaysVacuum ;
         Gtk::ToggleButton           * m_Library_QuarantineInvalid ;
 

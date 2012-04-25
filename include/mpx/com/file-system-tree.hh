@@ -22,7 +22,7 @@
 //  permission is above and beyond the permissions granted by the GPL license
 //  MPX is covered by.
 
-#ifndef MPX_FILE_SYSTEM_TREE_HH 
+#ifndef MPX_FILE_SYSTEM_TREE_HH
 #define MPX_FILE_SYSTEM_TREE_HH
 
 #ifdef HAVE_CONFIG_H
@@ -30,7 +30,6 @@
 #endif // HAVE_CONFIG_H
 #include <giomm.h>
 #include <gtkmm.h>
-#include <libglademm/xml.h>
 #include <sigx/sigx.h>
 #include "mpx/widgets/widgetloader.hh"
 
@@ -39,20 +38,20 @@ namespace MPX
     typedef sigc::signal<void, Glib::ustring> SignalUri;
 
     class FileSystemTree
-      : public Gnome::Glade::WidgetLoader<Gtk::TreeView>
+      : public WidgetLoader<Gtk::TreeView>
       , public sigx::glib_auto_dispatchable
     {
             SignalUri       signalUri;
 
         public:
-                
+
             SignalUri&
             signal_uri()
             {
                 return signalUri;
             }
 
-            FileSystemTree (Glib::RefPtr<Gnome::Glade::Xml> const& xml, std::string const&); 
+            FileSystemTree (Glib::RefPtr<Gtk::Builder> const& builder, std::string const&);
             virtual ~FileSystemTree () {}
 
             void
@@ -79,7 +78,7 @@ namespace MPX
 
             void
             append_path (std::string const& root_path, Gtk::TreeIter & root_iter);
-            
+
             void
             cell_data_func_text (Gtk::CellRenderer * basecell, Gtk::TreeIter const& iter);
 

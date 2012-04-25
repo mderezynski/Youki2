@@ -131,7 +131,7 @@ namespace MPX
         {
             GdkRectangle r ;
 
-            int off = GTK_BUTTON(gobj())->GSEAL(depressed) ? 1 : 0 ;
+            int off = get_active ();
 
             r.x         = a.get_x() + (a.get_width() - m_pixbuf_size) / 2 + off ;
             r.y         = a.get_y() + (a.get_height() - m_pixbuf_size) / 2 + off ;

@@ -25,7 +25,6 @@
 #include <glibmm/i18n.h>
 #include <gtkmm.h>
 #include <glib.h>
-#include <libglademm.h>
 
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
@@ -42,26 +41,27 @@
 
 using namespace Gtk;
 using namespace Glib;
-using namespace Gnome::Glade;
 using namespace MPX;
 using boost::get;
 using boost::algorithm::trim;
 
 namespace
 {
+    const std::string path = DATA_DIR G_DIR_SEPARATOR_S "ui" G_DIR_SEPARATOR_S "album-info-window.ui";
+
     const int N_STARS = 6;
 }
 
 namespace MPX
 {
                 AlbumRatingsList::AlbumRatingsList(
-                    const Glib::RefPtr<Gnome::Glade::Xml>&  xml
+                        const Glib::RefPtr<Gtk::Builder>& builder
                 )
                 : WidgetLoader<Gtk::TreeView>(xml, "album-info-window-ratings-list")
                 {
-                        Store = Gtk::ListStore::create(Columns); 
+                        Store = Gtk::ListStore::create(Columns);
 
-                        append_column(_("Date"), Columns.DateString);            
+                        append_column(_("Date"), Columns.DateString);
 
                         TreeViewColumn * col = manage (new TreeViewColumn(_("Rating")));
                         CellRendererPixbuf * cell = manage (new CellRendererPixbuf);
@@ -76,22 +76,16 @@ namespace MPX
                                                 ));
                         append_column(*col);
 
-                        append_column(_("Abstract"), Columns.ShortText);            
+                        append_column(_("Abstract"), Columns.ShortText);
 
                         for(int n = 0; n < N_STARS; ++n)
                         {
                                 Stars[n] = Gdk::Pixbuf::create_from_file(
-                                                build_filename(
-                                                        build_filename(
-                                                                "/usr/share/audiosource",
-                                                                "images"
-                                                                ),
-                                                        (boost::format("stars%d.png") % n).str()
-                                                        ));
+                                         Glib::build_filename("/usr/share/audiosource/images"), (boost::format("stars%d.png") % n).str());
                         }
 
                         Gtk::TextView * view;
-                        m_Xml->get_widget("albumcommentview", view);
+                        m_Builder->get_widget("albumcommentview", view);
                         Buffer = view->get_buffer();
 
                         get_selection()->signal_changed().connect(
@@ -163,33 +157,32 @@ namespace MPX
                     MPX::Covers               & obj_covers
                 )
                 {
-                        const std::string path = DATA_DIR G_DIR_SEPARATOR_S "glade" G_DIR_SEPARATOR_S "album-info-window.glade";
-                        Glib::RefPtr<Gnome::Glade::Xml> glade_xml = Gnome::Glade::Xml::create (path);
-                        AlbumInfoWindow * p = new AlbumInfoWindow(glade_xml, id, obj_library, obj_covers); 
+                        Glib::RefPtr<Gtk::Builder> builder = Gtk::Builder::create_from_file (path);
+                        AlbumInfoWindow * p = new AlbumInfoWindow(builder, id, obj_library, obj_covers); 
                         return p;
                 }
 
 
                 AlbumInfoWindow::AlbumInfoWindow(
-                    const Glib::RefPtr<Gnome::Glade::Xml>&  xml,
-                    gint64                                  id,
-                    MPX::Library                          & obj_library,    
-                    MPX::Covers                           & obj_covers
+                    const Glib::RefPtr<Gtk::Builder>& builder,
+                    gint64                            id,
+                    MPX::Library                    & obj_library,
+                    MPX::Covers                     & obj_covers
                 )
-                : WidgetLoader<Gtk::Window>(xml, "album-info-window")
+                : WidgetLoader<Gtk::Window>(builder, "album-info-window")
                 , m_Id(id)
                 , m_Lib(obj_library)
                 , m_Covers(obj_covers)
                 {
-                        glade_xml_signal_autoconnect(xml->gobj());
+                        //glade_xml_signal_autoconnect(xml->gobj());
 
-                        m_Xml->get_widget("album-info-window-cover", m_ImageCover); 
-                        m_Xml->get_widget("album-info-window-label-artist", m_l1);
-                        m_Xml->get_widget("album-info-window-label-album", m_l2);
-                        m_Xml->get_widget("album-info-window-label-release", m_l3);
-                        m_Xml->get_widget("album-info-window-label-mbid", m_l4);
-                        m_Xml->get_widget("album-info-window-label-tracks", m_l5);
-                        m_Xml->get_widget("album-info-window-delete-rating", m_delete_rating);
+                        m_Builder->get_widget("album-info-window-cover", m_ImageCover);
+                        m_Builder->get_widget("album-info-window-label-artist", m_l1);
+                        m_Builder->get_widget("album-info-window-label-album", m_l2);
+                        m_Builder->get_widget("album-info-window-label-release", m_l3);
+                        m_Builder->get_widget("album-info-window-label-mbid", m_l4);
+                        m_Builder->get_widget("album-info-window-label-tracks", m_l5);
+                        m_Builder->get_widget("album-info-window-delete-rating", m_delete_rating);
 
                         m_delete_rating->signal_clicked().connect(
                                         sigc::mem_fun(

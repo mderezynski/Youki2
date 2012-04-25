@@ -43,6 +43,8 @@ namespace MPX
 {
     namespace
     {
+        const char *ui_path = DATA_DIR G_DIR_SEPARATOR_S "ui" G_DIR_SEPARATOR_S "cppmod-prefs-coverart.ui";
+
         char const* sources[] =
         {
             N_("Local files (folder.jpg, cover.jpg, etc.)"),
@@ -53,8 +55,6 @@ namespace MPX
             N_("LastFM Cover Search")
         };
     }  // namespace
-
-    using namespace Gnome::Glade;
 
     typedef sigc::signal<void, int, bool> SignalColumnState;
 
@@ -88,8 +88,8 @@ namespace MPX
             Columns_t                       Columns;
             Glib::RefPtr<Gtk::ListStore>    Store;
 
-            CoverArtSourceView (const Glib::RefPtr<Gnome::Glade::Xml>& xml)
-                : WidgetLoader<Gtk::TreeView>(xml, "preferences-treeview-coverartsources")
+            CoverArtSourceView (const Glib::RefPtr<Gtk::Builder>& builder)
+                : WidgetLoader<Gtk::TreeView>(builder, "preferences-treeview-coverartsources")
             {
                 Store = Gtk::ListStore::create(Columns);
                 set_model(Store);
@@ -165,7 +165,7 @@ namespace MPX
     PrefsCoverart*
         PrefsCoverart::create(gint64 id)
     {
-        return new PrefsCoverart (Gnome::Glade::Xml::create (build_filename(DATA_DIR, "glade" G_DIR_SEPARATOR_S "cppmod-prefs-coverart.glade")), id );
+        return new PrefsCoverart (Gtk::Builder::create_from_file (ui_path, id);
     }
 
     PrefsCoverart::~PrefsCoverart ()
@@ -173,10 +173,10 @@ namespace MPX
     }
 
     PrefsCoverart::PrefsCoverart(
-          const Glib::RefPtr<Gnome::Glade::Xml>&    xml
-        , gint64                                    id
+          const Glib::RefPtr<Gtk::Builder>& builder
+        , gint64                            id
     )
-        : Gnome::Glade::WidgetLoader<Gtk::VBox>(xml, "cppmod-prefs-coverart")
+        : WidgetLoader<Gtk::VBox>(builder, "cppmod-prefs-coverart")
         , PluginHolderBase()
     {
         m_Name = "PreferencesModule COVERART" ;
@@ -198,7 +198,7 @@ namespace MPX
             , _("Coverart Sources")
         ) ;
 
-        m_Covers_CoverArtSources = new CoverArtSourceView(m_Xml);
+        m_Covers_CoverArtSources = new CoverArtSourceView(m_Builder);
 
         show_all() ;
     }

@@ -29,7 +29,6 @@
 #include <glibmm.h>
 #include <glib/gi18n.h>
 #include <gtkmm.h>
-#include <libglademm.h>
 #include <boost/format.hpp>
 #include "mpx/mpx-main.hh"
 
@@ -37,6 +36,8 @@
 
 namespace
 {
+  const std::string ui_path = DATA_DIR G_DIR_SEPARATOR_S "ui" G_DIR_SEPARATOR_S "equalizer.ui";
+
   static boost::format band_f ("band%d");
 }
 
@@ -46,12 +47,10 @@ namespace MPX
   Equalizer *
   Equalizer::create ()
   {
-      const std::string path = DATA_DIR G_DIR_SEPARATOR_S "glade" G_DIR_SEPARATOR_S "equalizer.glade";
-
-      Glib::RefPtr<Gnome::Glade::Xml> glade_xml = Gnome::Glade::Xml::create(path);
+      Glib::RefPtr<Gtk::Builder> builder = Gtk::Builder::create_from_file(ui_path);
 
       Equalizer* dialog = 0;
-      glade_xml->get_widget_derived ("equalizer", dialog);
+      ui->get_widget_derived ("equalizer", dialog);
 
       return dialog;
   }
@@ -65,20 +64,27 @@ namespace MPX
     }
   }
 
-  Equalizer::Equalizer (BaseObjectType*                        obj,
-                        Glib::RefPtr<Gnome::Glade::Xml> const& xml)
-  : Gtk::Window (obj)
-  , m_ref_xml   (xml)
+  Equalizer::Equalizer (BaseObjectType*                   obj,
+                        Glib::RefPtr<Gtk::Builder> const& builder)
+  : Gtk::Window   (obj)
+  , m_ref_builder (builder)
   {
-    dynamic_cast<Gtk::Button*>(m_ref_xml->get_widget ("close"))->signal_clicked().connect
-      (sigc::mem_fun (this, &Equalizer::hide));
+    Gtk::Button* close_button = 0;
+    m_ref_builder->get_widget ("close", close_button);
+    close_button->signal_clicked ().connect (sigc::mem_fun (this, &Equalizer::hide));
 
-    dynamic_cast<Gtk::Button*>(m_ref_xml->get_widget ("reset"))->signal_clicked().connect
-      (sigc::mem_fun (this, &Equalizer::reset));
+    Gtk::Button* reset_button = 0;
+    m_ref_builder->get_widget ("reset", reset_button);
+    reset_button->signal_clicked ().connect (sigc::mem_fun (this, &Equalizer::reset));
 
     for (int n = 0; n < 10; ++n)
     {
-      mcs_bind->bind_range_float(*dynamic_cast<Gtk::Range*> (m_ref_xml->get_widget ((band_f % n).str ())) , "audio", (band_f % n).str());
+      std::string band_name = (band_f % n).str;
+
+      Gtk::Range *range = 0;
+      m_ref_builder->get_widget(band_name, range);
+
+      mcs_bind->bind_range_float(range, "audio", band_name);
     }
   }
 } // namespace MPX

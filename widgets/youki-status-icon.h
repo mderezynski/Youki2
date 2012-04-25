@@ -24,8 +24,7 @@
 #ifndef YOUKI_STATUS_ICON_H
 #define YOUKI_STATUS_ICON_H
 
-#include <gtk/gtkimage.h>
-#include <gtk/gtkmenu.h>
+#include <gtk/gtk.h>
 #include "youki-tray-icon.h"
 
 G_BEGIN_DECLS

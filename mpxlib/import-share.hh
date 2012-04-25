@@ -28,15 +28,16 @@
 
 #include <glibmm/ustring.h>
 #include <gtkmm/dialog.h>
-#include <libglademm/xml.h>
+#include <gtkmm/entry.h>
+#include <gtkmm/togglebutton.h>
 
 namespace MPX
 {
   class DialogImportShare
-      : public Gnome::Glade::WidgetLoader<Gtk::Dialog>
+      : public WidgetLoader<Gtk::Dialog>
   {
       public:
-          DialogImportShare (Glib::RefPtr<Gnome::Glade::Xml> const& xml);
+          DialogImportShare (Glib::RefPtr<Gtk::Builder> const& xml);
           static DialogImportShare* create ();
           virtual ~DialogImportShare ();
 
@@ -48,7 +49,11 @@ namespace MPX
 
       private:
 
-        Glib::RefPtr<Gnome::Glade::Xml>	m_ref_xml;
+          Gtk::Entry* m_name_entry;
+          Gtk::Entry* m_login_entry;
+          Gtk::Entry* m_password_entry;
+          Gtk::Entry* m_location_entry;
+          Gtk::ToggleButton* m_show_creds_button;
   };
 } // namespace MPX
 

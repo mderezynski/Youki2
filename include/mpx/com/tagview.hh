@@ -5,7 +5,6 @@
 #include <cairomm/cairomm.h>
 #include <boost/shared_ptr.hpp>
 #include "mpx/widgets/widgetloader.hh"
-#include <libglademm/xml.h>
 
 namespace MPX
 {

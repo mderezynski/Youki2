@@ -31,42 +31,47 @@
 #include <glibmm.h>
 #include <glibmm/i18n.h>
 #include <gtkmm.h>
-#include <libglademm.h>
-#include <cstring>
 #include <string>
-
-using namespace Glib;
-using namespace Gtk;
 
 namespace MPX
 {
+    namespace
+    {
+        const std::string ui_path = DATA_DIR G_DIR_SEPARATOR_S "ui" G_DIR_SEPARATOR_S "request-value.ui";
+    }
+
     RequestValue*
     RequestValue::create ()
     {
-      const std::string path = DATA_DIR G_DIR_SEPARATOR_S "glade" G_DIR_SEPARATOR_S "request-value.glade";
-      RequestValue *p = new RequestValue(Gnome::Glade::Xml::create (path));
-      return p;
+        RequestValue *p = new RequestValue(Gtk::Builder::create_from_file (ui_path));
+        return p;
     }
 
-    RequestValue::RequestValue(const Glib::RefPtr<Gnome::Glade::Xml>& xml)
-    : Gnome::Glade::WidgetLoader<Gtk::Dialog>(xml, "request-value")
-    , m_ref_xml(xml)
+    RequestValue::RequestValue(const Glib::RefPtr<Gtk::Builder>& builder)
+        : WidgetLoader<Gtk::Dialog>(builder, "request-value")
     {
     }
 
     void
     RequestValue::get_request_infos(Glib::ustring& value)
     {
-        value = dynamic_cast<Entry*>(m_ref_xml->get_widget("field"))->get_text();
+        Gtk::Entry* entry = 0;
+        m_Builder->get_widget("field", entry);
+
+        value = entry->get_text();
     }
 
     void
     RequestValue::set_question(const Glib::ustring& question)
     {
-        dynamic_cast<Label*>(m_ref_xml->get_widget("question"))->set_text(question);
+        Gtk::Label* label = 0;
+        m_Builder->get_widget("question", label);
+
+        label->set_text(question);
     }
 
     RequestValue::~RequestValue ()
     {
     }
+
 } // namespace MPX

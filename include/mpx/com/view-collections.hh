@@ -27,7 +27,6 @@
 #include <gtkmm.h>
 #include <glib.h>
 #include <giomm.h>
-#include <libglademm.h>
 #include <Python.h>
 #define NO_IMPORT
 #include <pygobject.h>
@@ -70,7 +69,7 @@ namespace MPX
                 };
 
                class CollectionTreeView
-                        :   public Gnome::Glade::WidgetLoader<Gtk::TreeView>
+                        :   public WidgetLoader<Gtk::TreeView>
                 {
                     public:
 
@@ -192,7 +191,7 @@ namespace MPX
                         }
 
                         CollectionTreeView(
-                              const Glib::RefPtr<Gnome::Glade::Xml>&
+                              const Glib::RefPtr<Gtk::Builder>&
                             , const std::string&
                             , const std::string&
                             , const std::string&

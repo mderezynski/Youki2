@@ -25,7 +25,6 @@
 #include <gtkmm.h>
 #include <glib.h>
 #include <giomm.h>
-#include <libglademm.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
@@ -51,7 +50,6 @@
 
 using namespace Gtk;
 using namespace Glib;
-using namespace Gnome::Glade;
 using namespace MPX;
 using boost::get;
 using boost::algorithm::trim;
@@ -113,13 +111,13 @@ namespace
 namespace MPX
 {
                 CollectionTreeView::CollectionTreeView(
-                          const Glib::RefPtr<Gnome::Glade::Xml>&  xml    
-                        , const std::string&                      name
-                        , const std::string&                      name_showing_label
-                        , const std::string&                      name_filter_entry
-                        , Glib::RefPtr<Gtk::UIManager>            ui_manager
+                          const Glib::RefPtr<Gtk::Builder>& builder
+                        , const std::string&                name
+                        , const std::string&                name_showing_label
+                        , const std::string&                name_filter_entry
+                        , Glib::RefPtr<Gtk::UIManager>      ui_manager
                 )
-                : WidgetLoader<Gtk::TreeView>(xml,name)
+                : WidgetLoader<Gtk::TreeView>(builder, name)
                 , m_Name(name)
                 , m_ButtonPressed(false)
                 {
@@ -168,7 +166,7 @@ namespace MPX
 #endif
 
                         if( !name_showing_label.empty() )
-                            m_LabelShowing = new RoundedLayout(xml, name_showing_label);
+                            m_LabelShowing = new RoundedLayout(builder, name_showing_label);
                         else
                             m_LabelShowing = 0;
 
@@ -288,9 +286,9 @@ namespace MPX
                         std::vector<TargetEntry> Entries;
                         Entries.push_back(TargetEntry("mpx-collection", TARGET_SAME_APP, 0x90));
                         Entries.push_back(TargetEntry("mpx-track", TARGET_SAME_APP, 0x81));
-                        drag_source_set(Entries); 
+                        drag_source_set(Entries);
 
-                        xml->get_widget(name_filter_entry, m_FilterEntry);
+                        builder->get_widget(name_filter_entry, m_FilterEntry);
 
                         m_FilterEntry->signal_changed().connect(
                                         sigc::mem_fun(

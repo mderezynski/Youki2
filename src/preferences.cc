@@ -33,7 +33,6 @@
 #include <glib/gi18n.h>
 #include <gtk/gtkstock.h>
 #include <gtkmm.h>
-#include <libglademm.h>
 
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
@@ -63,11 +62,16 @@ using namespace Gtk ;
 
 namespace MPX
 {
+    namespace
+    {
+        const std::string ui_path = DATA_DIR G_DIR_SEPARATOR_S "ui" G_DIR_SEPARATOR_S "preferences.ui";
+    }
+
     //// Preferences
     Preferences*
         Preferences::create ()
     {
-        return new Preferences (Gnome::Glade::Xml::create (build_filename(DATA_DIR, "glade" G_DIR_SEPARATOR_S "preferences.glade")));
+        return new Preferences (Gtk::Builder::create_from_file (ui_path));
     }
 
     Preferences::~Preferences ()
@@ -124,20 +128,18 @@ namespace MPX
     }
 
     Preferences::Preferences(
-        const Glib::RefPtr<Gnome::Glade::Xml>&  xml
+        const Glib::RefPtr<Gtk::Builder>& builder
     )
-        : Gnome::Glade::WidgetLoader<Gtk::Window>(xml, "preferences")
+        : WidgetLoader<Gtk::Window>(builder, "preferences")
         , MPX::Service::Base("mpx-service-preferences")
     {
-        dynamic_cast<Button*>(m_Xml->get_widget ("close"))->signal_clicked().connect(
-            sigc::mem_fun(
-                *this
-              , &Preferences::hide
-        ));
+        Gtk::Button* close_button = 0;
+        m_Builder->get_widget ("close", close_button);
+        close_button->signal_clicked().connect(sigc::mem_fun(*this, &Preferences::hide));
 
         mcs->key_register("mpx","preferences-notebook-page", 0);
 
-        m_Xml->get_widget ("notebook", m_notebook_preferences);
+        m_Builder->get_widget ("notebook", m_notebook_preferences);
         m_notebook_preferences->set_current_page( mcs->key_get<int>("mpx","preferences-notebook-page") );
     }
 }  // namespace MPX

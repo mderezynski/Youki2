@@ -23,7 +23,6 @@
 #include <pygtk/pygtk.h>
 #include <pycairo/pycairo.h>
 #include <gdkmm/pixbuf.h>
-#include <libglademm/xml.h>
 
 #include "pysigc.hh"
 #include "gtkmmmodule.h"

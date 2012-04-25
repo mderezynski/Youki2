@@ -29,7 +29,6 @@
 #include <boost/format.hpp>
 #include <glibmm.h>
 #include <glibmm/i18n.h>
-#include <libglademm/xml.h>
 
 #include "mpx/mpx-main.hh"
 #include "mpx/mpx-plugin.hh"
@@ -42,7 +41,7 @@ using namespace Gtk;
 namespace MPX
 {
 	class PluginTreeView
-          : public Gnome::Glade::WidgetLoader<Gtk::TreeView>
+          : public WidgetLoader<Gtk::TreeView>
 	{
             typedef std::map<guint, Gtk::TreeIter> IdIterMap_t;
     
@@ -75,7 +74,7 @@ namespace MPX
 					add(Name);
 				};
 			};
-	
+
             Gtk::Window                   & m_GUI;
 
 			Glib::RefPtr<Gtk::ListStore>    Store;
@@ -87,12 +86,12 @@ namespace MPX
 		public:
 
 			PluginTreeView(
-                  const Glib::RefPtr<Gnome::Glade::Xml>&  xml
-                , PluginManager&                          manager
-                , Gtk::Window&                            gui
+                  const Glib::RefPtr<Gtk::Builder>& builder
+                , PluginManager&                    manager
+                , Gtk::Window&                      gui
             )
 
-            : Gnome::Glade::WidgetLoader<Gtk::TreeView>(xml, "treeview")
+            : WidgetLoader<Gtk::TreeView>(builder, "treeview")
             , m_GUI(gui)
 
 			{
@@ -128,7 +127,7 @@ namespace MPX
                     )
                 );
 
-				PluginHoldMap_t const& map = services->get<PluginManager>("mpx-service-plugins")->get_map();	
+				PluginHoldMap_t const& map = services->get<PluginManager>("mpx-service-plugins")->get_map();
 
 				for( PluginHoldMap_t::const_iterator i = map.begin(); i != map.end(); ++i )
 				{
@@ -306,31 +305,29 @@ namespace MPX
 		}
 
 		PluginManagerGUI::PluginManagerGUI(
-            const Glib::RefPtr<Gnome::Glade::Xml>& xml
+            const Glib::RefPtr<Gtk::Builder>& builder
         )
-        : Gnome::Glade::WidgetLoader<Gtk::Window>(xml, "window")
+        : WidgetLoader<Gtk::Window>(builder, "window")
         , Service::Base("mpx-service-plugins-gui")
 		{
-		    m_PluginTreeView = new PluginTreeView(xml, *(services->get<PluginManager>("mpx-service-plugins").get()), *this);
+		    m_PluginTreeView = new PluginTreeView(builder, *(services->get<PluginManager>("mpx-service-plugins").get()), *this);
 			m_PluginTreeView->get_selection()->signal_changed().connect(
                     sigc::mem_fun(
                         *this,
                         &PluginManagerGUI::on_selection_changed
             ));
 
-			xml->get_widget("overview", m_Overview);
-			xml->get_widget("options", m_Options);
-			xml->get_widget("error", m_Error);
-			xml->get_widget("notebook", m_Notebook);
-			m_Notebook->get_nth_page(1)->hide();
+			builder->get_widget("overview", m_Overview);
+			builder->get_widget("options", m_Options);
+			builder->get_widget("error", m_Error);
+			builder->get_widget("notebook", m_Notebook);
+			builder->get_nth_page(1)->hide();
 
-			dynamic_cast<Gtk::Button*>(xml->get_widget("close"))->signal_clicked().connect(
-                sigc::mem_fun(
-                    *this,
-                    &PluginManagerGUI::hide
-            ));
+            Gtk::Button* close_button = 0;
+            builder->get_widget("close", close_button);
+			close_button->signal_clicked().connect(sigc::mem_fun(*this, &PluginManagerGUI::hide));
 
-			xml->get_widget("traceback", m_Button_Traceback);
+			builder->get_widget("traceback", m_Button_Traceback);
 			m_Button_Traceback->signal_clicked().connect(
                     sigc::mem_fun(
                         *this,
@@ -367,8 +364,8 @@ namespace MPX
 		PluginManagerGUI*
 		PluginManagerGUI::create ()
 		{
-			const std::string path (build_filename(DATA_DIR, build_filename("glade","pluginmanager.glade")));
-			PluginManagerGUI * p = new PluginManagerGUI(Gnome::Glade::Xml::create (path)); 
+			const std::string path = DATA_DIR G_DIR_SEPARATOR_S "ui" G_DIR_SEPARATOR_S "pluginmanager.ui";
+			PluginManagerGUI * p = new PluginManagerGUI(Gtk::Builder::create_from_file (path));
 			return p;
 		}
 

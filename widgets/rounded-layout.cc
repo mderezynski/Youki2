@@ -6,14 +6,14 @@
 namespace MPX
 {
     RoundedLayout::RoundedLayout(
-          const Glib::RefPtr<Gnome::Glade::Xml>&  xml
-        , const std::string&                      name
-        , CairoCorners::CORNERS                   corners
-        , double                                  radius
+          const Glib::RefPtr<Gtk::Builder>& builder
+        , const std::string&                name
+        , CairoCorners::CORNERS             corners
+        , double                            radius
     )
-    : Gnome::Glade::WidgetLoader<Gtk::DrawingArea>(xml, name)
-    , m_corners( corners )
-    , m_radius( radius )
+        : WidgetLoader<Gtk::DrawingArea> (builder, name)
+        , m_corners( corners )
+        , m_radius( radius )
     {
         add_events(Gdk::EXPOSURE_MASK);
     }

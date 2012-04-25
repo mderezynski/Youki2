@@ -30,7 +30,6 @@
 
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
-#include <gtk/gtkprivate.h>
 
 #include "widget-marshalers.h"
 #include "youki-status-icon.h"
@@ -132,7 +131,7 @@ youki_status_icon_class_init (YoukiStatusIconClass *class)
 							_("Pixbuf"),
 							_("A GdkPixbuf to display"),
 							GDK_TYPE_PIXBUF,
-							GTK_PARAM_READWRITE));
+							G_PARAM_READWRITE));
 
   g_object_class_install_property (gobject_class,
 				   PROP_FILE,
@@ -140,7 +139,7 @@ youki_status_icon_class_init (YoukiStatusIconClass *class)
 							_("Filename"),
 							_("Filename to load and display"),
 							NULL,
-							GTK_PARAM_WRITABLE));
+							G_PARAM_WRITABLE));
 
   g_object_class_install_property (gobject_class,
 				   PROP_STOCK,
@@ -148,7 +147,7 @@ youki_status_icon_class_init (YoukiStatusIconClass *class)
 							_("Stock ID"),
 							_("Stock ID for a stock image to display"),
 							NULL,
-							GTK_PARAM_READWRITE));
+							G_PARAM_READWRITE));
   
   g_object_class_install_property (gobject_class,
                                    PROP_ICON_NAME,
@@ -156,7 +155,7 @@ youki_status_icon_class_init (YoukiStatusIconClass *class)
                                                         _("Icon Name"),
                                                         _("The name of the icon from the icon theme"),
                                                         NULL,
-                                                        GTK_PARAM_READWRITE));
+                                                        G_PARAM_READWRITE));
   
   g_object_class_install_property (gobject_class,
 				   PROP_STORAGE_TYPE,
@@ -165,7 +164,7 @@ youki_status_icon_class_init (YoukiStatusIconClass *class)
 						      _("The representation being used for image data"),
 						      GTK_TYPE_IMAGE_TYPE,
 						      GTK_IMAGE_EMPTY,
-						      GTK_PARAM_READABLE));
+						      G_PARAM_READABLE));
 
   g_object_class_install_property (gobject_class,
 				   PROP_SIZE,
@@ -175,7 +174,7 @@ youki_status_icon_class_init (YoukiStatusIconClass *class)
 						     0,
 						     G_MAXINT,
 						     0,
-						     GTK_PARAM_READABLE));
+						     G_PARAM_READABLE));
 
   g_object_class_install_property (gobject_class,
 				   PROP_BLINKING,
@@ -183,7 +182,7 @@ youki_status_icon_class_init (YoukiStatusIconClass *class)
 							 _("Blinking"),
 							 _("Whether or not the status icon is blinking"),
 							 FALSE,
-							 GTK_PARAM_READWRITE));
+							 G_PARAM_READWRITE));
 
   g_object_class_install_property (gobject_class,
 				   PROP_VISIBLE,
@@ -191,7 +190,7 @@ youki_status_icon_class_init (YoukiStatusIconClass *class)
 							 _("Visible"),
 							 _("Whether or not the status icon is visible"),
 							 TRUE,
-							 GTK_PARAM_READWRITE));
+							 G_PARAM_READWRITE));
 
   /**
    * YoukiStatusIcon::activate:
@@ -771,6 +770,7 @@ youki_status_icon_size_allocate (YoukiStatusIcon *status_icon,
   YoukiStatusIconPrivate *priv = status_icon->priv;
   GtkOrientation orientation;
   gint size;
+  gint xpad, ypad;
 
   orientation = _youki_tray_icon_get_orientation (YOUKI_TRAY_ICON (priv->tray_icon));
 
@@ -779,8 +779,9 @@ youki_status_icon_size_allocate (YoukiStatusIcon *status_icon,
   else
     size = allocation->width;
 
-  priv->image_width = allocation->width - GTK_MISC (priv->image)->xpad * 2;
-  priv->image_height = allocation->height - GTK_MISC (priv->image)->ypad * 2;
+  gtk_misc_get_padding (GTK_MISC (priv->image), &xpad, &ypad);
+  priv->image_width = allocation->width - xpad * 2;
+  priv->image_height = allocation->height - ypad * 2;
 
   if (priv->size != size)
     {
@@ -1329,7 +1330,7 @@ youki_status_icon_is_embedded (YoukiStatusIcon *status_icon)
 
   plug = GTK_PLUG (status_icon->priv->tray_icon);
 
-  if (plug->socket_window)
+  if (gtk_plug_get_socket_window (plug))
     return TRUE;
   else
     return FALSE;
@@ -1365,6 +1366,7 @@ youki_status_icon_position_menu (GtkMenu  *menu,
   GtkTextDirection direction;
   GtkRequisition menu_req;
   GdkRectangle monitor;
+  GtkAllocation allocation;
   gint monitor_num, height, width, xoffset, yoffset;
   
   g_return_if_fail (GTK_IS_MENU (menu));
@@ -1380,30 +1382,32 @@ youki_status_icon_position_menu (GtkMenu  *menu,
   screen = gtk_widget_get_screen (widget);
   gtk_menu_set_screen (menu, screen);
 
-  monitor_num = gdk_screen_get_monitor_at_window (screen, widget->window);
+  monitor_num = gdk_screen_get_monitor_at_window (screen, gtk_widget_get_window (widget));
   if (monitor_num < 0)
     monitor_num = 0;
   gtk_menu_set_monitor (menu, monitor_num);
 
   gdk_screen_get_monitor_geometry (screen, monitor_num, &monitor);
 
-  gdk_window_get_origin (widget->window, x, y);
+  gdk_window_get_origin (gtk_widget_get_window (widget), x, y);
   
   gtk_widget_size_request (GTK_WIDGET (menu), &menu_req);
+
+  gtk_widget_get_allocation (widget, &allocation);
 
   if (_youki_tray_icon_get_orientation (tray_icon) == GTK_ORIENTATION_VERTICAL)
     {
       width = 0;
-      height = widget->allocation.height;
-      xoffset = widget->allocation.width;
+      height = allocation.height;
+      xoffset = allocation.width;
       yoffset = 0;
     }
   else
     {
-      width = widget->allocation.width;
+      width = allocation.width;
       height = 0;
       xoffset = 0;
-      yoffset = widget->allocation.height;
+      yoffset = allocation.height;
     }
 
   if (direction == GTK_TEXT_DIR_RTL)
@@ -1479,23 +1483,25 @@ youki_status_icon_get_geometry (YoukiStatusIcon    *status_icon,
 {
   GtkWidget *widget;
   YoukiStatusIconPrivate *priv;
+  GtkAllocation allocation;
   gint x, y;
 
   g_return_val_if_fail (YOUKI_IS_STATUS_ICON (status_icon), FALSE);
 
   priv = status_icon->priv;
   widget = priv->tray_icon;
+  gtk_widget_get_allocation (widget, &allocation);
 
   if (screen)
     *screen = gtk_widget_get_screen (widget);
 
   if (area)
     {
-      gdk_window_get_origin (widget->window, &x, &y);
+      gdk_window_get_origin (gtk_widget_get_window (widget), &x, &y);
       area->x = x;
       area->y = y;
-      area->width = widget->allocation.width;
-      area->height = widget->allocation.height;
+      area->width = allocation.width;
+      area->height = allocation.height;
     }
 
   if (orientation)

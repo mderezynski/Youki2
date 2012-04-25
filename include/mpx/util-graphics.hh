@@ -28,8 +28,6 @@
 #include <gtk/gtk.h>
 #include <cairomm/context.h>
 #include <gdkmm/color.h>
-#include <gdkmm/colormap.h>
-#include <gdkmm/drawable.h>
 #include <gdkmm/pixbuf.h>
 #include <gdkmm/screen.h>
 #include <gtkmm/uimanager.h>

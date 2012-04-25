@@ -2,19 +2,21 @@
 #include "config.h"
 #include <gtkmm.h>
 #include <boost/format.hpp>
-
+#include <string>
 
 namespace MPX
 {
+    namespace
+    {
+        const std::string = DATA_DIR G_DIR_SEPARATOR_S "ui" G_DIR_SEPARATOR_S "timed-confirmation.ui";
+    }
+
     TimedConfirmation::TimedConfirmation(
         Glib::ustring const& text,
         int                  seconds
     )
-    : Gnome::Glade::WidgetLoader<Gtk::Dialog>(
-            Gnome::Glade::Xml::create(DATA_DIR G_DIR_SEPARATOR_S "glade" G_DIR_SEPARATOR_S "timed-confirmation.glade"),
-            "dialog"
-      )
-    , m_Seconds(seconds)
+        : WidgetLoader<Gtk::Dialog>(Gtk::Builder::create_from_file(ui_path), "dialog")
+        , m_Seconds(seconds)
     {
         set_has_separator(false);
         m_Button_Cancel = add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
@@ -49,7 +51,9 @@ namespace MPX
         get_vbox()->set_border_width(24);
         get_vbox()->set_size_request(-1,250);
 
-        Gtk::Label * label = dynamic_cast<Gtk::Label*>(m_Xml->get_widget("label"));
+        Gtk::Label *label = 0;
+        m_Builder->get_widget("label", label);
+
         label->set_markup( markup );
         get_vbox()->pack_start( *label, true, true );
         label->property_wrap() = true;

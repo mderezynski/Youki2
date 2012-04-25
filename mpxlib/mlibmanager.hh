@@ -37,7 +37,6 @@
 #include <gtkmm/filechooserwidget.h>
 #include <gtkmm/filefilter.h>
 #include <gtkmm/window.h>
-#include <libglademm/xml.h>
 #include <sigx/sigx.h>
 
 #include "library-mlibman.hh"
@@ -83,14 +82,14 @@ namespace MPX
     : public info::backtrace::Youki::MLibMan_adaptor
     , public DBus::IntrospectableAdaptor
     , public DBus::ObjectAdaptor
-    , public Gnome::Glade::WidgetLoader<Gtk::Window>
+    , public WidgetLoader<Gtk::Window>
     , public sigx::glib_auto_dispatchable
     , public Service::Base
     {
             FileStatsColumns                    m_FileStats_Columns ;
             Glib::RefPtr<Gtk::ListStore>        m_FileStats_Store ;
             Gtk::TreeView                     * m_FileStats_View ;
-        
+
             void
             update_filestats ();
 
@@ -122,7 +121,7 @@ namespace MPX
         private:
 
             MLibManager(
-                  const Glib::RefPtr<Gnome::Glade::Xml>& 
+                  const Glib::RefPtr<Gtk::Builder>&
                 , DBus::Connection&
             ) ;
 
@@ -306,8 +305,9 @@ namespace MPX
 
             Gtk::Statusbar  * m_Statusbar ;
             Gtk::Widget     * m_VboxInner ;
-	    Gtk::Label	    * m_RescanTimeoutLabel ;
-	    Gtk::ToggleButton * m_ButtonPauseRescan ;
+	        Gtk::Label	    * m_RescanTimeoutLabel ;
+            Gtk::Button     * m_ButtonScan ;
+	        Gtk::ToggleButton * m_ButtonPauseRescan ;
 
             Glib::Timer                     m_RescanTimer ;
 
@@ -387,15 +387,15 @@ namespace MPX
                                               , m_ShareName;
 
         //// DBUS
-    
-            virtual void 
+
+            virtual void
             ShowWindow () ;
 
             virtual void
             Exit () ;
 
             virtual void
-            Start() ; 
+            Start() ;
     } ;
 }
 #endif

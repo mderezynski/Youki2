@@ -31,50 +31,57 @@
 #include <glibmm.h>
 #include <glibmm/i18n.h>
 #include <gtkmm.h>
-#include <libglademm.h>
-#include <cstring>
-#include <string>
-
-using namespace Glib;
-using namespace Gtk;
 
 namespace MPX
 {
+    namespace
+    {
+        const std::string ui_path = DATA_DIR G_SEPARATOR_S "ui" G_SEPARATOR_S "import-share.ui";
+    }
+
     DialogImportShare*
     DialogImportShare::create ()
     {
-      const std::string path (build_filename(DATA_DIR, build_filename("glade","import-share.glade")));
-      DialogImportShare *p = new DialogImportShare(Gnome::Glade::Xml::create (path));
+      DialogImportShare *p = new DialogImportShare(Gtk::Builder::create (path));
       return p;
     }
 
-    DialogImportShare::DialogImportShare(const Glib::RefPtr<Gnome::Glade::Xml>& xml)
-   : Gnome::Glade::WidgetLoader<Gtk::Dialog>(xml, "import-share")
-    , m_ref_xml(xml)
+    DialogImportShare::DialogImportShare(const Glib::RefPtr<Gtk::Builder>& builder)
+        : WidgetLoader<Gtk::Dialog>(builder, "import-share")
     {
-        dynamic_cast<ToggleButton*>(m_ref_xml->get_widget("cb-show-credentials"))->signal_toggled().connect(
+        m_Builder->get_widget("cb-show-credentials", m_show_creds_button);
+
+        m_Builder->get_widget("share-password", m_password_entry);
+        m_Builder->get_widget("share-login"   , m_login_entry);
+        m_Builder->get_widget("share-name"    , m_name_entry);
+        m_Builder->get_widget("share-location", m_location_entry);
+
+        m_show_creds_button->signal_toggled().connect(
             sigc::mem_fun( *this, &DialogImportShare::on_cb_show_credentials_toggled));
     }
 
     void
     DialogImportShare::get_share_infos(Glib::ustring& share, Glib::ustring& name, Glib::ustring& login, Glib::ustring& password)
     {
-        share = dynamic_cast<Entry*>(m_ref_xml->get_widget("share-location"))->get_text();
-        name = dynamic_cast<Entry*>(m_ref_xml->get_widget("share-name"))->get_text();
-        login = dynamic_cast<Entry*>(m_ref_xml->get_widget("share-login"))->get_text();
-        password = dynamic_cast<Entry*>(m_ref_xml->get_widget("share-password"))->get_text();
+        share    = m_location_entry->get_text();
+        name     = m_name_entry->get_text();
+        login    = m_login_entry->get_text();
+        password = m_password_entry->get_text();
     }
 
     void
     DialogImportShare::on_cb_show_credentials_toggled()
     {
-        bool active = dynamic_cast<ToggleButton*>(m_ref_xml->get_widget("cb-show-credentials"))->get_active();
-        dynamic_cast<Entry*>(m_ref_xml->get_widget("share-login"))->property_visibility() = active;
-        dynamic_cast<Entry*>(m_ref_xml->get_widget("share-password"))->property_visibility() = active;
-        m_ref_xml->get_widget("share-login")->grab_focus();
+        bool active = m_show_creds_button->get_active();
+
+        m_login_entry->property_visibility()    = active;
+        m_password_entry->property_visibility() = active;
+
+        m_login_entry->grab_focus();
     }
 
     DialogImportShare::~DialogImportShare ()
     {
     }
+
 } // namespace MPX
