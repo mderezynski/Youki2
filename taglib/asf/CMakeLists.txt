@@ -6,7 +6,7 @@ INCLUDE_DIRECTORIES(
   ${TAGLIB_INCLUDE_DIRS}
   ${GLIBMM_INCLUDE_DIRS}
 )
-  
+
 SET(taglib_plugin_asf_SOURCES
   plugin.cc
   resolver.cpp
@@ -29,4 +29,4 @@ TARGET_LINK_LIBRARIES(taglib_plugin_asf
   mpx_common_reader
 )
 
-INSTALL(TARGETS taglib_plugin_asf LIBRARY DESTINATION ${PLUGIN_DIR}/taglib)
+INSTALL(TARGETS taglib_plugin_asf LIBRARY DESTINATION ${MPX_PLUGIN_DIR}/taglib)

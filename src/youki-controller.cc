@@ -1143,13 +1143,17 @@ namespace MPX
     void
     YoukiController::initiate_quit ()
     {
-	Gtk::Main::quit() ;
+        Gtk::Main::quit() ;
     }
 
     bool
     YoukiController::quit_timeout ()
     {
+<<<<<<< HEAD
 	return false ;
+=======
+        return false;
+>>>>>>> 70b64ece6b1b7021065f055555291a32afb66b28
     }
 
     void
@@ -1484,14 +1488,8 @@ namespace MPX
           unsigned int position
     )
     {
-        if( position < 0 )
-            return ;
-
         unsigned int duration = m_play->property_duration().get_value() ;
     
-        if( duration < 0 )
-            return ;
-
         if( m_seek_position && guint64(position) < m_seek_position.get() ) 
         {
             return ;
@@ -2129,7 +2127,7 @@ namespace MPX
     bool
     YoukiController::on_main_window_key_press_event_after(
           GdkEventKey* event
-    ) 
+    )
     {
 /*
         switch( event->keyval )
@@ -2141,7 +2139,10 @@ namespace MPX
             default: break ;
         }
 */
+<<<<<<< HEAD
 
+=======
+>>>>>>> 70b64ece6b1b7021065f055555291a32afb66b28
         return false ;
     }
 

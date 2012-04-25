@@ -55,7 +55,7 @@ namespace StringOperations
     }
 
     template<typename T>
-    inline std::string toWstring(T& numeric)
+    inline std::wstring toWstring(T& numeric)
     {
         std::wstringstream ss;
         ss << numeric;

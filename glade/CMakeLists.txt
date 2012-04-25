@@ -7,6 +7,6 @@ INSTALL(
         cppmod-scrobbler.glade
         mlibmanager.glade
         pluginmanager.glade
-        preferences.glade				    
-  DESTINATION ${MPX_PKGDATADIR}/glade
+        preferences.glade
+  DESTINATION ${MPX_PKGDATA_DIR}/glade
 )

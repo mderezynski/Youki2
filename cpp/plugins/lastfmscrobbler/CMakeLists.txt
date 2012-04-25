@@ -56,4 +56,4 @@ TARGET_LINK_LIBRARIES(cppmod-lastfmscrobbler
   -lcurl
 )
 
-INSTALL(TARGETS cppmod-lastfmscrobbler LIBRARY DESTINATION ${PLUGIN_DIR}/cppmod)
+INSTALL(TARGETS cppmod-lastfmscrobbler LIBRARY DESTINATION ${MPX_PLUGIN_DIR}/cppmod)

@@ -435,7 +435,7 @@ class MPXDJ(mpx.Plugin):
         self.playmode       = 0
         self.tqueue         = Queue.Queue()
 
-        self.xml            = gtk.glade.XML("@PLUGIN_DIR@" + "/plugins-python/mpxdj/mpxdj.glade")
+        self.xml            = gtk.glade.XML("@MPX_PLUGIN_DIR_FULL@/plugins-python/mpxdj/mpxdj.glade")
 
         self.widget         = self.xml.get_widget("widget")
         self.combo          = self.xml.get_widget("combobox")
@@ -444,12 +444,12 @@ class MPXDJ(mpx.Plugin):
 
 
         self.header_image = self.xml.get_widget("header-image")
-        self.header_image.set_from_file("@PLUGIN_DIR@" + "/plugins-python/mpxdj/mpxdj.png")
+        self.header_image.set_from_file("@MPX_PLUGIN_DIR_FULL@/plugins-python/mpxdj/mpxdj.png")
 
         self.notebook     = self.xml.get_widget("notebook")
 
         try:
-            self.icon = gtk.gdk.pixbuf_new_from_file("@PLUGIN_DIR@" + "/plugins-python/mpxdj/mpxdj-icon.png")
+            self.icon = gtk.gdk.pixbuf_new_from_file("@MPX_PLUGIN_DIR_FULL@/plugins-python/mpxdj/mpxdj-icon.png")
         except:
             self.icon = None
 

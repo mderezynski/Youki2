@@ -64,7 +64,7 @@ class TagTrack():
         self.model      = gtk.ListStore(gobject.TYPE_STRING)
         self.tags       = {}
 
-        self.xml        = gtk.glade.XML("@PLUGIN_DIR@" + "/plugins-python/lastfmstuff/tag-track.glade")
+        self.xml        = gtk.glade.XML("@MPX_PLUGIN_DIR_FULL@/plugins-python/lastfmstuff/tag-track.glade")
         self.dialog     = self.xml.get_widget("dialog")
         self.box        = self.xml.get_widget("entry")
         self.entry      = self.box.child

@@ -32,7 +32,7 @@ class AlbumActions(mpx.Plugin):
         self.id = id
         self.player = player
         self.mcs = mcs
-		self.xml = gtk.glade.XML("@PLUGIN_DIR@" + "/plugins-python/albumactions/albumactions.glade")
+		self.xml = gtk.glade.XML("@MPX_PLUGIN_DIR_FULL@/plugins-python/albumactions/albumactions.glade")
         self.mlib = player.get_source("36068e19-dfb3-49cd-85b4-52cea16fe0fd");
 
         # Actions

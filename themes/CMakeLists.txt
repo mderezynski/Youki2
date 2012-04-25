@@ -1,4 +1,4 @@
 INSTALL(
   FILES popularfruit.mpxtheme
-  DESTINATION ${MPX_PKGDATADIR}/themes
+  DESTINATION ${MPX_PKGDATA_DIR}/themes
 )

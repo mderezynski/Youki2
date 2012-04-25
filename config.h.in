@@ -32,11 +32,11 @@
 #define PREFIX              "@CMAKE_INSTALL_PREFIX@"
 
 /* Data directories */
-#define DATA_DIR            "@DATA_DIR@"
-#define LOCALE_DIR          "@LOCALE_DIR@"
+#define DATA_DIR            "@MPX_PKGDATA_DIR_FULL@"
+#define LOCALE_DIR          "@CMAKE_INSTALL_FULL_LOCALEDIR@"
 
 /* Plugins settings */
-#define PLUGIN_DIR          "@PLUGIN_DIR@"
+#define PLUGIN_DIR          "@MPX_PLUGIN_DIR_FULL@"
 #define PLUGIN_VERSION      @PLUGIN_VERSION@
 
 /* Directory for D-BUS service files */

@@ -299,6 +299,7 @@ namespace Hal
   template<>
   void    Context::filter_device_list  (StrV & in,
                 std::string const& property, std::string value)
+      throw (HALGenericError)
   {
     StrV out;
 
@@ -331,6 +332,7 @@ namespace Hal
   template<>
   void    Context::filter_device_list  (StrV & in,
             std::string const& property, dbus_int32_t value)
+      throw (HALGenericError)
   {
     StrV out;
 
@@ -364,6 +366,7 @@ namespace Hal
   template<>
   void    Context::filter_device_list  (StrV & in,
                     std::string const& property, dbus_uint64_t value)
+      throw (HALGenericError)
   {
     StrV out;
 
@@ -397,6 +400,7 @@ namespace Hal
   template<>
   void    Context::filter_device_list (StrV & in,
                       std::string const& property, double value)
+      throw (HALGenericError)
   {
     StrV out;
 
@@ -430,6 +434,7 @@ namespace Hal
   template<>
   void    Context::filter_device_list  (StrV & in,
                       std::string const& property, bool value)
+      throw (HALGenericError)
   {
     StrV out;
   
@@ -462,6 +467,7 @@ namespace Hal
   template<>
   void    Context::filter_device_list (StrV & in,
                     std::string const& property, StrV const& value)
+      throw (HALGenericError)
   {
     StrV out;
 

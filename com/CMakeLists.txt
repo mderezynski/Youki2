@@ -31,10 +31,10 @@ TARGET_LINK_LIBRARIES(mpx-view-components
   mpx-parsers
 )
 
-INSTALL(TARGETS mpx-view-components LIBRARY DESTINATION ${MPX_LIBDIR})
+INSTALL(TARGETS mpx-view-components LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 INSTALL(
   FILES album-info-window.glade
         mb-import-album.glade
-  DESTINATION ${MPX_PKGDATADIR}/glade
+  DESTINATION ${MPX_PKGDATA_DIR}/glade
 )

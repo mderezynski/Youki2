@@ -18,4 +18,4 @@ TARGET_LINK_LIBRARIES(taglib_plugin_mpc
   mpx_common_reader
 )
 
-INSTALL(TARGETS taglib_plugin_mpc LIBRARY DESTINATION ${PLUGIN_DIR}/taglib)
+INSTALL(TARGETS taglib_plugin_mpc LIBRARY DESTINATION ${MPX_PLUGIN_DIR}/taglib)

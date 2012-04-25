@@ -36,7 +36,7 @@ class LastFMVis(mpx.Plugin):
         self.covers = player.get_covers()
         self.mlib = player.get_source("36068e19-dfb3-49cd-85b4-52cea16fe0fd")
 
-        self.xml = gtk.glade.XML("@PLUGIN_DIR@" + "/plugins-python/lastfmvis/lastfmvis.glade")
+        self.xml = gtk.glade.XML("@MPX_PLUGIN_DIR_FULL@/plugins-python/lastfmvis/lastfmvis.glade")
 
         self.widget = self.xml.get_widget("widget")
         self.widget.unparent()

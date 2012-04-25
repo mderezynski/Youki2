@@ -26,4 +26,4 @@ TARGET_LINK_LIBRARIES(cppmod-audioprefs
   mconfig
 )
 
-INSTALL(TARGETS cppmod-audioprefs LIBRARY DESTINATION ${PLUGIN_DIR}/cppmod)
+INSTALL(TARGETS cppmod-audioprefs LIBRARY DESTINATION ${MPX_PLUGIN_DIR}/cppmod)

@@ -4,11 +4,7 @@
 #include <gtkmm.h>
 #include <cairomm/cairomm.h>
 #include <boost/shared_ptr.hpp>
-#ifdef HAVE_TR1
-#include <tr1/cmath>
-#else
-#include <math.h>
-#endif
+#include <cmath>
 #include "mpx/util-graphics.hh"
 
 using namespace Glib;
@@ -58,11 +54,7 @@ namespace MPX
             {
                 LayoutSP sp = *i;
 
-		#ifdef HAVE_TR1
-                if((x+(std::tr1::round(sp->m_Logical.get_width()-0.5))) > ((get_allocation().get_width()+0.5) / m_Layout.Scale)) 
-		#else
                 if((x+(round(sp->m_Logical.get_width()-0.5))) > ((get_allocation().get_width()+0.5) / m_Layout.Scale)) 
-		#endif
                 {
                     if((x - (TAG_SPACING / m_Layout.Scale)) > mw)
                     {
@@ -109,7 +101,7 @@ namespace MPX
             }
 
             double heightcorrection = (((get_allocation().get_height() - (m_Layout.Rows.size() * (m_Layout.RowHeight * m_Layout.Scale)))) / m_Layout.Scale) / 2.;
-            double height_for_row = (heightcorrection * 2.) / (m_Layout.Rows.size() - 1);
+            //double height_for_row = (heightcorrection * 2.) / (m_Layout.Rows.size() - 1);
             double ry = 0;
 
             int rowcounter = 0;
@@ -122,11 +114,8 @@ namespace MPX
 
                 double rx = (get_allocation().get_width() / 2.) - (((*wi) * m_Layout.Scale) / 2.); // center row
                 //double spacing = (get_allocation().get_width() - ((*wi) * m_Layout.Scale)) / (l.size() - 1);
-		#ifdef HAVE_TR1
-                rx = std::tr1::fmax(0, rx);
-		#else
-                rx = fmax(0, rx);
-		#endif
+                rx = std::max<double>(0, rx);
+
                 rx /= m_Layout.Scale;
                 for(LayoutList::const_iterator r = l.begin(); r != l.end(); ++r) 
                 {

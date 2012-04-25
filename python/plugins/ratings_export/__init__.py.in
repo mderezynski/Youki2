@@ -26,7 +26,7 @@ class Ratings(mpx.Plugin):
         self.covers = player.get_covers()
         self.mlib = player.get_source("36068e19-dfb3-49cd-85b4-52cea16fe0fd")
 
-		self.xml = gtk.glade.XML("@PLUGIN_DIR@" + "/plugins-python/ratings_export/ratings_export.glade")
+		self.xml = gtk.glade.XML("@MPX_PLUGIN_DIR_FULL@/plugins-python/ratings_export/ratings_export.glade")
 		self.dialog = self.xml.get_widget("dialog")
 		self.combo = self.xml.get_widget("combobox")
 		self.label = self.xml.get_widget("label")
@@ -35,7 +35,7 @@ class Ratings(mpx.Plugin):
 		self.go.set_sensitive(False)
 		
 		try:
-			self.icon = gtk.gdk.pixbuf_new_from_file("@PLUGIN_DIR@" + "/plugins-python/ratings_export/rexp-icon.png")
+			self.icon = gtk.gdk.pixbuf_new_from_file("@MPX_PLUGIN_DIR_FULL@/plugins-python/ratings_export/rexp-icon.png")
 		except:
             self.icon = None
 

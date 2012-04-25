@@ -1,3 +1,3 @@
 [D-BUS Service]
 Name=info.backtrace.Youki.App
-Exec=@MPX_LIBEXECDIR@/youki-bin
+Exec=@CMAKE_INSTALL_FULL_LIBEXECDIR@/youki-bin

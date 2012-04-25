@@ -7,7 +7,7 @@ INCLUDE_DIRECTORIES(
 )
 
 SET(mpx_common_reader_SOURCES
-  common.cc 
+  common.cc
   common.hh
 )
 

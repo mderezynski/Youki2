@@ -6,5 +6,5 @@ INSTALL(
         mpxdj-icon.png
         mpxdj.png
         mpxdj.youki-plugin
-  DESTINATION ${PLUGIN_DIR}/plugins-python/mpxdj
+  DESTINATION ${MPX_PLUGIN_DIR}/plugins-python/mpxdj
 )

@@ -27,5 +27,5 @@ TARGET_LINK_LIBRARIES(cppmod-mmkeys
   mpx-api
 )
 
-INSTALL(TARGETS cppmod-mmkeys LIBRARY DESTINATION ${PLUGIN_DIR}/cppmod)
+INSTALL(TARGETS cppmod-mmkeys LIBRARY DESTINATION ${MPX_PLUGIN_DIR}/cppmod)
 

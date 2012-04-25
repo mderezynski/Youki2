@@ -36,7 +36,7 @@
 #include <glib-object.h>
 #include <glib/gprintf.h>
 #include <glibmm/miscutils.h>
-#include <gtk/gtk.h>
+#include <gtkmm.h>
 
 #include <boost/format.hpp>
 
@@ -196,7 +196,7 @@ main (int    argc,
             return EXIT_FAILURE;
         }
 
-        gtk_init (&argc, &argv);
+        Gtk::Main kit (argc, argv);
 
         boost::format error_fmt (_("<big><b>Youki-Startup DBus Error</b></big>\n\nYouki can not be started trough DBus activation.\n"
                                    "The following error occured trying to start up Youki:\n\n'<b>%s</b>'\n\n"
@@ -214,13 +214,7 @@ main (int    argc,
             message = (error_fmt % _("(Unknown error. Perhaps DBus is not running at all?)")).str ();
         }
 
-        GtkWidget * dialog = gtk_message_dialog_new_with_markup(
-                                    NULL
-                                  , GtkDialogFlags (0)
-                                  , GTK_MESSAGE_ERROR
-                                  , GTK_BUTTONS_OK
-                                  , message.c_str()
-        ) ;
+        Gtk::MessageDialog dialog (message, true, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK);
 
         if( error )
         {
@@ -228,9 +222,8 @@ main (int    argc,
             error = NULL ;
         }
 
-        gtk_window_set_title( GTK_WINDOW (dialog), _("Youki-Startup: DBus Error") ) ;
-        gtk_dialog_run( GTK_DIALOG (dialog) ) ;
-        gtk_widget_destroy( dialog ) ;
+        dialog.set_title (_("Youki-Startup: DBus Error"));
+        dialog.run ();
 
         return EXIT_FAILURE;
     }
