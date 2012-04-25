@@ -435,7 +435,7 @@ namespace MPX
 
         Gtk::Alignment* Entry_Align = Gtk::manage( new Gtk::Alignment ) ;
         Entry_Align->add( *m_HBox_Entry ) ;
-	Entry_Align->set_padding( 2, 2, 2, 2 ) ;
+	Entry_Align->set_padding( 2, 2, 2, 4 ) ;
 	Entry_Align->property_xalign() = 1.0 ;
 	Entry_Align->property_xscale() = 0.0 ;
 

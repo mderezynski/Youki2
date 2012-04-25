@@ -1866,25 +1866,7 @@ namespace Albums
 			, c_base.b
 			, c_base.a
 		    ) ;
-		    RoundedRectangle(
-			  cairo
-			, 1
-			, 1
-			, a.get_width() - 7
-			, a.get_height() - 2
-			, rounding
-		    ) ;
-		    cairo->fill() ;
-
-		    RoundedRectangle(
-			  cairo
-			, 1
-			, 1 
-			, a.get_width() - 7
-			, a.get_height() - 2 
-			, rounding
-		    ) ;
-		    cairo->clip() ;
+		    cairo->paint() ;
 
 #if 0
 		    if( !(m_model->size() * m_height__row < m_height__current_viewport))
