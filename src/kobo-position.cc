@@ -125,13 +125,18 @@ namespace MPX
         cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 
         Gdk::Color cgdk ;
-        Gdk::Color c_base_gdk, c1, c2, c3 ; 
+        Gdk::Color c_base_gdk, c_text_dark, c1, c2, c3 ; 
 
 	cgdk.set_rgb_p( c.r, c.g, c.b) ;
 	c_base_gdk.set_rgb_p( c.r, c.g, c.b) ;
 
 	double h, s, b ;
 	
+	Util::color_to_hsb( cgdk, h, s, b ) ;
+	b *= 0.85 ; 
+	s *= 0.90 ;
+	c_text_dark = Util::color_from_hsb( h, s, b ) ;
+
 	Util::color_to_hsb( cgdk, h, s, b ) ;
 	b *= 0.85 ; 
 	c1 = Util::color_from_hsb( h, s, b ) ;
@@ -310,15 +315,15 @@ namespace MPX
 
 	    int xoff = 0 ;
 
-	    if( r.width-3 < (ri.get_width() / PANGO_SCALE)) 
+	    if( r.width-1 < (ri.get_width() / PANGO_SCALE)) 
 	    {
 		xoff = r.width ;
 
 		cairo->set_source_rgba(
-		      c1.get_red_p()
-		    , c1.get_green_p()
-		    , c1.get_blue_p()
-		    , 1.
+		      c_text_dark.get_red_p()
+		    , c_text_dark.get_green_p()
+		    , c_text_dark.get_blue_p()
+		    , 1. * get_alpha_at_time()
 		) ;
 	    }
 	    else
@@ -343,8 +348,7 @@ namespace MPX
 	    }
 	    else
 	    {
-		r1.x = xoff + 2 ;
-//		r1.x = fmax( xoff+3, xoff+3 + double(a.get_width()) * double(percent) - r.width - 7 ) ; 
+		r1.x = xoff + 3 ;
 	    }
 
             cairo->move_to(
@@ -374,9 +378,9 @@ namespace MPX
 	    ) ;
 
 	    cairo->set_source_rgba(
-		  c1.get_red_p()
-		, c1.get_green_p()
-		, c1.get_blue_p()
+		  c_text_dark.get_red_p()
+		, c_text_dark.get_green_p()
+		, c_text_dark.get_blue_p()
 		, 1. * factor
 	    ) ;
 

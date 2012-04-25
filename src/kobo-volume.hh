@@ -14,6 +14,8 @@ namespace MPX
             bool m_clicked ;
 
             IYoukiThemeEngine * m_theme ;            
+
+	    Cairo::RefPtr<Cairo::ImageSurface> m_image_mute ;
     
         public:
 

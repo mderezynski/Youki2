@@ -51,6 +51,9 @@ namespace MPX
         cgdk.set_rgb_p( c.r, c.g, c.b ) ; 
         modify_bg( Gtk::STATE_NORMAL, cgdk ) ;
         modify_base( Gtk::STATE_NORMAL, cgdk ) ;
+
+	m_image_mute = Util::cairo_image_surface_from_pixbuf( Gdk::Pixbuf::create_from_file( Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "mute-small-14x14px.png" ))) ;
+ 
     }
 
     KoboVolume::~KoboVolume () 
@@ -83,15 +86,25 @@ namespace MPX
         Cairo::RefPtr<Cairo::Context> cairo = get_window()->create_cairo_context() ;
 
         const Gdk::Rectangle& a = get_allocation() ;
+	const guint w = a.get_width() - 2 ;
 
         const ThemeColor& c_base /* :) */ = m_theme->get_color( THEME_COLOR_BACKGROUND ) ; 
         const ThemeColor& c = m_theme->get_color( THEME_COLOR_SELECT ) ;
         const ThemeColor& ct = m_theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
 
 	GdkRectangle r ;
+	double h, s, b ;
 
-	Gdk::Color c1 ;
-	c1.set_rgb_p( .2, .2, .2 ) ;
+        Gdk::Color cgdk, c1 ;
+	cgdk.set_rgb_p( c.r, c.g, c.b) ;
+	
+	Util::color_to_hsb( cgdk, h, s, b ) ;
+	//b *= 0.75 ; 
+	s *= 0.50 ;
+	b *= 0.75 ;
+	c1 = Util::color_from_hsb( h, s, b ) ;
+
+	// c1.set_rgb_p( .25, .25, .25 ) ;
 
 	Gdk::Color c2 ;
 	c2.set_rgb_p( c.r, c.g, c.b ) ; 
@@ -108,21 +121,25 @@ namespace MPX
         cairo->paint () ;
 
         cairo->set_operator( Cairo::OPERATOR_OVER ) ;
-
-        // BAR OUTLINE
         RoundedRectangle(
               cairo
             , 1 
             , 1 
-            , a.get_width() - 2
+            , w 
             , 16
             , 2.
         ) ;
-
 	cairo->set_source_rgba(
-	      c_gradient.get_red_p()
-	    , c_gradient.get_green_p()
-	    , c_gradient.get_blue_p()
+	      1 
+	    , 1 
+	    , 1 
+	    , 1 
+	) ;
+	cairo->fill_preserve() ;
+	cairo->set_source_rgba(
+	      c.r
+	    , c.g 
+	    , c.b 
 	    , 1. 
 	) ;
 
@@ -159,97 +176,84 @@ namespace MPX
 	cairo->fill (); 
 	cairo->restore () ;
 
-	const int text_size_px = 13 ;
-	const int text_size_pt = static_cast<int> ((text_size_px * 72) / Util::screen_get_y_resolution (Gdk::Screen::get_default ())) ;
-
-	Pango::FontDescription font_desc = get_style()->get_font() ; 
-	font_desc.set_size (text_size_pt * PANGO_SCALE) ;
-	font_desc.set_weight (Pango::WEIGHT_BOLD) ;
-
-	Glib::RefPtr<Pango::Layout> layout = Glib::wrap (pango_cairo_create_layout (cairo->cobj ())) ;
-
-	layout->set_font_description (font_desc) ;
-
 	if( m_volume == 0 )
 	{
-	    layout->set_text(_("MUTE")) ;
+	    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
+
+	    cairo->set_source(
+		  m_image_mute 
+		, 4
+		, 2
+	    ) ;
+
+	    cairo->rectangle(
+		  4
+		, 2
+		, 14
+		, 14
+	    ) ;
+	    cairo->fill() ;
 	}
 	else
 	{
+	    const int text_size_px = 13 ;
+	    const int text_size_pt = static_cast<int> ((text_size_px * 72) / Util::screen_get_y_resolution (Gdk::Screen::get_default ())) ;
+	    Pango::FontDescription font_desc = get_style()->get_font() ; 
+	    font_desc.set_size(text_size_pt * PANGO_SCALE) ;
+	    font_desc.set_weight(Pango::WEIGHT_BOLD) ;
+	    Glib::RefPtr<Pango::Layout> layout = Glib::wrap (pango_cairo_create_layout (cairo->cobj ())) ;
+	    layout->set_font_description(font_desc) ;
+
 	    layout->set_text(
 		(boost::format("%d") % m_volume).str()
 	    ) ;
-	}
 
-	Pango::Rectangle rl, ri ;
-	layout->get_extents( rl, ri ) ;
+	    Pango::Rectangle rl, ri ;
+	    layout->get_extents( rl, ri ) ;
 
-	int xoff = 0 ;
+	    int xoff = 0 ;
 
-	if( r.width-3 < (ri.get_width()/PANGO_SCALE))
-	{
-	    xoff = r.width ;
+	    if( r.width-3 < (ri.get_width()/PANGO_SCALE))
+	    {
+		xoff = r.width ;
 
-	    cairo->set_source_rgba(
-		  c_gradient.get_red_p()
-		, c_gradient.get_green_p()
-		, c_gradient.get_blue_p()
-		, m_volume == 0 ? 0.6 : 1. 
-	    ) ;
-	}
-	else
-	{
-	    cairo->set_source_rgba(
-		  ct.r
-		, ct.g
-		, ct.b
-		, ct.a
-	    ) ;
-	} 
+		cairo->set_source_rgba(
+		      c1.get_red_p()
+		    , c1.get_green_p()
+		    , c1.get_blue_p()
+		    , 1. 
+		) ;
+	    }
+	    else
+	    {
+		cairo->set_source_rgba(
+		      ct.r
+		    , ct.g
+		    , ct.b
+		    , ct.a
+		) ;
+	    } 
 
-	int x ;
-	int y = (get_height() - (ri.get_height()/PANGO_SCALE))/2. ;
+	    int x = 3 ;
+	    int y = (get_height() - (ri.get_height()/PANGO_SCALE))/2. ;
 
-	if( m_volume == 0 )
-	{
-	    x = (a.get_width()-(ri.get_width()/PANGO_SCALE)) / 2. ;
-	}
-	else
-	{
 	    if( xoff == 0 )
 	    {
 		x = r.width - (ri.get_width() / PANGO_SCALE) - 1 ; 
 	    }
 	    else
 	    {
-		x = xoff + 2 ;
+		x = xoff + 3 ;
 	    }
 
-//	    x = fmax( xoff+2, xoff+2+double((a.get_width() - pad*2)) * double(percent) - (ri.get_width()/PANGO_SCALE) - (pad+4)) ; 
+	    cairo->move_to(
+		  x 
+		, y
+	    ) ;
+
+	    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
+	    pango_cairo_show_layout (cairo->cobj (), layout->gobj ()) ;
 	}
-
-	cairo->move_to(
-	      x 
-	    , y
-	) ;
-
-	cairo->set_operator( Cairo::OPERATOR_OVER ) ;
-	pango_cairo_show_layout (cairo->cobj (), layout->gobj ()) ;
-
-        r.x = 0 ;
-        r.y = 0 ;
-        r.width = a.get_width() ;
-        r.height = a.get_height() ;
-
-        if( has_focus() )
-        {
-            m_theme->draw_focus(
-                  cairo
-                , r 
-                , is_sensitive()
-                , 2.
-            ) ;
-        }
 
         return true ;
     }
