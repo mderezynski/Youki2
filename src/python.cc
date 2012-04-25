@@ -29,7 +29,6 @@
 #include "gtkmmmodule.h"
 
 #include "mpx/mpx-types.hh"
-#include "mpx/mpx-lyrics.hh"
 #include "mpx/mpx-covers.hh"
 #ifdef HAVE_HAL
 #include "mpx/mpx-hal.hh"
