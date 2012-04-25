@@ -125,7 +125,7 @@ namespace
     void
     handle_sql_error( MPX::SQL::SqlGenericError & cxe )
     {
-        Gtk::Dialog dialog ("SQL Error", true, false ) ;
+        Gtk::Dialog dialog ("SQL Error", true) ;
         Gtk::Label label ;
         label.set_text( cxe.what() ) ;
         dialog.get_vbox()->pack_start( label, true, true ) ;

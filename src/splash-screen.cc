@@ -62,33 +62,34 @@ namespace MPX
 
         m_has_alpha = screen->is_composited();
 
-        if( m_has_alpha )
-        {
-            set_colormap (screen->get_rgba_colormap());
-        }
-        else
-        {
-            Glib::RefPtr<Gdk::Pixmap> mask_pixmap_window1, mask_pixmap_window2;
-            Glib::RefPtr<Gdk::Bitmap> mask_bitmap_window1, mask_bitmap_window2;
+        // FIXME: Port this to use Cairo
+        // if( m_has_alpha )
+        // {
+        //     set_colormap (screen->get_rgba_colormap());
+        // }
+        // else
+        // {
+        //     Glib::RefPtr<Gdk::Pixmap> mask_pixmap_window1, mask_pixmap_window2;
+        //     Glib::RefPtr<Gdk::Bitmap> mask_bitmap_window1, mask_bitmap_window2;
 
-            m_logo->render_pixmap_and_mask(
-                  mask_pixmap_window1
-                , mask_bitmap_window1
-                , 0
-            ) ;
+        //     m_logo->render_pixmap_and_mask(
+        //           mask_pixmap_window1
+        //         , mask_bitmap_window1
+        //         , 0
+        //     ) ;
 
-            m_logo->render_pixmap_and_mask(
-                  mask_pixmap_window2
-                , mask_bitmap_window2
-                , 128
-            ) ;
+        //     m_logo->render_pixmap_and_mask(
+        //           mask_pixmap_window2
+        //         , mask_bitmap_window2
+        //         , 128
+        //     ) ;
 
-            shape_combine_mask(
-                  mask_bitmap_window2
-                , 0
-                , 0
-            ) ;
-        }
+        //     shape_combine_mask(
+        //           mask_bitmap_window2
+        //         , 0
+        //         , 0
+        //     ) ;
+        // }
 
         show ();
     }
@@ -161,7 +162,7 @@ namespace MPX
 
         int lw, lh;
 
-        Pango::FontDescription font_desc = get_style()->get_font ();
+        Pango::FontDescription font_desc = get_style_context()->get_font ();
 
         int text_size_px = 8 ;
         int text_size_pt = static_cast<int> ((text_size_px * 72) / Util::screen_get_y_resolution (Gdk::Screen::get_default ())) ;

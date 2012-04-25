@@ -40,16 +40,16 @@ namespace MPX
 
     {
         add_events(Gdk::EventMask(Gdk::LEAVE_NOTIFY_MASK | Gdk::ENTER_NOTIFY_MASK | Gdk::POINTER_MOTION_MASK | Gdk::POINTER_MOTION_HINT_MASK | Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK )) ;
-        unset_flags(Gtk::CAN_FOCUS) ;
+        set_can_focus(false) ;
 
         m_theme = services->get<IYoukiThemeEngine>("mpx-service-theme").get() ;
 
         const ThemeColor& c = m_theme->get_color( THEME_COLOR_BASE ) ;
 
-        Gdk::Color cgdk ;
-        cgdk.set_rgb_p( c.r, c.g, c.b ) ; 
-        modify_bg( Gtk::STATE_NORMAL, cgdk ) ;
-        modify_base( Gtk::STATE_NORMAL, cgdk ) ;
+        Gdk::RGBA cgdk ;
+        cgdk.set_rgba( c.r, c.g, c.b, 1.0 ) ; 
+        override_background_color( cgdk, Gtk::STATE_FLAG_NORMAL ) ;
+        override_color( cgdk, Gtk::STATE_FLAG_NORMAL ) ;
     }
 
     KoboVolume::~KoboVolume () 
@@ -146,7 +146,7 @@ namespace MPX
             const int text_size_px = 12 ;
             const int text_size_pt = static_cast<int> ((text_size_px * 72) / Util::screen_get_y_resolution (Gdk::Screen::get_default ())) ;
 
-            Pango::FontDescription font_desc = get_style()->get_font() ; 
+            Pango::FontDescription font_desc = get_style_context()->get_font() ; 
             font_desc.set_size (text_size_pt * PANGO_SCALE) ;
             font_desc.set_weight (Pango::WEIGHT_BOLD) ;
 
@@ -324,19 +324,19 @@ namespace MPX
     {
         switch( event->keyval )
         {
-            case GDK_Left:
-            case GDK_KP_Left:
-            case GDK_Down:
-            case GDK_KP_Down:
+            case GDK_KEY_Left:
+            case GDK_KEY_KP_Left:
+            case GDK_KEY_Down:
+            case GDK_KEY_KP_Down:
 
                 vol_down () ;
 
                 return true ;
 
-            case GDK_Up:
-            case GDK_KP_Up:
-            case GDK_Right:
-            case GDK_KP_Right:
+            case GDK_KEY_Up:
+            case GDK_KEY_KP_Up:
+            case GDK_KEY_Right:
+            case GDK_KEY_KP_Right:
 
                 vol_up () ;
 

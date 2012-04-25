@@ -277,7 +277,7 @@ namespace MPX
         Gtk::Window tv ;
         gtk_widget_realize(GTK_WIDGET(tv.gobj())) ;
 
-        Gdk::Color csel = tv.get_style()->get_base( Gtk::STATE_SELECTED ) ;
+        Gdk::Color csel = tv.get_style_context()->get_base( Gtk::STATE_SELECTED ) ;
 	// csel.set_rgb_p( 0x53/255., 0x7f/255., 0xe9/255. ) ; 
 
         ThemeColorMap_t colors ;
@@ -310,21 +310,21 @@ namespace MPX
         Gdk::Color c3 = Util::color_from_hsb( h, s, b ) ;
         colors[THEME_COLOR_TITLEBAR_TOP] = ThemeColor( c3.get_red_p(), c3.get_green_p(), c3.get_blue_p(), 0.90 ) ; 
 
-        colors[THEME_COLOR_BACKGROUND] = theme_color_from_gdk(  tv.get_style()->get_bg( Gtk::STATE_NORMAL )) ;
-        colors[THEME_COLOR_BASE] = theme_color_from_gdk( tv.get_style()->get_base( Gtk::STATE_NORMAL )) ;
+        colors[THEME_COLOR_BACKGROUND] = theme_color_from_gdk(  tv.get_style_context()->get_background_color( Gtk::STATE_FLAG_NORMAL )) ;
+        colors[THEME_COLOR_BASE] = theme_color_from_gdk( tv.get_style_context()->get_color( Gtk::STATE_FLAG_NORMAL )) ;
 
-        Util::color_to_hsb( tv.get_style()->get_base( Gtk::STATE_NORMAL ), h, s, b ) ;
+        Util::color_to_hsb( tv.get_style_context()->get_base( Gtk::STATE_NORMAL ), h, s, b ) ;
 	b *= 0.95 ;
         colors[THEME_COLOR_BASE_ALTERNATE] = theme_color_from_gdk( Util::color_from_hsb ( h, s, b )) ; 
 
-        colors[THEME_COLOR_TEXT] = theme_color_from_gdk(  tv.get_style()->get_text( Gtk::STATE_NORMAL )) ;
-        colors[THEME_COLOR_TEXT_SELECTED] = theme_color_from_gdk(  tv.get_style()->get_fg( Gtk::STATE_SELECTED )) ;
+        colors[THEME_COLOR_TEXT] = theme_color_from_gdk(  tv.get_style_context()->get_text( Gtk::STATE_NORMAL )) ;
+        colors[THEME_COLOR_TEXT_SELECTED] = theme_color_from_gdk(  tv.get_style_context()->get_color( Gtk::STATE_FLAG_SELECTED )) ;
         colors[THEME_COLOR_DRAWER] = ThemeColor( 0.65, 0.65, 0.65, .4 ) ;
         colors[THEME_COLOR_WINDOW_BORDER] = ThemeColor( 0.25, 0.25, 0.25, 1. ) ; 
         colors[THEME_COLOR_ENTRY_OUTLINE] = ThemeColor( 0.2, 0.2, 0.2, 1. ) ; 
 
         colors[THEME_COLOR_TREELINES] = ThemeColor( .5, .5, .5, 1. ) ; 
-        colors[THEME_COLOR_INFO_AREA] = theme_color_from_gdk( tv.get_style()->get_base( Gtk::STATE_NORMAL )) ;
+        colors[THEME_COLOR_INFO_AREA] = theme_color_from_gdk( tv.get_style_context()->get_color( Gtk::STATE_FLAG_NORMAL )) ;
         colors[THEME_COLOR_VOLUME] = ThemeColor( .7, .7, .7, 1. ) ;
         colors[THEME_COLOR_RESIZE_GRIP] = ThemeColor( 1., 1., 1., .10 ) ; 
 

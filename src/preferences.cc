@@ -31,7 +31,6 @@
 
 #include <glibmm.h>
 #include <glib/gi18n.h>
-#include <gtk/gtkstock.h>
 #include <gtkmm.h>
 
 #include <boost/format.hpp>
