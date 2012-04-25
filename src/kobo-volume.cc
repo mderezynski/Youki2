@@ -95,7 +95,93 @@ namespace MPX
         cairo->paint () ;
 
         double percent = double(m_volume) / 100. ; 
-        cairo->set_operator( Cairo::OPERATOR_ATOP ) ;
+
+        cairo->set_operator( Cairo::OPERATOR_OVER ) ;
+
+        // BAR BACKGROUND
+        Cairo::RefPtr<Cairo::LinearGradient> volume_bar_back_gradient = Cairo::LinearGradient::create(
+              a.get_width() / 2 
+            , 1 
+            , a.get_width() / 2 
+            , 16
+        ) ;
+
+        volume_bar_back_gradient->add_color_stop_rgba(
+              0. 
+            , c.r
+            , c.g
+            , c.b
+            , 0.2 
+        ) ;
+
+        volume_bar_back_gradient->add_color_stop_rgba(
+              .2
+            , c.r
+            , c.g
+            , c.b
+            , 0.195 
+        ) ;
+
+        volume_bar_back_gradient->add_color_stop_rgba(
+              .4
+            , c.r
+            , c.g
+            , c.b
+            , 0.185
+        ) ;
+
+        volume_bar_back_gradient->add_color_stop_rgba(
+              .6
+            , c.r
+            , c.g
+            , c.b
+            , 0.185
+        ) ;
+        
+        volume_bar_back_gradient->add_color_stop_rgba(
+              .9
+            , c.r
+            , c.g
+            , c.b
+            , 0.195
+        ) ;
+
+        volume_bar_back_gradient->add_color_stop_rgba(
+              1. 
+            , c.r
+            , c.g
+            , c.b
+            , 0.2 
+        ) ;
+
+        cairo->set_source( volume_bar_back_gradient ) ;
+        RoundedRectangle(
+              cairo
+            , 1 
+            , 1 
+            , a.get_width() - 2
+            , 16
+            , 2.
+        ) ;
+        cairo->fill_preserve () ;
+
+        cairo->save() ;
+        cairo->set_source_rgba( c.r, c.g, c.b, 1. ) ;
+        cairo->set_line_width( 0.5 ) ;
+        cairo->stroke() ;
+        cairo->restore() ;
+
+        RoundedRectangle(
+              cairo
+            , 1 
+            , 1 
+            , a.get_width() - 2
+            , 16
+            , 2.
+        ) ;
+        cairo->clip() ;
+    
+	/// VOLUME
 
         if( m_volume )
         {
@@ -124,16 +210,14 @@ namespace MPX
             ) ;
 
             cairo->set_operator(
-                  Cairo::OPERATOR_ATOP
+                  Cairo::OPERATOR_OVER
             ) ;
 
-            RoundedRectangle(
-                  cairo
-                , r.x 
+            cairo->rectangle(
+                  r.x 
                 , r.y
                 , r.width 
                 , r.height
-                , 2.
             ) ;
 
             cairo->fill (); 
@@ -171,7 +255,7 @@ namespace MPX
                 , ct.b
                 , ct.a
             ) ;
-            cairo->set_operator( Cairo::OPERATOR_ATOP ) ;
+            cairo->set_operator( Cairo::OPERATOR_OVER ) ;
             pango_cairo_show_layout (cairo->cobj (), layout->gobj ()) ;
         }
 

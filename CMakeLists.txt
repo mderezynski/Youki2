@@ -124,7 +124,7 @@ PKG_CHECK_MODULES(GST_PLUGINS_BASE REQUIRED gstreamer-plugins-base-0.10>=0.10.9)
 
 # D-Bus
 
-PKG_CHECK_MODULES(DBUS REQUIRED dbus-c++-1 dbus-c++-glib-1 dbus-glib-1)
+PKG_CHECK_MODULES(DBUS REQUIRED dbus-c++-1 dbus-c++-glib-1 dbus-glib-1 indicate-0.7 indicate-gtk-0.7)
 IF(NOT DEFINED DBUS_SERVICES_DIR)
   EXECUTE_PROCESS(
     COMMAND ${PKG_CONFIG_EXECUTABLE} --variable=prefix dbus-1

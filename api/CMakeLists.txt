@@ -66,6 +66,12 @@ SET(mpx_api_SOURCES
   util-ui.cc
   xml.cc
   xpath.cc
+  hsb.cpp
+  hsl.cpp
+  rgb.cpp
+  ryb.cpp
+  scheme.cpp
+  yuv.cpp
   ${mpx_api_ADD_SOURCES}
 )
 
@@ -115,3 +121,4 @@ TARGET_LINK_LIBRARIES(mpx-api
 )
 
 INSTALL(TARGETS mpx-api LIBRARY DESTINATION ${MPX_LIBDIR})
+

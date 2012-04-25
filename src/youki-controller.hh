@@ -1,8 +1,10 @@
 #ifndef _YOUKI_CONTROLLER__HH
 #define _YOUKI_CONTROLLER__HH
 
-#include <gtkmm.h>
+#include "config.h"
+#include "mpx/i-youki-controller.hh"
 
+#include <gtkmm.h>
 #include <deque>
 
 #include <boost/optional.hpp>
@@ -18,7 +20,6 @@
 
 #include "mpx-mlibman-dbus-proxy-actual.hh"
 #include "mpx-app-dbus-adaptor.hh"
-#include "mpx/i-youki-controller.hh"
 
 #include <sigx/sigx.h>
 
@@ -51,9 +52,11 @@ namespace MPX
 
     class YoukiController
     : public IYoukiController
-    , public ::info::backtrace::Youki::App_adaptor
-    , public DBus::ObjectAdaptor
+    , public ::org::mpris::MediaPlayer2_adaptor
+    , public ::org::mpris::MediaPlayer2::Player_adaptor
     , public DBus::IntrospectableAdaptor
+    , public DBus::PropertiesAdaptor
+    , public DBus::ObjectAdaptor
     , public sigx::glib_auto_dispatchable
     , public Service::Base
     {
@@ -246,14 +249,16 @@ namespace MPX
             Gtk::HBox                       * m_HBox_Entry ;
             Gtk::HBox                       * m_HBox_Info ;
             Gtk::HBox                       * m_HBox_Controls ;
+
             Gtk::Label                      * m_Label_Search ;
+	    Gtk::Label			    * m_Label_Error ;
 
             Gtk::VBox                       * m_VBox ;
 
             Gtk::Notebook                   * m_NotebookPlugins ;
 
             Covers                          * m_covers ;
-            Play                            * m_play ;
+            MPX::Play                       * m_play ;
             Library                         * m_library ;
     
             Track_sp                          m_track_current ;          
@@ -294,7 +299,8 @@ namespace MPX
 
         protected:
 
-            //// PLAY ENGINE
+	    void
+	    on_play_error( const std::string&, const std::string&, const std::string& ) ;	
 
             void
             on_play_eos(
@@ -544,28 +550,45 @@ namespace MPX
             bool
             quit_timeout() ;
 
+	protected:
+
+	    void
+	    assign_metadata_to_DBus_property() ;
+
         protected: // DBUS
 
             virtual void
-            Present () ;
+            Raise(){ m_main_window->present(); } 
 
             virtual void
-            Startup () ;
+            Quit(){ initiate_quit(); }
 
-            virtual void
-            Quit () ;
+	    virtual void
+	    Next(){ API_next(); }
 
-            virtual std::map<std::string, DBus::Variant>
-            GetMetadata () ;
+	    virtual void
+	    Previous(){ API_prev(); }
 
-            virtual void
-            Next () ;
+	    virtual void
+	    Pause(){}
 
-            virtual void
-            Prev () ;
+	    virtual void
+	    PlayPause(){ API_pause_toggle(); } 
 
-            virtual void
-            Pause () ;
+	    virtual void
+	    Stop(){ API_stop(); }
+
+	    virtual void
+	    Play(){}
+
+	    virtual void
+	    Seek( const int64_t& s ){ on_position_seek( s/1000 ); }
+
+	    virtual void
+	    SetPosition( const DBus::Path&, const int64_t& ){} 
+
+	    virtual void
+	    OpenUri( const std::string& ){}
     } ;
 }
 

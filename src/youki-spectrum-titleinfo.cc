@@ -93,7 +93,7 @@ namespace MPX
 		const ThemeColor& c_text = m_theme->get_color( THEME_COLOR_TEXT_SELECTED ) ; 
         	const ThemeColor& c_info = m_theme->get_color( THEME_COLOR_INFO_AREA ) ; 
 
-		int text_size_pt = static_cast<int>( (12 * 72) / Util::screen_get_y_resolution( Gdk::Screen::get_default() )) ;
+		int text_size_pt = static_cast<int>( (14 * 72) / Util::screen_get_y_resolution( Gdk::Screen::get_default() )) ;
 
 		Pango::FontDescription font_desc = get_style()->get_font() ;
 		font_desc.set_size( text_size_pt * PANGO_SCALE ) ;
@@ -128,11 +128,11 @@ namespace MPX
 		RoundedRectangle(
 		      cairo
 		    , a.get_width() - 2 - width - 4 - 4
-		    , 8 
+		    , 3 
 		    , width + 7
 		    , height + 4 
 		    , 1. 
-		    , MPX::CairoCorners::CORNERS(5)
+		    , MPX::CairoCorners::CORNERS(6)
 		) ;
 
 		cairo->set_source_rgba( 1., 1., 1., 0.45 ) ;
@@ -147,7 +147,7 @@ namespace MPX
 
 		cairo->move_to(
 		      a.get_width() - 2 - width - 5
-		    , 10 
+		    , 5 
 		) ;
 
 		pango_cairo_show_layout( cairo->cobj(), layout->gobj() ) ;

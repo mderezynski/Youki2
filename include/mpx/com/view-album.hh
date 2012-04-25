@@ -121,12 +121,16 @@ namespace Albums
 	    int					    totaltime ;
 	    bool				    caching ;
 
-	    Album() : caching(false) {}
+	    Album()
+	    : coverart( Cairo::RefPtr<Cairo::ImageSurface>(0))
+	    , surfacecache( Cairo::RefPtr<Cairo::ImageSurface>(0))
+	    , caching(false)
+	    {}
         };
 
         typedef boost::shared_ptr<Album> Album_sp ;
 
-        typedef IndexedList<Album_sp>                       Model_t ;
+        typedef std::vector<Album_sp>                       Model_t ;
         typedef boost::shared_ptr<Model_t>                  Model_sp_t ;
         typedef std::map<guint, Model_t::iterator>         IdIterMap_t ;
         typedef std::vector<Model_t::iterator>              RowRowMapping_t ;
@@ -181,13 +185,13 @@ namespace Albums
 
                 IdIterMap_t                     m_iter_map ;
                 std::size_t                     m_top_row ;
-                boost::optional<guint>         m_selected ;
+                boost::optional<guint>          m_selected ;
 
                 Signal_2                        m_SIGNAL__changed ;
 		Signal_0			m_SIGNAL__redraw ;
 		Signal_1			m_SIGNAL__cover_updated ;
 
-		typedef IndexedList<Model_t::iterator>	ModelIterVec_t ;
+		typedef std::vector<Model_t::iterator>	ModelIterVec_t ;
 		typedef IndexedList<ModelIterVec_t>	ArtistAlbumMapping_t ;
 
 		ArtistAlbumMapping_t			m_artist_album_mapping ;
@@ -334,7 +338,7 @@ namespace Albums
                     const Album_sp album
                 )
                 {
-		    if( m_iter_map.find( album->album_id ) != m_iter_map.end() )
+		    if( album && m_iter_map.find( album->album_id ) != m_iter_map.end() )
 		    {
 		    	*(m_iter_map[album->album_id]) = album ;
 			 m_SIGNAL__redraw.emit() ;
@@ -563,7 +567,7 @@ namespace Albums
                     } 
 
                     RowRowMapping_t new_mapping ;
-                    new_mapping.reserve( m_realmodel->size() ) ;
+                    //new_mapping.reserve( m_realmodel->size() ) ;
 
                     m_selected.reset() ;
                     m_top_row = 0 ;
@@ -630,7 +634,7 @@ namespace Albums
                     } 
 
                     RowRowMapping_t new_mapping ;
-                    new_mapping.reserve( m_mapping.size() ) ;
+                    //new_mapping.reserve( m_mapping.size() ) ;
 
                     m_selected.reset() ;
                     m_top_row = 0 ;
@@ -724,7 +728,6 @@ namespace Albums
 
 		Cairo::RefPtr<Cairo::ImageSurface>
 		render_icon(
-                      Cairo::RefPtr<Cairo::ImageSurface>&   disc
                     , const Album_sp                        album
 		    , Gtk::Widget&			    widget
 		    , RTViewMode			    rt_viewmode
@@ -741,7 +744,7 @@ namespace Albums
 		    cairo->set_operator( Cairo::OPERATOR_OVER ) ; 
 
 		    cairo->set_source(
-			  album->coverart ? album->coverart : disc
+			  album->coverart ? album->coverart : m_image_disc
 			, 2 
 			, 2
 		    ) ; 
@@ -955,7 +958,7 @@ namespace Albums
 			if( !album->caching )
 			{
 			    if( !album->surfacecache ) 
-				    album->surfacecache = render_icon( m_image_disc, album, widget, m_rt_viewmode ) ;
+				    album->surfacecache = render_icon( album, widget, m_rt_viewmode ) ;
 
 			    cairo->set_source( album->surfacecache, r.x, r.y ) ; 
 			    cairo->rectangle( r.x, r.y , 68, 68 ) ;
@@ -995,7 +998,7 @@ namespace Albums
 
                     layout[L1]->set_font_description( font_desc[L1] ) ;
                     layout[L1]->set_ellipsize( Pango::ELLIPSIZE_END ) ;
-                    layout[L1]->set_width(( m_width - 108 - 40 ) * PANGO_SCALE ) ;
+                    layout[L1]->set_width(( m_width - 108 ) * PANGO_SCALE ) ;
 
                     if( row > 0 )
                     {
@@ -1138,24 +1141,24 @@ namespace Albums
 				if( hrs > 0 )
 				{
 					if( min != 0 )
-						layout[L3]->set_markup((boost::format("%d <b>hrs</b> %d <b>min</b>") % hrs % min).str()) ;
+						layout[L3]->set_markup((boost::format("<b>%d</b>h <b>%d</b>m") % hrs % min).str()) ;
 					else
-						layout[L3]->set_markup((boost::format("%d <b>hrs</b>") % hrs).str()) ;
+						layout[L3]->set_markup((boost::format("<b>%d</b>h") % hrs).str()) ;
 				}
 				else
 				if( min == 0 )
 				{
-					layout[L3]->set_markup("< 1 <b>min</b>") ;
+					layout[L3]->set_markup("< <b>1</b>m") ;
 				}
 				else
 				{
-					layout[L3]->set_markup((boost::format("%d <b>min</b>") % min).str()) ;
+					layout[L3]->set_markup((boost::format("<b>%d</b>m") % min).str()) ;
 				}
 
 				layout[L3]->get_pixel_size( width, height ) ;
 
 				cairo->move_to(
-				      m_width - width - 12 
+				      m_width - width - 8 
 				    , r.y + row_height - height - 14
 				) ;
 				cairo->set_source_rgba(
@@ -1170,7 +1173,7 @@ namespace Albums
 				layout[L3]->get_pixel_size( width, height ) ;
 
 				cairo->move_to(
-				      m_width - width - 12 
+				      m_width - width - 8 
 				    , r.y + row_height - height - 28
 				) ;
 				cairo->set_source_rgba(
@@ -1817,13 +1820,6 @@ namespace Albums
                     std::size_t limit   = Limiter<std::size_t>( Limiter<std::size_t>::ABS_ABS, 0, m_model->size(), m_height__current_viewport / m_height__row + 2 ) ;
                     int offset = m_prop_vadj.get_value()->get_value() - (row*m_height__row) ;
 		    
-		    std::size_t clip_pad = 0 ;
-
-		    if( m_prop_vadj.get_value()->get_value() > 0 && m_prop_vadj.get_value()->get_value() < (m_prop_vadj.get_value()->get_upper() - m_prop_vadj.get_value()->get_page_size()))
-		    {
-			clip_pad = 1 ;
-		    }
-
                     if( offset ) 
                     {
                         ypos -= offset ;
@@ -1840,32 +1836,37 @@ namespace Albums
 		    ) ;
 		    cairo->paint() ;
 
+		    cairo->save() ;
+                    RoundedRectangle(
+                          cairo
+                        , 1
+                        , 1
+                        , a.get_width() - 2 
+                        , a.get_height() - 2 
+                        , rounding
+                    ) ;
+		    cairo->set_source_rgba( c_outline.r, c_outline.g, c_outline.b, 1. ) ;
+		    cairo->set_line_width( 0.75 ) ;
+                    cairo->stroke() ;
+		    cairo->restore() ;
+
+                    RoundedRectangle(
+                          cairo
+                        , 2
+                        , 2
+                        , a.get_width() - 4 
+                        , a.get_height() - 4 
+                        , rounding
+                    ) ;
+                    cairo->clip() ;
+
 		    cairo->set_source_rgba(
 			  c_base.r
 			, c_base.g
 			, c_base.b
 			, c_base.a
 		    ) ;
-
-		    RoundedRectangle(
-			  cairo
-			, 1 
-			, 1 
-			, a.get_width() - 7 
-			, a.get_height() - 2
-			, rounding 
-		    ) ;
-		    cairo->fill() ;
-
-		    RoundedRectangle(
-			  cairo
-			, 1 
-			, 1 + clip_pad 
-			, a.get_width() - 7 
-			, a.get_height() - (2 + 2*clip_pad)
-			, rounding 
-		    ) ;
-		    cairo->clip() ;
+		    cairo->paint() ;
 
 #if 0
 		    if( !(m_model->size() * m_height__row < m_height__current_viewport))
@@ -1877,6 +1878,7 @@ namespace Albums
 		    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 
                     RowRowMapping_t::const_iterator iter = m_model->iter( row ) ;
+
 		    std::size_t n = 0 ;
 
                     while( n < limit && m_Model_I.in(row+n) ) 
@@ -1891,10 +1893,13 @@ namespace Albums
                         {
                             GdkRectangle r ;
 
-                            r.x         = 1 ; 
+                            r.x         = 0 ; 
                             r.y         = ypos ; 
-                            r.width     = a.get_width() - 8 ; 
+                            r.width     = a.get_width() ;
                             r.height    = m_height__row ;
+
+			    if( m_prop_vadj.get_value()->get_value() == 0 && (row+n == 0))
+				c = MPX::CairoCorners::CORNERS(3) ;
 
                             theme->draw_selection_rectangle(
                                   cairo
@@ -1909,9 +1914,9 @@ namespace Albums
 			{
                             GdkRectangle r ;
 
-                            r.x         = 1 ; 
+                            r.x         = 0 ; 
                             r.y         = ypos ; 
-                            r.width     = a.get_width() - 8 ; 
+                            r.width     = a.get_width() ; 
                             r.height    = m_height__row ; 
 
                             RoundedRectangle(
@@ -2009,6 +2014,8 @@ namespace Albums
 			frac_l = 1 ;
 		    }
 
+		    int w = get_allocation().get_width(), h = get_allocation().get_height() ;
+
 		    Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create( w/2., 0, w/2., h ) ; 
 
 		    if( frac_u > 0. ) 
@@ -2029,37 +2036,7 @@ namespace Albums
 		    cairo->rectangle( 0, 0, w, h ) ;
 		    cairo->mask( gradient ) ;
 #endif
-
 		    cairo->reset_clip() ;
-
-		    cairo->save() ;
-		    RoundedRectangle(
-			  cairo
-			, 1 
-			, 1 
-			, a.get_width() - 7
-			, a.get_height() - 2
-			, rounding 
-		    ) ;
-
-		   cairo->set_source_rgba(
-			  c_outline.r
-			, c_outline.g
-			, c_outline.b
-			, c_outline.a
-		    ) ;
-
-		    cairo->set_line_width( 1. ) ; 
-		    cairo->stroke() ;
-		    cairo->restore() ;
-
-		    GtkWidget * widget = GTK_WIDGET(gobj()) ;
-
-	            if( has_focus() )
-			    gtk_paint_focus (widget->style, widget->window,
-			       gtk_widget_get_state (widget),
-			       &event->area, widget, NULL,
-			       2, 2, a.get_width() - 9 , a.get_height() - 4);
 
                     return true;
                 }

@@ -67,7 +67,7 @@ namespace Artist
                 , const Row_t& b
             ) const 
             {
-                guint id[2] = { get<1>(a), get<1>(b) } ;
+                gint id[2] = { get<1>(a), get<1>(b) } ;
 
                 if( id[0] == -1 )
                 {
@@ -89,7 +89,7 @@ namespace Artist
                 Model_sp_t                      m_realmodel ;
                 IdIterMap_t                     m_iter_map ;
                 std::size_t                     m_top_row ;
-                boost::optional<guint>         m_selected ;
+                boost::optional<guint>          m_selected ;
                 boost::optional<std::size_t>    m_selected_row ;
                 Signal_1                        m_changed ;
 
@@ -1025,7 +1025,7 @@ namespace Artist
                                           , get_page_size()
                                       ) + 2 ;
 
-                    std::size_t ypos = 1 ;
+                    std::size_t ypos = 2 ;
                     std::size_t xpos = 0 ;
 
                     int offset = m_prop_vadj.get_value()->get_value() - (row*m_height__row) ;
@@ -1046,22 +1046,37 @@ namespace Artist
 		    ) ;
 		    cairo->paint() ;
 
+		    cairo->save() ;
+                    RoundedRectangle(
+                          cairo
+                        , 1
+                        , 1
+                        , a.get_width() - 2 
+                        , a.get_height() - 2 
+                        , rounding
+                    ) ;
+		    cairo->set_source_rgba( c_outline.r, c_outline.g, c_outline.b, 1. ) ; 
+		    cairo->set_line_width( 0.75 ) ;
+                    cairo->stroke() ;
+		    cairo->restore() ;
+
+                    RoundedRectangle(
+                          cairo
+                        , 2
+                        , 2
+                        , a.get_width() - 4 
+                        , a.get_height() - 4 
+                        , rounding
+                    ) ;
+                    cairo->clip() ;
+
 		    cairo->set_source_rgba(
 			  c_base.r
 			, c_base.g
 			, c_base.b
 			, c_base.a
 		    ) ;
-		    RoundedRectangle(
-			  cairo
-			, 1
-			, 1
-			, a.get_width() - 7
-			, a.get_height() - 2
-			, rounding 
-		    ) ;
-		    cairo->fill_preserve() ;
-		    cairo->clip() ;
+		    cairo->paint() ;
 
 		    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 
@@ -1081,9 +1096,9 @@ namespace Artist
                         {
                             GdkRectangle r ;
 
-                            r.x         = 1 ;
+                            r.x         = 0 ;
                             r.y         = ypos ;
-                            r.width     = a.get_width() - 8 ; 
+                            r.width     = a.get_width() ; 
                             r.height    = m_height__row ; 
 
                             theme->draw_selection_rectangle(
@@ -1099,9 +1114,9 @@ namespace Artist
                         {
                             GdkRectangle r ;
 
-                            r.x       = 1 ;
+                            r.x       = 0 ;
                             r.y       = ypos ;
-                            r.width   = a.get_width() - 8 ; 
+                            r.width   = a.get_width() ; 
                             r.height  = m_height__row ; 
 
                             RoundedRectangle(
@@ -1148,35 +1163,6 @@ namespace Artist
                     }
 
 		    cairo->reset_clip() ;
-
-		    cairo->save() ;
-		    RoundedRectangle(
-			  cairo
-			, 1 
-			, 1 
-			, a.get_width() - 7
-			, a.get_height() - 2
-			, rounding 
-		    ) ;
-
-		   cairo->set_source_rgba(
-			  c_outline.r
-			, c_outline.g
-			, c_outline.b
-			, c_outline.a
-		    ) ;
-
-		    cairo->set_line_width( 1. ) ; 
-		    cairo->stroke() ;
-		    cairo->restore() ;
-
-		    GtkWidget * widget = GTK_WIDGET(gobj()) ;
-
-	            if( has_focus() )
-			    gtk_paint_focus (widget->style, widget->window,
-			       gtk_widget_get_state (widget),
-			       &event->area, widget, NULL,
-			       2, 2, a.get_width() - 9 , a.get_height() - 4);
 
                     return true;
                 }

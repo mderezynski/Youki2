@@ -286,7 +286,7 @@ main (int argc, char ** argv)
     DBus::default_dispatcher = &dispatcher ;
     dispatcher.attach( g_main_context_default() ) ;
     DBus::Connection conn = DBus::Connection::SessionBus () ;
-    conn.request_name( "info.backtrace.Youki.App" ) ;
+    conn.request_name( "org.mpris.MediaPlayer2.youki" ) ;
 
     Splashscreen* splash = new Splashscreen;
 
@@ -330,7 +330,6 @@ main (int argc, char ** argv)
         splash->set_message(_("Starting Plugin Manager..."),9/10.);
         services->add(boost::shared_ptr<PluginManagerGUI>(MPX::PluginManagerGUI::create()));
 
-        services->get<YoukiController>("mpx-service-controller")->StartupComplete() ;
         splash->set_message(_(""),10/10.);
 
         services->get<YoukiController>("mpx-service-controller")->get_widget()->show_all() ;

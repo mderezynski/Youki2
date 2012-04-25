@@ -91,27 +91,9 @@ namespace Tracks
 
         typedef boost::tuple<std::string, std::string, std::string, guint, Track_sp, guint, guint, std::string, std::string, guint>  Row_t ;
 
-/*
-        bool operator<(const Row_t& a, const Row_t& b )
-        {
-            const Glib::ustring&    a1 = get<1>(a)
-                                  , a2 = get<0>(a)
-                                  , a3 = get<2>(a) ;
-
-            const Glib::ustring&    b1 = get<1>(b)
-                                  , b2 = get<0>(b)
-                                  , b3 = get<2>(b) ;
-
-            guint ta = get<5>(a) ;
-            guint tb = get<5>(b) ;
-
-            return (a1 < b1 && a2 < b2 && a3 < b3 && ta < tb ) ; 
-        }
-*/
-
-        typedef std::vector<Row_t>                          Model_t ;
-        typedef boost::shared_ptr<Model_t>                  Model_sp_t ;
-        typedef sigc::signal<void, std::size_t, bool>       Signal1 ;
+        typedef std::vector<Row_t>			Model_t ;
+        typedef boost::shared_ptr<Model_t>		Model_sp_t ;
+        typedef sigc::signal<void, std::size_t, bool>	Signal1 ;
 
         struct Model_t_iterator_equal
         : std::binary_function<Model_t::iterator, Model_t::iterator, bool>
@@ -245,7 +227,7 @@ namespace Tracks
                 , const Model_t::const_iterator& i
             ) const
             {
-		return(id < boost::get<3>(*i)) ;
+		return(boost::get<3>(*i) < id) ;
             }
 	};
 
@@ -365,14 +347,13 @@ namespace Tracks
         struct DataModelFilter
         : public DataModel
         {
-                typedef std::vector<guint>                     IdVector_t ;
-                typedef boost::shared_ptr<IdVector_t>           IdVector_sp ;
+                typedef std::vector<guint>		    IdVector_t ;
+                typedef boost::shared_ptr<IdVector_t>	    IdVector_sp ;
 
-                typedef std::set<Model_t::const_iterator>       ModelIteratorSet_t ;
-                typedef boost::shared_ptr<ModelIteratorSet_t>   ModelIteratorSet_sp ;
-                typedef std::vector<ModelIteratorSet_sp>        IntersectVector_t ;
-                typedef std::vector<Model_t::const_iterator>    RowRowMapping_t ;
-
+                typedef std::set<Model_t::const_iterator>	ModelIteratorSet_t ;
+                typedef boost::shared_ptr<ModelIteratorSet_t>	ModelIteratorSet_sp ;
+                typedef std::vector<ModelIteratorSet_sp>	IntersectVector_t ;
+                typedef std::vector<Model_t::const_iterator>	RowRowMapping_t ;
 		typedef boost::shared_ptr<RowRowMapping_t>	RowRowMapping_sp ;
 
                 guint  m_max_size_constraints_artist ;
@@ -472,6 +453,7 @@ namespace Tracks
                 void
                 clear_active_track()
                 {
+		    g_message("Resetting cur.") ;
 		    m_id_currently_playing.reset() ;
 		    m_row_currently_playing_in_mapping.reset() ;
                 }
@@ -485,9 +467,10 @@ namespace Tracks
                 void
                 set_active_id(guint id)
                 {
-                    m_id_currently_playing = id ;
+		    g_message("Resetting cur.") ;
 		    m_row_currently_playing_in_mapping.reset() ;
 
+                    m_id_currently_playing = id ;
                     scan_for_currently_playing() ;
                 }
 
@@ -700,11 +683,11 @@ namespace Tracks
 
                 void
                 scan(
-                      const boost::optional<guint>& id_top
+                      const boost::optional<guint>& id
                 )
                 {
 			scan_for_currently_playing() ;
-			scan_for_upper_bound( id_top ) ;
+			scan_for_upper_bound( id ) ;
                 }
 
                 void
@@ -713,6 +696,7 @@ namespace Tracks
                 {
                     if( m_id_currently_playing )
                     {
+#if 0
 			RowRowMapping_t::const_iterator it, first, last, begin = m_mapping->begin() ;
 
 			std::size_t count, step ;
@@ -722,8 +706,6 @@ namespace Tracks
 
 			count = std::distance( first, last ) ; 
 
-			FindIdFunc f ;
-
 			while( count > 0 )
 			{
 			    it = first ;
@@ -731,7 +713,7 @@ namespace Tracks
 
 			    std::advance( it, step ) ;
 
-			    if(!f(m_id_currently_playing.get(),*it)) 
+			    if(!(m_id_currently_playing.get() < boost::get<3>(**it)))
 			    {
 				first = ++it ;
 				count -= step + 1 ;
@@ -739,23 +721,37 @@ namespace Tracks
 
 			}
 
-			if( it != m_mapping->end() )
+			if( first != m_mapping->end() )
 			{
-			    m_row_currently_playing_in_mapping = std::distance( begin, first) - 1 ;
+			    m_row_currently_playing_in_mapping = std::distance(first,begin) - 1 ;
 			    return ;
+			}
+#endif
+			guint d = 0 ;
+
+			for( RowRowMapping_t::const_iterator i = m_mapping->begin() ; i != m_mapping->end() ; ++i )
+			{
+			    if( m_id_currently_playing.get() == boost::get<3>(**i))
+			    {
+				m_row_currently_playing_in_mapping = d ;
+				return ;
+			    }
+			    ++d ;
 			}
                     }
 
+		    g_message("Resetting cur.") ;
 		    m_row_currently_playing_in_mapping.reset() ;
                 }
 
                 void
                 scan_for_upper_bound(
-                      const boost::optional<guint>& id_top
+                      const boost::optional<guint>& id
                 )
                 {
-                    if( id_top )
+                    if( id )
                     {
+#if 0
 			RowRowMapping_t::const_iterator it, first, last, begin = m_mapping->begin() ;
 
 			std::size_t count, step ;
@@ -765,14 +761,14 @@ namespace Tracks
 
 			count = std::distance( first, last ) ; 
 
-			FindIdFunc f ;
-
 			while( count > 0 )
 			{
 			    it = first ;
 			    step = count / 2 ;
+
 			    std::advance( it, step ) ;
-			    if(f(id_top.get(),*it)) 
+
+			    if(!(id.get() < boost::get<3>(**it)))
 			    {
 				first = ++it ;
 				count -= step + 1 ;
@@ -780,11 +776,24 @@ namespace Tracks
 
 			}
 
-			if( it != m_mapping->end() )
+			if( first != m_mapping->end() )
 			{
-			    m_upper_bound = std::distance( begin, first ) - 1 ;
+			    m_upper_bound = std::distance(begin, first) - 1 ;
 			    return ;
 			}
+#endif
+			guint d = 0 ;
+
+			for( RowRowMapping_t::const_iterator i = m_mapping->begin() ; i != m_mapping->end() ; ++i )
+			{
+			    if( id.get() == boost::get<3>(**i))
+			    {
+				m_upper_bound = d ;
+				return ;
+			    }
+			    ++d ;
+			}
+
                     }
 
 		    m_upper_bound = 0 ;
@@ -856,6 +865,13 @@ namespace Tracks
 
                     RowRowMapping_sp new_mapping( new RowRowMapping_t ), new_mapping_unfiltered( new RowRowMapping_t ) ;
 
+		    boost::optional<guint> id ;
+
+		    if( m_mapping && m_upper_bound < m_mapping->size() )
+		    {
+			id = get<3>(row(m_upper_bound)) ;
+		    }
+
                     m_upper_bound = 0 ;
 
 		    if( m_constraint_single_album )
@@ -863,8 +879,8 @@ namespace Tracks
 			AlbumTrackMapping_t::size_type n = m_constraint_single_album.get() ; 
 			const ModelIdxVec_t& v = m_album_track_mapping[n] ;
 
-                        new_mapping->reserve( m_realmodel->size() ) ;
-                        new_mapping_unfiltered->reserve( m_realmodel->size() ) ;
+                        //new_mapping->reserve( m_realmodel->size() ) ;
+                        //new_mapping_unfiltered->reserve( m_realmodel->size() ) ;
 
 			for( ModelIdxVec_t::const_iterator i = v.begin() ; i != v.end() ; ++i )
 			{
@@ -881,8 +897,8 @@ namespace Tracks
                         m_constraints_albums.reset() ;
                         m_constraints_artist.reset() ;
 
-                        new_mapping->reserve( m_realmodel->size() ) ;
-                        new_mapping_unfiltered->reserve( m_realmodel->size() ) ;
+                        //new_mapping->reserve( m_realmodel->size() ) ;
+                        //new_mapping_unfiltered->reserve( m_realmodel->size() ) ;
 
                         for( Model_t::iterator i = m_realmodel->begin(); i != m_realmodel->end(); ++i )
                         {
@@ -902,8 +918,8 @@ namespace Tracks
                         TCVector_t& constraints_albums = *(m_constraints_albums.get()) ;
                         IdVector_t& constraints_artist = *(m_constraints_artist.get()) ;
 
-                        new_mapping->reserve( m_realmodel->size() ) ;
-                        new_mapping_unfiltered->reserve( m_realmodel->size() ) ;
+                        //new_mapping->reserve( m_realmodel->size() ) ;
+                        //new_mapping_unfiltered->reserve( m_realmodel->size() ) ;
 
                         for( Model_t::const_iterator i = m_realmodel->begin(); i != m_realmodel->end(); ++i ) // determine all the matches
                         {
@@ -939,7 +955,7 @@ namespace Tracks
                     else
                     {
                         IntersectVector_t intersect ;
-                        intersect.reserve( m_frags.size() ) ; 
+                        //intersect.reserve( m_frags.size() ) ; 
 
                         StrV vec( 3 ) ;
 
@@ -1017,8 +1033,8 @@ namespace Tracks
                             }
                         }
 
-                        new_mapping->reserve( output->size() ) ;
-                        new_mapping_unfiltered->reserve( output->size() ) ;
+                        //new_mapping->reserve( output->size() ) ;
+                        //new_mapping_unfiltered->reserve( output->size() ) ;
 
                         m_constraints_albums = TCVector_sp( new TCVector_t ) ; 
                         m_constraints_albums->resize( m_max_size_constraints_albums + 1 ) ;
@@ -1063,12 +1079,10 @@ namespace Tracks
 		    m_mapping = new_mapping ;
 		    m_mapping_unfiltered = new_mapping_unfiltered ;
 
-                    scan( m_id_currently_playing ) ;
-
-                    if( m_row_currently_playing_in_mapping )
-                    {
-                        m_upper_bound = m_row_currently_playing_in_mapping.get() ;
-                    }
+		    if( id )
+		    {
+			scan_for_upper_bound( id ) ;
+		    }
 
                     m_changed.emit( m_upper_bound, true ) ; 
                 }
@@ -1084,6 +1098,13 @@ namespace Tracks
 
                     RowRowMapping_sp new_mapping( new RowRowMapping_t ), new_mapping_unfiltered( new RowRowMapping_t ) ;
 
+		    boost::optional<guint> id ;
+
+		    if( m_mapping && m_upper_bound < m_mapping->size() )
+		    {
+			id = get<3>(row(m_upper_bound)) ;
+		    }
+
                     m_upper_bound = 0 ;
 
 		    if( m_constraint_single_album ) // FIXME: This is not iterative
@@ -1091,8 +1112,8 @@ namespace Tracks
 			AlbumTrackMapping_t::size_type n = m_constraint_single_album.get() ; 
 			const ModelIdxVec_t& v = m_album_track_mapping[n] ;
 
-                        new_mapping->reserve( m_realmodel->size() ) ;
-                        new_mapping_unfiltered->reserve( m_realmodel->size() ) ;
+                        //new_mapping->reserve( m_realmodel->size() ) ;
+                        //new_mapping_unfiltered->reserve( m_realmodel->size() ) ;
 
 			for( ModelIdxVec_t::const_iterator i = v.begin() ; i != v.end() ; ++i )
 			{
@@ -1109,8 +1130,8 @@ namespace Tracks
                         m_constraints_albums.reset() ;
                         m_constraints_artist.reset() ;
 
-                        new_mapping->reserve( m_mapping_unfiltered->size() ) ;
-                        new_mapping_unfiltered->reserve( m_mapping_unfiltered->size() ) ;
+                        //new_mapping->reserve( m_mapping_unfiltered->size() ) ;
+                        //new_mapping_unfiltered->reserve( m_mapping_unfiltered->size() ) ;
 
                         for( RowRowMapping_t::iterator i = m_mapping_unfiltered->begin(); i != m_mapping_unfiltered->end(); ++i )
                         {
@@ -1130,8 +1151,8 @@ namespace Tracks
                         IdVector_t& constraints_artist = *(m_constraints_artist.get()) ;
                         TCVector_t& constraints_albums = *(m_constraints_albums.get()) ;
 
-                        new_mapping->reserve( m_mapping_unfiltered->size() ) ;
-                        new_mapping_unfiltered->reserve( m_mapping_unfiltered->size() ) ;
+                        //new_mapping->reserve( m_mapping_unfiltered->size() ) ;
+                        //new_mapping_unfiltered->reserve( m_mapping_unfiltered->size() ) ;
 
                         for( RowRowMapping_t::const_iterator i = m_mapping_unfiltered->begin(); i != m_mapping_unfiltered->end(); ++i )
                         {
@@ -1168,7 +1189,7 @@ namespace Tracks
                     else
                     {
                         IntersectVector_t intersect ; 
-                        intersect.reserve( m_frags.size() ) ;
+                        //intersect.reserve( m_frags.size() ) ;
 
                         StrV vec( 3 ) ;
 
@@ -1260,8 +1281,8 @@ namespace Tracks
                             }
                         }
 
-                        new_mapping->reserve( m_realmodel->size() ) ;
-                        new_mapping_unfiltered->reserve( m_realmodel->size() ) ; 
+                        //new_mapping->reserve( m_realmodel->size() ) ;
+                        //new_mapping_unfiltered->reserve( m_realmodel->size() ) ; 
 
                         m_constraints_albums = TCVector_sp( new TCVector_t ) ; 
                         m_constraints_albums->resize( m_max_size_constraints_albums + 1 ) ;
@@ -1306,12 +1327,10 @@ namespace Tracks
                     m_mapping = new_mapping ;
                     m_mapping_unfiltered = new_mapping_unfiltered ;
 
-                    scan( m_id_currently_playing ) ;
-
-                    if( m_row_currently_playing_in_mapping )
-                    {
-                        m_upper_bound = m_row_currently_playing_in_mapping.get() ;
-                    }
+		    if( id )
+		    {
+			scan_for_upper_bound( id ) ;
+		    }
 
                     m_changed.emit( m_upper_bound, true ) ; 
                 }
@@ -2187,22 +2206,37 @@ namespace Tracks
 		    ) ;
 		    cairo->paint() ;
 
+		    cairo->save() ;
+                    RoundedRectangle(
+                          cairo
+                        , 1
+                        , 1
+                        , a.get_width() - 2 
+                        , a.get_height() - 2 
+                        , rounding
+                    ) ;
+		    cairo->set_source_rgba( c_outline.r, c_outline.g, c_outline.b, 1.) ; 
+		    cairo->set_line_width( 0.75 ) ;
+                    cairo->stroke() ;
+		    cairo->restore() ;
+
+                    RoundedRectangle(
+                          cairo
+                        , 2
+                        , 2
+                        , a.get_width() - 4 
+                        , a.get_height() - 4 
+                        , rounding
+                    ) ;
+                    cairo->clip() ;
+
 		    cairo->set_source_rgba(
 			  c_base.r
 			, c_base.g
 			, c_base.b
 			, c_base.a
 		    ) ;
-		    RoundedRectangle(
-			  cairo
-			, 1 
-			, 1 
-			, a.get_width() - 5 
-			, a.get_height() - 2
-			, rounding 
-		    ) ;
-		    cairo->fill_preserve() ;
-		    cairo->clip() ;
+		    cairo->paint() ;
 
 		    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 
@@ -2220,10 +2254,10 @@ namespace Tracks
 
 		    RoundedRectangle(
 			  cairo
-			, 1
-			, 1
-			, a.get_width() - 5
-			, m_height__headers - 2 
+			, 0
+			, 0
+			, a.get_width()
+			, m_height__headers
 			, MPX::CairoCorners::CORNERS(3)
 		    ) ;
 		
@@ -2244,6 +2278,7 @@ namespace Tracks
 		    Cairo::RefPtr<Cairo::LinearGradient> gr = Cairo::LinearGradient::create( a.get_width()/2., 1, a.get_width() / 2., m_height__headers - 2 ) ;
 
 		    gr->add_color_stop_rgba( 0., c1.get_red_p(), c1.get_green_p(), c1.get_blue_p(), 1. ) ;
+		    gr->add_color_stop_rgba( .35, c1.get_red_p(), c1.get_green_p(), c1.get_blue_p(), 1. ) ;
 		    gr->add_color_stop_rgba( 1., c2.get_red_p(), c2.get_green_p(), c2.get_blue_p(), 1. ) ;
 
 		    cairo->set_source( gr ) ;
@@ -2251,13 +2286,14 @@ namespace Tracks
 		    cairo->restore() ;
 
 		    cairo->save() ;
-		    cairo->set_line_width( 0.75 ) ;
+		    cairo->set_antialias( Cairo::ANTIALIAS_NONE ) ;
+		    cairo->set_line_width( 1. ) ;
 		    cairo->set_source_rgba( c_outline.r, c_outline.g, c_outline.b, 0.6 ) ;
-		    cairo->move_to( 1, m_height__headers ) ;
-		    cairo->line_to( a.get_width() - 5, m_height__headers ) ;
+		    cairo->move_to( 0, m_height__headers ) ;
+		    cairo->line_to( a.get_width(), m_height__headers ) ;
 		    cairo->stroke() ;
 		    cairo->restore() ;
-		
+
 		    xpos = 0 ;
 
 		    for( Columns::iterator i = m_columns.begin(); i != m_columns.end(); ++i )
@@ -2412,16 +2448,17 @@ namespace Tracks
 			    xpos += (*i)->get_width() ; // adjust us to the column's end
 
 			    cairo->save() ;
+			    cairo->set_antialias( Cairo::ANTIALIAS_NONE ) ;
 			    cairo->set_line_width(
-				  .75
+				  1. 
 			    ) ;
 			    cairo->move_to(
 				  xpos
-				, m_height__headers 
+				, m_height__headers + 1 
 			    ) ; 
 			    cairo->line_to(
 				  xpos
-				, a.get_height() - m_height__headers
+				, a.get_height()
 			    ) ;
 			    cairo->set_dash(
 				  dashes
@@ -2440,8 +2477,9 @@ namespace Tracks
 				continue ;
 
 			    cairo->save() ;
+			    cairo->set_antialias( Cairo::ANTIALIAS_NONE ) ;
 			    cairo->set_line_width(
-				  .75
+				  1. 
 			    ) ;
 			    cairo->move_to(
 				  xpos
@@ -2455,7 +2493,7 @@ namespace Tracks
 				  c_outline.r
 				, c_outline.g
 				, c_outline.b
-				, 0.6
+				, 0.4
 			    ) ;
 
 			    cairo->stroke() ;
@@ -2464,36 +2502,6 @@ namespace Tracks
 		    }
 
 		    cairo->reset_clip() ;
-
-		    cairo->save() ;
-
-		    RoundedRectangle(
-			  cairo
-			, 1 
-			, 1 
-			, a.get_width() - 5
-			, a.get_height() - 2
-			, rounding 
-		    ) ;
-
-		   cairo->set_source_rgba(
-			  c_outline.r
-			, c_outline.g
-			, c_outline.b
-			, c_outline.a
-		    ) ;
-
-		    cairo->set_line_width( 1. ) ;
-		    cairo->stroke() ;
-		    cairo->restore() ;
-
-		    GtkWidget * widget = GTK_WIDGET(gobj()) ;
-
-	            if( has_focus() )
-			    gtk_paint_focus (widget->style, widget->window,
-			       gtk_widget_get_state (widget),
-			       &event->area, widget, NULL,
-			       2, 2, a.get_width() - 7 , a.get_height() - 4);
 
                     return true;
                 }
@@ -2844,7 +2852,7 @@ namespace Tracks
                     Glib::ustring text = m_SearchEntry->get_text().casefold() ;
 
 		    bool numeric = false ;
-		    int nr ;
+		    guint nr ;
 
 		    try{
 			nr = boost::lexical_cast<int>( text ) ;
@@ -2899,7 +2907,7 @@ namespace Tracks
                     Glib::ustring text = m_SearchEntry->get_text().casefold() ;
 
 		    bool numeric = false ;
-		    int nr ;
+		    guint nr ;
 
 		    try{
 			nr = boost::lexical_cast<int>( text ) ;
@@ -2954,7 +2962,7 @@ namespace Tracks
                     Glib::ustring text = m_SearchEntry->get_text().casefold() ;
 
 		    bool numeric = false ;
-		    int nr ;
+		    guint nr ;
 
 		    try{
 			nr = boost::lexical_cast<int>( text ) ;

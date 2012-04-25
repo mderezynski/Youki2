@@ -6,18 +6,14 @@
 #include "mpx/algorithm/limiter.hh"
 #include "mpx/algorithm/interval.hh"
 #include "mpx/widgets/cairo-extensions.hh"
-
 #include "mpx/i-youki-play.hh"
-
 #include "mpx/util-graphics.hh"
+#include "ahote.h"
 
 #include "kobo-position.hh"
 
 namespace
 {
-    int const animation_fps = 2 ;
-    int const animation_frame_period_ms = 1000 / animation_fps ;
-
     MPX::ThemeColor 
     fade_colors(
     	  const MPX::ThemeColor& c_a
@@ -127,10 +123,15 @@ namespace MPX
         cairo->set_operator( Cairo::OPERATOR_ATOP ) ;
 
         Gdk::Color cgdk ;
-        double h, s, b ;
-        cgdk.set_rgb_p( c.r, c.g, c.b ) ;
-        Util::color_to_hsb( cgdk, h, s, b ) ;
-        Gdk::Color c_base_gdk = Util::color_from_hsb( h, s, b ) ;
+        Gdk::Color c_base_gdk ; 
+
+	double h,s,b ;
+
+	//ahote::Colors scheme = ahote::complements( ahote::RGB( c.r, c.g, c.b)) ;
+	//ahote::RGB rgb = scheme[1] ;
+
+	c_base_gdk.set_rgb_p( c.r, c.g, c.b) ;
+	cgdk.set_rgb_p( c.r, c.g, c.b) ;
 
         // BAR BACKGROUND
         Cairo::RefPtr<Cairo::LinearGradient> volume_bar_back_gradient = Cairo::LinearGradient::create(
@@ -205,8 +206,17 @@ namespace MPX
         cairo->stroke() ;
         cairo->restore() ;
 
-        // BAR
+        RoundedRectangle(
+              cairo
+            , 1 
+            , 1 
+            , a.get_width() - 2
+            , 16
+            , 2.
+        ) ;
+	cairo->clip() ;
 
+        // BAR
         double factor       = 1. ;
         guint position     = m_clicked ? m_seek_position : m_position ;
         double percent      = double(position) / double(m_duration) ; 
@@ -253,7 +263,7 @@ namespace MPX
                 , c1.get_red_p()
                 , c1.get_green_p()
                 , c1.get_blue_p()
-                , factor 
+                , 1 // factor 
             ) ;
 
             volume_bar_gradient->add_color_stop_rgba(
@@ -261,7 +271,7 @@ namespace MPX
                 , c2.get_red_p()
                 , c2.get_green_p()
                 , c2.get_blue_p()
-                , factor
+                , 1 // factor
             ) ;
             
             volume_bar_gradient->add_color_stop_rgba(
@@ -269,21 +279,18 @@ namespace MPX
                 , c3.get_red_p()
                 , c3.get_green_p()
                 , c3.get_blue_p()
-                , factor
+                , 1 // factor
             ) ;
 
             cairo->set_source( volume_bar_gradient ) ;
-            RoundedRectangle(
-                  cairo
-                , r.x 
+            cairo->rectangle(
+                  r.x 
                 , r.y
                 , r.width 
                 , r.height
-                , 2.
             ) ;
-
-            cairo->fill (); 
-            cairo->restore () ;
+            cairo->fill(); 
+            cairo->restore() ;
         }
 
 	Pango::Rectangle rl, ri ;
