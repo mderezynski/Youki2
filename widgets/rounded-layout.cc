@@ -54,9 +54,9 @@ namespace MPX
             , a.get_height()
         ) ;
 
-        Gdk::Cairo::set_source_color(
+        Gdk::Cairo::set_source_rgba(
               cairo
-            , get_style()->get_bg(Gtk::STATE_NORMAL)
+            , get_style_context()->get_background_color(Gtk::STATE_FLAG_NORMAL)
         ) ;
 
         cairo->set_operator(Cairo::OPERATOR_SOURCE);

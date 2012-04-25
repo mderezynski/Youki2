@@ -18,13 +18,14 @@ namespace MPX
     {
         if( !signal_added )
         {
-            GTK_WIDGET_GET_CLASS(gobj())->set_scroll_adjustments_signal =
-                    g_signal_new ("set-scroll-adjustments",
-                              G_OBJECT_CLASS_TYPE (G_OBJECT_CLASS (G_OBJECT_GET_CLASS(G_OBJECT(gobj())))),
-                              GSignalFlags (G_SIGNAL_RUN_FIRST),
-                              0,
-                              NULL, NULL,
-                              g_cclosure_user_marshal_VOID__OBJECT_OBJECT, G_TYPE_NONE, 2, GTK_TYPE_ADJUSTMENT, GTK_TYPE_ADJUSTMENT);
+            // FIXME: Implement the Gtk::Scrollable interface
+            // GTK_WIDGET_GET_CLASS(gobj())->set_scroll_adjustments_signal =
+            //         g_signal_new ("set-scroll-adjustments",
+            //                   G_OBJECT_CLASS_TYPE (G_OBJECT_CLASS (G_OBJECT_GET_CLASS(G_OBJECT(gobj())))),
+            //                   GSignalFlags (G_SIGNAL_RUN_FIRST),
+            //                   0,
+            //                   NULL, NULL,
+            //                   g_cclosure_user_marshal_VOID__OBJECT_OBJECT, G_TYPE_NONE, 2, GTK_TYPE_ADJUSTMENT, GTK_TYPE_ADJUSTMENT);
 
             signal_added = true ;
         }
@@ -44,16 +45,16 @@ namespace MPX
         , gpointer          data
     )
     {
-        RoundedFrame & frame = *reinterpret_cast<RoundedFrame*>(data) ;
+        // RoundedFrame & frame = *reinterpret_cast<RoundedFrame*>(data) ;
 
-        if( frame.get_child() )
-        {
-            GtkWidget * child = GTK_WIDGET(frame.get_child()->gobj()) ;
+        // if( frame.get_child() )
+        // {
+        //     GtkWidget * child = GTK_WIDGET(frame.get_child()->gobj()) ;
 
-            guint signal_id = GTK_WIDGET_GET_CLASS( child )->set_scroll_adjustments_signal ;
+        //     guint signal_id = GTK_WIDGET_GET_CLASS( child )->set_scroll_adjustments_signal ;
 
-            g_signal_emit( child, signal_id, 0, hadj, vadj ) ;
-        }
+        //     g_signal_emit( child, signal_id, 0, hadj, vadj ) ;
+        // }
 
         return TRUE ;
     }
@@ -65,7 +66,9 @@ namespace MPX
     {
         if( get_child() && get_child()->get_visible() )
         {
-            Gtk::Requisition child_r = get_child()->size_request() ;
+            Gtk::Requisition child_r, child_r2;
+            get_child()->get_preferred_size(child_r, child_r2);
+
             req->width = std::max( 0, child_r.width ) ;
             req->height = child_r.height ;
         }

@@ -8,7 +8,7 @@ namespace MPX
 {
     namespace
     {
-        const std::string = DATA_DIR G_DIR_SEPARATOR_S "ui" G_DIR_SEPARATOR_S "timed-confirmation.ui";
+        const std::string ui_path = DATA_DIR G_DIR_SEPARATOR_S "ui" G_DIR_SEPARATOR_S "timed-confirmation.ui";
     }
 
     TimedConfirmation::TimedConfirmation(
@@ -18,7 +18,6 @@ namespace MPX
         : WidgetLoader<Gtk::Dialog>(Gtk::Builder::create_from_file(ui_path), "dialog")
         , m_Seconds(seconds)
     {
-        set_has_separator(false);
         m_Button_Cancel = add_button(Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL);
         m_Button_OK = add_button((boost::format("OK (%d)") % seconds).str(), Gtk::RESPONSE_OK);
 

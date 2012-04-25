@@ -127,14 +127,14 @@ namespace MPX
             cursor = gdk_cursor_new_from_name( gdk_display_get_default(), "watch" ) ;
         }
 
-        gdk_window_set_cursor( GTK_WIDGET (window)->window, cursor ) ;
+        gdk_window_set_cursor( gtk_widget_get_window (GTK_WIDGET (window)), cursor ) ;
         gdk_flush() ;
     }
 
     void
     window_set_idle( GtkWindow* window )
     {
-        gdk_window_set_cursor( GTK_WIDGET (window)->window, NULL ) ;
+        gdk_window_set_cursor( gtk_widget_get_window (GTK_WIDGET (window)), NULL ) ;
         gdk_flush() ;
     }
 
@@ -148,7 +148,7 @@ namespace MPX
             cursor = gdk_cursor_new_from_name( gdk_display_get_default(), "watch" ) ;
         }
 
-        gdk_window_set_cursor( GTK_WIDGET(window.gobj())->window, cursor ) ;
+        gdk_window_set_cursor( window.get_window()->gobj(), cursor ) ;
         gdk_flush() ;
     }
 
