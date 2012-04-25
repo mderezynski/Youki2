@@ -728,7 +728,7 @@ namespace Albums
 
 		Cairo::RefPtr<Cairo::ImageSurface>
 		render_icon(
-                    , const Album_sp                        album
+                      const Album_sp                        album
 		    , Gtk::Widget&			    widget
 		    , RTViewMode			    rt_viewmode
 		)
