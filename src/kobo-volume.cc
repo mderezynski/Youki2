@@ -68,7 +68,7 @@ namespace MPX
           int volume
     )
     {
-        m_volume = volume ;
+        m_volume = std::max( 0, std::min( 100,volume)) ;
         queue_draw () ;
     }
 
@@ -77,6 +77,8 @@ namespace MPX
         GdkEventExpose* G_GNUC_UNUSED
     )
     {
+        double percent = double(m_volume) / 100. ; 
+
         Cairo::RefPtr<Cairo::Context> cairo = get_window()->create_cairo_context() ;
 
         const Gdk::Rectangle& a = get_allocation() ;
@@ -84,6 +86,16 @@ namespace MPX
         const ThemeColor& c_base /* :) */ = m_theme->get_color( THEME_COLOR_BACKGROUND ) ; 
         const ThemeColor& c = m_theme->get_color( THEME_COLOR_SELECT ) ;
         const ThemeColor& ct = m_theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
+
+	GdkRectangle r ;
+
+	Gdk::Color c1 ;
+	c1.set_rgb_p( .2, .2, .2 ) ;
+
+	Gdk::Color c2 ;
+	c2.set_rgb_p( c.r, c.g, c.b ) ; 
+
+	Gdk::Color c_gradient = get_color_at_pos( c1, c2, percent ) ;
 
         cairo->set_operator(Cairo::OPERATOR_SOURCE) ;
         cairo->set_source_rgba(
@@ -94,67 +106,9 @@ namespace MPX
         ) ;
         cairo->paint () ;
 
-        double percent = double(m_volume) / 100. ; 
-
         cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 
-        // BAR BACKGROUND
-        Cairo::RefPtr<Cairo::LinearGradient> volume_bar_back_gradient = Cairo::LinearGradient::create(
-              a.get_width() / 2 
-            , 1 
-            , a.get_width() / 2 
-            , 16
-        ) ;
-
-        volume_bar_back_gradient->add_color_stop_rgba(
-              0. 
-            , c.r
-            , c.g
-            , c.b
-            , 0.2 
-        ) ;
-
-        volume_bar_back_gradient->add_color_stop_rgba(
-              .2
-            , c.r
-            , c.g
-            , c.b
-            , 0.195 
-        ) ;
-
-        volume_bar_back_gradient->add_color_stop_rgba(
-              .4
-            , c.r
-            , c.g
-            , c.b
-            , 0.185
-        ) ;
-
-        volume_bar_back_gradient->add_color_stop_rgba(
-              .6
-            , c.r
-            , c.g
-            , c.b
-            , 0.185
-        ) ;
-        
-        volume_bar_back_gradient->add_color_stop_rgba(
-              .9
-            , c.r
-            , c.g
-            , c.b
-            , 0.195
-        ) ;
-
-        volume_bar_back_gradient->add_color_stop_rgba(
-              1. 
-            , c.r
-            , c.g
-            , c.b
-            , 0.2 
-        ) ;
-
-        cairo->set_source( volume_bar_back_gradient ) ;
+        // BAR OUTLINE
         RoundedRectangle(
               cairo
             , 1 
@@ -163,103 +117,94 @@ namespace MPX
             , 16
             , 2.
         ) ;
-        cairo->fill_preserve () ;
 
-        cairo->save() ;
-        cairo->set_source_rgba( c.r, c.g, c.b, 1. ) ;
+	cairo->set_source_rgba(
+	      c_gradient.get_red_p()
+	    , c_gradient.get_green_p()
+	    , c_gradient.get_blue_p()
+	    , .6
+	) ;
+
         cairo->set_line_width( 0.5 ) ;
-        cairo->stroke() ;
-        cairo->restore() ;
-
-        RoundedRectangle(
-              cairo
-            , 1 
-            , 1 
-            , a.get_width() - 2
-            , 16
-            , 2.
-        ) ;
+        cairo->stroke_preserve() ;
         cairo->clip() ;
-    
+
 	/// VOLUME
+	r.x         = pad ; 
+	r.y         = 1 ; 
+	r.width     = fmax( 0, (a.get_width()-2*pad) * double(percent)) ;
+	r.height    = 16 ; 
 
-        if( m_volume )
-        {
-            GdkRectangle r ;
+	cairo->save () ;
 
-            r.x         = pad ; 
-            r.y         = 1 ; 
-            r.width     = fmax( 0, (a.get_width()-2*pad) * double(percent)) ;
-            r.height    = 16 ; 
+	cairo->set_source_rgba(
+	      c_gradient.get_red_p()
+	    , c_gradient.get_green_p()
+	    , c_gradient.get_blue_p()
+	    , .6
+	) ;
 
-            cairo->save () ;
+	cairo->set_operator(
+	      Cairo::OPERATOR_OVER
+	) ;
 
-            Gdk::Color c1 ;
-            c1.set_rgb_p( .2, .2, .2 ) ;
+	cairo->rectangle(
+	      r.x 
+	    , r.y
+	    , r.width 
+	    , r.height
+	) ;
 
-            Gdk::Color c2 ;
-            c2.set_rgb_p( c.r, c.g, c.b ) ; 
+	cairo->fill (); 
+	cairo->restore () ;
 
-            Gdk::Color c_gradient = get_color_at_pos( c1, c2,  percent ) ;
+	const int text_size_px = 12 ;
+	const int text_size_pt = static_cast<int> ((text_size_px * 72) / Util::screen_get_y_resolution (Gdk::Screen::get_default ())) ;
 
-            cairo->set_source_rgba(
-                  c_gradient.get_red_p()
-                , c_gradient.get_green_p()
-                , c_gradient.get_blue_p()
-                , .6
-            ) ;
+	Pango::FontDescription font_desc = get_style()->get_font() ; 
+	font_desc.set_size (text_size_pt * PANGO_SCALE) ;
+	font_desc.set_weight (Pango::WEIGHT_BOLD) ;
 
-            cairo->set_operator(
-                  Cairo::OPERATOR_OVER
-            ) ;
+	Glib::RefPtr<Pango::Layout> layout = Glib::wrap (pango_cairo_create_layout (cairo->cobj ())) ;
 
-            cairo->rectangle(
-                  r.x 
-                , r.y
-                , r.width 
-                , r.height
-            ) ;
+	layout->set_font_description (font_desc) ;
+	layout->set_text(
+	    (boost::format("%d") % m_volume).str()
+	) ;
 
-            cairo->fill (); 
-            cairo->restore () ;
-        }
+	Pango::Rectangle rl, ri ;
+	layout->get_extents( rl, ri ) ;
 
-        {
-            const Gtk::Allocation& a = get_allocation() ;
+	int xoff = 0 ;
 
-            const int text_size_px = 12 ;
-            const int text_size_pt = static_cast<int> ((text_size_px * 72) / Util::screen_get_y_resolution (Gdk::Screen::get_default ())) ;
+	if( r.width-4 < (ri.get_width()/PANGO_SCALE))
+	{
+	    xoff = r.width ;
 
-            Pango::FontDescription font_desc = get_style()->get_font() ; 
-            font_desc.set_size (text_size_pt * PANGO_SCALE) ;
-            font_desc.set_weight (Pango::WEIGHT_BOLD) ;
+	    cairo->set_source_rgba(
+		  c_gradient.get_red_p()
+		, c_gradient.get_green_p()
+		, c_gradient.get_blue_p()
+		, 1. 
+	    ) ;
+	}
+	else
+	{
+	    cairo->set_source_rgba(
+		  ct.r
+		, ct.g
+		, ct.b
+		, ct.a
+	    ) ;
+	} 
 
-            Glib::RefPtr<Pango::Layout> layout = Glib::wrap (pango_cairo_create_layout (cairo->cobj ())) ;
+	cairo->move_to(
+	      fmax( xoff+2, xoff+2+double((a.get_width() - pad*2)) * double(percent) - (ri.get_width()/PANGO_SCALE) - (pad+4)) 
+	    , (get_height() - (ri.get_height()/PANGO_SCALE))/2.
+	) ;
 
-            layout->set_font_description (font_desc) ;
-            layout->set_text(
-                (boost::format("%d") % m_volume).str()
-            ) ;
-
-            Pango::Rectangle rl, ri ;
-            layout->get_extents( rl, ri ) ;
-
-            cairo->move_to(
-                  fmax( 2, 2 + double((a.get_width() - pad*2)) * double(percent) - (ri.get_width()/PANGO_SCALE) - (pad+4) ) 
-                , (get_height() - (ri.get_height()/PANGO_SCALE))/2.
-            ) ;
-
-            cairo->set_source_rgba(
-                  ct.r
-                , ct.g
-                , ct.b
-                , ct.a
-            ) ;
-            cairo->set_operator( Cairo::OPERATOR_OVER ) ;
-            pango_cairo_show_layout (cairo->cobj (), layout->gobj ()) ;
-        }
-
-        GdkRectangle r ;
+	cairo->set_operator( Cairo::OPERATOR_OVER ) ;
+	pango_cairo_show_layout (cairo->cobj (), layout->gobj ()) ;
 
         r.x = 0 ;
         r.y = 0 ;
