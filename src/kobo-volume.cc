@@ -1,4 +1,5 @@
 #include <gtkmm.h>
+#include <glibmm/i18n.h>
 #include <boost/format.hpp>
 #include <cmath>
 #include "kobo-volume.hh"
@@ -122,10 +123,10 @@ namespace MPX
 	      c_gradient.get_red_p()
 	    , c_gradient.get_green_p()
 	    , c_gradient.get_blue_p()
-	    , .6
+	    , 1. 
 	) ;
 
-        cairo->set_line_width( 0.5 ) ;
+        cairo->set_line_width( 0.75 ) ;
         cairo->stroke_preserve() ;
         cairo->clip() ;
 
@@ -141,7 +142,7 @@ namespace MPX
 	      c_gradient.get_red_p()
 	    , c_gradient.get_green_p()
 	    , c_gradient.get_blue_p()
-	    , .6
+	    , 1. 
 	) ;
 
 	cairo->set_operator(
@@ -158,7 +159,7 @@ namespace MPX
 	cairo->fill (); 
 	cairo->restore () ;
 
-	const int text_size_px = 12 ;
+	const int text_size_px = 13 ;
 	const int text_size_pt = static_cast<int> ((text_size_px * 72) / Util::screen_get_y_resolution (Gdk::Screen::get_default ())) ;
 
 	Pango::FontDescription font_desc = get_style()->get_font() ; 
@@ -168,16 +169,24 @@ namespace MPX
 	Glib::RefPtr<Pango::Layout> layout = Glib::wrap (pango_cairo_create_layout (cairo->cobj ())) ;
 
 	layout->set_font_description (font_desc) ;
-	layout->set_text(
-	    (boost::format("%d") % m_volume).str()
-	) ;
+
+	if( m_volume == 0 )
+	{
+	    layout->set_text(_("MUTE")) ;
+	}
+	else
+	{
+	    layout->set_text(
+		(boost::format("%d") % m_volume).str()
+	    ) ;
+	}
 
 	Pango::Rectangle rl, ri ;
 	layout->get_extents( rl, ri ) ;
 
 	int xoff = 0 ;
 
-	if( r.width-4 < (ri.get_width()/PANGO_SCALE))
+	if( r.width-3 < (ri.get_width()/PANGO_SCALE))
 	{
 	    xoff = r.width ;
 
@@ -185,7 +194,7 @@ namespace MPX
 		  c_gradient.get_red_p()
 		, c_gradient.get_green_p()
 		, c_gradient.get_blue_p()
-		, 1. 
+		, m_volume == 0 ? 0.6 : 1. 
 	    ) ;
 	}
 	else
@@ -198,9 +207,30 @@ namespace MPX
 	    ) ;
 	} 
 
+	int x ;
+	int y = (get_height() - (ri.get_height()/PANGO_SCALE))/2. ;
+
+	if( m_volume == 0 )
+	{
+	    x = (a.get_width()-(ri.get_width()/PANGO_SCALE)) / 2. ;
+	}
+	else
+	{
+	    if( xoff == 0 )
+	    {
+		x = r.width - (ri.get_width() / PANGO_SCALE) - 1 ; 
+	    }
+	    else
+	    {
+		x = xoff + 2 ;
+	    }
+
+//	    x = fmax( xoff+2, xoff+2+double((a.get_width() - pad*2)) * double(percent) - (ri.get_width()/PANGO_SCALE) - (pad+4)) ; 
+	}
+
 	cairo->move_to(
-	      fmax( xoff+2, xoff+2+double((a.get_width() - pad*2)) * double(percent) - (ri.get_width()/PANGO_SCALE) - (pad+4)) 
-	    , (get_height() - (ri.get_height()/PANGO_SCALE))/2.
+	      x 
+	    , y
 	) ;
 
 	cairo->set_operator( Cairo::OPERATOR_OVER ) ;
