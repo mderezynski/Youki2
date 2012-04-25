@@ -1108,17 +1108,15 @@ namespace MPX
         const ThemeColor& c_bg   = theme->get_color( THEME_COLOR_BACKGROUND ) ; 
         const ThemeColor& c_base = theme->get_color( THEME_COLOR_BASE ) ; 
 
-        Gdk::Color c ;
-        c.set_rgb_p( c_base.r, c_base.g, c_base.b ) ; 
+        Gdk::RGBA c ;
+        c.set_rgba( c_base.r, c_base.g, c_base.b, 1.0 ) ;
 
-        Gdk::Color c2 ;
-        c2.set_rgb_p( c_bg.r, c_bg.g, c_bg.b ) ; 
+        Gdk::RGBA c2 ;
+        c2.set_rgba( c_bg.r, c_bg.g, c_bg.b, 1.0 ) ;
 
-        m_ListViewArtist->modify_bg( Gtk::STATE_NORMAL, c ) ;
-        m_ListViewAlbums->modify_bg( Gtk::STATE_NORMAL, c ) ;
-        m_ListViewTracks->modify_bg( Gtk::STATE_NORMAL, c ) ;
-
-        c.set_rgb_p( c_bg.r, c_bg.g, c_bg.b ) ; 
+        m_ListViewArtist->override_background_color( c, Gtk::STATE_FLAG_NORMAL ) ;
+        m_ListViewAlbums->override_background_color( c, Gtk::STATE_FLAG_NORMAL ) ;
+        m_ListViewTracks->override_background_color( c, Gtk::STATE_FLAG_NORMAL ) ;
     }
 
     void
@@ -1848,13 +1846,13 @@ namespace MPX
     {
         switch( event->keyval )
         {
-	    case GDK_Down:
+	        case GDK_KEY_Down:
             {
-		m_ListViewTracks->grab_focus() ;
-		return true ;
-	    }
+                m_ListViewTracks->grab_focus() ;
+                return true ;
+            }
 
-            case GDK_BackSpace:
+            case GDK_KEY_BackSpace:
             {
                 if( m_Entry->get_text().empty() )
                 {
@@ -1865,20 +1863,20 @@ namespace MPX
                 break ;
             }
 
-            case GDK_c:
-            case GDK_C:
+            case GDK_KEY_c:
+            case GDK_KEY_C:
             {
-                if( event->state & GDK_CONTROL_MASK )  
-                { 
-		    on_entry_clear_clicked() ;
-		    return true ;
+                if( event->state & GDK_CONTROL_MASK )
+                {
+                    on_entry_clear_clicked() ;
+                    return true ;
                 }
 
                 break ;
             }
 
-            case GDK_w:
-            case GDK_W:
+            case GDK_KEY_w:
+            case GDK_KEY_W:
             {
                 if( event->state & GDK_CONTROL_MASK )  
                 {
@@ -2087,7 +2085,7 @@ namespace MPX
 /*
         switch( event->keyval )
         {
-            case GDK_Escape:
+            case GDK_KEY_Escape:
                 m_main_window->hide() ;
                 return true ;
 

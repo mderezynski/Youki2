@@ -147,6 +147,8 @@ namespace MPX
 
         DBusGProxy * m_mmkeys_dbusproxy;
         grab_type m_mmkeys_grab_type;
+        Gtk::Button* m_apply_button;
+        Gtk::Button* m_revert_button;
 
         static void
         media_player_key_pressed (DBusGProxy *proxy,

@@ -274,7 +274,7 @@ namespace MPX
 #endif //HAVE_ALSA
 
             // OSS
-            Gtk::ComboBoxEntry                * m_oss_cbe_device;
+            Gtk::ComboBox                     * m_oss_cbe_device;
             Gtk::SpinButton                   * m_oss_buffer_time;
 
             // ESD
@@ -291,7 +291,7 @@ namespace MPX
             Gtk::SpinButton                   * m_jack_buffer_time;
 
 #ifdef HAVE_SUN
-            Gtk::ComboBoxEntry                * m_sun_cbe_device;
+            Gtk::ComboBox                     * m_sun_cbe_device;
             Gtk::SpinButton                   * m_sun_buffer_time;
 #endif // HAVE_SUN
 

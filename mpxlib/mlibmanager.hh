@@ -303,6 +303,7 @@ namespace MPX
             Gtk::Button     * m_Vacuum ;
 #endif // HAVE_HAL
 
+            Gtk::Notebook   * m_notebook;
             Gtk::Statusbar  * m_Statusbar ;
             Gtk::Widget     * m_VboxInner ;
 	        Gtk::Label	    * m_RescanTimeoutLabel ;

@@ -95,7 +95,7 @@ namespace MPX
 
 		int text_size_pt = static_cast<int>( (12 * 72) / Util::screen_get_y_resolution( Gdk::Screen::get_default() )) ;
 
-		Pango::FontDescription font_desc = get_style()->get_font() ;
+		Pango::FontDescription font_desc = get_style_context()->get_font() ;
 		font_desc.set_size( text_size_pt * PANGO_SCALE ) ;
 
 		Glib::RefPtr<Pango::Layout> layout = Glib::wrap( pango_cairo_create_layout( cairo->cobj() )) ;
@@ -305,7 +305,7 @@ namespace MPX
 
         int text_size_pt = static_cast<int>( (14 * 72) / Util::screen_get_y_resolution( Gdk::Screen::get_default() )) ;
 
-        Pango::FontDescription font_desc = get_style()->get_font() ;
+        Pango::FontDescription font_desc = get_style_context()->get_font() ;
         font_desc.set_size( text_size_pt * PANGO_SCALE ) ;
         font_desc.set_weight( Pango::WEIGHT_BOLD ) ;
 
@@ -346,7 +346,7 @@ namespace MPX
 
         text_size_pt = static_cast<int>( (20 * 72) / Util::screen_get_y_resolution( Gdk::Screen::get_default() )) ;
 
-        font_desc = get_style()->get_font() ;
+        font_desc = get_style_context()->get_font() ;
         font_desc.set_size( text_size_pt * PANGO_SCALE ) ;
         font_desc.set_weight( Pango::WEIGHT_BOLD ) ;
 

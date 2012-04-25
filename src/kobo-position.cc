@@ -60,7 +60,7 @@ namespace MPX
 
     {
         add_events(Gdk::EventMask(Gdk::LEAVE_NOTIFY_MASK | Gdk::ENTER_NOTIFY_MASK | Gdk::POINTER_MOTION_MASK | Gdk::POINTER_MOTION_HINT_MASK | Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK )) ;
-        unset_flags(Gtk::CAN_FOCUS) ;
+        set_can_focus (false) ;
 
         m_theme = services->get<IYoukiThemeEngine>("mpx-service-theme").get() ;
     }
@@ -289,7 +289,7 @@ namespace MPX
 	Pango::Rectangle rl, ri ;
        	GdkRectangle r ;
 
-	Pango::FontDescription font_desc = get_style()->get_font() ;
+	Pango::FontDescription font_desc = get_style_context()->get_font() ;
 	Glib::RefPtr<Pango::Layout> layout = Glib::wrap( pango_cairo_create_layout(cairo->cobj()) ) ;
 
 	const int text_size_px = 12 ;
@@ -506,8 +506,8 @@ namespace MPX
 
         switch( event->keyval )
         {
-            case GDK_Down:
-            case GDK_KP_Down:
+            case GDK_KEY_Down:
+            case GDK_KEY_KP_Down:
 
                 p = Limiter<guint> (
                       Limiter<guint>::ABS_ABS
@@ -521,8 +521,8 @@ namespace MPX
 
                 return true ;
 
-            case GDK_Up:
-            case GDK_KP_Up:
+            case GDK_KEY_Up:
+            case GDK_KEY_KP_Up:
 
                 p = Limiter<guint> (
                       Limiter<guint>::ABS_ABS

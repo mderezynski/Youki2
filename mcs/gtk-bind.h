@@ -82,7 +82,7 @@ namespace Mcs
 
       void
       rebind_cbox_entry (MCS_CB_DEFAULT_SIGNATURE,
-                         Gtk::ComboBoxEntry& cbox_entry);
+                         Gtk::ComboBox& cbox_entry);
 
       void
       rebind_toggle_button (MCS_CB_DEFAULT_SIGNATURE,
@@ -126,7 +126,7 @@ namespace Mcs
 
 
       void
-      bind_cbox_entry     (Gtk::ComboBoxEntry& cbox_entry,
+      bind_cbox_entry     (Gtk::ComboBox&      cbox_entry,
                            std::string const&  domain,
                            std::string const&  key);
 
@@ -178,7 +178,7 @@ namespace Mcs
                                std::string const& key);
 
       void
-      cbox_entry_changed_cb   (Gtk::ComboBoxEntry& cbox_entry,
+      cbox_entry_changed_cb   (Gtk::ComboBox&      cbox_entry,
                                std::string const&  domain,
                                std::string const&  key);
 

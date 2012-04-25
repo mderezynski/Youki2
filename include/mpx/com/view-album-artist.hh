@@ -2,7 +2,6 @@
 #define YOUKI_VIEW_ARTISTS__HH
 
 #include <gtkmm.h>
-#include <gtk/gtktreeview.h>
 #include <cairomm/cairomm.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/algorithm/string.hpp>
@@ -44,7 +43,7 @@ namespace Artist
 {
         namespace
         {
-            const double rounding = 1. ; 
+            const double rounding = 1. ;
         }
 
         typedef boost::tuple<std::string, guint>           Row_t ;
@@ -65,7 +64,7 @@ namespace Artist
             bool operator() (
                   const Row_t& a
                 , const Row_t& b
-            ) const 
+            ) const
             {
                 guint id[2] = { get<1>(a), get<1>(b) } ;
 
@@ -81,7 +80,7 @@ namespace Artist
 
                 return boost::get<0>(a) < boost::get<0>(b) ;
             }
-        } ; 
+        } ;
 
         struct DataModel
         : public sigc::trackable
@@ -89,14 +88,14 @@ namespace Artist
                 Model_sp_t                      m_realmodel ;
                 IdIterMap_t                     m_iter_map ;
                 std::size_t                     m_top_row ;
-                boost::optional<guint>         m_selected ;
+                boost::optional<guint>          m_selected ;
                 boost::optional<std::size_t>    m_selected_row ;
                 Signal_1                        m_changed ;
 
                 DataModel()
-                : m_top_row( 0 )
+                    : m_top_row( 0 )
                 {
-                    m_realmodel = Model_sp_t( new Model_t ) ; 
+                    m_realmodel = Model_sp_t( new Model_t ) ;
                 }
 
                 DataModel(
@@ -104,7 +103,7 @@ namespace Artist
                 )
                 : m_top_row( 0 )
                 {
-                    m_realmodel = model; 
+                    m_realmodel = model;
                 }
 
                 virtual void
@@ -113,7 +112,7 @@ namespace Artist
                     m_realmodel->clear () ;
                     m_iter_map.clear() ;
                     m_top_row = 0 ;
-                } 
+                }
 
                 virtual Signal_1&
                 signal_changed()
@@ -173,7 +172,7 @@ namespace Artist
 
                     Model_t::iterator i = m_realmodel->end();
                     std::advance( i, -1 );
-                    m_iter_map.insert(std::make_pair(artist_id, i)); 
+                    m_iter_map.insert(std::make_pair(artist_id, i));
                 }
 
                 virtual void
@@ -194,12 +193,12 @@ namespace Artist
                                 m_realmodel->begin()
                               , m_realmodel->end()
                               , row
-                              , order 
+                              , order
                           )
                         , row
                     ) ;
 
-                    m_iter_map.insert( std::make_pair( artist_id, i )); 
+                    m_iter_map.insert( std::make_pair( artist_id, i ));
                 }
         };
 
@@ -249,9 +248,9 @@ namespace Artist
                     m_mapping.clear() ;
 		    m_top_row = 0 ;
                     m_changed.emit( m_top_row ) ;
-                } 
+                }
 
-                virtual std::size_t 
+                virtual std::size_t
                 size()
                 {
                     return m_mapping.size();
@@ -265,12 +264,12 @@ namespace Artist
                     return *(m_mapping[row]);
                 }
 
-                virtual RowRowMapping_t::const_iterator 
+                virtual RowRowMapping_t::const_iterator
                 row_iter(
                       std::size_t row
                 )
                 {
-                    RowRowMapping_t::const_iterator i  = m_mapping.begin() ; 
+                    RowRowMapping_t::const_iterator i  = m_mapping.begin() ;
                     std::advance( i, row ) ;
                     return i ;
                 }
@@ -283,7 +282,7 @@ namespace Artist
                 {
                     DataModel::append_artist( artist, artist_id ) ;
                 }
-                
+
                 virtual void
                 insert_artist(
                       const std::string&        artist_name
@@ -303,9 +302,9 @@ namespace Artist
                 {
                     IdIterMap_t::iterator i = m_iter_map.find( artist_id ) ;
 
-                    if( i != m_iter_map.end() ) 
+                    if( i != m_iter_map.end() )
                     {
-                        Model_t::iterator iter = (*i).second ; 
+                        Model_t::iterator iter = (*i).second ;
 			m_iter_map.erase( i ) ;
                         m_realmodel->erase( iter ) ;
                     }
@@ -317,7 +316,7 @@ namespace Artist
                 {
                     using boost::get;
 
-                    if( m_realmodel->empty() ) 
+                    if( m_realmodel->empty() )
                     {
                         return ;
                     }
@@ -339,7 +338,7 @@ namespace Artist
 
                     IdVector_t * constraints_artist = m_constraints_artist.get() ;
 
-                    Model_t::iterator i = m_realmodel->begin() ; 
+                    Model_t::iterator i = m_realmodel->begin() ;
                     new_mapping.push_back( i++ ) ;
 		    std::size_t n = std::distance( m_realmodel->begin(), i ) ;
 
@@ -369,7 +368,7 @@ namespace Artist
 
                     std::swap( m_mapping, new_mapping ) ;
                     update_count() ;
-                    m_changed.emit( d ) ; 
+                    m_changed.emit( d ) ;
                 }
 
                 void
@@ -386,7 +385,7 @@ namespace Artist
 		    }
 		    else
 		    {
-                    	get<0>(row) = _("All Artists") ; 
+                    	get<0>(row) = _("All Artists") ;
 		    }
                 }
         };
@@ -417,7 +416,7 @@ namespace Artist
                 void
                 set_width (int width)
                 {
-                    m_width = width; 
+                    m_width = width;
                 }
 
                 int
@@ -485,7 +484,7 @@ namespace Artist
 
                     std::string s = get<0>(datarow) ;
 
-                    Glib::RefPtr<Pango::Layout> layout = widget.create_pango_layout("") ; 
+                    Glib::RefPtr<Pango::Layout> layout = widget.create_pango_layout("") ;
 
                     layout->set_ellipsize(
                           Pango::ELLIPSIZE_END
@@ -500,12 +499,12 @@ namespace Artist
                     if( row == 0 )
                     {
 			Pango::Attribute attr = Pango::Attribute::create_attr_weight( Pango::WEIGHT_BOLD ) ;
-			Pango::AttrList list ; 
-			list.insert( attr ) ;	
-			layout->set_attributes( list ) ; 
+			Pango::AttrList list ;
+			list.insert( attr ) ;
+			layout->set_attributes( list ) ;
                     }
 
-                    layout->set_text( s ) ; 
+                    layout->set_text( s ) ;
 
 		    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 
@@ -520,8 +519,8 @@ namespace Artist
 			    c->set_operator( Cairo::OPERATOR_OVER ) ;
 
 			    c->set_source_rgba(
-				  0. 
-				, 0. 
+				  0.
+				, 0.
 				, 0.
 				, 0.40
 			    ) ;
@@ -584,7 +583,7 @@ namespace Artist
                 std::set<int>                       m_collapsed ;
                 std::set<int>                       m_fixed ;
                 int                                 m_fixed_total_width ;
-        
+
                 Signal_void                         m_SIGNAL_selection_changed ;
                 Signal_void                         m_SIGNAL_find_accepted ;
                 Signal_void                         m_SIGNAL_start_playback ;
@@ -598,17 +597,16 @@ namespace Artist
                 void
                 initialize_metrics ()
                 {
-                    PangoContext *context = gtk_widget_get_pango_context (GTK_WIDGET (gobj()));
+                    Glib::RefPtr<Pango::Context> context = get_pango_context ();
 
-                    PangoFontMetrics *metrics = pango_context_get_metrics(
-                          context
-                        , GTK_WIDGET (gobj())->style->font_desc
-                        , pango_context_get_language (context)
+                    Pango::FontMetrics metrics = context->get_metrics(
+                          get_style_context ()->get_font ()
+                        , context->get_language ()
                     ) ;
 
                     m_height__row =
-                        (pango_font_metrics_get_ascent (metrics)/PANGO_SCALE) + 
-                        (pango_font_metrics_get_descent (metrics)/PANGO_SCALE) + 5 ;
+                        (metrics.get_ascent () / PANGO_SCALE) +
+                        (metrics.get_descent () / PANGO_SCALE) + 5 ;
                 }
 
                 void
@@ -626,7 +624,7 @@ namespace Artist
                 )
                 {
                     if( m_height__current_viewport && m_height__row )
-                        return m_height__current_viewport / m_height__row ; 
+                        return m_height__current_viewport / m_height__row ;
                     else
                         return 0 ;
                 }
@@ -635,7 +633,7 @@ namespace Artist
                 get_upper_row ()
                 {
                     if( m_prop_vadj.get_value() )
-                        return m_prop_vadj.get_value()->get_value() / m_height__row ; 
+                        return m_prop_vadj.get_value()->get_value() / m_height__row ;
                     else
                         return 0 ;
                 }
@@ -647,10 +645,10 @@ namespace Artist
 
                     Interval<std::size_t> i (
                           Interval<std::size_t>::IN_IN
-                        , up 
+                        , up
                         , up + (m_height__current_viewport / m_height__row)
                     ) ;
-            
+
                     return i.in( row ) ;
                 }
 
@@ -671,31 +669,31 @@ namespace Artist
                     {
                         switch( event->keyval )
                         {
-                            case GDK_Up:
-                            case GDK_KP_Up:
+                            case GDK_KEY_Up:
+                            case GDK_KEY_KP_Up:
                                 find_prev_match() ;
                                 return true ;
 
-                            case GDK_Down:
-                            case GDK_KP_Down:
+                            case GDK_KEY_Down:
+                            case GDK_KEY_KP_Down:
                                 find_next_match() ;
                                 return true ;
 
-                            case GDK_Escape:
+                            case GDK_KEY_Escape:
                                 cancel_search() ;
                                 return true ;
 
-                            case GDK_Tab:
+                            case GDK_KEY_Tab:
                                 cancel_search() ;
-                                return false ; 
-        
+                                return false ;
+
                             default: ;
                         }
 
                         GdkEvent *new_event = gdk_event_copy( (GdkEvent*)(event) ) ;
                         g_object_unref( ((GdkEventKey*)new_event)->window ) ;
-                        ((GdkEventKey *) new_event)->window = GDK_WINDOW(g_object_ref(G_OBJECT(GTK_WIDGET(m_SearchWindow->gobj())->window))) ;
-                        gtk_widget_event(GTK_WIDGET(m_SearchEntry->gobj()), new_event) ;
+                        ((GdkEventKey *) new_event)->window = m_SearchWindow->get_window()->gobj();
+                        m_SearchEntry->event (new_event) ;
                         gdk_event_free(new_event) ;
 
                         return true ;
@@ -707,15 +705,15 @@ namespace Artist
 
                     switch( event->keyval )
                     {
-                        case GDK_Up:
-                        case GDK_KP_Up:
-                        case GDK_Page_Up:
+                        case GDK_KEY_Up:
+                        case GDK_KEY_KP_Up:
+                        case GDK_KEY_Page_Up:
                         {
 
-                            if( origin == 0 ) 
+                            if( origin == 0 )
                                 break ;
 
-                            if( !m_selection ) 
+                            if( !m_selection )
                             {
                                 select_row( get_upper_row() ) ;
                                 break ;
@@ -723,19 +721,19 @@ namespace Artist
 
                             std::size_t step ;
 
-                            if( event->keyval == GDK_Page_Up )
+                            if( event->keyval == GDK_KEY_Page_Up )
                             {
-                                step = get_page_size() ; 
+                                step = get_page_size() ;
                             }
                             else
                             {
-                                step = 1 ; 
+                                step = 1 ;
                             }
-                            
-                            row = Limiter<guint> ( 
+
+                            row = Limiter<guint> (
                                   Limiter<guint>::ABS_ABS
                                 , 0
-                                , m_model->size()-1 
+                                , m_model->size()-1
                                 , origin - step
                             ) ;
 
@@ -747,15 +745,15 @@ namespace Artist
                                 , get_upper_row()
                             ) ;
 
-                            if( i.in( row )) 
+                            if( i.in( row ))
                             {
-                                scroll_to_row( row ) ; 
+                                scroll_to_row( row ) ;
                             }
 
                             return true;
                         }
 
-                        case GDK_Home:
+                        case GDK_KEY_Home:
                         {
                             scroll_to_row( 0 ) ;
                             select_row( 0 ) ;
@@ -763,7 +761,7 @@ namespace Artist
                             return true ;
                         }
 
-                        case GDK_End:
+                        case GDK_KEY_End:
                         {
                             scroll_to_row( m_model->size() - get_page_size() ) ;
                             select_row( m_model->size() - 1 ) ;
@@ -771,14 +769,14 @@ namespace Artist
                             return true ;
                         }
 
-                        case GDK_Down:
-                        case GDK_KP_Down:
-                        case GDK_Page_Down:
+                        case GDK_KEY_Down:
+                        case GDK_KEY_KP_Down:
+                        case GDK_KEY_Page_Down:
                         {
                             if( origin == (m_model->size()-1) )
                                 break ;
 
-                            if( !m_selection ) 
+                            if( !m_selection )
                             {
                                 select_row( get_upper_row() ) ;
                                 break ;
@@ -786,7 +784,7 @@ namespace Artist
 
                             std::size_t step ;
 
-                            if( event->keyval == GDK_Page_Down )
+                            if( event->keyval == GDK_KEY_Page_Down )
                             {
                                 step = get_page_size() ;
                             }
@@ -795,24 +793,24 @@ namespace Artist
                                 step = 1 ;
                             }
 
-                            row = Limiter<guint> ( 
+                            row = Limiter<guint> (
                                   Limiter<guint>::ABS_ABS
-                                , 0 
-                                , m_model->size() - 1 
-                                , origin + step 
+                                , 0
+                                , m_model->size() - 1
+                                , origin + step
                             ) ;
 
                             select_row( row ) ;
 
                             i = Interval<std::size_t> (
                                   Interval<std::size_t>::IN_EX
-                                , get_upper_row() + (get_page_size()) 
-                                , m_model->size() 
+                                , get_upper_row() + (get_page_size())
+                                , m_model->size()
                             ) ;
 
-                            if( i.in( row )) 
+                            if( i.in( row ))
                             {
-                                scroll_to_row( row ) ; 
+                                scroll_to_row( row ) ;
                             }
 
                             return true ;
@@ -837,14 +835,14 @@ namespace Artist
 
                                 GdkEvent *new_event = gdk_event_copy( (GdkEvent*)(event) ) ;
                                 g_object_unref( ((GdkEventKey*)new_event)->window ) ;
-                                gtk_widget_realize( GTK_WIDGET(m_SearchWindow->gobj()) ) ;
-                                ((GdkEventKey *) new_event)->window = GDK_WINDOW(g_object_ref(G_OBJECT(GTK_WIDGET(m_SearchWindow->gobj())->window))) ;
+                                m_SearchWindow->realize ();
+                                ((GdkEventKey *) new_event)->window = m_SearchWindow->get_window()->gobj();
 
-                                gtk_widget_event(GTK_WIDGET(m_SearchEntry->gobj()), new_event) ;
+                                m_SearchEntry->event(new_event) ;
                                 gdk_event_free(new_event) ;
 
                                 m_search_active = true ;
-        
+
                                 return false ;
                             }
                     }
@@ -862,25 +860,16 @@ namespace Artist
 
                     GdkEvent *fevent = gdk_event_new (GDK_FOCUS_CHANGE);
 
-                    g_object_ref (widget);
-
-                   if( in )
-                      GTK_WIDGET_SET_FLAGS( widget, GTK_HAS_FOCUS ) ;
-                    else
-                      GTK_WIDGET_UNSET_FLAGS( widget, GTK_HAS_FOCUS ) ;
+                    w.property_has_focus () = in;
 
                     fevent->focus_change.type   = GDK_FOCUS_CHANGE;
-                    fevent->focus_change.window = GDK_WINDOW(g_object_ref( widget->window )) ;
+                    fevent->focus_change.window = w.get_window()->gobj();
                     fevent->focus_change.in     = in;
 
-                    gtk_widget_event( widget, fevent ) ;
+                    w.event( fevent ) ;
 
-                    g_object_notify(
-                          G_OBJECT (widget)
-                        , "has-focus"
-                    ) ;
+                    g_object_notify(G_OBJECT (widget), "has-focus") ;
 
-                    g_object_unref( widget ) ;
                     gdk_event_free( fevent ) ;
                 }
 
@@ -889,44 +878,44 @@ namespace Artist
                 {
                     using boost::get;
 
-		    cancel_search() ;
-		    grab_focus() ;
+                    cancel_search() ;
+                    grab_focus() ;
 
-		    if( event->button == 1 && event->type == GDK_2BUTTON_PRESS )
-	            {
-			m_SIGNAL_start_playback.emit() ;
-		        return false ;
-		    }
+                    if( event->button == 1 && event->type == GDK_2BUTTON_PRESS )
+                    {
+                        m_SIGNAL_start_playback.emit() ;
+                        return false ;
+                    }
 
-		    std::size_t row  = double(m_prop_vadj.get_value()->get_value()) / double(m_height__row) ; 
-		    std::size_t off  = m_height__row - (m_prop_vadj.get_value()->get_value() - (row*m_height__row)) ;
+                    std::size_t row  = double(m_prop_vadj.get_value()->get_value()) / double(m_height__row) ;
+                    std::size_t off  = m_height__row - (m_prop_vadj.get_value()->get_value() - (row*m_height__row)) ;
 
-		    if( event->y > off || off == 0 )
-		    {
-			std::size_t row2 = row + (event->y + (off ? (m_height__row-off) : 0)) / m_height__row ; 
+                    if( event->y > off || off == 0 )
+                    {
+                        std::size_t row2 = row + (event->y + (off ? (m_height__row-off) : 0)) / m_height__row ;
 
-			if( m_selection && boost::get<2>(m_selection.get()) == row2 )
-			    return true ;
+                        if( m_selection && boost::get<2>(m_selection.get()) == row2 )
+                            return true ;
 
-			if( row2 < m_model->size() ) 
-			{
-			    if( row2 >= (row + m_height__current_viewport/m_height__row))
-			    {
-			    }
-			    select_row( row2 ) ;
-			}
+                        if( row2 < m_model->size() )
+                        {
+                            if( row2 >= (row + m_height__current_viewport/m_height__row))
+                            {
+                            }
+                            select_row( row2 ) ;
+                        }
 
-		    }
-		    else
-		    {
-			if( m_selection && boost::get<2>(m_selection.get()) == row )
-			    return false ;
+                    }
+                    else
+                    {
+                        if( m_selection && boost::get<2>(m_selection.get()) == row )
+                            return false ;
 
-			if(row < m_model->size())
-			{
-			    select_row( row ) ;
-			}
-		    }
+                        if(row < m_model->size())
+                        {
+                            select_row( row ) ;
+                        }
+                    }
 
                     return false ;
                 }
@@ -956,16 +945,16 @@ namespace Artist
                 {
                     if( m_prop_vadj.get_value() )
                     {
-                        m_prop_vadj.get_value()->set_upper( upper ) ; 
-                        m_prop_vadj.get_value()->set_page_size( page_size ) ; 
-                        m_prop_vadj.get_value()->set_step_increment( step_increment ) ; 
+                        m_prop_vadj.get_value()->set_upper( upper ) ;
+                        m_prop_vadj.get_value()->set_page_size( page_size ) ;
+                        m_prop_vadj.get_value()->set_step_increment( step_increment ) ;
                     }
                 }
 
                 bool
                 on_configure_event(
                     GdkEventConfigure* event
-                )        
+                )
                 {
                     m_height__current_viewport = event->height ;
 
@@ -973,8 +962,8 @@ namespace Artist
                     {
                         configure_vadj(
                               (m_model->size() * m_height__row) + 3
-                            , m_height__current_viewport 
-                            , 3 
+                            , m_height__current_viewport
+                            , 3
                         ) ;
                     }
 
@@ -985,7 +974,7 @@ namespace Artist
                         if( m_fixed.count( n ) )
                         {
                             continue ;
-                        } 
+                        }
 
                         if( m_collapsed.count( n ) )
                         {
@@ -1012,11 +1001,12 @@ namespace Artist
                     const ThemeColor& c_base_rules_hint = theme->get_color( THEME_COLOR_BASE_ALTERNATE ) ;
                     const ThemeColor& c_text            = theme->get_color( THEME_COLOR_TEXT ) ;
                     const ThemeColor& c_text_sel        = theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
-		    const ThemeColor& c_bg	= theme->get_color( THEME_COLOR_BACKGROUND ) ;
-		    const ThemeColor& c_base	= theme->get_color( THEME_COLOR_BASE ) ;
-		    const ThemeColor& c_outline	= theme->get_color( THEME_COLOR_ENTRY_OUTLINE ) ;
 
-                    std::size_t row = get_upper_row() ; 
+                    const ThemeColor& c_bg	    = theme->get_color( THEME_COLOR_BACKGROUND ) ;
+                    const ThemeColor& c_base	= theme->get_color( THEME_COLOR_BASE ) ;
+                    const ThemeColor& c_outline	= theme->get_color( THEME_COLOR_ENTRY_OUTLINE ) ;
+
+                    std::size_t row = get_upper_row() ;
 
                     std::size_t limit = Limiter<std::size_t>(
                                             Limiter<std::size_t>::ABS_ABS
@@ -1030,79 +1020,67 @@ namespace Artist
 
                     int offset = m_prop_vadj.get_value()->get_value() - (row*m_height__row) ;
 
-                    if( offset ) 
+                    if( offset )
                     {
                         ypos -= offset ;
                     }
 
-                    Cairo::RefPtr<Cairo::Context> cairo = get_window()->create_cairo_context(); 
+                    Cairo::RefPtr<Cairo::Context> cairo = get_window()->create_cairo_context();
 
-		    cairo->set_operator( Cairo::OPERATOR_SOURCE ) ;
-		    cairo->set_source_rgba(
-			  c_bg.r
-			, c_bg.g
-			, c_bg.b
-			, c_bg.a
-		    ) ;
-		    cairo->paint() ;
+                    cairo->set_operator( Cairo::OPERATOR_SOURCE ) ;
+                    cairo->set_source_rgba(c_bg.r, c_bg.g, c_bg.b, c_bg.a) ;
+                    cairo->paint() ;
 
-		    cairo->set_source_rgba(
-			  c_base.r
-			, c_base.g
-			, c_base.b
-			, c_base.a
-		    ) ;
-		    RoundedRectangle(
-			  cairo
-			, 1
-			, 1
-			, a.get_width() - 7
-			, a.get_height() - 2
-			, rounding 
-		    ) ;
-		    cairo->fill_preserve() ;
-		    cairo->clip() ;
+                    cairo->set_source_rgba(c_base.r, c_base.g, c_base.b, c_base.a) ;
+                    RoundedRectangle(cairo
+                                     , 1
+                                     , 1
+                                     , a.get_width() - 7
+                                     , a.get_height() - 2
+                                     , rounding
+                                     ) ;
+                    cairo->fill_preserve() ;
+                    cairo->clip() ;
 
-		    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
+                    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 
-		    std::size_t n = 0 ;
+                    std::size_t n = 0 ;
 
                     while( (row+n) < m_model->size() && n < limit )
                     {
-			RowRowMapping_t::const_iterator iter = m_model->row_iter( row+n ) ;
+                        RowRowMapping_t::const_iterator iter = m_model->row_iter( row+n ) ;
 
-			MPX::CairoCorners::CORNERS c = MPX::CairoCorners::CORNERS(0) ;
+                        MPX::CairoCorners::CORNERS c = MPX::CairoCorners::CORNERS(0) ;
 
                         xpos = 0 ;
 
                         bool is_selected = (m_selection && boost::get<1>(m_selection.get()) == get<1>(**iter)) ;
 
-                        if( is_selected ) 
+                        if( is_selected )
                         {
                             GdkRectangle r ;
 
                             r.x         = 1 ;
                             r.y         = ypos ;
-                            r.width     = a.get_width() - 8 ; 
-                            r.height    = m_height__row ; 
+                            r.width     = a.get_width() - 8 ;
+                            r.height    = m_height__row ;
 
                             theme->draw_selection_rectangle(
                                   cairo
                                 , r
                                 , has_focus()
-				, rounding
-				, c
+                                , rounding
+                                , c
                             ) ;
                         }
-			else
-                        if((row+n) % 2) 
+                        else if((row+n) % 2)
                         {
                             GdkRectangle r ;
 
                             r.x       = 1 ;
                             r.y       = ypos ;
-                            r.width   = a.get_width() - 8 ; 
-                            r.height  = m_height__row ; 
+                            r.width   = a.get_width() - 8 ;
+                            r.height  = m_height__row ;
 
                             RoundedRectangle(
                                   cairo
@@ -1111,14 +1089,14 @@ namespace Artist
                                 , r.width
                                 , r.height
                                 , rounding
-				, c
+                                , c
                             ) ;
 
                             cairo->set_source_rgba(
-                                  c_base_rules_hint.r 
-                                , c_base_rules_hint.g 
-                                , c_base_rules_hint.b 
-                                , c_base_rules_hint.a 
+                                  c_base_rules_hint.r
+                                , c_base_rules_hint.g
+                                , c_base_rules_hint.b
+                                , c_base_rules_hint.a
                             ) ;
 
                             cairo->fill() ;
@@ -1128,7 +1106,7 @@ namespace Artist
                         {
                             (*i)->render(
                                   cairo
-                                , **iter 
+                                , **iter
                                 ,  *this
                                 , row+n
                                 , xpos
@@ -1143,70 +1121,67 @@ namespace Artist
 
                         ypos += m_height__row;
 
-			++n ;
+                        ++n ;
                         ++iter;
                     }
 
-		    cairo->reset_clip() ;
+                    cairo->reset_clip() ;
 
-		    cairo->save() ;
-		    RoundedRectangle(
-			  cairo
-			, 1 
-			, 1 
-			, a.get_width() - 7
-			, a.get_height() - 2
-			, rounding 
-		    ) ;
+                    cairo->save() ;
+                    RoundedRectangle(cairo
+                                     , 1
+                                     , 1
+                                     , a.get_width() - 7
+                                     , a.get_height() - 2
+                                     , rounding
+                                     ) ;
 
-		   cairo->set_source_rgba(
-			  c_outline.r
-			, c_outline.g
-			, c_outline.b
-			, c_outline.a
-		    ) ;
+                    cairo->set_source_rgba(c_outline.r
+                                           , c_outline.g
+                                           , c_outline.b
+                                           , c_outline.a
+                                           ) ;
 
-		    cairo->set_line_width( 1. ) ; 
-		    cairo->stroke() ;
-		    cairo->restore() ;
+                    cairo->set_line_width( 1. ) ;
+                    cairo->stroke() ;
+                    cairo->restore() ;
 
-		    GtkWidget * widget = GTK_WIDGET(gobj()) ;
-
-	            if( has_focus() )
-			    gtk_paint_focus (widget->style, widget->window,
-			       gtk_widget_get_state (widget),
-			       &event->area, widget, NULL,
-			       2, 2, a.get_width() - 9 , a.get_height() - 4);
-
+                    // FIXME: Port this to use render_focus()
+                    // GtkWidget * widget = GTK_WIDGET(gobj()) ;
+                    // if( has_focus() )
+                    // {
+                    //     gtk_paint_focus (widget->style, widget->window,
+                    //                      gtk_widget_get_state (widget),
+                    //                      &event->area, widget, NULL,
+                    //                      2, 2, a.get_width() - 9 , a.get_height() - 4);
+                    // }
                     return true;
                 }
 
-                void
-                on_model_changed(
-                      std::size_t       position
-                )
-                {
-		    configure_vadj(
-			  (m_model->size() * m_height__row) + 3
-			, m_height__current_viewport 
-			, 3 
-		    ) ;
+            void
+            on_model_changed (std::size_t position)
+            {
+                configure_vadj(
+                               (m_model->size() * m_height__row) + 3
+                               , m_height__current_viewport
+                               , 3
+                               ) ;
 
-                    select_row( position ) ; 
-                    scroll_to_row( position ) ;
-                }
+                select_row( position ) ;
+                scroll_to_row( position ) ;
+            }
 
                 static gboolean
                 list_view_set_adjustments(
                     GtkWidget*obj,
                     GtkAdjustment*hadj,
-                    GtkAdjustment*vadj, 
+                    GtkAdjustment*vadj,
                     gpointer data
                 )
                 {
                     if( vadj )
                     {
-                            g_object_set(G_OBJECT(obj), "vadjustment", vadj, NULL); 
+                            g_object_set(G_OBJECT(obj), "vadjustment", vadj, NULL);
                             g_object_set(G_OBJECT(obj), "hadjustment", hadj, NULL);
 
                             Class & view = *(reinterpret_cast<Class*>(data));
@@ -1242,14 +1217,14 @@ namespace Artist
 
                                 select_row( row ) ;
 
-				if( !get_row_is_visible( row ))		
+				if( !get_row_is_visible( row ))
 	                                scroll_to_row( row ) ;
 
                                 return ;
                             }
                         }
                     }
-                
+
                     clear_selection() ;
                 }
 
@@ -1340,7 +1315,7 @@ namespace Artist
 
                     return boost::optional<guint>() ;
                 }
-    
+
                 void
                 clear_selection(
                 )
@@ -1412,7 +1387,7 @@ namespace Artist
                     else
                     {
                         m_fixed.erase( column ) ;
-                        m_fixed_total_width -= m_columns[column]->get_width() ; 
+                        m_fixed_total_width -= m_columns[column]->get_width() ;
                         queue_resize () ;
                         queue_draw () ;
                     }
@@ -1432,7 +1407,7 @@ namespace Artist
                         return ;
                     }
 
-                    RowRowMapping_t::iterator i = m_model->m_mapping.begin(); 
+                    RowRowMapping_t::iterator i = m_model->m_mapping.begin();
 
                     if( m_selection )
                     {
@@ -1446,7 +1421,7 @@ namespace Artist
 
                         if( match.length() && match.substr( 0, text.length()) == text.substr( 0, text.length()) )
                         {
-                            std::size_t d = std::distance( m_model->m_mapping.begin(), i ) ; 
+                            std::size_t d = std::distance( m_model->m_mapping.begin(), i ) ;
                             scroll_to_row( d ) ;
                             select_row( d ) ;
                             return ;
@@ -1466,12 +1441,12 @@ namespace Artist
                         return ;
                     }
 
-                    RowRowMapping_t::iterator i = m_model->m_mapping.begin(); 
+                    RowRowMapping_t::iterator i = m_model->m_mapping.begin();
 
                     if( m_selection )
                     {
                         std::advance( i, get<2>(m_selection.get()) ) ;
-                        --i ; 
+                        --i ;
                     }
 
                     for( ; i >= m_model->m_mapping.begin(); --i )
@@ -1480,7 +1455,7 @@ namespace Artist
 
                         if( match.length() && match.substr( 0, text.length()) == text.substr( 0, text.length()) )
                         {
-                            std::size_t d = std::distance( m_model->m_mapping.begin(), i ) ; 
+                            std::size_t d = std::distance( m_model->m_mapping.begin(), i ) ;
                             scroll_to_row( d ) ;
                             select_row( d ) ;
                             return ;
@@ -1500,8 +1475,8 @@ namespace Artist
                         return ;
                     }
 
-                    RowRowMapping_t::iterator i = m_model->m_mapping.begin(); 
-                    ++i ;               
+                    RowRowMapping_t::iterator i = m_model->m_mapping.begin();
+                    ++i ;
 
                     for( ; i != m_model->m_mapping.end(); ++i )
                     {
@@ -1509,8 +1484,8 @@ namespace Artist
 
                         if( match.length() && match.substr( 0, text.length()) == text.substr( 0, text.length()) )
                         {
-                            std::size_t d = std::distance( m_model->m_mapping.begin(), i ) ; 
-                            scroll_to_row( d ) ; 
+                            std::size_t d = std::distance( m_model->m_mapping.begin(), i ) ;
+                            scroll_to_row( d ) ;
                             select_row( d ) ;
                             return ;
                         }
@@ -1524,7 +1499,7 @@ namespace Artist
                 on_search_entry_activated()
                 {
                     cancel_search() ;
-                    m_SIGNAL_find_accepted.emit() ; 
+                    m_SIGNAL_find_accepted.emit() ;
                 }
 
                 bool
@@ -1535,7 +1510,7 @@ namespace Artist
                     cancel_search() ;
                     return false ;
                 }
-    
+
             public:
 
                 void
@@ -1576,23 +1551,24 @@ namespace Artist
                 {
                     boost::shared_ptr<IYoukiThemeEngine> theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;
                     const ThemeColor& c = theme->get_color( THEME_COLOR_BASE ) ;
-                    Gdk::Color cgdk ;
-                    cgdk.set_rgb_p( c.r, c.g, c.b ) ; 
-                    modify_bg( Gtk::STATE_NORMAL, cgdk ) ;
-                    modify_base( Gtk::STATE_NORMAL, cgdk ) ;
+                    Gdk::RGBA cgdk ;
+                    cgdk.set_rgba( c.r, c.g, c.b, 1.0 ) ;
+                    override_background_color ( cgdk, Gtk::STATE_FLAG_NORMAL ) ;
+                    override_color( cgdk, Gtk::STATE_FLAG_NORMAL ) ;
 
-                    set_flags(Gtk::CAN_FOCUS);
+                    set_can_focus (true);
                     add_events(Gdk::EventMask( GDK_KEY_PRESS_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_LEAVE_NOTIFY_MASK | GDK_BUTTON_PRESS_MASK ));
 
-                    ((GtkWidgetClass*)(G_OBJECT_GET_CLASS(G_OBJECT(gobj()))))->set_scroll_adjustments_signal = 
-                            g_signal_new ("set_scroll_adjustments",
-                                      G_OBJECT_CLASS_TYPE (G_OBJECT_CLASS (G_OBJECT_GET_CLASS(G_OBJECT(gobj())))),
-                                      GSignalFlags (G_SIGNAL_RUN_FIRST),
-                                      0,
-                                      NULL, NULL,
-                                      g_cclosure_user_marshal_VOID__OBJECT_OBJECT, G_TYPE_NONE, 2, GTK_TYPE_ADJUSTMENT, GTK_TYPE_ADJUSTMENT);
+                    // FIXME: Implement Gtk::Scrollable
+                    // GTK_WIDGET_GET_CLASS(gobj())->set_scroll_adjustments_signal =
+                    //         g_signal_new ("set_scroll_adjustments",
+                    //                   G_OBJECT_CLASS_TYPE (G_OBJECT_CLASS (G_OBJECT_GET_CLASS(G_OBJECT(gobj())))),
+                    //                   GSignalFlags (G_SIGNAL_RUN_FIRST),
+                    //                   0,
+                    //                   NULL, NULL,
+                    //                   g_cclosure_user_marshal_VOID__OBJECT_OBJECT, G_TYPE_NONE, 2, GTK_TYPE_ADJUSTMENT, GTK_TYPE_ADJUSTMENT);
 
-                    g_signal_connect(G_OBJECT(gobj()), "set_scroll_adjustments", G_CALLBACK(list_view_set_adjustments), this);
+                    // g_signal_connect(G_OBJECT(gobj()), "set_scroll_adjustments", G_CALLBACK(list_view_set_adjustments), this);
 
                     m_SearchEntry = Gtk::manage( new Gtk::Entry ) ;
                     gtk_widget_realize( GTK_WIDGET(m_SearchEntry->gobj() )) ;
@@ -1603,7 +1579,7 @@ namespace Artist
                                   *this
                                 , &Class::on_search_entry_changed
                     )) ;
-    
+
                     m_SearchEntry->signal_activate().connect(
                             sigc::mem_fun(
                                   *this

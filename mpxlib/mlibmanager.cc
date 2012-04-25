@@ -58,7 +58,7 @@ using boost::get;
 
 namespace
 {
-    const std::string path (DATA_DIR G_DIR_SEPARATOR_S "ui" G_DIR_SEPARATOR_S "mlibmanager.ui");
+    const std::string ui_path = DATA_DIR G_DIR_SEPARATOR_S "ui" G_DIR_SEPARATOR_S "mlibmanager.ui";
 
     const char MenubarMLibMan [] =
         "<ui>"
@@ -182,6 +182,8 @@ namespace MPX
 
        /*- Widgets -------------------------------------------------------*/
 
+        m_Builder->get_widget("notebook1", m_notebook);
+
         m_Builder->get_widget("treeview-filestats", m_FileStats_View );
 
         m_FileStats_Store = Gtk::ListStore::create( m_FileStats_Columns ) ;
@@ -238,7 +240,9 @@ namespace MPX
 
         /*- Details Textview/Buffer ---------------------------------------*/
 
-        m_TextBufferDetails = (dynamic_cast<Gtk::TextView*>(m_Builder->get_widget("textview-details")))->get_buffer();
+        Gtk::TextView* textview = 0;
+        m_Builder->get_widget("textview-details", textview);
+        m_TextBufferDetails = textview->get_buffer();
 
 #ifdef HAVE_HAL
         /*- Volumes View --------------------------------------------------*/
@@ -364,7 +368,7 @@ namespace MPX
         Glib::signal_timeout().connect( sigc::mem_fun(*this, &MLibManager::on_rescan_timeout), 1000 );
         m_RescanTimer.start();
 
-	m_ButtonPauseRescan->set_sensitive( mcs->key_get<bool>("library","rescan-in-intervals")) ;
+        m_ButtonPauseRescan->set_sensitive( mcs->key_get<bool>("library","rescan-in-intervals")) ;
 
         /*- Actions -------------------------------------------------------*/
 
@@ -393,7 +397,7 @@ namespace MPX
                     &MLibManager::rescan_volumes
         ));
 
-	m_Actions->get_action("action-mlib-rescan")->connect_proxy( *b ) ;
+        m_ButtonScan->set_related_action (m_Actions->get_action("action-mlib-rescan"));
 
         m_Actions->add( Action::create(
 
@@ -421,7 +425,7 @@ namespace MPX
                 &MLibManager::hide
         ));
 
-        m_Actions->get_action("action-close")->connect_proxy( *m_Close );
+        m_Close->set_related_action (m_Actions->get_action("action-close"));
 
         m_UIManager->insert_action_group(m_Actions);
 
@@ -437,11 +441,9 @@ namespace MPX
             )
         )
         {
-            dynamic_cast<Alignment*>(
-                m_Builder->get_widget("alignment-menu")
-            )->add(
-                *(m_UIManager->get_widget ("/MenubarMLibMan"))
-            );
+            Gtk::Alignment* alignment = 0;
+            m_Builder->get_widget("alignment-menu", alignment);
+            alignment->add (*m_UIManager->get_widget ("/MenubarMLibMan"));
 
             update_filestats();
         }
@@ -458,7 +460,7 @@ namespace MPX
         else
 #endif
         {
-            m_Builder->get_widget("notebook1")->hide();
+            m_notebook->hide();
         }
 
         boost::shared_ptr<Library_MLibMan> library = services->get<Library_MLibMan>("mpx-service-library");
@@ -555,7 +557,7 @@ namespace MPX
         if( use_hal )
         {
             populate_volumes();
-            m_Builder->get_widget("notebook1")->show();
+            m_notebook->show();
             m_Actions->get_action("action-import-folder")->set_visible( false );
             m_Actions->get_action("action-import-share")->set_visible( false );
             set_resizable( true );
@@ -563,7 +565,7 @@ namespace MPX
         else
         {
             clear_volumes();
-            m_Builder->get_widget("notebook1")->hide();
+            m_notebook->hide();
             m_Actions->get_action("action-import-folder")->set_visible( true );
             m_Actions->get_action("action-import-share")->set_visible( true );
             set_resizable( false );
@@ -1275,7 +1277,10 @@ namespace MPX
 
         if(m_ManagedPaths.count(FullPath))
         {
-            dynamic_cast<Gtk::Label*>(m_Builder->get_widget("innerdialog-label-yes"))->set_text_with_mnemonic("_Remove");
+            Gtk::Label* label = 0;
+            m_Builder->get_widget("innerdialog-label-yes", label);
+            label->set_text_with_mnemonic("_Remove");
+
             m_InnerdialogLabel->set_markup((
                 boost::format(
                     "<b>Remove</b> %s <b>?</b>")
@@ -1319,7 +1324,10 @@ namespace MPX
         }
         else
         {
-            dynamic_cast<Gtk::Label*>(m_Builder->get_widget("innerdialog-label-yes"))->set_text_with_mnemonic("_Add");
+            Gtk::Label* label = 0;
+            m_Builder->get_widget("innerdialog-label-yes", label);
+            label->set_text_with_mnemonic("_Add");
+
             m_InnerdialogLabel->set_markup((
                 boost::format(
                     "<b>Add</b> %s <b>?</b>")

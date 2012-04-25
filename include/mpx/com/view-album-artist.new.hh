@@ -570,17 +570,17 @@ namespace Artist
                 void
                 initialize_metrics ()
                 {
-                    PangoContext *context = gtk_widget_get_pango_context (GTK_WIDGET (gobj()));
+                    Glib::RefPtr<Pango::Context> context = get_pango_context ();
 
-                    PangoFontMetrics *metrics = pango_context_get_metrics(
+                    Pango::FontMetrics metrics = context->get_metrics(
                           context
-                        , GTK_WIDGET (gobj())->style->font_desc
-                        , pango_context_get_language (context)
+                        , get_style_context()->get_font()
+                        , context->get_language ()
                     ) ;
 
                     m_height__row =
-                        (pango_font_metrics_get_ascent (metrics)/PANGO_SCALE) + 
-                        (pango_font_metrics_get_descent (metrics)/PANGO_SCALE) + 7 ;
+                        (metrics.get_ascent ()/PANGO_SCALE) +
+                        (metrics.get_descent ()/PANGO_SCALE) + 7 ;
                 }
 
                 void

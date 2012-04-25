@@ -63,13 +63,14 @@ namespace Mcs
 
   void
   Bind::rebind_cbox_entry (MCS_CB_DEFAULT_SIGNATURE,
-                           Gtk::ComboBoxEntry& cbox_entry)
+                           Gtk::ComboBox& cbox_entry)
   {
+    //FIXME: Check if there is an entry widget attached
     if (m_rebind_locks[RL_CBOX_ENTRY])
       return;
 
     RebindLock (*this, RL_CBOX_ENTRY);
-    cbox_entry.get_entry()->set_text (boost::get<std::string> (value));
+    //cbox_entry.get_entry()->set_text (boost::get<std::string> (value));
   }
 
   void
@@ -291,32 +292,35 @@ namespace Mcs
     font_button.property_font_name () = mcs->key_get<std::string> (domain, key);
   }
 
-  //Gtk::ComboBoxEntry
   void
-  Bind::cbox_entry_changed_cb (Gtk::ComboBoxEntry& cbox_entry,
+  Bind::cbox_entry_changed_cb (Gtk::ComboBox& cbox_entry,
                                std::string const&  domain,
                                std::string const&  key)
   {
+    //FIXME: Check if there is an entry widget attached
+
     if (m_rebind_locks[RL_CBOX_ENTRY])
       return;
 
     RebindLock (*this, RL_CBOX_ENTRY);
-    KeyVariant key_value = std::string (cbox_entry.get_entry ()->get_text ());
-    mcs->key_set (domain, key, key_value);
+    //KeyVariant key_value = std::string (cbox_entry.get_entry ()->get_text ());
+    //mcs->key_set (domain, key, key_value);
   }
 
   void
-  Bind::bind_cbox_entry (Gtk::ComboBoxEntry& cbox_entry,
+  Bind::bind_cbox_entry (Gtk::ComboBox& cbox_entry,
                          std::string const&  domain,
                          std::string const&  key)
   {
-    cbox_entry.get_entry ()->set_text (mcs->key_get<std::string> (domain, key));
-    cbox_entry.signal_changed ().connect (sigc::bind (sigc::mem_fun (this, &Bind::cbox_entry_changed_cb),
-                                                      sigc::ref (cbox_entry), domain, key));
+    //FIXME: Check if there is an entry widget attached
 
-    mcs->subscribe (domain, key,
-                    sigc::bind (sigc::mem_fun (this, &Bind::rebind_cbox_entry),
-                                sigc::ref (cbox_entry)));
+    // cbox_entry.get_entry ()->set_text (mcs->key_get<std::string> (domain, key));
+    // cbox_entry.signal_changed ().connect (sigc::bind (sigc::mem_fun (this, &Bind::cbox_entry_changed_cb),
+    //                                                   sigc::ref (cbox_entry), domain, key));
+
+    // mcs->subscribe (domain, key,
+    //                 sigc::bind (sigc::mem_fun (this, &Bind::rebind_cbox_entry),
+    //                             sigc::ref (cbox_entry)));
   }
 
   //Gtk::ComboBox

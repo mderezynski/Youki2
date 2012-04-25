@@ -29,7 +29,6 @@
 
 #include <glibmm.h>
 #include <glib/gi18n.h>
-#include <gtk/gtkstock.h>
 #include <gtkmm.h>
 
 #include <boost/format.hpp>
@@ -92,17 +91,13 @@ namespace MPX
         ) ;
 
         //// LIBRARY
-        mcs_bind->bind_filechooser(
-            *dynamic_cast<Gtk::FileChooser*>( m_Builder->get_widget( "fc-music-import-path" ))
-            , "mpx"
-            , "music-import-path"
-            );
+        Gtk::FileChooser* file_chooser = 0;
 
-        mcs_bind->bind_filechooser(
-            *dynamic_cast<Gtk::FileChooser*>( m_Builder->get_widget( "fc-quarantine-path" ))
-            , "mpx"
-            , "music-quarantine-path"
-            );
+        m_Builder->get_widget( "fc-music-import-path", file_chooser );
+        mcs_bind->bind_filechooser(*file_chooser, "mpx", "music-import-path");
+
+        m_Builder->get_widget( "fc-quarantine-path", file_chooser );
+        mcs_bind->bind_filechooser(*file_chooser, "mpx", "music-quarantine-path");
 
         Glib::RefPtr<Gio::File> quarantine_path = Gio::File::create_for_path( mcs->key_get<std::string>("mpx","music-quarantine-path")) ;
 

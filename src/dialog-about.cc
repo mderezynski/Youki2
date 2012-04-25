@@ -143,17 +143,18 @@ namespace MPX
 
       set_size_request (m_background->get_width (), m_background->get_height ());
 
-      if(!Gdk::Screen::get_default()->is_composited())
-      {
-          Glib::RefPtr<Gdk::Pixmap> pixmap;
-          Glib::RefPtr<Gdk::Bitmap> mask;
-          m_background->render_pixmap_and_mask( pixmap, mask, mask_alpha_threshold ) ;
-          shape_combine_mask( mask, 0, 0 ) ;
-      }
-      else
-      {
-          set_colormap (Gdk::Screen::get_default()->get_rgba_colormap());
-      }
+      // FIXME: Port this to use shape_combine_region()
+      // if(!Gdk::Screen::get_default()->is_composited())
+      // {
+      //     Glib::RefPtr<Gdk::Pixmap> pixmap;
+      //     Glib::RefPtr<Gdk::Bitmap> mask;
+      //     m_background->render_pixmap_and_mask( pixmap, mask, mask_alpha_threshold ) ;
+      //     shape_combine_mask( mask, 0, 0 ) ;
+      // }
+      // else
+      // {
+      //     set_colormap (Gdk::Screen::get_default()->get_rgba_colormap());
+      // }
 
       m_timer.stop ();
       m_timer.reset ();
@@ -162,7 +163,7 @@ namespace MPX
   bool
   AboutDialog::on_key_press_event (GdkEventKey *event)
   {
-      if (event->keyval == GDK_Escape)
+      if (event->keyval == GDK_KEY_Escape)
           hide ();
 
       return false;

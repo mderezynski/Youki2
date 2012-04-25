@@ -29,7 +29,6 @@
 
 #include <glibmm.h>
 #include <glib/gi18n.h>
-#include <gtk/gtkstock.h>
 #include <gst/gst.h>
 #include <gtkmm.h>
 
@@ -277,7 +276,8 @@ namespace MPX
 
         for (unsigned n = 0; n < G_N_ELEMENTS( buttons ); ++n)
         {
-            ToggleButton* button = dynamic_cast<ToggleButton*>( m_Builder->get_widget( buttons[n].widget ));
+            Gtk::ToggleButton* button = 0;
+            m_Builder->get_widget( buttons[n].widget, button );
 
             if( button )
             {

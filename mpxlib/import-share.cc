@@ -36,13 +36,13 @@ namespace MPX
 {
     namespace
     {
-        const std::string ui_path = DATA_DIR G_SEPARATOR_S "ui" G_SEPARATOR_S "import-share.ui";
+        const std::string ui_path = DATA_DIR G_DIR_SEPARATOR_S "ui" G_DIR_SEPARATOR_S "import-share.ui";
     }
 
     DialogImportShare*
     DialogImportShare::create ()
     {
-      DialogImportShare *p = new DialogImportShare(Gtk::Builder::create (path));
+      DialogImportShare *p = new DialogImportShare(Gtk::Builder::create_from_file (ui_path));
       return p;
     }
 

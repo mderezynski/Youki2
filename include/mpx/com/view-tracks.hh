@@ -1656,14 +1656,13 @@ namespace Tracks
                 void
                 initialize_metrics ()
                 {
-                    PangoContext *context = gtk_widget_get_pango_context (GTK_WIDGET (gobj()));
+                    Glib::RefPtr<Pango::Context> context = get_pango_context ();
 
-                    PangoFontMetrics *metrics = pango_context_get_metrics (context,
-                                                                            GTK_WIDGET (gobj())->style->font_desc, 
-                                                                            pango_context_get_language (context));
+                    Pango::FontMetrics metrics = context->get_metrics (get_style_context ()->get_font (),
+                                                                       context->get_language ());
 
-                    m_height__row = (pango_font_metrics_get_ascent (metrics)/PANGO_SCALE) + 
-                                   (pango_font_metrics_get_descent (metrics)/PANGO_SCALE) + 5 ;
+                    m_height__row = (metrics.get_ascent ()/PANGO_SCALE) +
+                                    (metrics.get_descent ()/PANGO_SCALE) + 5 ;
 
                     const int visible_area_pad = 5 ;
 
@@ -1675,7 +1674,7 @@ namespace Tracks
                 {
                     if( m_model->size() )
                     {
-                        m_model->set_current_row( get_upper_row() ) ;        
+                        m_model->set_current_row( get_upper_row() ) ;
                         queue_draw() ;
 
                         m_SIGNAL_vadj_changed.emit() ;
@@ -1712,39 +1711,39 @@ namespace Tracks
                     {
                         switch( event->keyval )
                         {
-                            case GDK_Up:
-                            case GDK_KP_Up:
+                            case GDK_KEY_Up:
+                            case GDK_KEY_KP_Up:
                                 find_prev_match() ;
                                 return true ;
 
-                            case GDK_Down:
-                            case GDK_KP_Down:
+                            case GDK_KEY_Down:
+                            case GDK_KEY_KP_Down:
                                 find_next_match() ;
                                 return true ;
 
-                            case GDK_Escape:
+                            case GDK_KEY_Escape:
                                 cancel_search() ;
                                 return true ;
 
-                            case GDK_Tab:
+                            case GDK_KEY_Tab:
                                 cancel_search() ;
                                 return false ;
 
-                            case GDK_Return:
-                            case GDK_KP_Enter:
-                            case GDK_ISO_Enter:
-                            case GDK_3270_Enter:
+                            case GDK_KEY_Return:
+                            case GDK_KEY_KP_Enter:
+                            case GDK_KEY_ISO_Enter:
+                            case GDK_KEY_3270_Enter:
                                 cancel_search() ;
                                 goto continue_matching ;
-        
+
                             default: ;
                         }
 
                         GdkEvent *new_event = gdk_event_copy( (GdkEvent*)(event) ) ;
                         g_object_unref( ((GdkEventKey*)new_event)->window ) ;
-                        ((GdkEventKey *) new_event)->window = GDK_WINDOW(g_object_ref(G_OBJECT(GTK_WIDGET(m_SearchEntry->gobj())->window))) ;
+                        ((GdkEventKey *) new_event)->window = m_SearchEntry->get_window()->gobj();
 
-                        gtk_widget_event(GTK_WIDGET(m_SearchEntry->gobj()), new_event) ;
+                        m_SearchEntry->event(new_event) ;
                         gdk_event_free(new_event) ;
 
                         return true ;
@@ -1757,7 +1756,7 @@ namespace Tracks
 
                     switch( event->keyval )
                     {
-                        case GDK_Delete:
+                        case GDK_KEY_Delete:
                         {
                             if( m_selection )
                             {
@@ -1768,10 +1767,10 @@ namespace Tracks
                             return true ;
                         }
 
-                        case GDK_Return:
-                        case GDK_KP_Enter:
-                        case GDK_ISO_Enter:
-                        case GDK_3270_Enter:
+                        case GDK_KEY_Return:
+                        case GDK_KEY_KP_Enter:
+                        case GDK_KEY_ISO_Enter:
+                        case GDK_KEY_3270_Enter:
                         {
                             if( m_search_active )
                             {
@@ -1785,22 +1784,22 @@ namespace Tracks
                                 MPX::Track_sp track = get<4>(*(get<0>(m_selection.get()))) ;
                                 m_SIGNAL_track_activated.emit( track, !(event->state & GDK_CONTROL_MASK) ) ;
 
-				if( event->state & GDK_CONTROL_MASK )
-				{
-				    clear_selection() ;
-				}
+                                if( event->state & GDK_CONTROL_MASK )
+                                {
+                                    clear_selection() ;
+                                }
                             }
 
                             return true;
                         }
 
-                        case GDK_Up:
-                        case GDK_KP_Up:
-                        case GDK_Page_Up:
+                        case GDK_KEY_Up:
+                        case GDK_KEY_KP_Up:
+                        case GDK_KEY_Page_Up:
                         {
-                            if( event->keyval == GDK_Page_Up )
+                            if( event->keyval == GDK_KEY_Page_Up )
                             {
-                                step = get_page_size() ; 
+                                step = get_page_size() ;
                             }
                             else
                             {
@@ -1814,7 +1813,7 @@ namespace Tracks
                                     m_model->swap( origin, origin-step ) ;
                                     m_selection = boost::make_tuple((*m_model->m_mapping)[origin-step], origin-step) ;
                                 }
-                        
+
                                 return true ;
                             }
 
@@ -1837,7 +1836,7 @@ namespace Tracks
                             return true;
                         }
 
-                        case GDK_Home:
+                        case GDK_KEY_Home:
                         {
                             select_row( 0 ) ;
                             scroll_to_row( 0 ) ;
@@ -1845,7 +1844,7 @@ namespace Tracks
                             return true ;
                         }
 
-                        case GDK_End:
+                        case GDK_KEY_End:
                         {
                             select_row( m_model->size() - 1 ) ;
                             scroll_to_row( m_model->size() - get_page_size() ) ;
@@ -1853,11 +1852,11 @@ namespace Tracks
                             return true ;
                         }
 
-                        case GDK_Down:
-                        case GDK_KP_Down:
-                        case GDK_Page_Down:
+                        case GDK_KEY_Down:
+                        case GDK_KEY_KP_Down:
+                        case GDK_KEY_Page_Down:
                         {
-                            if( event->keyval == GDK_Page_Down )
+                            if( event->keyval == GDK_KEY_Page_Down )
                             {
                                 step = get_page_size() ; 
                             }
@@ -1873,7 +1872,7 @@ namespace Tracks
                                     m_model->swap( origin, origin+step ) ;
                                     m_selection = boost::make_tuple((*m_model->m_mapping)[origin+step], origin+step) ;
                                 }
-                        
+
                                 return true ;
                             }
 
@@ -1885,9 +1884,9 @@ namespace Tracks
                             {
                                 std::size_t row = std::min<std::size_t>( origin+step, m_model->size()-1 ) ;
 
-                                if( row >= get_lower_row() ) 
+                                if( row >= get_lower_row() )
                                 {
-				    scroll_to_row( row ) ;
+                                    scroll_to_row( row ) ;
                                     // m_prop_vadj.get_value()->set_value( std::min<std::size_t>(get_upper_row()+step, row )) ;
                                 }
 
@@ -1916,10 +1915,11 @@ namespace Tracks
 
                                 GdkEvent *new_event = gdk_event_copy( (GdkEvent*)(event) ) ;
                                 g_object_unref( ((GdkEventKey*)new_event)->window ) ;
-                                gtk_widget_realize( GTK_WIDGET(m_SearchWindow->gobj()) ) ;
-                                ((GdkEventKey *) new_event)->window = GDK_WINDOW(g_object_ref(G_OBJECT(GTK_WIDGET(m_SearchWindow->gobj())->window))) ;
+                                m_SearchWindow->realize() ;
 
-                                gtk_widget_event(GTK_WIDGET(m_SearchEntry->gobj()), new_event) ;
+                                ((GdkEventKey *) new_event)->window = m_SearchWindow->get_window()->gobj() ;
+
+                                m_SearchEntry->event(new_event) ;
                                 gdk_event_free(new_event) ;
 
                                 m_search_active = true ;
@@ -1933,33 +1933,20 @@ namespace Tracks
 
                 void
                 send_focus_change(
-                      Gtk::Widget&  w
+                      Gtk::Widget&  widget
                     , bool          in
                     )
                 {
-                    GtkWidget * widget = w.gobj() ;
 
                     GdkEvent *fevent = gdk_event_new (GDK_FOCUS_CHANGE);
 
-                    g_object_ref (widget);
-
-                   if( in )
-                      GTK_WIDGET_SET_FLAGS( widget, GTK_HAS_FOCUS ) ;
-                    else
-                      GTK_WIDGET_UNSET_FLAGS( widget, GTK_HAS_FOCUS ) ;
-
                     fevent->focus_change.type   = GDK_FOCUS_CHANGE;
-                    fevent->focus_change.window = GDK_WINDOW(g_object_ref( widget->window )) ;
+                    fevent->focus_change.window = widget.get_window()->gobj() ;
                     fevent->focus_change.in     = in;
 
-                    gtk_widget_event( widget, fevent ) ;
+                    widget.event( fevent ) ;
+                    widget.property_has_focus() = in;
 
-                    g_object_notify(
-                          G_OBJECT (widget)
-                        , "has-focus"
-                    ) ;
-
-                    g_object_unref( widget ) ;
                     gdk_event_free( fevent ) ;
                 }
 
@@ -2402,100 +2389,80 @@ namespace Tracks
 
 		    //// TREELINES
 		    {
-			xpos = 0 ;
+                xpos = 0 ;
 
-			Columns::iterator i2 = m_columns.end() ;
-			--i2 ;
+                Columns::iterator i2 = m_columns.end() ;
+                --i2 ;
 
-			for( Columns::const_iterator i = m_columns.begin() ; i != i2; ++i )
-			{
-			    xpos += (*i)->get_width() ; // adjust us to the column's end
+                for( Columns::const_iterator i = m_columns.begin() ; i != i2; ++i )
+                {
+                    xpos += (*i)->get_width() ; // adjust us to the column's end
 
-			    cairo->save() ;
-			    cairo->set_line_width(
-				  .75
-			    ) ;
-			    cairo->move_to(
-				  xpos
-				, m_height__headers 
-			    ) ; 
-			    cairo->line_to(
-				  xpos
-				, a.get_height() - m_height__headers
-			    ) ;
-			    cairo->set_dash(
-				  dashes
-				, 0
-			    ) ;
-			    cairo->set_source_rgba(
-				  c_treelines.r
-				, c_treelines.g
-				, c_treelines.b
-				, c_treelines.a * 0.8
-			    ) ;
-			    cairo->stroke() ;
-			    cairo->restore() ;
+                    cairo->save() ;
+                    cairo->set_line_width(.75) ;
+                    cairo->move_to(xpos, m_height__headers) ;
+                    cairo->line_to(xpos, a.get_height() - m_height__headers) ;
+                    cairo->set_dash(dashes, 0) ;
 
-			    if( i == i2 )
-				continue ;
+                    cairo->set_source_rgba(c_treelines.r
+                                           , c_treelines.g
+                                           , c_treelines.b
+                                           , c_treelines.a * 0.8
+                                           ) ;
+                    cairo->stroke() ;
+                    cairo->restore() ;
 
-			    cairo->save() ;
-			    cairo->set_line_width(
-				  .75
-			    ) ;
-			    cairo->move_to(
-				  xpos
-				, 0 
-			    ) ; 
-			    cairo->line_to(
-				  xpos
-				, m_height__headers - 1
-			    ) ;
-			    cairo->set_source_rgba(
-				  c_outline.r
-				, c_outline.g
-				, c_outline.b
-				, 0.6
-			    ) ;
+                    if( i == i2 )
+                        continue ;
 
-			    cairo->stroke() ;
-			    cairo->restore(); 
-			}
+                    cairo->save() ;
+                    cairo->set_line_width(.75) ;
+                    cairo->move_to(xpos, 0) ;
+                    cairo->line_to(xpos, m_height__headers - 1) ;
+                    cairo->set_source_rgba(c_outline.r
+                                           , c_outline.g
+                                           , c_outline.b
+                                           , 0.6
+                                           ) ;
+
+                    cairo->stroke() ;
+                    cairo->restore();
+                }
 		    }
 
 		    cairo->reset_clip() ;
 
 		    cairo->save() ;
 
-		    RoundedRectangle(
-			  cairo
-			, 1 
-			, 1 
-			, a.get_width() - 5
-			, a.get_height() - 2
-			, rounding 
-		    ) ;
+		    RoundedRectangle(cairo
+                             , 1 
+                             , 1 
+                             , a.get_width() - 5
+                             , a.get_height() - 2
+                             , rounding 
+                             ) ;
 
-		   cairo->set_source_rgba(
-			  c_outline.r
-			, c_outline.g
-			, c_outline.b
-			, c_outline.a
-		    ) ;
+            cairo->set_source_rgba(c_outline.r
+                                   , c_outline.g
+                                   , c_outline.b
+                                   , c_outline.a
+                                   ) ;
 
 		    cairo->set_line_width( 1. ) ;
 		    cairo->stroke() ;
 		    cairo->restore() ;
 
-		    GtkWidget * widget = GTK_WIDGET(gobj()) ;
+            // FIXME: Port this to use render_focus()
+            // if( has_focus() )
+            // {
+            //     GtkWidget * widget = GTK_WIDGET(gobj()) ;
+            //     gtk_paint_focus (widget->style, widget->window,
+            //                      gtk_widget_get_state (widget),
+            //                      &event->area, widget, NULL,
+            //                      2, 2, a.get_width() - 7 , a.get_height() - 4);
+            // }
 
-	            if( has_focus() )
-			    gtk_paint_focus (widget->style, widget->window,
-			       gtk_widget_get_state (widget),
-			       &event->area, widget, NULL,
-			       2, 2, a.get_width() - 7 , a.get_height() - 4);
-
-                    return true;
+            return true;
                 }
 
                 void
@@ -3112,25 +3079,26 @@ namespace Tracks
                 {
                     boost::shared_ptr<IYoukiThemeEngine> theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;
                     const ThemeColor& c = theme->get_color( THEME_COLOR_BASE ) ;
-                    Gdk::Color cgdk ;
-                    cgdk.set_rgb_p( c.r, c.g, c.b ) ; 
-                    modify_bg( Gtk::STATE_NORMAL, cgdk ) ;
-                    modify_base( Gtk::STATE_NORMAL, cgdk ) ;
+                    Gdk::RGBA cgdk ;
+                    cgdk.set_rgba( c.r, c.g, c.b, 1.0 ) ;
+                    override_background_color( cgdk, Gtk::STATE_FLAG_NORMAL ) ;
+                    override_color( cgdk, Gtk::STATE_FLAG_NORMAL ) ;
 
                     m_pb_play_l  = Gdk::Pixbuf::create_from_file( Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "row-play.png" )) ;
 
-                    set_flags(Gtk::CAN_FOCUS);
+                    set_can_focus(true);
                     add_events(Gdk::EventMask(GDK_KEY_PRESS_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_LEAVE_NOTIFY_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK ));
 
-                    ((GtkWidgetClass*)(G_OBJECT_GET_CLASS(G_OBJECT(gobj()))))->set_scroll_adjustments_signal = 
-                            g_signal_new ("set_scroll_adjustments",
-                                      G_OBJECT_CLASS_TYPE (G_OBJECT_CLASS (G_OBJECT_GET_CLASS(G_OBJECT(gobj())))),
-                                      GSignalFlags (G_SIGNAL_RUN_FIRST),
-                                      0,
-                                      NULL, NULL,
-                                      g_cclosure_user_marshal_VOID__OBJECT_OBJECT, G_TYPE_NONE, 2, GTK_TYPE_ADJUSTMENT, GTK_TYPE_ADJUSTMENT);
+                    // FIXME: Port this to Gtk::Scrollable
+                    // GTK_WIDGET_GET_CLASS(gobj())->set_scroll_adjustments_signal =
+                    //         g_signal_new ("set_scroll_adjustments",
+                    //                   G_OBJECT_CLASS_TYPE (G_OBJECT_CLASS (G_OBJECT_GET_CLASS(G_OBJECT(gobj())))),
+                    //                   GSignalFlags (G_SIGNAL_RUN_FIRST),
+                    //                   0,
+                    //                   NULL, NULL,
+                    //                   g_cclosure_user_marshal_VOID__OBJECT_OBJECT, G_TYPE_NONE, 2, GTK_TYPE_ADJUSTMENT, GTK_TYPE_ADJUSTMENT);
 
-                    g_signal_connect(G_OBJECT(gobj()), "set_scroll_adjustments", G_CALLBACK(list_view_set_adjustments), this);
+                    // g_signal_connect(G_OBJECT(gobj()), "set_scroll_adjustments", G_CALLBACK(list_view_set_adjustments), this);
 
                     /*
                     signal_query_tooltip().connect(

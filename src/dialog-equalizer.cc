@@ -50,7 +50,7 @@ namespace MPX
       Glib::RefPtr<Gtk::Builder> builder = Gtk::Builder::create_from_file(ui_path);
 
       Equalizer* dialog = 0;
-      ui->get_widget_derived ("equalizer", dialog);
+      builder->get_widget_derived ("equalizer", dialog);
 
       return dialog;
   }
@@ -79,12 +79,12 @@ namespace MPX
 
     for (int n = 0; n < 10; ++n)
     {
-      std::string band_name = (band_f % n).str;
+      std::string band_name = (band_f % n).str();
 
       Gtk::Range *range = 0;
       m_ref_builder->get_widget(band_name, range);
 
-      mcs_bind->bind_range_float(range, "audio", band_name);
+      mcs_bind->bind_range_float(*range, "audio", band_name);
     }
   }
 } // namespace MPX

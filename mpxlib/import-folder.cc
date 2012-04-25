@@ -37,7 +37,7 @@ namespace MPX
 {
     namespace
     {
-        const std::string ui_path = DATA_DIR G_SEPARATOR_S "ui" G_SEPARATOR_S "import-folder.ui";
+        const std::string ui_path = DATA_DIR G_DIR_SEPARATOR_S "ui" G_DIR_SEPARATOR_S "import-folder.ui";
     }
 
     DialogImportFolder*
@@ -48,7 +48,7 @@ namespace MPX
     }
 
     DialogImportFolder::DialogImportFolder(const Glib::RefPtr<Gtk::Builder>& builder)
-        : WidgetLoader<Gtk::Dialog>(xml, "import-folder")
+        : WidgetLoader<Gtk::Dialog>(builder, "import-folder")
     {
     }
 
@@ -56,9 +56,9 @@ namespace MPX
     DialogImportFolder::get_folder_infos(Glib::ustring& uri)
     {
         Gtk::FileChooserButton* button = 0;
-        m_ref_xml->get_widget("fcbutton", button);
+        m_Builder->get_widget("fcbutton", button);
 
-        uri = button->->get_current_folder_uri();
+        uri = button->get_current_folder_uri();
     }
 
     DialogImportFolder::~DialogImportFolder ()

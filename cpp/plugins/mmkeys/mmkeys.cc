@@ -114,7 +114,8 @@ namespace MPX
 
         for( int n = 1; n <= N_MM_KEYS; ++n)
         {
-            Gtk::Widget * entry = m_Builder->get_widget((boost::format ("mm-entry-%d") % n).str());
+            Gtk::Widget * entry = 0;
+            m_Builder->get_widget((boost::format ("mm-entry-%d") % n).str(), entry);
 
             entry->signal_key_press_event().connect(
                 sigc::bind(
@@ -134,7 +135,8 @@ namespace MPX
                 n
                 ));
 
-            Gtk::Button * button = dynamic_cast<Gtk::Button*>(m_Builder->get_widget ((boost::format ("mm-clear-%d") % n).str()));
+            Gtk::Button * button = 0;
+            m_Builder->get_widget ((boost::format ("mm-clear-%d") % n).str(), button);
 
             button->signal_clicked().connect(
                 sigc::bind(
@@ -152,7 +154,8 @@ namespace MPX
 
         for( int n = 1; n <= N_MM_KEY_SYSTEMS; ++n )
         {
-            Gtk::RadioButton * button = dynamic_cast<Gtk::RadioButton*>(m_Builder->get_widget ((boost::format ("mm-rb-%d") % n).str(), button));
+            Gtk::RadioButton * button = 0;
+            m_Builder->get_widget ((boost::format ("mm-rb-%d") % n).str(), button);
 
             button->signal_toggled().connect(
                 sigc::bind(
@@ -169,10 +172,11 @@ namespace MPX
             }
         }
 
-        dynamic_cast<Gtk::Button*>(m_Builder->get_widget ("mm-revert"))->signal_clicked().connect(
-            sigc::mem_fun( *this, &MMKeys::mm_load ));
-        dynamic_cast<Gtk::Button*>(m_Builder->get_widget ("mm-apply"))->signal_clicked().connect(
-            sigc::mem_fun( *this, &MMKeys::mm_apply ));
+        m_Builder->get_widget ("mm-revert", m_revert_button);
+        m_Builder->get_widget ("mm-apply", m_apply_button);
+
+        m_revert_button->signal_clicked().connect(sigc::mem_fun( *this, &MMKeys::mm_load));
+        m_apply_button->signal_clicked().connect(sigc::mem_fun( *this, &MMKeys::mm_apply));
 
         mm_load ();
     }
@@ -183,7 +187,9 @@ namespace MPX
             bool active
         )
     {
-        m_Builder->get_widget("mm-vbox")->set_sensitive( active );
+        Gtk::VBox* vbox = 0;
+        m_Builder->get_widget("mm-vbox", vbox);
+        vbox->set_sensitive( active );
         on_mm_edit_done() ;
     }
 
@@ -199,8 +205,8 @@ namespace MPX
             mcs->key_set<int>("hotkeys", (boost::format ("key-%d-mask") % n).str(), c.mask);
         }
 
-        m_Builder->get_widget ("mm-apply")->set_sensitive (false);
-        m_Builder->get_widget ("mm-revert")->set_sensitive (false);
+        m_apply_button->set_sensitive (false);
+        m_revert_button->set_sensitive (false);
 
         on_mm_edit_done() ;
     }
@@ -219,10 +225,13 @@ namespace MPX
 
         int sys = mcs->key_get<int>("hotkeys","system");
         if( sys < 0 || sys > 2) sys = 1;
-        dynamic_cast<Gtk::RadioButton*>(m_Builder->get_widget ((boost::format ("mm-rb-%d") % (sys+1)).str()))->set_active();
 
-        m_Builder->get_widget ("mm-apply")->set_sensitive (false);
-        m_Builder->get_widget ("mm-revert")->set_sensitive (false);
+        Gtk::RadioButton* button = 0;
+        m_Builder->get_widget ((boost::format ("mm-rb-%d") % (sys+1)).str(), button);
+        button->set_active();
+
+        m_apply_button->set_sensitive (false);
+        m_revert_button->set_sensitive (false);
 
         on_mm_edit_done() ;
     }
@@ -275,7 +284,7 @@ namespace MPX
             text = Util::stdstrjoin(strings, " + ");
         }
 
-        Gtk::Entry * entry;
+        Gtk::Entry *entry = 0;
         m_Builder->get_widget ((boost::format ("mm-entry-%d") % entry_id).str(), entry);
 
         entry->set_text (text);
@@ -289,23 +298,23 @@ namespace MPX
         int is_mod;
         int mod;
 
-        if( event->keyval == GDK_Tab ) return false;
+        if( event->keyval == GDK_KEY_Tab ) return false;
         mod = 0;
         is_mod = 0;
 
-        if( (event->state & GDK_CONTROL_MASK) | (!is_mod && (is_mod = (event->keyval == GDK_Control_L || event->keyval == GDK_Control_R))) )
+        if( (event->state & GDK_CONTROL_MASK) | (!is_mod && (is_mod = (event->keyval == GDK_KEY_Control_L || event->keyval == GDK_KEY_Control_R))) )
             mod |= ControlMask;
 
-        if( (event->state & GDK_MOD1_MASK) | (!is_mod && (is_mod = (event->keyval == GDK_Alt_L || event->keyval == GDK_Alt_R))) )
+        if( (event->state & GDK_MOD1_MASK) | (!is_mod && (is_mod = (event->keyval == GDK_KEY_Alt_L || event->keyval == GDK_KEY_Alt_R))) )
             mod |= Mod1Mask;
 
-        if( (event->state & GDK_SHIFT_MASK) | (!is_mod && (is_mod = (event->keyval == GDK_Shift_L || event->keyval == GDK_Shift_R))) )
+        if( (event->state & GDK_SHIFT_MASK) | (!is_mod && (is_mod = (event->keyval == GDK_KEY_Shift_L || event->keyval == GDK_KEY_Shift_R))) )
             mod |= ShiftMask;
 
-        if( (event->state & GDK_MOD5_MASK) | (!is_mod && (is_mod = (event->keyval == GDK_ISO_Level3_Shift))) )
+        if( (event->state & GDK_MOD5_MASK) | (!is_mod && (is_mod = (event->keyval == GDK_KEY_ISO_Level3_Shift))) )
             mod |= Mod5Mask;
 
-        if( (event->state & GDK_MOD4_MASK) | (!is_mod && (is_mod = (event->keyval == GDK_Super_L || event->keyval == GDK_Super_R))) )
+        if( (event->state & GDK_MOD4_MASK) | (!is_mod && (is_mod = (event->keyval == GDK_KEY_Super_L || event->keyval == GDK_KEY_Super_R))) )
             mod |= Mod4Mask;
 
         if( !is_mod )
@@ -315,8 +324,8 @@ namespace MPX
         } else controls.key = 0;
 
         set_keytext (entry_id, is_mod ? 0 : event->hardware_keycode, mod);
-        m_Builder->get_widget ("mm-apply")->set_sensitive (true);
-        m_Builder->get_widget ("mm-revert")->set_sensitive (true);
+        m_apply_button->set_sensitive (true);
+        m_revert_button->set_sensitive (true);
         return false;
     }
 
@@ -329,8 +338,8 @@ namespace MPX
             controls.mask = 0;
         }
         set_keytext (entry_id, controls.key, controls.mask);
-        m_Builder->get_widget ("mm-apply")->set_sensitive (true);
-        m_Builder->get_widget ("mm-revert")->set_sensitive (true);
+        m_apply_button->set_sensitive (true);
+        m_revert_button->set_sensitive (true);
         return false;
     }
 
@@ -341,8 +350,8 @@ namespace MPX
         controls.key = 0;
         controls.mask = 0;
         set_keytext(entry_id, 0, 0);
-        m_Builder->get_widget ("mm-apply")->set_sensitive (true);
-        m_Builder->get_widget ("mm-revert")->set_sensitive (true);
+        m_apply_button->set_sensitive (true);
+        m_revert_button->set_sensitive (true);
     }
 
     void
@@ -350,19 +359,22 @@ namespace MPX
     {
         on_mm_edit_begin() ;
 
+        Gtk::Table* table = 0;
+        m_Builder->get_widget ("mm-table", table);
+
         switch( option )
         {
             case 1:
             case 2:
-                m_Builder->get_widget ("mm-table")->set_sensitive (false);
+                table->set_sensitive (false);
                 break;
 
             case 3:
-                m_Builder->get_widget ("mm-table")->set_sensitive (true);
+                table->set_sensitive (true);
                 break;
         }
         m_mm_option = option - 1;
-        m_Builder->get_widget ("mm-apply")->set_sensitive (true);
+        m_apply_button->set_sensitive (true);
     }
 
     void
@@ -412,35 +424,35 @@ namespace MPX
     {
         gdk_error_trap_push ();
 
-        XGrabKey (GDK_DISPLAY (), key_code,
+        XGrabKey (GDK_DISPLAY_XDISPLAY (gdk_display_get_default ()), key_code,
             0,
             GDK_WINDOW_XID (root), True,
             GrabModeAsync, GrabModeAsync);
-        XGrabKey (GDK_DISPLAY (), key_code,
+        XGrabKey (GDK_DISPLAY_XDISPLAY (gdk_display_get_default ()), key_code,
             Mod2Mask,
             GDK_WINDOW_XID (root), True,
             GrabModeAsync, GrabModeAsync);
-        XGrabKey (GDK_DISPLAY (), key_code,
+        XGrabKey (GDK_DISPLAY_XDISPLAY (gdk_display_get_default ()), key_code,
             Mod5Mask,
             GDK_WINDOW_XID (root), True,
             GrabModeAsync, GrabModeAsync);
-        XGrabKey (GDK_DISPLAY (), key_code,
+        XGrabKey (GDK_DISPLAY_XDISPLAY (gdk_display_get_default ()), key_code,
             LockMask,
             GDK_WINDOW_XID (root), True,
             GrabModeAsync, GrabModeAsync);
-        XGrabKey (GDK_DISPLAY (), key_code,
+        XGrabKey (GDK_DISPLAY_XDISPLAY (gdk_display_get_default ()), key_code,
             Mod2Mask | Mod5Mask,
             GDK_WINDOW_XID (root), True,
             GrabModeAsync, GrabModeAsync);
-        XGrabKey (GDK_DISPLAY (), key_code,
+        XGrabKey (GDK_DISPLAY_XDISPLAY (gdk_display_get_default ()), key_code,
             Mod2Mask | LockMask,
             GDK_WINDOW_XID (root), True,
             GrabModeAsync, GrabModeAsync);
-        XGrabKey (GDK_DISPLAY (), key_code,
+        XGrabKey (GDK_DISPLAY_XDISPLAY (gdk_display_get_default ()), key_code,
             Mod5Mask | LockMask,
             GDK_WINDOW_XID (root), True,
             GrabModeAsync, GrabModeAsync);
-        XGrabKey (GDK_DISPLAY (), key_code,
+        XGrabKey (GDK_DISPLAY_XDISPLAY (gdk_display_get_default ()), key_code,
             Mod2Mask | Mod5Mask | LockMask,
             GDK_WINDOW_XID (root), True,
             GrabModeAsync, GrabModeAsync);
@@ -464,44 +476,44 @@ namespace MPX
 
         modifier &= ~(m_numlock_mask | m_capslock_mask | m_scrolllock_mask);
 
-        XGrabKey (GDK_DISPLAY (), key_code, modifier, GDK_WINDOW_XID (root),
+        XGrabKey (GDK_DISPLAY_XDISPLAY (gdk_display_get_default ()), key_code, modifier, GDK_WINDOW_XID (root),
             False, GrabModeAsync, GrabModeAsync);
 
         if( modifier == AnyModifier )
             return;
 
         if( m_numlock_mask )
-            XGrabKey (GDK_DISPLAY (), key_code, modifier | m_numlock_mask,
+            XGrabKey (GDK_DISPLAY_XDISPLAY (gdk_display_get_default ()), key_code, modifier | m_numlock_mask,
                 GDK_WINDOW_XID (root),
                 False, GrabModeAsync, GrabModeAsync);
 
         if( m_capslock_mask )
-            XGrabKey (GDK_DISPLAY (), key_code, modifier | m_capslock_mask,
+            XGrabKey (GDK_DISPLAY_XDISPLAY (gdk_display_get_default ()), key_code, modifier | m_capslock_mask,
                 GDK_WINDOW_XID (root),
                 False, GrabModeAsync, GrabModeAsync);
 
         if( m_scrolllock_mask )
-            XGrabKey (GDK_DISPLAY (), key_code, modifier | m_scrolllock_mask,
+            XGrabKey (GDK_DISPLAY_XDISPLAY (gdk_display_get_default ()), key_code, modifier | m_scrolllock_mask,
                 GDK_WINDOW_XID (root),
                 False, GrabModeAsync, GrabModeAsync);
 
         if( m_numlock_mask && m_capslock_mask )
-            XGrabKey (GDK_DISPLAY (), key_code, modifier | m_numlock_mask | m_capslock_mask,
+            XGrabKey (GDK_DISPLAY_XDISPLAY (gdk_display_get_default ()), key_code, modifier | m_numlock_mask | m_capslock_mask,
                 GDK_WINDOW_XID (root),
                 False, GrabModeAsync, GrabModeAsync);
 
         if( m_numlock_mask && m_scrolllock_mask )
-            XGrabKey (GDK_DISPLAY (), key_code, modifier | m_numlock_mask | m_scrolllock_mask,
+            XGrabKey (GDK_DISPLAY_XDISPLAY (gdk_display_get_default ()), key_code, modifier | m_numlock_mask | m_scrolllock_mask,
                 GDK_WINDOW_XID (root),
                 False, GrabModeAsync, GrabModeAsync);
 
         if( m_capslock_mask && m_scrolllock_mask )
-            XGrabKey (GDK_DISPLAY (), key_code, modifier | m_capslock_mask | m_scrolllock_mask,
+            XGrabKey (GDK_DISPLAY_XDISPLAY (gdk_display_get_default ()), key_code, modifier | m_capslock_mask | m_scrolllock_mask,
                 GDK_WINDOW_XID (root),
                 False, GrabModeAsync, GrabModeAsync);
 
         if( m_numlock_mask && m_capslock_mask && m_scrolllock_mask )
-            XGrabKey (GDK_DISPLAY (), key_code,
+            XGrabKey (GDK_DISPLAY_XDISPLAY (gdk_display_get_default ()), key_code,
                 modifier | m_numlock_mask | m_capslock_mask | m_scrolllock_mask,
                 GDK_WINDOW_XID (root), False, GrabModeAsync,
                 GrabModeAsync);
@@ -519,7 +531,7 @@ namespace MPX
     {
         gdk_error_trap_push ();
 
-        XUngrabKey (GDK_DISPLAY (), AnyKey, AnyModifier, GDK_WINDOW_XID (root));
+        XUngrabKey (GDK_DISPLAY_XDISPLAY (gdk_display_get_default ()), AnyKey, AnyModifier, GDK_WINDOW_XID (root));
 
         gdk_flush ();
 
@@ -553,10 +565,10 @@ namespace MPX
 
         if( sys == 0 )
         {
-            keycodes[0] = XKeysymToKeycode (GDK_DISPLAY (), XF86XK_AudioPlay);
-            keycodes[1] = XKeysymToKeycode (GDK_DISPLAY (), XF86XK_AudioPrev);
-            keycodes[2] = XKeysymToKeycode (GDK_DISPLAY (), XF86XK_AudioNext);
-            keycodes[3] = XKeysymToKeycode (GDK_DISPLAY (), XF86XK_AudioStop);
+            keycodes[0] = XKeysymToKeycode (GDK_DISPLAY_XDISPLAY (gdk_display_get_default ()), XF86XK_AudioPlay);
+            keycodes[1] = XKeysymToKeycode (GDK_DISPLAY_XDISPLAY (gdk_display_get_default ()), XF86XK_AudioPrev);
+            keycodes[2] = XKeysymToKeycode (GDK_DISPLAY_XDISPLAY (gdk_display_get_default ()), XF86XK_AudioNext);
+            keycodes[3] = XKeysymToKeycode (GDK_DISPLAY_XDISPLAY (gdk_display_get_default ()), XF86XK_AudioStop);
         }
         else
         {
@@ -597,10 +609,10 @@ namespace MPX
         MMKeys::mmkeys_grab (bool grab)
     {
         gint keycodes[] = { 0, 0, 0, 0 };
-        keycodes[0] = XKeysymToKeycode (GDK_DISPLAY (), XF86XK_AudioPlay);
-        keycodes[1] = XKeysymToKeycode (GDK_DISPLAY (), XF86XK_AudioPrev);
-        keycodes[2] = XKeysymToKeycode (GDK_DISPLAY (), XF86XK_AudioNext);
-        keycodes[3] = XKeysymToKeycode (GDK_DISPLAY (), XF86XK_AudioStop);
+        keycodes[0] = XKeysymToKeycode (GDK_DISPLAY_XDISPLAY (gdk_display_get_default ()), XF86XK_AudioPlay);
+        keycodes[1] = XKeysymToKeycode (GDK_DISPLAY_XDISPLAY (gdk_display_get_default ()), XF86XK_AudioPrev);
+        keycodes[2] = XKeysymToKeycode (GDK_DISPLAY_XDISPLAY (gdk_display_get_default ()), XF86XK_AudioNext);
+        keycodes[3] = XKeysymToKeycode (GDK_DISPLAY_XDISPLAY (gdk_display_get_default ()), XF86XK_AudioStop);
 
         GdkDisplay  * display ;
         GdkScreen   * screen ;
