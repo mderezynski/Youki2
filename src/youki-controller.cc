@@ -487,6 +487,7 @@ namespace MPX
 
         m_main_window->set_icon_list( pixvector ) ; 
 	m_main_window->signal_delete_event().connect( sigc::bind_return( sigc::hide<-1>( sigc::mem_fun( *this, &YoukiController::initiate_quit )), false)) ;
+	m_main_window->w().signal_key_press_event().connect( sigc::mem_fun( *this, &YoukiController::on_main_window_key_press_event_after )) ;
 
         Gdk::Color background ;
         background.set_rgb_p( 0.1, 0.1, 0.1 ) ;
@@ -2125,16 +2126,14 @@ namespace MPX
           GdkEventKey* event
     )
     {
-/*
         switch( event->keyval )
         {
-            case GDK_Escape:
-                m_main_window->hide() ;
+            case GDK_F6:
+		m_Entry->grab_focus() ; 
                 return true ;
 
             default: break ;
         }
-*/
         return false ;
     }
 

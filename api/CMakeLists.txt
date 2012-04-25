@@ -49,7 +49,6 @@ SET(mpx_api_SOURCES
   base64.c
   error.cc
   libxml2-sax-base.cc
-  lyrics.cc
   md5.c
   metadatareader-taglib.cc
   minisoup.cc
