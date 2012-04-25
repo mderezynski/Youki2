@@ -27,10 +27,6 @@ ADD_CUSTOM_COMMAND(
 )
 
 SET(mpx_widgets_SOURCES
-  youki-status-icon.c
-  youki-status-icon.h
-  youki-tray-icon.c
-  youki-tray-icon.h
   youki-toggle-button.cc
   cairo-extensions.cc
   dialog-simple-entry.cc
