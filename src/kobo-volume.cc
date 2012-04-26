@@ -214,10 +214,12 @@ namespace MPX
         cairo->stroke_preserve() ;
         cairo->clip() ;
 
+	cairo->set_line_width( 1. ) ;
+
 	/// VOLUME
-	r.x         = pad ; 
+	r.x         = 1 ; 
 	r.y         = 1 ; 
-	r.width     = fmax( 0, (a.get_width()-2*pad) * double(percent)) ;
+	r.width     = fmax( 0, (a.get_width()-2) * double(percent)) ;
 	r.height    = 16 ; 
 
 	cairo->save () ;
@@ -233,11 +235,13 @@ namespace MPX
 	      Cairo::OPERATOR_OVER
 	) ;
 
-	cairo->rectangle(
-	      r.x 
+	RoundedRectangle(
+	      cairo
+	    , r.x 
 	    , r.y
 	    , r.width 
 	    , r.height
+	    , 2.
 	) ;
 
 	cairo->fill (); 
