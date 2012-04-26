@@ -37,6 +37,7 @@ namespace MPX
     KoboVolume::KoboVolume ()
         : m_clicked( false )
         , m_volume( 0 )
+	, m_last_position( m_volume )
     {
         add_events(Gdk::EventMask(Gdk::LEAVE_NOTIFY_MASK | Gdk::ENTER_NOTIFY_MASK | Gdk::POINTER_MOTION_MASK | Gdk::POINTER_MOTION_HINT_MASK | Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK )) ;
         unset_flags(Gtk::CAN_FOCUS) ;
@@ -352,10 +353,21 @@ namespace MPX
         {
             grab_focus() ;
             m_clicked = true ;
-	    m_volume = std::max<std::size_t>( 0, std::min<std::size_t>( 100, (event->x) / 2 )) ;
-	    m_posv.push_back( m_volume ) ;
-            m_SIGNAL_set_volume.emit( m_volume ) ;
-            queue_draw () ;
+
+	    std::size_t new_volume = std::max<std::size_t>( 0, std::min<std::size_t>( 100, (event->x) / 2 )) ;
+
+	    if( new_volume != m_volume )
+	    {
+		m_volume = new_volume ; 
+		m_posv.push_back( m_volume ) ;
+		m_last_position = m_volume ;
+		m_count = 1 ;
+		m_timer.stop() ;
+		m_timer.reset() ;
+		m_timer.start() ;
+		m_SIGNAL_set_volume.emit( m_volume ) ;
+		queue_draw () ;
+	    }
         }
 
         return true ;
@@ -366,20 +378,32 @@ namespace MPX
         GdkEventButton* event
     )
     {
+	m_timer.stop() ;
+
         m_clicked = false ;
 	m_posv.push_back( m_volume ) ;
 
-	if( m_posv.size() >= 2 )
+	if( m_timer_elapsed() < 1.5 && m_posv.size() >= 2 ) // IMPORTANT: We don't snap if the user holds the mouse still for 1.5 seconds; it's our way of enabling users to still set a precise position
 	{
 	    std::size_t& a = m_posv[m_posv.size()-1] ;
 	    std::size_t& b = m_posv[m_posv.size()-2] ;
 
-	    int diff = abs( a - b ) ; 
+	    std::size_t snap = m_volume ;
 
-	    if( diff <= 5 )
+	    if( abs(a-b) <= 5 && m_count > 1 )
 	    {
 		m_posv.clear() ;
-		std::size_t snap = std::size_t(((a+b)/2. + 2.5) / 5.) * 5 ;
+		snap = std::size_t(((a+b)/2. + 2.5) / 5.) * 5 ;
+	    }
+	    else
+	    if( abs( m_volume - m_last_position ) > 10 && m_count >= 2 )
+	    {
+		m_posv.clear() ;
+		snap = std::size_t((m_volume + 2.5) / 5.) * 5 ;
+	    }
+
+	    if( snap != m_volume )
+	    {
 		m_volume = snap ;
 		m_SIGNAL_set_volume.emit( m_volume ) ;
 		queue_draw() ;
@@ -399,21 +423,28 @@ namespace MPX
             int x_orig, y_orig;
             GdkModifierType state;
 
-            if (event->is_hint)
+            if( event->is_hint )
             {
-                gdk_window_get_pointer (event->window, &x_orig, &y_orig, &state);
+                gdk_window_get_pointer( event->window, &x_orig, &y_orig, &state ) ;
             }
             else
             {
-                x_orig = int (event->x);
-                y_orig = int (event->y);
-                state = GdkModifierType (event->state);
-            }
+                x_orig = int(event->x);
+                y_orig = int(event->y);
 
-	    m_volume = std::max( 0, std::min( 100, (x_orig) / 2 )) ;
-	    
-            m_SIGNAL_set_volume.emit( m_volume ) ;
-            queue_draw () ;
+                state = GdkModifierType(event->state);
+            } 
+
+	    std::size_t new_volume = std::max( 0, std::min( 100, (x_orig) / 2 )) ;
+
+	    if( new_volume != m_volume )
+	    {
+		m_volume = new_volume ; 
+		++m_count ;
+		m_timer.reset() ;
+		m_SIGNAL_set_volume.emit( m_volume ) ;
+		queue_draw () ;
+	    }
         }
 
         return true ;
