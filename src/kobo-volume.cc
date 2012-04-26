@@ -34,11 +34,13 @@ namespace
 
 namespace MPX
 {
-    KoboVolume::KoboVolume ()
+    KoboVolume::KoboVolume()
         : m_clicked( false )
         , m_volume( 0 )
 	, m_last_position( m_volume )
     {
+	m_posv.push_back( m_volume ); // ha, let's play!
+
         add_events(Gdk::EventMask(Gdk::LEAVE_NOTIFY_MASK | Gdk::ENTER_NOTIFY_MASK | Gdk::POINTER_MOTION_MASK | Gdk::POINTER_MOTION_HINT_MASK | Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK )) ;
         unset_flags(Gtk::CAN_FOCUS) ;
 
@@ -390,10 +392,20 @@ namespace MPX
 
 	    std::size_t snap = m_volume ;
 
+	    g_message("abs(a-b): %u, m_count: %u", std::size_t(abs(a-b)), m_count) ;
+
 	    if( abs(a-b) <= 5 && m_count > 1 )
 	    {
+		std::size_t middle = (a+b)/2. ;
+
 		m_posv.clear() ;
-		snap = std::size_t(((a+b)/2. + 2.5) / 5.) * 5 ;
+		snap = std::size_t((middle + 2.5) / 5.) * 5 ;
+	    }
+	    else
+	    if(m_count == 1)
+	    {
+		m_posv.clear() ;
+		snap = std::size_t((m_volume + 2.5) / 5.) * 5 ;
 	    }
 	    else
 	    if( abs( m_volume - m_last_position ) > 10 && m_count >= 2 )
