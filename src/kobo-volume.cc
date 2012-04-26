@@ -95,19 +95,24 @@ namespace MPX
 	GdkRectangle r ;
 	double h, s, b ;
 
-        Gdk::Color cgdk, c1 ;
-	cgdk.set_rgb_p( c.r, c.g, c.b) ;
+        Gdk::Color cgdk, c1, c2 ;
+
+	cgdk.set_rgb_p( 0.35, 0.35, 0.35 ) ;
 	
 	Util::color_to_hsb( cgdk, h, s, b ) ;
-	//b *= 0.75 ; 
-	s *= 0.50 ;
-	b *= 0.75 ;
+	// b *= 0.85 ;
+	// s *= 0.50 ;
+	cgdk = Util::color_from_hsb( h, s, b ) ;
+
+	Util::color_to_hsb( cgdk, h, s, b ) ;
+	b *= 0.95 ;
+	// s *= 0.50 ;
 	c1 = Util::color_from_hsb( h, s, b ) ;
 
-	// c1.set_rgb_p( .25, .25, .25 ) ;
-
-	Gdk::Color c2 ;
-	c2.set_rgb_p( c.r, c.g, c.b ) ; 
+	Util::color_to_hsb( cgdk, h, s, b ) ;
+	b *= 0.70 ;
+	//s *= 0.75 ;
+	c2 = Util::color_from_hsb( h, s, b ) ;
 
 	Gdk::Color c_gradient = get_color_at_pos( c1, c2, percent ) ;
 
@@ -129,17 +134,79 @@ namespace MPX
             , 16
             , 2.
         ) ;
+
+        Cairo::RefPtr<Cairo::LinearGradient> position_bar_back_gradient = Cairo::LinearGradient::create(
+              a.get_width() / 2 
+            , 1 
+            , a.get_width() / 2 
+            , 16
+        ) ;
+
+        position_bar_back_gradient->add_color_stop_rgba(
+              0. 
+            , cgdk.get_red_p()
+            , cgdk.get_green_p()
+            , cgdk.get_blue_p()
+            , 0.2 
+        ) ;
+
+        position_bar_back_gradient->add_color_stop_rgba(
+              .2
+            , cgdk.get_red_p()
+            , cgdk.get_green_p()
+            , cgdk.get_blue_p()
+            , 0.195 
+        ) ;
+
+        position_bar_back_gradient->add_color_stop_rgba(
+              .4
+            , cgdk.get_red_p()
+            , cgdk.get_green_p()
+            , cgdk.get_blue_p()
+            , 0.185
+        ) ;
+
+        position_bar_back_gradient->add_color_stop_rgba(
+              .6
+            , cgdk.get_red_p()
+            , cgdk.get_green_p()
+            , cgdk.get_blue_p()
+            , 0.185
+        ) ;
+        
+        position_bar_back_gradient->add_color_stop_rgba(
+              .9
+            , cgdk.get_red_p()
+            , cgdk.get_green_p()
+            , cgdk.get_blue_p()
+            , 0.195
+        ) ;
+
+        position_bar_back_gradient->add_color_stop_rgba(
+              1. 
+            , cgdk.get_red_p()
+            , cgdk.get_green_p()
+            , cgdk.get_blue_p()
+            , 0.2 
+        ) ;
+
+        cairo->set_source( position_bar_back_gradient ) ;
+
+        RoundedRectangle(
+              cairo
+            , 1 
+            , 1 
+            , w
+            , 16
+            , 2.
+        ) ;
+
+        cairo->fill_preserve () ;
+
 	cairo->set_source_rgba(
-	      1 
-	    , 1 
-	    , 1 
-	    , 1 
-	) ;
-	cairo->fill_preserve() ;
-	cairo->set_source_rgba(
-	      c.r
-	    , c.g 
-	    , c.b 
+	      c_gradient.get_red_p()
+	    , c_gradient.get_green_p()
+	    , c_gradient.get_blue_p()
 	    , 1. 
 	) ;
 
@@ -182,15 +249,15 @@ namespace MPX
 
 	    cairo->set_source(
 		  m_image_mute 
-		, 4
+		, a.get_width() - 4 - m_image_mute->get_width()
 		, 2
 	    ) ;
 
 	    cairo->rectangle(
-		  4
+		  a.get_width() - 4 - m_image_mute->get_width()
 		, 2
-		, 14
-		, 14
+		, m_image_mute->get_width()
+		, m_image_mute->get_height()
 	    ) ;
 	    cairo->fill() ;
 	}
