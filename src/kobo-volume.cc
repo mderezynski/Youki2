@@ -280,7 +280,7 @@ namespace MPX
 
 	    int xoff = 0 ;
 
-	    if( r.width-3 < (ri.get_width()/PANGO_SCALE))
+	    if( r.width-6 < (ri.get_width()/PANGO_SCALE))
 	    {
 		xoff = r.width ;
 
@@ -306,11 +306,11 @@ namespace MPX
 
 	    if( xoff == 0 )
 	    {
-		x = r.width - (ri.get_width() / PANGO_SCALE) - 1 ; 
+		x = r.width - (ri.get_width() / PANGO_SCALE) - 3 ; 
 	    }
 	    else
 	    {
-		x = xoff + 3 ;
+		x = xoff + 4 ;
 	    }
 
 	    cairo->move_to(

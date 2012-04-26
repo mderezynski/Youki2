@@ -314,7 +314,7 @@ namespace MPX
 
 	    int xoff = 0 ;
 
-	    if( r.width-1 < (ri.get_width() / PANGO_SCALE)) 
+	    if( r.width-7 < (ri.get_width() / PANGO_SCALE)) 
 	    {
 		xoff = r.width ;
 
@@ -331,7 +331,7 @@ namespace MPX
 		      ct.r
 		    , ct.g
 		    , ct.b
-		    , 0.8 * get_alpha_at_time()
+		    , 0.95 * get_alpha_at_time()
 		) ;
 	    }
 
@@ -343,11 +343,11 @@ namespace MPX
 
 	    if( xoff == 0 )
 	    {
-		r1.x = r.width - r1.width - 1 ;
+		r1.x = r.width - r1.width - 2 ;
 	    }
 	    else
 	    {
-		r1.x = xoff + 3 ;
+		r1.x = xoff + 4 ;
 	    }
 
             cairo->move_to(
