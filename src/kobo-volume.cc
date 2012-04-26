@@ -35,10 +35,8 @@ namespace
 namespace MPX
 {
     KoboVolume::KoboVolume ()
-
-        : m_volume( 0 )
-        , m_clicked( false )
-
+        : m_clicked( false )
+        , m_volume( 0 )
     {
         add_events(Gdk::EventMask(Gdk::LEAVE_NOTIFY_MASK | Gdk::ENTER_NOTIFY_MASK | Gdk::POINTER_MOTION_MASK | Gdk::POINTER_MOTION_HINT_MASK | Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK )) ;
         unset_flags(Gtk::CAN_FOCUS) ;
@@ -63,7 +61,7 @@ namespace MPX
     void
     KoboVolume::on_size_request( Gtk::Requisition * req )
     {
-        req->width  = 100 + 2*pad ;
+        req->width  = 200 + 2*pad ;
         req->height = 18 ;
     }
 
@@ -89,7 +87,7 @@ namespace MPX
 	const guint w = a.get_width() - 2 ;
 
         const ThemeColor& c_base /* :) */ = m_theme->get_color( THEME_COLOR_BACKGROUND ) ; 
-        const ThemeColor& c = m_theme->get_color( THEME_COLOR_SELECT ) ;
+
         const ThemeColor& ct = m_theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
 
 	GdkRectangle r ;
@@ -354,9 +352,7 @@ namespace MPX
         {
             grab_focus() ;
             m_clicked = true ;
-            m_volume = event->x ; 
-            m_volume = std::max( m_volume, 0 ) ;
-            m_volume = std::min( m_volume, 100 ) ;
+	    m_volume = std::max<std::size_t>( 0, std::min<std::size_t>( 100, (event->x) / 2 )) ;
             m_SIGNAL_set_volume.emit( m_volume ) ;
             queue_draw () ;
         }
@@ -370,15 +366,25 @@ namespace MPX
     )
     {
         m_clicked = false ;
+	m_posv.push_back( m_volume ) ;
 
-        m_volume = event->x ; 
-        m_volume = std::max( m_volume, 0 ) ;
-        m_volume = std::min( m_volume, 100 ) ;
+	if( m_posv.size() >= 2 )
+	{
+	    std::size_t& a = m_posv[m_posv.size()-1] ;
+	    std::size_t& b = m_posv[m_posv.size()-2] ;
 
-        m_SIGNAL_set_volume.emit( m_volume ) ;
+	    int diff = abs( a - b ) ; 
 
-        queue_draw () ;
-
+	    if( diff <= 5 )
+	    {
+		m_posv.clear() ;
+		std::size_t snap = std::size_t(((a+b)/2. + 2.5) / 5.) * 5 ;
+		m_volume = snap ;
+		m_SIGNAL_set_volume.emit( m_volume ) ;
+		queue_draw() ;
+	    }
+	}
+	
         return true ;
     }
 
@@ -403,12 +409,9 @@ namespace MPX
                 state = GdkModifierType (event->state);
             }
 
-            m_volume = x_orig ;
-            m_volume = std::max( m_volume, 0 ) ;
-            m_volume = std::min( m_volume, 100 ) ;
-
+	    m_volume = std::max( 0, std::min( 100, (x_orig) / 2 )) ;
+	    
             m_SIGNAL_set_volume.emit( m_volume ) ;
-
             queue_draw () ;
         }
 
@@ -419,7 +422,7 @@ namespace MPX
     KoboVolume::vol_down()
     {
         m_volume -= 5 ; 
-        m_volume = std::max( std::min( m_volume, 100), 0 ) ;
+        m_volume = std::max<std::size_t>( std::min<std::size_t>( m_volume, 100), 0 ) ;
         m_SIGNAL_set_volume.emit( m_volume ) ;
         queue_draw () ;
     }
@@ -428,7 +431,7 @@ namespace MPX
     KoboVolume::vol_up()
     {
         m_volume += 5 ; 
-        m_volume = std::max( std::min( m_volume, 100), 0 ) ;
+        m_volume = std::max<std::size_t>( std::min<std::size_t>( m_volume, 100), 0 ) ;
         m_SIGNAL_set_volume.emit( m_volume ) ;
         queue_draw () ;
     }

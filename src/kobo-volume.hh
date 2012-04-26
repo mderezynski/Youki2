@@ -10,8 +10,13 @@ namespace MPX
     {
         protected:
         
-            int  m_volume ;        
-            bool m_clicked ;
+	    typedef std::vector<std::size_t> PosV_t ;
+
+            bool	m_clicked ;
+            std::size_t	m_volume ;        
+	    std::size_t m_last_position ;
+
+	    PosV_t m_posv ;
 
             IYoukiThemeEngine * m_theme ;            
 
