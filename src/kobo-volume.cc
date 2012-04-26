@@ -383,7 +383,7 @@ namespace MPX
         m_clicked = false ;
 	m_posv.push_back( m_volume ) ;
 
-	if( m_timer_elapsed() < 1.5 && m_posv.size() >= 2 ) // IMPORTANT: We don't snap if the user holds the mouse still for 1.5 seconds; it's our way of enabling users to still set a precise position
+	if( m_timer.elapsed() < 1.5 && m_posv.size() >= 2 ) // IMPORTANT: We don't snap if the user holds the mouse still for 1.5 seconds; it's our way of enabling users to still set a precise position
 	{
 	    std::size_t& a = m_posv[m_posv.size()-1] ;
 	    std::size_t& b = m_posv[m_posv.size()-2] ;
