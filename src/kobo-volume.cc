@@ -353,6 +353,7 @@ namespace MPX
             grab_focus() ;
             m_clicked = true ;
 	    m_volume = std::max<std::size_t>( 0, std::min<std::size_t>( 100, (event->x) / 2 )) ;
+	    m_posv.push_back( m_volume ) ;
             m_SIGNAL_set_volume.emit( m_volume ) ;
             queue_draw () ;
         }
