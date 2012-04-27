@@ -277,13 +277,13 @@ namespace MPX
         Gtk::Window tv ;
         gtk_widget_realize(GTK_WIDGET(tv.gobj())) ;
 
-        Gdk::Color csel = tv.get_style_context()->get_base( Gtk::STATE_SELECTED ) ;
+        Gdk::RGBA csel = tv.get_style_context()->get_color( Gtk::STATE_FLAG_SELECTED ) ;
 	// csel.set_rgb_p( 0x53/255., 0x7f/255., 0xe9/255. ) ; 
 
         ThemeColorMap_t colors ;
         colors[THEME_COLOR_SELECT] = ThemeColor( csel.get_red_p(), csel.get_green_p(), csel.get_blue_p(), 1. ) ;
 
-	Gdk::Color ctit ;
+	Gdk::RGBA ctit ;
 	ctit.set_rgb_p( 0x6d/255., 0x9c/255., 0xe9/255. ) ;
 
         Util::color_to_hsb( ctit, h, s, b ) ;
@@ -313,7 +313,7 @@ namespace MPX
         colors[THEME_COLOR_BACKGROUND] = theme_color_from_gdk(  tv.get_style_context()->get_background_color( Gtk::STATE_FLAG_NORMAL )) ;
         colors[THEME_COLOR_BASE] = theme_color_from_gdk( tv.get_style_context()->get_color( Gtk::STATE_FLAG_NORMAL )) ;
 
-        Util::color_to_hsb( tv.get_style_context()->get_base( Gtk::STATE_NORMAL ), h, s, b ) ;
+        Util::color_to_hsb( tv.get_style_context()->get_color( Gtk::STATE_FLAG_NORMAL ), h, s, b ) ;
 	b *= 0.95 ;
         colors[THEME_COLOR_BASE_ALTERNATE] = theme_color_from_gdk( Util::color_from_hsb ( h, s, b )) ; 
 
@@ -385,8 +385,8 @@ namespace MPX
     {
         const ThemeColor& c = get_color( THEME_COLOR_SELECT ) ;
 
-        Gdk::Color cgdk ;
-        cgdk.set_rgb_p( c.r, c.g, c.b ) ;
+        Gdk::RGBA cgdk ;
+        cgdk.set_rgba( c.r, c.g, c.b, 1.0 ) ;
 
         cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 
@@ -403,26 +403,26 @@ namespace MPX
         
         Util::color_to_hsb( cgdk, h, s, b ) ;
         b *= 0.90 ; 
-        Gdk::Color c1 = Util::color_from_hsb( h, s, b ) ;
+        Gdk::RGBA c1 = Util::color_from_hsb( h, s, b ) ;
 
         Util::color_to_hsb( cgdk, h, s, b ) ;
         b *= 0.50 ; 
 	s *= 0.95 ;
-        Gdk::Color c2 = Util::color_from_hsb( h, s, b ) ;
+        Gdk::RGBA c2 = Util::color_from_hsb( h, s, b ) ;
 
         gradient->add_color_stop_rgba(
               0
-            , c1.get_red_p()
-            , c1.get_green_p()
-            , c1.get_blue_p()
+            , c1.get_red()
+            , c1.get_green()
+            , c1.get_blue()
             , alpha
         ) ;
        
         gradient->add_color_stop_rgba(
               1. 
-            , c2.get_red_p()
-            , c2.get_green_p()
-            , c2.get_blue_p()
+            , c2.get_red()
+            , c2.get_green()
+            , c2.get_blue()
             , alpha
         ) ;
 
@@ -463,8 +463,8 @@ namespace MPX
 
         const ThemeColor& c = get_color( THEME_COLOR_SELECT ) ;
 
-        Gdk::Color cgdk ;
-        cgdk.set_rgb_p( c.r, c.g, c.b ) ;
+        Gdk::RGBA cgdk ;
+        cgdk.set_rgba( c.r, c.g, c.b, 1.0 ) ;
 
         Util::color_to_hsb( cgdk, h, s, b ) ;
         b = std::min( 1., b+0.04 ) ;
@@ -474,9 +474,9 @@ namespace MPX
         cairo->save() ;
         cairo->set_operator( Cairo::OPERATOR_OVER ) ;
         cairo->set_source_rgba(
-              c1.get_red_p() 
-            , c1.get_green_p()
-            , c1.get_blue_p()
+              c1.get_red() 
+            , c1.get_green()
+            , c1.get_blue()
             , 1. 
         ) ;
         RoundedRectangle(

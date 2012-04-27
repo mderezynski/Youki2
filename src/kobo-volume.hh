@@ -10,10 +10,22 @@ namespace MPX
     {
         protected:
         
-            int  m_volume ;        
-            bool m_clicked ;
+	    typedef std::vector<std::size_t> PosV_t ;
+
+            bool	m_clicked ;
+            std::size_t	m_volume ;        
+	    Glib::Timer m_timer ;
+
+/* FIXME: future use
+	    void
+	    try_set_volume_internal( std::size_t event_x ) ;
+*/
+
+	    PosV_t m_posv ;
 
             IYoukiThemeEngine * m_theme ;            
+
+	    Cairo::RefPtr<Cairo::ImageSurface> m_image_mute ;
     
         public:
 

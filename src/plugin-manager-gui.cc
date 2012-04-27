@@ -321,7 +321,7 @@ namespace MPX
 			builder->get_widget("options", m_Options);
 			builder->get_widget("error", m_Error);
 			builder->get_widget("notebook", m_Notebook);
-			builder->get_nth_page(1)->hide();
+			m_Notebook->get_nth_page(1)->hide();
 
             Gtk::Button* close_button = 0;
             builder->get_widget("close", close_button);

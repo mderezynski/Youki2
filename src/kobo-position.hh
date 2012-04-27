@@ -18,8 +18,8 @@ namespace MPX
             guint      m_duration ;        
             guint      m_position ;
             guint      m_seek_position ;
-            double      m_seek_factor ;
-            bool        m_clicked ;
+            double     m_seek_factor ;
+            bool       m_clicked ;
 
             sigc::connection m_update_conn ;
 	    Glib::Timer t; 

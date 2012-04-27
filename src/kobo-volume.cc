@@ -1,4 +1,5 @@
 #include <gtkmm.h>
+#include <glibmm/i18n.h>
 #include <boost/format.hpp>
 #include <cmath>
 #include "kobo-volume.hh"
@@ -33,12 +34,12 @@ namespace
 
 namespace MPX
 {
-    KoboVolume::KoboVolume ()
-
-        : m_volume( 0 )
-        , m_clicked( false )
-
+    KoboVolume::KoboVolume()
+        : m_clicked( false )
+        , m_volume( 0 )
     {
+	m_posv.push_back( m_volume ); // ha, let's play!
+
         add_events(Gdk::EventMask(Gdk::LEAVE_NOTIFY_MASK | Gdk::ENTER_NOTIFY_MASK | Gdk::POINTER_MOTION_MASK | Gdk::POINTER_MOTION_HINT_MASK | Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK )) ;
         set_can_focus(false) ;
 
@@ -47,19 +48,21 @@ namespace MPX
         const ThemeColor& c = m_theme->get_color( THEME_COLOR_BASE ) ;
 
         Gdk::RGBA cgdk ;
-        cgdk.set_rgba( c.r, c.g, c.b, 1.0 ) ; 
+        cgdk.set_rgba( c.r, c.g, c.b, 1.0 ) ;
         override_background_color( cgdk, Gtk::STATE_FLAG_NORMAL ) ;
         override_color( cgdk, Gtk::STATE_FLAG_NORMAL ) ;
+
+        m_image_mute = Util::cairo_image_surface_from_pixbuf( Gdk::Pixbuf::create_from_file( Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "mute-small-14x14px.png" ))) ;
     }
 
-    KoboVolume::~KoboVolume () 
+    KoboVolume::~KoboVolume ()
     {
     }
-    
+
     void
     KoboVolume::on_size_request( Gtk::Requisition * req )
     {
-        req->width  = 100 + 2*pad ;
+        req->width  = 200 + 2*pad ;
         req->height = 18 ;
     }
 
@@ -68,7 +71,7 @@ namespace MPX
           int volume
     )
     {
-        m_volume = volume ;
+        m_volume = std::max( 0, std::min( 100,volume)) ;
         queue_draw () ;
     }
 
@@ -77,13 +80,39 @@ namespace MPX
         GdkEventExpose* G_GNUC_UNUSED
     )
     {
+        double percent = double(m_volume) / 100. ; 
+
         Cairo::RefPtr<Cairo::Context> cairo = get_window()->create_cairo_context() ;
 
         const Gdk::Rectangle& a = get_allocation() ;
+	const guint w = a.get_width() - 2 ;
 
         const ThemeColor& c_base /* :) */ = m_theme->get_color( THEME_COLOR_BACKGROUND ) ; 
-        const ThemeColor& c = m_theme->get_color( THEME_COLOR_SELECT ) ;
         const ThemeColor& ct = m_theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
+
+	GdkRectangle r ;
+	double h, s, b ;
+
+        Gdk::Color cgdk, c1, c2 ;
+
+	cgdk.set_rgb_p( 0.35, 0.35, 0.35 ) ;
+	
+	Util::color_to_hsb( cgdk, h, s, b ) ;
+	// b *= 0.85 ;
+	// s *= 0.50 ;
+	cgdk = Util::color_from_hsb( h, s, b ) ;
+
+	Util::color_to_hsb( cgdk, h, s, b ) ;
+	b *= 0.95 ;
+	// s *= 0.50 ;
+	c1 = Util::color_from_hsb( h, s, b ) ;
+
+	Util::color_to_hsb( cgdk, h, s, b ) ;
+	b *= 0.70 ;
+	//s *= 0.75 ;
+	c2 = Util::color_from_hsb( h, s, b ) ;
+
+	Gdk::Color c_gradient = get_color_at_pos( c1, c2, percent ) ;
 
         cairo->set_operator(Cairo::OPERATOR_SOURCE) ;
         cairo->set_source_rgba(
@@ -94,103 +123,204 @@ namespace MPX
         ) ;
         cairo->paint () ;
 
-        double percent = double(m_volume) / 100. ; 
-        cairo->set_operator( Cairo::OPERATOR_ATOP ) ;
+        cairo->set_operator( Cairo::OPERATOR_OVER ) ;
+        RoundedRectangle(
+              cairo
+            , 1 
+            , 1 
+            , w 
+            , 16
+            , 2.
+        ) ;
 
-        if( m_volume )
-        {
-            GdkRectangle r ;
+        Cairo::RefPtr<Cairo::LinearGradient> position_bar_back_gradient = Cairo::LinearGradient::create(
+              a.get_width() / 2 
+            , 1 
+            , a.get_width() / 2 
+            , 16
+        ) ;
 
-            r.x         = pad ; 
-            r.y         = 1 ; 
-            r.width     = fmax( 0, (a.get_width()-2*pad) * double(percent)) ;
-            r.height    = 16 ; 
+        position_bar_back_gradient->add_color_stop_rgba(
+              0. 
+            , cgdk.get_red_p()
+            , cgdk.get_green_p()
+            , cgdk.get_blue_p()
+            , 0.2 
+        ) ;
 
-            cairo->save () ;
+        position_bar_back_gradient->add_color_stop_rgba(
+              .2
+            , cgdk.get_red_p()
+            , cgdk.get_green_p()
+            , cgdk.get_blue_p()
+            , 0.195 
+        ) ;
 
-            Gdk::Color c1 ;
-            c1.set_rgb_p( .2, .2, .2 ) ;
+        position_bar_back_gradient->add_color_stop_rgba(
+              .4
+            , cgdk.get_red_p()
+            , cgdk.get_green_p()
+            , cgdk.get_blue_p()
+            , 0.185
+        ) ;
 
-            Gdk::Color c2 ;
-            c2.set_rgb_p( c.r, c.g, c.b ) ; 
+        position_bar_back_gradient->add_color_stop_rgba(
+              .6
+            , cgdk.get_red_p()
+            , cgdk.get_green_p()
+            , cgdk.get_blue_p()
+            , 0.185
+        ) ;
+        
+        position_bar_back_gradient->add_color_stop_rgba(
+              .9
+            , cgdk.get_red_p()
+            , cgdk.get_green_p()
+            , cgdk.get_blue_p()
+            , 0.195
+        ) ;
 
-            Gdk::Color c_gradient = get_color_at_pos( c1, c2,  percent ) ;
+        position_bar_back_gradient->add_color_stop_rgba(
+              1. 
+            , cgdk.get_red_p()
+            , cgdk.get_green_p()
+            , cgdk.get_blue_p()
+            , 0.2 
+        ) ;
 
-            cairo->set_source_rgba(
-                  c_gradient.get_red_p()
-                , c_gradient.get_green_p()
-                , c_gradient.get_blue_p()
-                , .6
-            ) ;
+        cairo->set_source( position_bar_back_gradient ) ;
 
-            cairo->set_operator(
-                  Cairo::OPERATOR_ATOP
-            ) ;
+        RoundedRectangle(
+              cairo
+            , 1 
+            , 1 
+            , w
+            , 16
+            , 2.
+        ) ;
 
-            RoundedRectangle(
-                  cairo
-                , r.x 
-                , r.y
-                , r.width 
-                , r.height
-                , 2.
-            ) ;
+        cairo->fill_preserve () ;
 
-            cairo->fill (); 
-            cairo->restore () ;
-        }
+	cairo->set_source_rgba(
+	      c_gradient.get_red_p()
+	    , c_gradient.get_green_p()
+	    , c_gradient.get_blue_p()
+	    , 1. 
+	) ;
 
-        {
-            const Gtk::Allocation& a = get_allocation() ;
+        cairo->set_line_width( 0.75 ) ;
+        cairo->stroke_preserve() ;
+        cairo->clip() ;
 
-            const int text_size_px = 12 ;
-            const int text_size_pt = static_cast<int> ((text_size_px * 72) / Util::screen_get_y_resolution (Gdk::Screen::get_default ())) ;
+	cairo->set_line_width( 1. ) ;
 
-            Pango::FontDescription font_desc = get_style_context()->get_font() ; 
-            font_desc.set_size (text_size_pt * PANGO_SCALE) ;
-            font_desc.set_weight (Pango::WEIGHT_BOLD) ;
+	/// VOLUME
+	r.x         = 1 ; 
+	r.y         = 1 ; 
+	r.width     = fmax( 0, (a.get_width()-2) * double(percent)) ;
+	r.height    = 16 ; 
 
-            Glib::RefPtr<Pango::Layout> layout = Glib::wrap (pango_cairo_create_layout (cairo->cobj ())) ;
+	cairo->save () ;
 
-            layout->set_font_description (font_desc) ;
-            layout->set_text(
-                (boost::format("%d") % m_volume).str()
-            ) ;
+	cairo->set_source_rgba(
+	      c_gradient.get_red_p()
+	    , c_gradient.get_green_p()
+	    , c_gradient.get_blue_p()
+	    , 1. 
+	) ;
 
-            Pango::Rectangle rl, ri ;
-            layout->get_extents( rl, ri ) ;
+	cairo->set_operator(
+	      Cairo::OPERATOR_OVER
+	) ;
 
-            cairo->move_to(
-                  fmax( 2, 2 + double((a.get_width() - pad*2)) * double(percent) - (ri.get_width()/PANGO_SCALE) - (pad+4) ) 
-                , (get_height() - (ri.get_height()/PANGO_SCALE))/2.
-            ) ;
+	cairo->rectangle(
+	      r.x 
+	    , r.y
+	    , r.width 
+	    , r.height
+	) ;
 
-            cairo->set_source_rgba(
-                  ct.r
-                , ct.g
-                , ct.b
-                , ct.a
-            ) ;
-            cairo->set_operator( Cairo::OPERATOR_ATOP ) ;
-            pango_cairo_show_layout (cairo->cobj (), layout->gobj ()) ;
-        }
+	cairo->fill (); 
+	cairo->restore () ;
 
-        GdkRectangle r ;
+	if( m_volume == 0 )
+	{
+	    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 
-        r.x = 0 ;
-        r.y = 0 ;
-        r.width = a.get_width() ;
-        r.height = a.get_height() ;
+	    cairo->set_source(
+		  m_image_mute 
+		, a.get_width() - 4 - m_image_mute->get_width()
+		, 2
+	    ) ;
 
-        if( has_focus() )
-        {
-            m_theme->draw_focus(
-                  cairo
-                , r 
-                , is_sensitive()
-                , 2.
-            ) ;
-        }
+	    cairo->rectangle(
+		  a.get_width() - 4 - m_image_mute->get_width()
+		, 2
+		, m_image_mute->get_width()
+		, m_image_mute->get_height()
+	    ) ;
+	    cairo->fill() ;
+	}
+	else
+	{
+	    const int text_size_px = 13 ;
+	    const int text_size_pt = static_cast<int> ((text_size_px * 72) / Util::screen_get_y_resolution (Gdk::Screen::get_default ())) ;
+	    Pango::FontDescription font_desc = get_style_context()->get_font() ; 
+	    font_desc.set_size(text_size_pt * PANGO_SCALE) ;
+	    font_desc.set_weight(Pango::WEIGHT_BOLD) ;
+	    Glib::RefPtr<Pango::Layout> layout = Glib::wrap (pango_cairo_create_layout (cairo->cobj ())) ;
+	    layout->set_font_description(font_desc) ;
+
+	    layout->set_text(
+		(boost::format("%d") % m_volume).str()
+	    ) ;
+
+	    Pango::Rectangle rl, ri ;
+	    layout->get_extents( rl, ri ) ;
+
+	    int xoff = 0 ;
+
+	    if( r.width-6 < (ri.get_width()/PANGO_SCALE))
+	    {
+		xoff = r.width ;
+
+		cairo->set_source_rgba(
+		      c1.get_red_p()
+		    , c1.get_green_p()
+		    , c1.get_blue_p()
+		    , 1. 
+		) ;
+	    }
+	    else
+	    {
+		cairo->set_source_rgba(
+		      ct.r
+		    , ct.g
+		    , ct.b
+		    , ct.a
+		) ;
+	    } 
+
+	    int x = 3 ;
+	    int y = (get_height() - (ri.get_height()/PANGO_SCALE))/2. ;
+
+	    if( xoff == 0 )
+	    {
+		x = r.width - (ri.get_width() / PANGO_SCALE) - 3 ; 
+	    }
+	    else
+	    {
+		x = xoff + 4 ;
+	    }
+
+	    cairo->move_to(
+		  x 
+		, y
+	    ) ;
+
+	    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
+	    pango_cairo_show_layout (cairo->cobj (), layout->gobj ()) ;
+	}
 
         return true ;
     }
@@ -220,11 +350,23 @@ namespace MPX
         {
             grab_focus() ;
             m_clicked = true ;
-            m_volume = event->x ; 
-            m_volume = std::max( m_volume, 0 ) ;
-            m_volume = std::min( m_volume, 100 ) ;
-            m_SIGNAL_set_volume.emit( m_volume ) ;
-            queue_draw () ;
+
+	    std::size_t new_volume = std::max<std::size_t>( 0, std::min<std::size_t>( 100, (event->x) / 2 )) ;
+
+	    if( new_volume != m_volume )
+	    {
+		m_volume = new_volume ; 
+
+/*
+		m_posv.push_back( m_volume ) ;
+		m_timer.stop() ;
+		m_timer.reset() ;
+		m_timer.start() ;
+*/
+
+		m_SIGNAL_set_volume.emit( m_volume ) ;
+		queue_draw () ;
+	    }
         }
 
         return true ;
@@ -237,13 +379,31 @@ namespace MPX
     {
         m_clicked = false ;
 
-        m_volume = event->x ; 
-        m_volume = std::max( m_volume, 0 ) ;
-        m_volume = std::min( m_volume, 100 ) ;
+/*
+	m_timer.stop() ;
 
-        m_SIGNAL_set_volume.emit( m_volume ) ;
+	guint snap = m_volume ;
 
-        queue_draw () ;
+	if( m_timer.elapsed() > 0.6 ) 
+	{
+	    guint tenth = m_volume / guint(10) ;
+	    guint   mod = m_volume % 10 ;
+
+	    if( mod < 5 ) 
+		snap = std::min<guint>( tenth * 10, 100 ) ;
+	    else if( mod == 5 )
+		snap = m_volume ;
+	    else
+		snap = std::min<guint>( tenth * 10 + 10,  100 ) ;
+
+	    if( snap != m_volume )
+	    {
+		m_volume = snap ;
+		m_SIGNAL_set_volume.emit( m_volume ) ;
+		queue_draw() ;
+	    }
+	}
+*/
 
         return true ;
     }
@@ -258,24 +418,27 @@ namespace MPX
             int x_orig, y_orig;
             GdkModifierType state;
 
-            if (event->is_hint)
+            if( event->is_hint )
             {
-                gdk_window_get_pointer (event->window, &x_orig, &y_orig, &state);
+                gdk_window_get_pointer( event->window, &x_orig, &y_orig, &state ) ;
             }
             else
             {
-                x_orig = int (event->x);
-                y_orig = int (event->y);
-                state = GdkModifierType (event->state);
-            }
+                x_orig = int(event->x);
+                y_orig = int(event->y);
 
-            m_volume = x_orig ;
-            m_volume = std::max( m_volume, 0 ) ;
-            m_volume = std::min( m_volume, 100 ) ;
+                state = GdkModifierType(event->state);
+            } 
 
-            m_SIGNAL_set_volume.emit( m_volume ) ;
+	    std::size_t new_volume = std::max( 0, std::min( 100, (x_orig) / 2 )) ;
 
-            queue_draw () ;
+	    if( new_volume != m_volume )
+	    {
+		m_volume = new_volume ; 
+//		m_timer.reset() ;
+		m_SIGNAL_set_volume.emit( m_volume ) ;
+		queue_draw () ;
+	    }
         }
 
         return true ;
@@ -285,7 +448,7 @@ namespace MPX
     KoboVolume::vol_down()
     {
         m_volume -= 5 ; 
-        m_volume = std::max( std::min( m_volume, 100), 0 ) ;
+        m_volume = std::max<std::size_t>( std::min<std::size_t>( m_volume, 100), 0 ) ;
         m_SIGNAL_set_volume.emit( m_volume ) ;
         queue_draw () ;
     }
@@ -294,7 +457,7 @@ namespace MPX
     KoboVolume::vol_up()
     {
         m_volume += 5 ; 
-        m_volume = std::max( std::min( m_volume, 100), 0 ) ;
+        m_volume = std::max<std::size_t>( std::min<std::size_t>( m_volume, 100), 0 ) ;
         m_SIGNAL_set_volume.emit( m_volume ) ;
         queue_draw () ;
     }

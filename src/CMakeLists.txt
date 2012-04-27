@@ -59,12 +59,8 @@ SET(youki_bin_SOURCES
   kobo-position.cc
   youki-controller.hh
   youki-controller.cc
-  youki-simpleinfo.hh
-  youki-simpleinfo.cc
   kobo-main.hh
   kobo-main.cc
-  kobo-titleinfo.hh
-  kobo-titleinfo.cc
   kobo-volume.hh
   kobo-volume.cc
   youki-theme-engine.hh

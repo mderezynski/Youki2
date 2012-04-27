@@ -26,9 +26,9 @@
 #include "mpx/algorithm/ntree.hh"
 #include "mpx/algorithm/interval.hh"
 #include "mpx/algorithm/limiter.hh"
+#include "mpx/algorithm/vector_compare.hh"
 
 #include "mpx/com/indexed-list.hh"
-
 #include "mpx/aux/glibaddons.hh"
 
 #include "mpx/widgets/cairo-extensions.hh"
@@ -91,27 +91,29 @@ namespace Tracks
 
         typedef boost::tuple<std::string, std::string, std::string, guint, Track_sp, guint, guint, std::string, std::string, guint>  Row_t ;
 
-/*
-        bool operator<(const Row_t& a, const Row_t& b )
-        {
-            const Glib::ustring&    a1 = get<1>(a)
-                                  , a2 = get<0>(a)
-                                  , a3 = get<2>(a) ;
+	bool operator==(const Row_t& a, const Row_t& b)
+	{
+	    return boost::get<3>(a) == boost::get<3>(b) ;
+	}
 
-            const Glib::ustring&    b1 = get<1>(b)
-                                  , b2 = get<0>(b)
-                                  , b3 = get<2>(b) ;
+	bool operator==( Row_t& a, Row_t& b )
+	{
+	    return boost::get<3>(a) == boost::get<3>(b) ;
+	}
 
-            guint ta = get<5>(a) ;
-            guint tb = get<5>(b) ;
+	bool operator!=(const Row_t& a, const Row_t& b)
+	{
+	    return boost::get<3>(a) == boost::get<3>(b) ;
+	}
 
-            return (a1 < b1 && a2 < b2 && a3 < b3 && ta < tb ) ; 
-        }
-*/
+	bool operator!=( Row_t& a, Row_t& b )
+	{
+	    return boost::get<3>(a) == boost::get<3>(b) ;
+	}
 
-        typedef std::vector<Row_t>                          Model_t ;
-        typedef boost::shared_ptr<Model_t>                  Model_sp_t ;
-        typedef sigc::signal<void, std::size_t, bool>       Signal1 ;
+        typedef std::vector<Row_t>			Model_t ;
+        typedef boost::shared_ptr<Model_t>		Model_sp_t ;
+        typedef sigc::signal<void, std::size_t, bool>	Signal1 ;
 
         struct Model_t_iterator_equal
         : std::binary_function<Model_t::iterator, Model_t::iterator, bool>
@@ -245,7 +247,7 @@ namespace Tracks
                 , const Model_t::const_iterator& i
             ) const
             {
-		return(id < boost::get<3>(*i)) ;
+		return(boost::get<3>(*i) < id) ;
             }
 	};
 
@@ -256,7 +258,8 @@ namespace Tracks
 		typedef std::vector<Model_t::size_type>		ModelIdxVec_t ;
 		typedef std::vector<ModelIdxVec_t>		AlbumTrackMapping_t ;
 
-                Signal1         m_changed;
+                Signal1         m_SIGNAL__changed;
+
                 Model_sp_t      m_realmodel;
                 std::size_t     m_upper_bound ;
 
@@ -284,7 +287,7 @@ namespace Tracks
                 virtual Signal1&
                 signal_changed()
                 {
-                    return m_changed ;
+                    return m_SIGNAL__changed ;
                 }
 
                 virtual bool
@@ -365,14 +368,13 @@ namespace Tracks
         struct DataModelFilter
         : public DataModel
         {
-                typedef std::vector<guint>                     IdVector_t ;
-                typedef boost::shared_ptr<IdVector_t>           IdVector_sp ;
+                typedef std::vector<guint>		    IdVector_t ;
+                typedef boost::shared_ptr<IdVector_t>	    IdVector_sp ;
 
-                typedef std::set<Model_t::const_iterator>       ModelIteratorSet_t ;
-                typedef boost::shared_ptr<ModelIteratorSet_t>   ModelIteratorSet_sp ;
-                typedef std::vector<ModelIteratorSet_sp>        IntersectVector_t ;
-                typedef std::vector<Model_t::const_iterator>    RowRowMapping_t ;
-
+                typedef std::set<Model_t::const_iterator>	ModelIteratorSet_t ;
+                typedef boost::shared_ptr<ModelIteratorSet_t>	ModelIteratorSet_sp ;
+                typedef std::vector<ModelIteratorSet_sp>	IntersectVector_t ;
+                typedef std::vector<Model_t::const_iterator>	RowRowMapping_t ;
 		typedef boost::shared_ptr<RowRowMapping_t>	RowRowMapping_sp ;
 
                 guint  m_max_size_constraints_artist ;
@@ -406,7 +408,7 @@ namespace Tracks
                 IdVector_sp                 m_constraints_artist ;
                 TCVector_sp                 m_constraints_albums ;
                 bool                        m_cache_enabled ;
-                Gtk::Widget*                m_widget ;
+//                Gtk::Widget*                m_widget ;
 
                 DataModelFilter( DataModel_sp_t& model )
 
@@ -427,7 +429,7 @@ namespace Tracks
 		shuffle()
 		{
 			std::random_shuffle( m_mapping->begin(), m_mapping->end() ) ;
-                    	m_changed.emit( 0, false ) ;
+                    	m_SIGNAL__changed.emit( 0, false ) ;
 		}
 
                 void
@@ -466,7 +468,7 @@ namespace Tracks
                     m_mapping_unfiltered->clear() ;
                     clear_active_track() ;
 		    m_upper_bound = 0 ;
-                    m_changed.emit( 0, true ) ;
+                    m_SIGNAL__changed.emit( 0, true ) ;
                 } 
 
                 void
@@ -485,9 +487,9 @@ namespace Tracks
                 void
                 set_active_id(guint id)
                 {
-                    m_id_currently_playing = id ;
 		    m_row_currently_playing_in_mapping.reset() ;
 
+                    m_id_currently_playing = id ;
                     scan_for_currently_playing() ;
                 }
 
@@ -585,7 +587,7 @@ namespace Tracks
                     m_row_currently_playing_in_mapping.reset() ;
                     scan_for_currently_playing() ;
 
-                    m_changed.emit( m_upper_bound, false ) ;
+                    m_SIGNAL__changed.emit( m_upper_bound, false ) ;
                 }
 
                 void
@@ -599,7 +601,7 @@ namespace Tracks
                     m_row_currently_playing_in_mapping.reset() ;
                     scan_for_currently_playing() ;
 
-                    m_changed.emit( m_upper_bound, true ) ;
+                    m_SIGNAL__changed.emit( m_upper_bound, true ) ;
                 }
 
                 virtual void
@@ -692,19 +694,19 @@ namespace Tracks
                     {
                         m_current_filter = text ;
 			m_current_filter_noaque = Util::stdstrjoin( m_frags, " " ) ;
-                        Util::window_set_busy( * dynamic_cast<Gtk::Window*>(m_widget->get_toplevel()) ) ;
+                        //Util::window_set_busy( * dynamic_cast<Gtk::Window*>(m_widget->get_toplevel()) ) ;
                         regen_mapping() ;
-                        Util::window_set_idle( * dynamic_cast<Gtk::Window*>(m_widget->get_toplevel()) ) ;
+                        //Util::window_set_idle( * dynamic_cast<Gtk::Window*>(m_widget->get_toplevel()) ) ;
                     }
                 }
 
                 void
                 scan(
-                      const boost::optional<guint>& id_top
+                      const boost::optional<guint>& id
                 )
                 {
 			scan_for_currently_playing() ;
-			scan_for_upper_bound( id_top ) ;
+			scan_for_upper_bound( id ) ;
                 }
 
                 void
@@ -713,6 +715,7 @@ namespace Tracks
                 {
                     if( m_id_currently_playing )
                     {
+#if 0
 			RowRowMapping_t::const_iterator it, first, last, begin = m_mapping->begin() ;
 
 			std::size_t count, step ;
@@ -722,8 +725,6 @@ namespace Tracks
 
 			count = std::distance( first, last ) ; 
 
-			FindIdFunc f ;
-
 			while( count > 0 )
 			{
 			    it = first ;
@@ -731,7 +732,7 @@ namespace Tracks
 
 			    std::advance( it, step ) ;
 
-			    if(!f(m_id_currently_playing.get(),*it)) 
+			    if(!(m_id_currently_playing.get() < boost::get<3>(**it)))
 			    {
 				first = ++it ;
 				count -= step + 1 ;
@@ -739,10 +740,22 @@ namespace Tracks
 
 			}
 
-			if( it != m_mapping->end() )
+			if( first != m_mapping->end() )
 			{
-			    m_row_currently_playing_in_mapping = std::distance( begin, first) - 1 ;
+			    m_row_currently_playing_in_mapping = std::distance(first,begin) - 1 ;
 			    return ;
+			}
+#endif
+			guint d = 0 ;
+
+			for( RowRowMapping_t::const_iterator i = m_mapping->begin() ; i != m_mapping->end() ; ++i )
+			{
+			    if( m_id_currently_playing.get() == boost::get<3>(**i))
+			    {
+				m_row_currently_playing_in_mapping = d ;
+				return ;
+			    }
+			    ++d ;
 			}
                     }
 
@@ -751,11 +764,12 @@ namespace Tracks
 
                 void
                 scan_for_upper_bound(
-                      const boost::optional<guint>& id_top
+                      const boost::optional<guint>& id
                 )
                 {
-                    if( id_top )
+                    if( id )
                     {
+#if 0
 			RowRowMapping_t::const_iterator it, first, last, begin = m_mapping->begin() ;
 
 			std::size_t count, step ;
@@ -765,14 +779,14 @@ namespace Tracks
 
 			count = std::distance( first, last ) ; 
 
-			FindIdFunc f ;
-
 			while( count > 0 )
 			{
 			    it = first ;
 			    step = count / 2 ;
+
 			    std::advance( it, step ) ;
-			    if(f(id_top.get(),*it)) 
+
+			    if(!(id.get() < boost::get<3>(**it)))
 			    {
 				first = ++it ;
 				count -= step + 1 ;
@@ -780,11 +794,24 @@ namespace Tracks
 
 			}
 
-			if( it != m_mapping->end() )
+			if( first != m_mapping->end() )
 			{
-			    m_upper_bound = std::distance( begin, first ) - 1 ;
+			    m_upper_bound = std::distance(begin, first) - 1 ;
 			    return ;
 			}
+#endif
+			guint d = 0 ;
+
+			for( RowRowMapping_t::const_iterator i = m_mapping->begin() ; i != m_mapping->end() ; ++i )
+			{
+			    if( id.get() == boost::get<3>(**i))
+			    {
+				m_upper_bound = d ;
+				return ;
+			    }
+			    ++d ;
+			}
+
                     }
 
 		    m_upper_bound = 0 ;
@@ -853,8 +880,15 @@ namespace Tracks
                     using boost::algorithm::split;
                     using boost::algorithm::is_any_of;
                     using boost::algorithm::find_first;
-
+	
                     RowRowMapping_sp new_mapping( new RowRowMapping_t ), new_mapping_unfiltered( new RowRowMapping_t ) ;
+
+		    boost::optional<guint> id ;
+
+		    if( m_mapping && m_upper_bound < m_mapping->size() )
+		    {
+			id = get<3>(row(m_upper_bound)) ;
+		    }
 
                     m_upper_bound = 0 ;
 
@@ -1060,17 +1094,18 @@ namespace Tracks
                         }
                     }
 
-		    m_mapping = new_mapping ;
-		    m_mapping_unfiltered = new_mapping_unfiltered ;
+		    if( !m_mapping || !vector_compare( *m_mapping, *new_mapping ))
+		    {
+                        m_mapping = new_mapping ;
+	                m_mapping_unfiltered = new_mapping_unfiltered ;
 
-                    scan( m_id_currently_playing ) ;
+			if( id )
+			{
+			    scan_for_upper_bound( id ) ;
+			}
 
-                    if( m_row_currently_playing_in_mapping )
-                    {
-                        m_upper_bound = m_row_currently_playing_in_mapping.get() ;
-                    }
-
-                    m_changed.emit( m_upper_bound, true ) ; 
+			m_SIGNAL__changed.emit( m_upper_bound, true ) ; 
+		    }
                 }
 
                 void
@@ -1083,6 +1118,13 @@ namespace Tracks
                     using boost::algorithm::find_first;
 
                     RowRowMapping_sp new_mapping( new RowRowMapping_t ), new_mapping_unfiltered( new RowRowMapping_t ) ;
+
+		    boost::optional<guint> id ;
+
+		    if( m_mapping && m_upper_bound < m_mapping->size() )
+		    {
+			id = get<3>(row(m_upper_bound)) ;
+		    }
 
                     m_upper_bound = 0 ;
 
@@ -1303,17 +1345,18 @@ namespace Tracks
                         }
                     }
 
-                    m_mapping = new_mapping ;
-                    m_mapping_unfiltered = new_mapping_unfiltered ;
+		    if( !m_mapping || !vector_compare( *m_mapping, *new_mapping ))
+		    {
+                        m_mapping = new_mapping ;
+	                m_mapping_unfiltered = new_mapping_unfiltered ;
 
-                    scan( m_id_currently_playing ) ;
+			if( id )
+			{
+			    scan_for_upper_bound( id ) ;
+			}
 
-                    if( m_row_currently_playing_in_mapping )
-                    {
-                        m_upper_bound = m_row_currently_playing_in_mapping.get() ;
-                    }
-
-                    m_changed.emit( m_upper_bound, true ) ; 
+			m_SIGNAL__changed.emit( m_upper_bound, true ) ; 
+		    }
                 }
         };
 
@@ -1915,7 +1958,7 @@ namespace Tracks
 
                                 GdkEvent *new_event = gdk_event_copy( (GdkEvent*)(event) ) ;
                                 g_object_unref( ((GdkEventKey*)new_event)->window ) ;
-                                m_SearchWindow->realize() ;
+                                gtk_widget_realize (GTK_WIDGET (m_SearchWindow->gobj ())); //m_SearchWindow->realize() ;
 
                                 ((GdkEventKey *) new_event)->window = m_SearchWindow->get_window()->gobj() ;
 
@@ -2174,22 +2217,37 @@ namespace Tracks
 		    ) ;
 		    cairo->paint() ;
 
+		    cairo->save() ;
+                    RoundedRectangle(
+                          cairo
+                        , 1
+                        , 1
+                        , a.get_width() - 2 
+                        , a.get_height() - 2 
+                        , rounding
+                    ) ;
+		    cairo->set_source_rgba( c_outline.r, c_outline.g, c_outline.b, 1.) ; 
+		    cairo->set_line_width( 0.75 ) ;
+                    cairo->stroke() ;
+		    cairo->restore() ;
+
+                    RoundedRectangle(
+                          cairo
+                        , 2
+                        , 2
+                        , a.get_width() - 4 
+                        , a.get_height() - 4 
+                        , rounding
+                    ) ;
+                    cairo->clip() ;
+
 		    cairo->set_source_rgba(
 			  c_base.r
 			, c_base.g
 			, c_base.b
 			, c_base.a
 		    ) ;
-		    RoundedRectangle(
-			  cairo
-			, 1 
-			, 1 
-			, a.get_width() - 5 
-			, a.get_height() - 2
-			, rounding 
-		    ) ;
-		    cairo->fill_preserve() ;
-		    cairo->clip() ;
+		    cairo->paint() ;
 
 		    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 
@@ -2207,10 +2265,10 @@ namespace Tracks
 
 		    RoundedRectangle(
 			  cairo
-			, 1
-			, 1
-			, a.get_width() - 5
-			, m_height__headers - 2 
+			, 0
+			, 0
+			, a.get_width()
+			, m_height__headers
 			, MPX::CairoCorners::CORNERS(3)
 		    ) ;
 		
@@ -2231,6 +2289,7 @@ namespace Tracks
 		    Cairo::RefPtr<Cairo::LinearGradient> gr = Cairo::LinearGradient::create( a.get_width()/2., 1, a.get_width() / 2., m_height__headers - 2 ) ;
 
 		    gr->add_color_stop_rgba( 0., c1.get_red_p(), c1.get_green_p(), c1.get_blue_p(), 1. ) ;
+		    gr->add_color_stop_rgba( .35, c1.get_red_p(), c1.get_green_p(), c1.get_blue_p(), 1. ) ;
 		    gr->add_color_stop_rgba( 1., c2.get_red_p(), c2.get_green_p(), c2.get_blue_p(), 1. ) ;
 
 		    cairo->set_source( gr ) ;
@@ -2238,13 +2297,14 @@ namespace Tracks
 		    cairo->restore() ;
 
 		    cairo->save() ;
-		    cairo->set_line_width( 0.75 ) ;
+		    cairo->set_antialias( Cairo::ANTIALIAS_NONE ) ;
+		    cairo->set_line_width( 1. ) ;
 		    cairo->set_source_rgba( c_outline.r, c_outline.g, c_outline.b, 0.6 ) ;
-		    cairo->move_to( 1, m_height__headers ) ;
-		    cairo->line_to( a.get_width() - 5, m_height__headers ) ;
+		    cairo->move_to( 0, m_height__headers ) ;
+		    cairo->line_to( a.get_width(), m_height__headers ) ;
 		    cairo->stroke() ;
 		    cairo->restore() ;
-		
+
 		    xpos = 0 ;
 
 		    for( Columns::iterator i = m_columns.begin(); i != m_columns.end(); ++i )
@@ -2398,11 +2458,31 @@ namespace Tracks
                 {
                     xpos += (*i)->get_width() ; // adjust us to the column's end
 
-                    cairo->save() ;
-                    cairo->set_line_width(.75) ;
-                    cairo->move_to(xpos, m_height__headers) ;
-                    cairo->line_to(xpos, a.get_height() - m_height__headers) ;
-                    cairo->set_dash(dashes, 0) ;
+			    cairo->save() ;
+			    cairo->set_antialias( Cairo::ANTIALIAS_NONE ) ;
+			    cairo->set_line_width(
+				  1. 
+			    ) ;
+			    cairo->move_to(
+				  xpos
+				, m_height__headers + 1 
+			    ) ; 
+			    cairo->line_to(
+				  xpos
+				, a.get_height()
+			    ) ;
+			    cairo->set_dash(
+				  dashes
+				, 0
+			    ) ;
+			    cairo->set_source_rgba(
+				  c_treelines.r
+				, c_treelines.g
+				, c_treelines.b
+				, c_treelines.a * 0.8
+			    ) ;
+			    cairo->stroke() ;
+			    cairo->restore() ;
 
                     cairo->set_source_rgba(c_treelines.r
                                            , c_treelines.g
@@ -2412,8 +2492,25 @@ namespace Tracks
                     cairo->stroke() ;
                     cairo->restore() ;
 
-                    if( i == i2 )
-                        continue ;
+			    cairo->save() ;
+			    cairo->set_antialias( Cairo::ANTIALIAS_NONE ) ;
+			    cairo->set_line_width(
+				  1. 
+			    ) ;
+			    cairo->move_to(
+				  xpos
+				, 0 
+			    ) ; 
+			    cairo->line_to(
+				  xpos
+				, m_height__headers - 1
+			    ) ;
+			    cairo->set_source_rgba(
+				  c_outline.r
+				, c_outline.g
+				, c_outline.b
+				, 0.4
+			    ) ;
 
                     cairo->save() ;
                     cairo->set_line_width(.75) ;
@@ -2432,37 +2529,7 @@ namespace Tracks
 
 		    cairo->reset_clip() ;
 
-		    cairo->save() ;
-
-		    RoundedRectangle(cairo
-                             , 1 
-                             , 1 
-                             , a.get_width() - 5
-                             , a.get_height() - 2
-                             , rounding 
-                             ) ;
-
-            cairo->set_source_rgba(c_outline.r
-                                   , c_outline.g
-                                   , c_outline.b
-                                   , c_outline.a
-                                   ) ;
-
-		    cairo->set_line_width( 1. ) ;
-		    cairo->stroke() ;
-		    cairo->restore() ;
-
-            // FIXME: Port this to use render_focus()
-            // if( has_focus() )
-            // {
-            //     GtkWidget * widget = GTK_WIDGET(gobj()) ;
-            //     gtk_paint_focus (widget->style, widget->window,
-            //                      gtk_widget_get_state (widget),
-            //                      &event->area, widget, NULL,
-            //                      2, 2, a.get_width() - 7 , a.get_height() - 4);
-            // }
-
-            return true;
+                    return true;
                 }
 
                 void
@@ -2626,15 +2693,14 @@ namespace Tracks
                         boost::optional<guint> active_track = m_model->m_id_currently_playing ;
 
                         m_model = model;
-                        m_model->m_widget = this ;
-
+                        //m_model->m_widget = this ;
                         m_model->m_id_currently_playing = active_track ;
                         m_model->scan_for_currently_playing() ;
                     }
                     else
                     {
                         m_model = model;
-                        m_model->m_widget = this ;
+                        //m_model->m_widget = this ;
                     }
 
                     m_model->signal_changed().connect(
@@ -2811,17 +2877,12 @@ namespace Tracks
                     Glib::ustring text = m_SearchEntry->get_text().casefold() ;
 
 		    bool numeric = false ;
-		    int nr ;
+		    guint nr ;
 
 		    try{
 			nr = boost::lexical_cast<int>( text ) ;
 			numeric = true ;
 		    } catch(...) {}
-
-                    if( text.empty() )
-                    {
-                        return ;
-                    }
 
                     DataModelFilter::RowRowMapping_t::iterator i = m_model->m_mapping->begin(); 
 
@@ -2866,17 +2927,12 @@ namespace Tracks
                     Glib::ustring text = m_SearchEntry->get_text().casefold() ;
 
 		    bool numeric = false ;
-		    int nr ;
+		    guint nr ;
 
 		    try{
 			nr = boost::lexical_cast<int>( text ) ;
 			numeric = true ;
 		    } catch(...) {}
-
-                    if( text.empty() )
-                    {
-                        return ;
-                    }
 
                     DataModelFilter::RowRowMapping_t::iterator i = m_model->m_mapping->begin(); 
 
@@ -2921,18 +2977,12 @@ namespace Tracks
                     Glib::ustring text = m_SearchEntry->get_text().casefold() ;
 
 		    bool numeric = false ;
-		    int nr ;
+		    guint nr ;
 
 		    try{
 			nr = boost::lexical_cast<int>( text ) ;
 			numeric = true ;
 		    } catch(...) {}
-
-                    if( text.empty() )
-                    {
-			cancel_search() ;
-                        return ;
-                    }
 
                     DataModelFilter::RowRowMapping_t::iterator i = m_model->m_mapping->begin(); 
 		
@@ -2961,8 +3011,6 @@ namespace Tracks
 
 			++ row ;
                     }
-
-                    clear_selection() ;
                 }
 
                 void

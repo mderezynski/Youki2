@@ -48,15 +48,15 @@ namespace Artist
 
         typedef boost::tuple<std::string, guint>           Row_t ;
 
-        typedef IndexedList<Row_t>                          Model_t ;
-        typedef boost::shared_ptr<Model_t>                  Model_sp_t ;
+        typedef IndexedList<Row_t>                         Model_t ;
+        typedef boost::shared_ptr<Model_t>                 Model_sp_t ;
         typedef std::map<guint, Model_t::iterator>         IdIterMap_t ;
 
-        typedef std::vector<Model_t::iterator>              RowRowMapping_t ;
+        typedef std::vector<Model_t::iterator>             RowRowMapping_t ;
 
-        typedef sigc::signal<void>                          Signal_0 ;
-        typedef sigc::signal<void, std::size_t>		    Signal_1 ;
-	typedef sigc::signal<void, guint>		    Signal_1a ;
+        typedef sigc::signal<void>                         Signal_0 ;
+        typedef sigc::signal<void, std::size_t>		   Signal_1 ;
+	typedef sigc::signal<void, guint>		   Signal_1a ;
 
         struct OrderFunc
         : public std::binary_function<Row_t, Row_t, bool>
@@ -66,7 +66,7 @@ namespace Artist
                 , const Row_t& b
             ) const
             {
-                guint id[2] = { get<1>(a), get<1>(b) } ;
+                gint id[2] = { get<1>(a), get<1>(b) } ;
 
                 if( id[0] == -1 )
                 {
@@ -835,7 +835,7 @@ namespace Artist
 
                                 GdkEvent *new_event = gdk_event_copy( (GdkEvent*)(event) ) ;
                                 g_object_unref( ((GdkEventKey*)new_event)->window ) ;
-                                m_SearchWindow->realize ();
+                                gtk_widget_realize( GTK_WIDGET( m_SearchWindow->gobj() ) ); //m_SearchWindow->realize ();
                                 ((GdkEventKey *) new_event)->window = m_SearchWindow->get_window()->gobj();
 
                                 m_SearchEntry->event(new_event) ;
@@ -1015,7 +1015,7 @@ namespace Artist
                                           , get_page_size()
                                       ) + 2 ;
 
-                    std::size_t ypos = 1 ;
+                    std::size_t ypos = 2 ;
                     std::size_t xpos = 0 ;
 
                     int offset = m_prop_vadj.get_value()->get_value() - (row*m_height__row) ;
@@ -1025,7 +1025,42 @@ namespace Artist
                         ypos -= offset ;
                     }
 
-                    Cairo::RefPtr<Cairo::Context> cairo = get_window()->create_cairo_context();
+                    Cairo::RefPtr<Cairo::Context> cairo = get_window()->create_cairo_context(); 
+
+                    cairo->set_operator( Cairo::OPERATOR_SOURCE ) ;
+                    cairo->set_source_rgba(c_bg.r
+                                           , c_bg.g
+                                           , c_bg.b
+                                           , c_bg.a
+                                           ) ;
+                    cairo->paint() ;
+
+                    cairo->save() ;
+                    RoundedRectangle(
+                                     cairo
+                                     , 1
+                                     , 1
+                                     , a.get_width() - 2 
+                                     , a.get_height() - 2 
+                                     , rounding
+                                     ) ;
+                    cairo->set_source_rgba( c_outline.r, c_outline.g, c_outline.b, 1. ) ; 
+                    cairo->set_line_width( 0.75 ) ;
+                    cairo->stroke() ;
+                    cairo->restore() ;
+
+                    RoundedRectangle(
+                          cairo
+                        , 2
+                        , 2
+                        , a.get_width() - 4 
+                        , a.get_height() - 4 
+                        , rounding
+                    ) ;
+                    cairo->clip() ;
+
+                    cairo->set_source_rgba(c_base.r, c_base.g, c_base.b, c_base.a) ;
+                    cairo->paint() ;
 
                     cairo->set_operator( Cairo::OPERATOR_SOURCE ) ;
                     cairo->set_source_rgba(c_bg.r, c_bg.g, c_bg.b, c_bg.a) ;
@@ -1060,9 +1095,9 @@ namespace Artist
                         {
                             GdkRectangle r ;
 
-                            r.x         = 1 ;
+                            r.x         = 0 ;
                             r.y         = ypos ;
-                            r.width     = a.get_width() - 8 ;
+                            r.width     = a.get_width() ;
                             r.height    = m_height__row ;
 
                             theme->draw_selection_rectangle(
@@ -1077,9 +1112,9 @@ namespace Artist
                         {
                             GdkRectangle r ;
 
-                            r.x       = 1 ;
+                            r.x       = 0 ;
                             r.y       = ypos ;
-                            r.width   = a.get_width() - 8 ;
+                            r.width   = a.get_width() ;
                             r.height  = m_height__row ;
 
                             RoundedRectangle(
@@ -1127,34 +1162,6 @@ namespace Artist
 
                     cairo->reset_clip() ;
 
-                    cairo->save() ;
-                    RoundedRectangle(cairo
-                                     , 1
-                                     , 1
-                                     , a.get_width() - 7
-                                     , a.get_height() - 2
-                                     , rounding
-                                     ) ;
-
-                    cairo->set_source_rgba(c_outline.r
-                                           , c_outline.g
-                                           , c_outline.b
-                                           , c_outline.a
-                                           ) ;
-
-                    cairo->set_line_width( 1. ) ;
-                    cairo->stroke() ;
-                    cairo->restore() ;
-
-                    // FIXME: Port this to use render_focus()
-                    // GtkWidget * widget = GTK_WIDGET(gobj()) ;
-                    // if( has_focus() )
-                    // {
-                    //     gtk_paint_focus (widget->style, widget->window,
-                    //                      gtk_widget_get_state (widget),
-                    //                      &event->area, widget, NULL,
-                    //                      2, 2, a.get_width() - 9 , a.get_height() - 4);
-                    // }
                     return true;
                 }
 
@@ -1253,18 +1260,18 @@ namespace Artist
                     }
                 }
 
-		boost::optional<guint>
-		get_selected_id()
-		{
-		    boost::optional<guint> id ;
+                boost::optional<guint>
+                get_selected_id()
+                {
+                    boost::optional<guint> id ;
 
-		    if( m_selection )
-		    {
-			id = get<1>(m_selection.get()) ;
-		    }
+                    if( m_selection )
+                    {
+                        id = get<1>(m_selection.get()) ;
+                    }
 
-		    return id ;
-		}
+                    return id ;
+                }
 
                 void
                 select_row(

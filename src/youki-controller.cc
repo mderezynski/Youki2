@@ -1,14 +1,23 @@
 #include "config.h"
 
+#include <libindicate/indicator-messages.h>
+#include <libindicate/indicator.h>
+#include <libindicate/interests.h>
+#include <libindicate/listener.h>
+#include <libindicate/server.h>
+
 #include <glibmm/i18n.h>
 #include <gdk/gdkkeysyms.h>
+
 #include <boost/format.hpp>
+#include <boost/ref.hpp>
 
 #include "mpx/mpx-main.hh"
 #include "mpx/mpx-covers.hh"
 #include "mpx/mpx-types.hh"
-#include "mpx/util-string.hh"
 #include "mpx/mpx-stock.hh"
+
+#include "mpx/util-string.hh"
 
 #include "mpx/com/view-album-artist.hh"
 #include "mpx/com/view-album.hh"
@@ -16,7 +25,6 @@
 
 #include "mpx/widgets/cairo-extensions.hh"
 #include "mpx/widgets/percentual-distribution-hbox.hh"
-#include "mpx/widgets/rounded-frame.hh"
 
 #include "mpx/i-youki-theme-engine.hh"
 
@@ -25,7 +33,6 @@
 #include "play.hh"
 #include "preferences.hh"
 
-#define _INSIDE_YC_CC_ 1
 #include "youki-controller.hh"
 
 namespace
@@ -59,58 +66,26 @@ namespace
     "</ui>"
     ;
 
-    std::string
+    struct AttrInfo_t
+    {
+	int Attr ;
+	const char* AttrName ;
+    } ;
+    
+    AttrInfo_t
     mpris_attribute_id_str[] =
     {
-           "location"
-         , "title"
-         , "genre"
-         , "comment"
-         , "label"
-         , "puid fingerprint"
-         , "mpx tag hash"
-         , "mb track id"
-         , "artist"
-         , "artist sort name"
-         , "mb artist id"
-         , "album"
-         , "mb album id"
-         , "mb release date"
-         , "mb release country"
-         , "mb release type"
-         , "asin"
-         , "album artist"
-         , "album artist sort name"
-         , "mb album artist id"
-         , "mime type"
-         , "mpx hal volume udi"
-         , "mpx hal device udi"
-         , "mpx hal volume relative path"
-         , "mpx insert path"
-         , "mpx location name"
+	{ MPX::ATTRIBUTE_ALBUM, "xesam:album" },
+	{ MPX::ATTRIBUTE_ALBUM_ARTIST, "xesam:albumArtist" },
+	{ MPX::ATTRIBUTE_ARTIST, "xesam:artist" },
+	{ MPX::ATTRIBUTE_TITLE, "xesam:title" },
     };
 
-    std::string
+    AttrInfo_t
     mpris_attribute_id_int[] =
     {
-            "tracknumber"
-          , "time"
-          , "rating"
-          , "year"
-          , "mtime"
-          , "audio-bitrate"
-          , "audio-samplerate"
-          , "mpx play count"
-          , "mpx play date"
-          , "mpx insert date"
-          , "mpx is mb album artist"
-          , "mpx active"
-          , "mpx quality"
-          , "mpx device id"
-          , "mpx track id"
-          , "mpx album id"
-          , "mpx artist id"
-          , "mpx album artist id"
+	{ MPX::ATTRIBUTE_TRACK, "xesam:trackNumber" },
+	{ MPX::ATTRIBUTE_TIME, "mpris:length" },
     };
 
     bool
@@ -119,7 +94,7 @@ namespace
         , const MPX::SQL::Row&   r2
     )
     {
-        return Glib::ustring(::MPX::Util::row_get_album_artist_name( r1 )).casefold() < Glib::ustring(::MPX::Util::row_get_album_artist_name( r2 )).casefold() ;
+        return Glib::ustring(::MPX::Util::row_get_album_artist_name( r1 )) < Glib::ustring(::MPX::Util::row_get_album_artist_name( r2 )) ;
     }
 
     void
@@ -162,7 +137,7 @@ namespace
 	d.run() ;
     }
   
-    typedef boost::optional<unsigned int> OptId ;
+    typedef boost::optional<unsigned int> OptUInt ;
 }
 
 namespace MPX
@@ -179,13 +154,51 @@ namespace MPX
         DBus::Connection conn
     )
     : Glib::ObjectBase( "YoukiController" )
-    , DBus::ObjectAdaptor( conn, "/info/backtrace/Youki/App" )
+    , DBus::ObjectAdaptor( conn, "/org/mpris/MediaPlayer2" )
     , Service::Base("mpx-service-controller")
     , private_( new Private )
     , m_main_window( 0 )
     , m_follow_track( false )
     , m_history_ignore_save( false )
     {
+	CanQuit = true ;
+	CanRaise = true ; 
+	CanSetFullscreen = false ; 
+	HasTrackList = false ;
+	Identity = "Youki" ;
+	DesktopEntry = "youki" ; 
+
+	std::vector<std::string> v1 ;
+	v1.push_back("audio/mpeg") ;
+
+	std::vector<std::string> v2 ;
+	v2.push_back("file") ;
+
+	SupportedMimeTypes = v1 ;
+	SupportedUriSchemes = v2 ;
+
+	PlaybackStatus = "Stopped" ;
+	LoopStatus = "None" ;
+	Rate = 1 ;
+	Shuffle = false ; 
+	Metadata = std::map<std::string, DBus::Variant>() ;
+	Volume = 50 ;
+	Position = 0 ;
+	MinimumRate = 1 ;
+	MaximumRate = 1 ;
+
+	CanGoNext = true ; 
+	CanGoPrevious = true ; 
+	CanPlay = true ; 
+	CanPause = true ; 
+	CanSeek = false ; 
+	CanControl = true ;
+
+	IndicateServer* is = indicate_server_ref_default() ;
+	indicate_server_set_type( is, "music.youki" ) ;
+	indicate_server_set_desktop_file( is, "/usr/share/applications/youki.desktop") ;
+	indicate_server_show( is ) ;
+
         m_C_SIG_ID_track_new =
             g_signal_new(
                   "track-new"
@@ -226,7 +239,7 @@ namespace MPX
         ) ;
 
         m_covers    = services->get<Covers>("mpx-service-covers").get() ;
-        m_play      = services->get<Play>("mpx-service-play").get() ;
+        m_play      = services->get<MPX::Play>("mpx-service-play").get() ;
         m_library   = services->get<Library>("mpx-service-library").get() ;
 
         m_mlibman_dbus_proxy = services->get<info::backtrace::Youki::MLibMan_proxy_actual>("mpx-service-mlibman").get() ; 
@@ -296,6 +309,12 @@ namespace MPX
             sigc::mem_fun(
                   *this
                 , &YoukiController::on_play_eos
+        )) ;
+
+        m_play->signal_error().connect(
+            sigc::mem_fun(
+                  *this
+                , &YoukiController::on_play_error
         )) ;
 
         m_play->signal_seek().connect(
@@ -376,7 +395,7 @@ namespace MPX
 	m_VBox->set_border_width( 0 ) ;
 
         m_HBox_Main = Gtk::manage( new PercentualDistributionHBox ) ;
-        m_HBox_Main->set_spacing( 2 ) ; 
+        m_HBox_Main->set_spacing( 6 ) ; 
 
         m_HBox_Entry = Gtk::manage( new Gtk::HBox ) ;
         m_HBox_Entry->set_spacing( 4 ) ;
@@ -384,6 +403,8 @@ namespace MPX
 
 	m_Label_Search = Gtk::manage( new Gtk::Label("Find Mu_sic:", true )) ;
 	m_Label_Search->set_mnemonic_widget( *m_Entry ) ;
+
+	m_Label_Error = Gtk::manage( new Gtk::Label("")) ;
 
 	Gtk::HBox * HBox_Navi = Gtk::manage( new Gtk::HBox ) ;
 	HBox_Navi->set_spacing( 1 ) ;
@@ -408,13 +429,13 @@ namespace MPX
         HBox_Navi->pack_start( *m_BTN_HISTORY_PREV, false, false, 0 ) ;
         HBox_Navi->pack_start( *m_BTN_HISTORY_FFWD, false, false, 0 ) ;
 
-//        m_HBox_Entry->pack_start( *m_Label_Search, false, false, 0 ) ;
+        m_HBox_Entry->pack_start( *m_Label_Error, true, true, 0 ) ;
         m_HBox_Entry->pack_start( *HBox_Navi, false, false, 0 ) ;
         m_HBox_Entry->pack_start( *m_Entry, false, false, 0 ) ;
 
         Gtk::Alignment* Entry_Align = Gtk::manage( new Gtk::Alignment ) ;
         Entry_Align->add( *m_HBox_Entry ) ;
-	Entry_Align->set_padding( 2, 2, 2, 3 ) ;
+	Entry_Align->set_padding( 2, 2, 2, 4 ) ;
 	Entry_Align->property_xalign() = 1.0 ;
 	Entry_Align->property_xscale() = 0.0 ;
 
@@ -437,7 +458,7 @@ namespace MPX
 
 	Gtk::Alignment * HBox_Main_Align = Gtk::manage( new Gtk::Alignment ) ;
 	HBox_Main_Align->add( *m_HBox_Main ) ;
-	HBox_Main_Align->set_padding( 0, 0, 1, 0 ) ;
+	HBox_Main_Align->set_padding( 0, 0, 1, 2 ) ;
 
         m_HBox_Bottom = Gtk::manage( new Gtk::HBox ) ;
         m_HBox_Bottom->set_spacing( 4 ) ;
@@ -466,6 +487,7 @@ namespace MPX
 
         m_main_window->set_icon_list( pixvector ) ; 
 	m_main_window->signal_delete_event().connect( sigc::bind_return( sigc::hide<-1>( sigc::mem_fun( *this, &YoukiController::initiate_quit )), false)) ;
+	m_main_window->w().signal_key_press_event().connect( sigc::mem_fun( *this, &YoukiController::on_main_window_key_press_event_after )) ;
 
         Gdk::Color background ;
         background.set_rgb_p( 0.1, 0.1, 0.1 ) ;
@@ -1020,8 +1042,6 @@ namespace MPX
 
         m_main_window = 0 ;
         private_ = 0 ;
-
-        ShutdownComplete () ;
     }
 
     Gtk::Window*
@@ -1128,7 +1148,7 @@ namespace MPX
     bool
     YoukiController::quit_timeout ()
     {
-        return false;
+	return false ;
     }
 
     void
@@ -1442,6 +1462,7 @@ namespace MPX
         try{
                 m_track_current = t ; 
                 m_play->switch_stream( m_library->trackGetLocation( t ) ) ;
+		assign_metadata_to_DBus_property() ;
 
         } catch( Library::FileQualificationError & cxe )
         {
@@ -1470,6 +1491,19 @@ namespace MPX
         }
 
         m_main_position->set_position( duration, position ) ;
+
+	Position = position * 1000 ;
+    }
+
+    void
+    YoukiController::on_play_error(
+	  const std::string&	a
+	, const std::string&	b
+	, const std::string&	c
+    )
+    {
+	std::string e = (boost::format("[%s]: %s") % a % b).str() ;	
+	m_Label_Error->set_text( e ) ;
     }
 
     void
@@ -1491,6 +1525,7 @@ namespace MPX
 	    m_play_queue.pop_front() ;
 
 	    play_track( p ) ;
+	    goto x1 ;
 	}
 	else
 	{
@@ -1526,12 +1561,14 @@ namespace MPX
 		    {
 			unsigned int next_id = boost::get<unsigned int>((*i)["id"]) ;
 			play_track( m_library->getTrackById( next_id )) ;		    
+			goto x1 ;
 		    }
 		}
 	    }
 	    else
 	    {
-		OptId pos = private_->FilterModelTracks->get_active_track() ;
+		private_->FilterModelTracks->scan_for_currently_playing() ;
+		OptUInt pos = private_->FilterModelTracks->get_active_track() ;
 
 		// The currently playing track is in the current filter projection...
 		if( pos )
@@ -1542,29 +1579,24 @@ namespace MPX
 		    if( pos_next < private_->FilterModelTracks->size() )
 		    {
 			play_track( boost::get<4>(private_->FilterModelTracks->row( pos_next )) ) ;
+			goto x1 ;
 		    }
-		    else
-		        m_play->request_status( PLAYSTATUS_STOPPED ) ; 
 		}
 		else
-		if( !pos && private_->FilterModelTracks->m_id_currently_playing )
 		{
-		    m_play->request_status( PLAYSTATUS_STOPPED ) ; 
-		}
-		else
-		if( private_->FilterModelTracks->size() )
-		/// Not in the current projection? OK, so start with the top tracki, if the projection's size is > 0
-		{
-		    play_track( boost::get<4>(private_->FilterModelTracks->row( 0 )) ) ;
-		}
-		else
-		/// Out of luck too? Then we bail.	
-		{
-		    m_play->request_status( PLAYSTATUS_STOPPED ) ; 
+		    /// Not in the current projection? OK, so start with the top tracki, if the projection's size is > 0
+		    if( private_->FilterModelTracks->size() )
+		    {
+			play_track( boost::get<4>(private_->FilterModelTracks->row( 0 )) ) ;
+			goto x1 ;
+		    }
 		}
 	    }
 	}
 
+	m_play->request_status( PLAYSTATUS_STOPPED ) ; 
+
+	x1:
         m_library->trackPlayed( m_track_previous, t ) ;
     }
 
@@ -1582,12 +1614,16 @@ namespace MPX
         switch( status )
         {
             case PLAYSTATUS_PLAYING:
+		m_Label_Error->set_text("") ;
 		m_main_position->unpause() ;
+		PlaybackStatus = "Playing" ;
                 break ;
 
             case PLAYSTATUS_STOPPED:
 
                 m_track_current.reset() ;
+		assign_metadata_to_DBus_property() ;
+
                 m_seek_position.reset() ; 
                 m_main_info->clear() ;
 		m_main_position->unpause() ;
@@ -1598,6 +1634,8 @@ namespace MPX
 
                 if( m_main_window )
                     m_main_window->queue_draw () ;    
+
+		PlaybackStatus = "Stopped" ;
 
                 break ;
 
@@ -1620,8 +1658,10 @@ namespace MPX
 
 		if( m_main_window && mcs->key_get<bool>("mpx","minimize-on-pause"))
 		{
-			m_main_window->iconify() ;
-		}
+		    m_main_window->iconify() ;
+		}			
+
+		PlaybackStatus = "Paused" ;
 
                 break ;
 
@@ -1733,7 +1773,7 @@ namespace MPX
 
         private_->FilterModelAlbums->clear_all_constraints_quiet() ;
 
-        OptId id_artist = m_ListViewArtist->get_selected() ;
+        OptUInt id_artist = m_ListViewArtist->get_selected() ;
 
 	if( id_artist )
 	{
@@ -1763,8 +1803,8 @@ namespace MPX
         private_->FilterModelTracks->clear_synthetic_constraints_quiet() ;
 //	private_->FilterModelTracks->clear_single_album_constraint_quiet() ;
 
-        OptId id_artist = m_ListViewArtist->get_selected() ;
-        OptId id_albums = m_ListViewAlbums->get_selected() ;
+        OptUInt id_artist = m_ListViewArtist->get_selected() ;
+        OptUInt id_albums = m_ListViewAlbums->get_selected() ;
 
 	AQE::Constraint_t ac ; 
 
@@ -1981,7 +2021,7 @@ namespace MPX
         private_->FilterModelTracks->set_filter( m_Entry->get_text() ) ;
 
         private_->FilterModelArtist->set_constraints_artist( private_->FilterModelTracks->m_constraints_artist ) ;
-        private_->FilterModelArtist->regen_mapping() ;
+//        private_->FilterModelArtist->regen_mapping() ;
 
         private_->FilterModelAlbums->set_constraints_albums( private_->FilterModelTracks->m_constraints_albums ) ;
         private_->FilterModelAlbums->set_constraints_artist( private_->FilterModelTracks->m_constraints_artist ) ;
@@ -2009,6 +2049,8 @@ namespace MPX
         ) ;
 
         m_play->property_volume().set_value( volume ) ;
+
+	Volume = volume ; 
     }
 
     void
@@ -2025,7 +2067,7 @@ namespace MPX
         if( private_->FilterModelTracks->size() )
         {
 	    const char * album_top_f = "SELECT id FROM track WHERE album_j = '%u' AND pcount IS NOT NULL ORDER BY pcount DESC" ;
-	    OptId id = m_ListViewAlbums->get_selected() ;
+	    OptUInt id = m_ListViewAlbums->get_selected() ;
 
 	    if( id && active ) 
 	    {
@@ -2036,7 +2078,7 @@ namespace MPX
 		{
 			private_->FilterModelTracks->set_active_id( boost::get<unsigned int>(v[0]["id"])) ;
 
-			OptId model_track_pos = private_->FilterModelTracks->get_active_track() ;
+			OptUInt model_track_pos = private_->FilterModelTracks->get_active_track() ;
 
 			if( model_track_pos )
 			{
@@ -2082,16 +2124,14 @@ namespace MPX
           GdkEventKey* event
     )
     {
-/*
         switch( event->keyval )
         {
-            case GDK_KEY_Escape:
-                m_main_window->hide() ;
+            case GDK_KEY_F6:
+                m_Entry->grab_focus() ;
                 return true ;
 
             default: break ;
         }
-*/
         return false ;
     }
 
@@ -2161,80 +2201,68 @@ namespace MPX
 
     //// DBUS
 
-    void
-    YoukiController::Present ()
+void
+    YoukiController::assign_metadata_to_DBus_property()
     {
-        if( m_main_window )
-        {
-            m_main_window->present() ;
-        }
-    }
-
-    void
-    YoukiController::Startup ()
-    {
-    }
-
-    void
-    YoukiController::Quit ()
-    {
-    }
-
-    std::map<std::string, DBus::Variant>
-    YoukiController::GetMetadata ()
-    {
+	return ;
+/*
         if( !m_track_current )
         {
-            return std::map<std::string, DBus::Variant>() ;
+	    Metadata = std::map<std::string, DBus::Variant>() ;
+	    return ;
         }
-
-        std::map<std::string, DBus::Variant> m ;
+*/
 
         const MPX::Track& track = *(m_track_current.get()) ;
 
-        for( int n = ATTRIBUTE_LOCATION; n < N_ATTRIBUTES_STRING; ++n )
+	DBus::MessageIter i_out = Metadata.get_value_writer() ;
+	DBus::MessageIter i_arr = i_out.new_array("{sv}") ;
+
+        for( guint n = 0 ; n < G_N_ELEMENTS(mpris_attribute_id_str) ; ++n )
         {
-            if( track[n].is_initialized() )
+            if( track.has(mpris_attribute_id_str[n].Attr))
             {
-                    DBus::Variant val ;
-                    DBus::MessageIter iter = val.writer() ;
-                    std::string v = boost::get<std::string>( track[n].get() ) ; 
-                    iter << v ;
-                    m[mpris_attribute_id_str[n-ATTRIBUTE_LOCATION]] = val ;
+		    DBus::MessageIter i_dict = i_arr.new_dict_entry() ;
+
+		    i_dict << std::string(mpris_attribute_id_str[n].AttrName) ;
+
+		    DBus::MessageIter var = i_dict.new_variant("s");
+		    var << std::string(boost::get<std::string>( track[mpris_attribute_id_str[n].Attr].get())) ; 
+		    i_dict << var ;
             }
         }
 
-        for( int n = ATTRIBUTE_TRACK; n < N_ATTRIBUTES_INT; ++n )
+        for( guint n = 0 ; n < G_N_ELEMENTS(mpris_attribute_id_int) ; ++n )
         {
-            if( track[n].is_initialized() )
+            if( track.has(mpris_attribute_id_int[n].Attr))
             {
-                    DBus::Variant val ;
-                    DBus::MessageIter iter = val.writer() ;
-                    unsigned int v = boost::get<unsigned int>( track[n].get() ) ;
-                    iter << v ;
-                    m[mpris_attribute_id_int[n-ATTRIBUTE_TRACK]] = val ;
+		    DBus::MessageIter i_dict = i_arr.new_dict_entry() ;
+
+		    i_dict << std::string(mpris_attribute_id_str[n].AttrName) ;
+
+		    DBus::MessageIter var = i_dict.new_variant("x") ;
+		    var << gint64(boost::get<guint>( track[mpris_attribute_id_int[n].Attr].get())) ;
+		    i_dict << var ;
             }
         }
 
-        return m ;
-    }
+	if( track.has(ATTRIBUTE_MB_ALBUM_ID) )
+	{
+	    std::string artUrl = m_covers->get_thumb_path( boost::get<std::string>(track[ATTRIBUTE_MB_ALBUM_ID].get())) ;
+	
+	    if(Glib::file_test( artUrl, Glib::FILE_TEST_EXISTS ))
+	    {
+		DBus::MessageIter i_dict = i_arr.new_dict_entry() ;
 
-    void
-    YoukiController::Next ()
-    {
-        API_next() ;
-    }
+		i_dict << std::string("mpris:artUrl") ;
 
-    void
-    YoukiController::Prev ()
-    {
-        API_prev() ;
-    }
+		DBus::MessageIter var = i_dict.new_variant("s") ;
+		var << std::string(Glib::filename_to_uri( artUrl )) ;
+		i_dict << var ;
+	    }
+	}
 
-    void
-    YoukiController::Pause ()
-    {
-        API_pause_toggle() ;
+	i_out.close_container( i_arr ) ;
     }
 
     void

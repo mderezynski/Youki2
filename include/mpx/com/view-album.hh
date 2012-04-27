@@ -22,6 +22,7 @@
 
 #include "mpx/algorithm/limiter.hh"
 #include "mpx/algorithm/interval.hh"
+#include "mpx/algorithm/vector_compare.hh"
 
 #include "mpx/aux/glibaddons.hh"
 
@@ -98,36 +99,60 @@ namespace Albums
 
     // Album
 
-    struct Album
-    {
-        Cairo::RefPtr<Cairo::ImageSurface> coverart ;
-        Cairo::RefPtr<Cairo::ImageSurface> surfacecache ;
-        guint                              album_id ;
-        guint                              artist_id ;
-        std::string                        album ;
-        std::string                        album_artist ;
-        std::string                        type ;
-        std::string                        year ;
-        std::string                        mbid ;
-        std::string                        mbid_artist ;
-        std::string                        label ;
-        guint                              track_count ;
-        guint				               track_count_release_total ;
-        guint				               insert_date ;
-        gdouble                            album_playscore ;
-        int					               totaltime ;
-        bool				               caching ;
+        struct Album
+        {
+            Cairo::RefPtr<Cairo::ImageSurface>      coverart ;
+            Cairo::RefPtr<Cairo::ImageSurface>      surfacecache ;
+            guint                                   album_id ;
+            guint                                   artist_id ;
+            std::string                             album ;
+            std::string                             album_artist ;
+            std::string                             type ;
+            std::string                             year ;
+            std::string                             mbid ;
+            std::string                             mbid_artist ;
+            std::string                             label ;
+            guint                                   track_count ;
+            guint				                    track_count_release_total ;
+            guint				                    insert_date ;
+            gdouble                                 album_playscore ;
+            int					                    totaltime ;
+            bool				                    caching ;
 
-        Album() : caching(false) {}
-    };
+	    bool operator==( const Album& other )
+	    {
+		return other.album_id == album_id ;
+	    }
 
-    typedef boost::shared_ptr<Album> Album_sp ;
+	    bool operator!=( const Album& other )
+	    {
+		return other.album_id == album_id ;
+	    }
 
-    typedef IndexedList<Album_sp>                       Model_t ;
-    typedef boost::shared_ptr<Model_t>                  Model_sp_t ;
-    typedef std::map<guint, Model_t::iterator>         IdIterMap_t ;
-    typedef std::vector<Model_t::iterator>              RowRowMapping_t ;
-    typedef sigc::signal<void, std::size_t, bool>       Signal_2 ;
+	    Album()
+	    : coverart( Cairo::RefPtr<Cairo::ImageSurface>(0))
+	    , surfacecache( Cairo::RefPtr<Cairo::ImageSurface>(0))
+	    , caching(false)
+	    {}
+        };
+
+        typedef boost::shared_ptr<Album>		    Album_sp ;
+        typedef std::vector<Album_sp>                       Model_t ;
+        typedef boost::shared_ptr<Model_t>                  Model_sp_t ;
+        typedef std::map<guint, Model_t::iterator>          IdIterMap_t ;
+        typedef std::vector<Model_t::iterator>              RowRowMapping_t ;
+
+	bool operator==( const Album_sp& a, const Album_sp& b )
+	{
+	    return a->album_id == b->album_id ;
+	}
+
+	bool operator!=( const Album_sp& a, const Album_sp& b )
+	{
+	    return a->album_id != b->album_id ;
+	}
+
+        typedef sigc::signal<void, std::size_t, bool>       Signal_2 ;
 	typedef sigc::signal<void>			    Signal_0 ;
 	typedef sigc::signal<void, guint>		    Signal_1 ;
 
@@ -170,44 +195,44 @@ namespace Albums
 	{
 		Model_sp_t             m_realmodel ;
 
-		IdIterMap_t            m_iter_map ;
-		std::size_t            m_top_row ;
-		boost::optional<guint> m_selected ;
+        IdIterMap_t            m_iter_map ;
+        std::size_t            m_upper_bound ;
 
 		Signal_2               m_SIGNAL__changed ;
 		Signal_0			   m_SIGNAL__redraw ;
 		Signal_1			   m_SIGNAL__cover_updated ;
 
-		typedef IndexedList<Model_t::iterator>	ModelIterVec_t ;
+/*
+		typedef std::vector<Model_t::iterator>	ModelIterVec_t ;
 		typedef IndexedList<ModelIterVec_t>	ArtistAlbumMapping_t ;
+		ArtistAlbumMapping_t			m_artist_album_mapping ;
+*/
 
-		ArtistAlbumMapping_t   m_artist_album_mapping ;
+        DataModel()
+            : m_upper_bound( 0 )
+        {
+            m_realmodel = Model_sp_t(new Model_t);
+        }
 
-		DataModel()
-			: m_top_row( 0 )
-		{
-			m_realmodel = Model_sp_t(new Model_t);
-		}
-
-		DataModel(Model_sp_t model)
-			: m_top_row( 0 )
-		{
-			m_realmodel = model;
-		}
+        DataModel(Model_sp_t model)
+            : m_upper_bound( 0 )
+        {
+            m_realmodel = model;
+        }
 
 		virtual void
 		set_max_artist_id( guint id )
 		{
-		    m_artist_album_mapping.resize( id + 1 ) ;
+		    //m_artist_album_mapping.resize( id + 1 ) ;
 		}
 
-		virtual void
-		clear()
-		{
-			m_realmodel->clear () ;
-			m_iter_map.clear() ;
-			m_top_row = 0 ;
-		}
+        virtual void
+        clear()
+        {
+            m_realmodel->clear() ;
+            m_iter_map.clear() ;
+            m_upper_bound = 0 ;
+        }
 
 		virtual Signal_2&
 		signal_changed ()
@@ -221,116 +246,102 @@ namespace Albums
 			return m_SIGNAL__redraw ;
 		}
 
-                virtual Signal_1&
-                signal_cover_updated ()
-                {
-                    return m_SIGNAL__cover_updated ;
-                }
+        virtual Signal_1&
+        signal_cover_updated ()
+        {
+            return m_SIGNAL__cover_updated ;
+        }
 
-                virtual bool
-                is_set ()
-                {
-                    return bool(m_realmodel) ;
-                }
+        virtual bool
+        is_set ()
+        {
+            return bool(m_realmodel) ;
+        }
 
-                virtual std::size_t
-                size ()
-                {
-                    return m_realmodel->size() ;
-                }
+        virtual std::size_t
+        size ()
+        {
+            return m_realmodel->size() ;
+        }
 
-                virtual Album_sp
-                row(std::size_t row)
-                {
-                    return (*m_realmodel)[row] ;
-                }
+        virtual Album_sp
+        row(std::size_t row)
+        {
+            return (*m_realmodel)[row] ;
+        }
 
-                virtual void
-                set_current_row(
-                    std::size_t row
+        virtual void
+        set_current_row(std::size_t row)
+        {
+            m_upper_bound = row ;
+        }
+
+        virtual void
+        append_album(const Album_sp album)
+        {
+            m_realmodel->push_back( album ) ;
+            Model_t::iterator i = m_realmodel->end() ;
+            std::advance( i, -1 ) ;
+            m_iter_map.insert( std::make_pair( album->album_id, i )) ;
+
+            /*
+              if( album->album_id != -1 )
+              {
+                  guint artist_id = album->artist_id ;
+                  ModelIterVec_t& v = m_artist_album_mapping[artist_id] ;
+                  v.push_back( i ) ;
+              }
+            */
+        }
+
+        virtual void
+        insert_album(const Album_sp album)
+        {
+            static OrderFunc order ;
+
+            Model_t::iterator i = m_realmodel->insert(
+                std::lower_bound(
+                    m_realmodel->begin()
+                  , m_realmodel->end()
+                  , album
+                  , order
                 )
-                {
-                    m_top_row = row ;
-                }
+              , album
+            ) ;
 
-                virtual void
-                set_selected(
-                    const boost::optional<guint>& id = boost::optional<guint>()
-                )
-                {
-                    m_selected = id ;
-                }
+            m_iter_map.insert( std::make_pair( album->album_id, i )) ;
 
-                virtual void
-                append_album(
-                    const Album_sp album
-                )
-                {
-                    m_realmodel->push_back( album ) ;
-                    Model_t::iterator i = m_realmodel->end() ;
-                    std::advance( i, -1 ) ;
-                    m_iter_map.insert( std::make_pair( album->album_id, i )) ;
-
-					if( album->album_id != -1 )
-					{
-						guint artist_id = album->artist_id ;
-						ModelIterVec_t& v = m_artist_album_mapping[artist_id] ;
-						v.push_back( i ) ;
-					}
-                }
-
-                virtual void
-                insert_album(
-                    const Album_sp album
-                )
-                {
-                    static OrderFunc order ;
-
-                    Model_t::iterator i = m_realmodel->insert(
-                          std::lower_bound(
-                              m_realmodel->begin()
-                            , m_realmodel->end()
-                            , album
-                            , order
-                          )
-                        , album
-                    ) ;
-
-                    m_iter_map.insert( std::make_pair( album->album_id, i )) ;
-
-					if( album->album_id != -1 )
-					{
-						guint artist_id = album->artist_id ;
-						ModelIterVec_t& v = m_artist_album_mapping[artist_id] ;
-						v.push_back( i ) ;
-					}
-                }
-
-                void
-                erase_album(
-                    guint id_album
-                )
-                {
-                    IdIterMap_t::iterator i = m_iter_map.find( id_album ) ;
-
-                    if( i != m_iter_map.end() )
+            /*
+                    if( album->album_id != -1 )
                     {
-                        m_realmodel->erase( i->second );
-                        m_iter_map.erase( id_album );
+                        guint artist_id = album->artist_id ;
+                        ModelIterVec_t& v = m_artist_album_mapping[artist_id] ;
+                        v.push_back( i ) ;
                     }
-                }
+                    */
+        }
 
-                void
-                update_album(
-                    const Album_sp album
-                )
-                {
-					if( m_iter_map.find( album->album_id ) != m_iter_map.end() )
-					{
-						*(m_iter_map[album->album_id]) = album ;
-						m_SIGNAL__redraw.emit() ;
-					}
-                }
+        void
+        erase_album(guint id_album)
+        {
+            IdIterMap_t::iterator i = m_iter_map.find( id_album ) ;
+
+            if( i != m_iter_map.end() )
+            {
+                m_realmodel->erase( i->second );
+                m_iter_map.erase( id_album );
+            }
+        }
+
+        void
+        update_album(const Album_sp album)
+        {
+            if( album && m_iter_map.find( album->album_id ) != m_iter_map.end() )
+            {
+                *(m_iter_map[album->album_id]) = album ;
+                m_SIGNAL__redraw.emit() ;
+            }
+        }
 
 		void
 		update_album_cover_cancel(
@@ -353,29 +364,28 @@ namespace Albums
 		    }
 		}
 
-                void
-                update_album_cover(
-                      guint				 id
-                    , Cairo::RefPtr<Cairo::ImageSurface> is
-                )
+        void
+        update_album_cover(guint				 id
+                         , Cairo::RefPtr<Cairo::ImageSurface> is
+                           )
+        {
+            IdIterMap_t::iterator i = m_iter_map.find( id ) ;
+
+            if( i != m_iter_map.end() )
+            {
+                Album_sp & album = *i->second ;
+
+                if( album )
                 {
-                    IdIterMap_t::iterator i = m_iter_map.find( id ) ;
+                    album->coverart = is ;
+                    album->surfacecache.clear() ;
+                    album->caching = false ;
 
-					if( i != m_iter_map.end() )
-					{
-                    	Album_sp & album = *i->second ;
-
-						if( album )
-						{
-                    		album->coverart = is ;
-							album->surfacecache.clear() ;
-							album->caching = false ;
-
-							m_SIGNAL__cover_updated.emit( id ) ;
-                    		m_SIGNAL__redraw.emit() ;
-						}
-					}
+                    m_SIGNAL__cover_updated.emit( id ) ;
+                    m_SIGNAL__redraw.emit() ;
                 }
+            }
+        }
 	};
 
         typedef boost::shared_ptr<DataModel> DataModel_sp_t;
@@ -384,7 +394,7 @@ namespace Albums
         : public DataModel
         {
             typedef std::vector<guint>                     IdVector_t ;
-            typedef boost::shared_ptr<IdVector_t>           IdVector_sp ;
+            typedef boost::shared_ptr<IdVector_t>          IdVector_sp ;
 
             public:
 
@@ -392,7 +402,9 @@ namespace Albums
                 TCVector_sp       m_constraints_albums ;
                 IdVector_sp       m_constraints_artist ;
 
+/*
 	        boost::optional<guint> m_constraint_single_artist ;
+*/
 
             public:
 
@@ -452,13 +464,17 @@ namespace Albums
 		{
 		    m_constraints_artist.reset() ;
 		    m_constraints_albums.reset() ;
+/*
 		    m_constraint_single_artist.reset() ;
+*/
 		}
 
 		virtual void
 		set_constraint_single_artist( guint id )
 		{
+/*
 		    m_constraint_single_artist = id ;
+*/
 		}
 
                 virtual void
@@ -466,7 +482,8 @@ namespace Albums
                 {
                     DataModel::clear() ;
                     m_mapping.clear() ;
-		    m_top_row = 0 ;
+		    m_upper_bound = 0 ;
+
 		    m_SIGNAL__redraw.emit() ;
                 }
 
@@ -501,6 +518,7 @@ namespace Albums
                 )
                 {
                     std::swap( m_mapping[p1], m_mapping[p2] ) ;
+
 		    m_SIGNAL__redraw.emit() ;
                 }
 
@@ -535,9 +553,7 @@ namespace Albums
                     const Album_sp album
                 )
                 {
-                    DataModel::update_album(
-                        album
-                    ) ;
+                    DataModel::update_album( album ) ;
 
                     regen_mapping() ;
                 }
@@ -556,8 +572,7 @@ namespace Albums
                     RowRowMapping_t new_mapping ;
                     new_mapping.reserve( m_realmodel->size() ) ;
 
-                    m_selected.reset() ;
-                    m_top_row = 0 ;
+                    m_upper_bound = 0 ;
 
                     typedef Model_t::iterator Iter ;
                     Iter i = m_realmodel->begin() ;
@@ -588,14 +603,14 @@ namespace Albums
 		    else
 		    {
 			    TCVector_t * constraints_albums = m_constraints_albums.get() ;
-			    IdVector_t * constraints_artist = m_constraints_artist.get() ;
+			    //IdVector_t * constraints_artist = m_constraints_artist.get() ;
 
 			    for( ; i != m_realmodel->end(); ++i )
 			    {
 				int truth =
 					    (!constraints_albums || ((*constraints_albums)[(*i)->album_id].Count > 0))
-									    &&
-					    (!constraints_artist || ((*constraints_artist)[(*i)->artist_id] > 0))
+					/*				    &&
+					    (!constraints_artist || ((*constraints_artist)[(*i)->artist_id] > 0)) */
 				;
 
 				if( truth )
@@ -605,8 +620,11 @@ namespace Albums
 			    }
 		    }
 
-                    std::swap( new_mapping, m_mapping ) ;
-                    m_SIGNAL__changed.emit( m_top_row, true ) ;
+		    if( !vector_compare( m_mapping, new_mapping ))
+		    {
+			std::swap( new_mapping, m_mapping ) ;
+			m_SIGNAL__changed.emit( m_upper_bound, true ) ;
+		    }
                 }
 
                 virtual void
@@ -623,8 +641,7 @@ namespace Albums
                     RowRowMapping_t new_mapping ;
                     new_mapping.reserve( m_mapping.size() ) ;
 
-                    m_selected.reset() ;
-                    m_top_row = 0 ;
+                    m_upper_bound = 0 ;
 
                     typedef RowRowMapping_t::const_iterator Iter ;
 
@@ -634,14 +651,14 @@ namespace Albums
 		    ++i ;
 
 		    TCVector_t * constraints_albums = m_constraints_albums.get() ;
-		    IdVector_t * constraints_artist = m_constraints_artist.get() ;
+		    //IdVector_t * constraints_artist = m_constraints_artist.get() ;
 
 		    for( ; i != m_mapping.end(); ++i )
 		    {
 			int truth =
 				    (!constraints_albums || ((*constraints_albums)[(**i)->album_id].Count > 0))
-								    &&
-				    (!constraints_artist || ((*constraints_artist)[(**i)->artist_id] > 0))
+					/*	  &&
+				    (!constraints_artist || ((*constraints_artist)[(**i)->artist_id] > 0)) */
 			;
 
 			if( truth )
@@ -650,8 +667,11 @@ namespace Albums
 			}
 		    }
 
-                    std::swap( new_mapping, m_mapping ) ;
-                    m_SIGNAL__changed.emit( m_top_row, true ) ;
+		    if( !vector_compare( m_mapping, new_mapping ))
+		    {
+			std::swap( new_mapping, m_mapping ) ;
+			m_SIGNAL__changed.emit( m_upper_bound, true ) ;
+		    }
                 }
         };
 
@@ -715,8 +735,7 @@ namespace Albums
 
 		Cairo::RefPtr<Cairo::ImageSurface>
 		render_icon(
-                      Cairo::RefPtr<Cairo::ImageSurface>&   disc
-                    , const Album_sp                        album
+                      const Album_sp                        album
 		    , Gtk::Widget&			    widget
 		    , RTViewMode			    rt_viewmode
 		)
@@ -732,7 +751,7 @@ namespace Albums
 		    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 
 		    cairo->set_source(
-			  album->coverart ? album->coverart : disc
+			  album->coverart ? album->coverart : m_image_disc
 			, 2
 			, 2
 		    ) ;
@@ -945,8 +964,8 @@ namespace Albums
 
 			if( !album->caching )
 			{
-			    if( !album->surfacecache )
-				    album->surfacecache = render_icon( m_image_disc, album, widget, m_rt_viewmode ) ;
+			    if( !album->surfacecache ) 
+				    album->surfacecache = render_icon( album, widget, m_rt_viewmode ) ;
 
 			    cairo->set_source( album->surfacecache, r.x, r.y ) ;
 			    cairo->rectangle( r.x, r.y , 68, 68 ) ;
@@ -986,7 +1005,7 @@ namespace Albums
 
                     layout[L1]->set_font_description( font_desc[L1] ) ;
                     layout[L1]->set_ellipsize( Pango::ELLIPSIZE_END ) ;
-                    layout[L1]->set_width(( m_width - 108 - 40 ) * PANGO_SCALE ) ;
+                    layout[L1]->set_width(( m_width - 108 ) * PANGO_SCALE ) ;
 
                     if( row > 0 )
                     {
@@ -1005,6 +1024,8 @@ namespace Albums
 			    layout[L3]->set_font_description( font_desc[L3] ) ;
 			    layout[L3]->set_ellipsize( Pango::ELLIPSIZE_END ) ;
 			    layout[L3]->set_width(( m_width - 108 ) * PANGO_SCALE ) ;
+
+			    layout[L1]->set_width(( m_width - 145 ) * PANGO_SCALE ) ;
 
                             xpos += 7 + 64 ;
 
@@ -1068,7 +1089,7 @@ namespace Albums
 
 					cairo->move_to(
 					      sx
-					    , r.y + row_height - height - 14
+					    , r.y + row_height - height - 27
 					) ;
 					cairo->set_source_rgba(
 					      color.r
@@ -1088,7 +1109,7 @@ namespace Albums
 
 					cairo->move_to(
 					      sx
-					    , r.y + row_height - height - 14
+					    , r.y + row_height - height - 27
 					) ;
 					cairo->set_source_rgba(
 					      color.r
@@ -1109,44 +1130,45 @@ namespace Albums
 				layout[L3]->set_width( -1 ) ;
 				layout[L3]->set_ellipsize( Pango::ELLIPSIZE_NONE ) ;
 
-				int min = 0, hrs = 0, tm = 0 ;
-				int totaltracks = 0 ;
+//				guint tm = 0 ;
+				guint totaltracks = 0 ;
 
 				if( album_constraints )
 				{
-					tm = ((*album_constraints)[album->album_id]).Time ;
+//					tm = ((*album_constraints)[album->album_id]).Time ;
 					totaltracks = ((*album_constraints)[album->album_id]).Count ;
 				}
 				else
 				{
-					tm = album->totaltime ;
+//					tm = album->totaltime ;
 					totaltracks = album->track_count ;
 				}
 
-				hrs = (tm+60) / 3600 ;
-				min = ((tm+60) - hrs*3600) / 60 ;
+#if 0
+				guint min = (tm+60) / 60 ;
 
+/*
 				if( hrs > 0 )
 				{
 					if( min != 0 )
-						layout[L3]->set_markup((boost::format("%d <b>hrs</b> %d <b>min</b>") % hrs % min).str()) ;
+						layout[L3]->set_markup((boost::format("<b>%d</b>h <b>%d</b>m") % hrs % min).str()) ;
 					else
-						layout[L3]->set_markup((boost::format("%d <b>hrs</b>") % hrs).str()) ;
+						layout[L3]->set_markup((boost::format("<b>%d</b>h") % hrs).str()) ;
 				}
 				else
+*/
 				if( min == 0 )
 				{
-					layout[L3]->set_markup("< 1 <b>min</b>") ;
+					layout[L3]->set_markup((boost::format("< <b>1</b> %s") % _("Minute")).str()) ;
 				}
 				else
 				{
-					layout[L3]->set_markup((boost::format("%d <b>min</b>") % min).str()) ;
+					layout[L3]->set_markup((boost::format("<b>%d</b> %s") % min % ((min > 1) ? _("Minutes") : _("Minute"))).str()) ;
 				}
 
 				layout[L3]->get_pixel_size( width, height ) ;
-
 				cairo->move_to(
-				      m_width - width - 12
+				      m_width - width - 8 
 				    , r.y + row_height - height - 14
 				) ;
 				cairo->set_source_rgba(
@@ -1156,13 +1178,13 @@ namespace Albums
 				    , 0.9
 				) ;
 				pango_cairo_show_layout( cairo->cobj(), layout[L3]->gobj() ) ;
+#endif
 
 				layout[L3]->set_markup((boost::format("<b>%d</b> %s") % totaltracks % ((totaltracks>1) ? "Tracks" : "Track")).str()) ;
 				layout[L3]->get_pixel_size( width, height ) ;
-
 				cairo->move_to(
-				      m_width - width - 12
-				    , r.y + row_height - height - 28
+				      m_width - width - 8 
+				    , r.y + row_height - height - 27 
 				) ;
 				cairo->set_source_rgba(
 				      color.r
@@ -1794,17 +1816,10 @@ namespace Albums
                     std::size_t limit   = Limiter<std::size_t>( Limiter<std::size_t>::ABS_ABS, 0, m_model->size(), m_height__current_viewport / m_height__row + 2 ) ;
                     int offset = m_prop_vadj.get_value()->get_value() - (row*m_height__row) ;
 
-		    std::size_t clip_pad = 0 ;
-
-		    if( m_prop_vadj.get_value()->get_value() > 0 && m_prop_vadj.get_value()->get_value() < (m_prop_vadj.get_value()->get_upper() - m_prop_vadj.get_value()->get_page_size()))
-		    {
-				clip_pad = 1 ;
-		    }
-
-			if( offset )
-			{
-				ypos -= offset ;
-			}
+                    if( offset )
+                    {
+                        ypos -= offset ;
+                    }
 
 			Cairo::RefPtr<Cairo::Context> cairo = get_window()->create_cairo_context() ;
 
@@ -1812,13 +1827,37 @@ namespace Albums
 		    cairo->set_source_rgba(c_bg.r, c_bg.g, c_bg.b, c_bg.a) ;
 		    cairo->paint() ;
 
-		    cairo->set_source_rgba(c_base.r, c_base.g, c_base.b, c_base.a) ;
+		    cairo->save() ;
+                    RoundedRectangle(
+                          cairo
+                        , 1
+                        , 1
+                        , a.get_width() - 2 
+                        , a.get_height() - 2 
+                        , rounding
+                    ) ;
+		    cairo->set_source_rgba( c_outline.r, c_outline.g, c_outline.b, 1. ) ;
+		    cairo->set_line_width( 0.75 ) ;
+                    cairo->stroke() ;
+		    cairo->restore() ;
 
-		    RoundedRectangle(cairo, 1, 1, a.get_width() - 7, a.get_height() - 2, rounding) ;
-		    cairo->fill() ;
+                    RoundedRectangle(
+                          cairo
+                        , 2
+                        , 2
+                        , a.get_width() - 4 
+                        , a.get_height() - 4 
+                        , rounding
+                    ) ;
+                    cairo->clip() ;
 
-		    RoundedRectangle(cairo, 1, 1 + clip_pad, a.get_width() - 7, a.get_height() - (2 + 2*clip_pad), rounding) ;
-		    cairo->clip() ;
+		    cairo->set_source_rgba(
+			  c_base.r
+			, c_base.g
+			, c_base.b
+			, c_base.a
+		    ) ;
+		    cairo->paint() ;
 
 #if 0
 		    if( !(m_model->size() * m_height__row < m_height__current_viewport))
@@ -1830,6 +1869,7 @@ namespace Albums
 		    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 
             RowRowMapping_t::const_iterator iter = m_model->iter( row ) ;
+
 		    std::size_t n = 0 ;
 
             while( n < limit && m_Model_I.in(row+n) )
@@ -1840,9 +1880,45 @@ namespace Albums
 
 				bool is_selected = m_selection && boost::get<2>(m_selection.get()) == row+n ;
 
-				if( is_selected )
-				{
-					GdkRectangle r ;
+                        if( is_selected )
+                        {
+                            GdkRectangle r ;
+
+                            r.x         = 0 ; 
+                            r.y         = ypos ; 
+                            r.width     = a.get_width() ;
+                            r.height    = m_height__row ;
+
+			    if( m_prop_vadj.get_value()->get_value() == 0 && (row+n == 0))
+				c = MPX::CairoCorners::CORNERS(3) ;
+
+                            theme->draw_selection_rectangle(
+                                  cairo
+                                , r
+                                , has_focus()
+				, rounding
+				, c
+                            ) ;
+                        }
+			else
+			if((row+n) % 2)
+			{
+                            GdkRectangle r ;
+
+                            r.x         = 0 ; 
+                            r.y         = ypos ; 
+                            r.width     = a.get_width() ; 
+                            r.height    = m_height__row ; 
+
+                            RoundedRectangle(
+                                  cairo
+                                , r.x
+                                , r.y
+                                , r.width
+                                , r.height
+                                , rounding
+				, c
+                            ) ;
 
 					r.x         = 1 ;
 					r.y         = ypos ;
@@ -1965,39 +2041,9 @@ namespace Albums
 		    cairo->rectangle( 0, 0, w, h ) ;
 		    cairo->mask( gradient ) ;
 #endif
-
 		    cairo->reset_clip() ;
 
-		    cairo->save() ;
-		    RoundedRectangle(
-			  cairo
-			, 1
-			, 1
-			, a.get_width() - 7
-			, a.get_height() - 2
-			, rounding
-		    ) ;
-
-		   cairo->set_source_rgba(
-			  c_outline.r
-			, c_outline.g
-			, c_outline.b
-			, c_outline.a
-		    ) ;
-
-		    cairo->set_line_width( 1. ) ;
-		    cairo->stroke() ;
-		    cairo->restore() ;
-
-			// FIXME: Port this to use render_focus()
-		    // GtkWidget * widget = GTK_WIDGET(gobj()) ;
-            // if( has_focus() )
-            //     gtk_paint_focus (widget->style, widget->window,
-            //                      gtk_widget_get_state (widget),
-            //                      &event->area, widget, NULL,
-            //                      2, 2, a.get_width() - 9 , a.get_height() - 4);
-
-            return true;
+                    return true;
                 }
 
                 void
@@ -2156,8 +2202,6 @@ namespace Albums
                         const guint& id = (*m_model->m_mapping[row])->album_id ;
 
                         m_selection = boost::make_tuple( m_model->m_mapping[row], id, row ) ;
-
-                        m_model->set_selected( id ) ;
 
                         if( !quiet )
                         {
@@ -2464,7 +2508,6 @@ namespace Albums
                 clear_selection(
                 )
                 {
-                    m_model->m_selected.reset() ;
                     m_selection.reset() ;
                     queue_draw() ;
                 }
@@ -2473,7 +2516,6 @@ namespace Albums
                 clear_selection_quiet(
                 )
                 {
-                    m_model->m_selected.reset() ;
                     m_selection.reset() ;
                 }
 

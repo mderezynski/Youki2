@@ -119,7 +119,7 @@ PKG_CHECK_MODULES(GST_PLUGINS_BASE REQUIRED gstreamer-plugins-base-0.10>=0.10.9)
 
 # D-Bus
 
-PKG_CHECK_MODULES(DBUS REQUIRED dbus-c++-1 dbus-c++-glib-1 dbus-glib-1)
+PKG_CHECK_MODULES(DBUS REQUIRED dbus-c++-1 dbus-c++-glib-1 dbus-glib-1 indicate-0.7 indicate-gtk3-0.7)
 IF(NOT DEFINED DBUS_SERVICES_DIR)
   EXECUTE_PROCESS(
     COMMAND ${PKG_CONFIG_EXECUTABLE} --variable=prefix dbus-1
@@ -232,8 +232,8 @@ ELSEIF(CMAKE_C_COMPILER_ID STREQUAL "Clang")
   SET(CXX_LANG_FLAGS "")
 ENDIF()
 
-SET(CMAKE_C_FLAGS   "${COMMON_FLAGS} ${C_LANG_FLAGS} ${COMPILER_FLAGS}")
-SET(CMAKE_CXX_FLAGS "${COMMON_FLAGS} ${CXX_LANG_FLAGS} ${COMPILER_FLAGS}")
+SET(CMAKE_C_FLAGS   "${COMMON_FLAGS} ${C_LANG_FLAGS} ${COMPILER_FLAGS} -ggdb3 -fno-inline -O0")
+SET(CMAKE_CXX_FLAGS "${COMMON_FLAGS} ${CXX_LANG_FLAGS} ${COMPILER_FLAGS} -ggdb3 -fno-inline -O0")
 
 # Profile build C/C++ flags
 SET(CMAKE_C_FLAGS_PROFILE   "-ggdb3 -pg -fprofile-arcs -ftest-coverage")

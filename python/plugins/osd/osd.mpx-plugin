@@ -1,8 +1,0 @@
-[MPX Plugin]
-Loader=python
-Module=osd
-IAge=1
-Name=OSD
-Authors=Milosz Derezynski <milosz@backtrace.info>
-Copyright=Copyright © 2008 Milosz Derezynski 
-Website=http://mpx.backtrace.info/
