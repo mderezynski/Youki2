@@ -26,9 +26,9 @@
 #include "mpx/algorithm/ntree.hh"
 #include "mpx/algorithm/interval.hh"
 #include "mpx/algorithm/limiter.hh"
+#include "mpx/algorithm/vector_compare.hh"
 
 #include "mpx/com/indexed-list.hh"
-
 #include "mpx/aux/glibaddons.hh"
 
 #include "mpx/widgets/cairo-extensions.hh"
@@ -90,6 +90,26 @@ namespace Tracks
         }
 
         typedef boost::tuple<std::string, std::string, std::string, guint, Track_sp, guint, guint, std::string, std::string, guint>  Row_t ;
+
+	bool operator==(const Row_t& a, const Row_t& b)
+	{
+	    return boost::get<3>(a) == boost::get<3>(b) ;
+	}
+
+	bool operator==( Row_t& a, Row_t& b )
+	{
+	    return boost::get<3>(a) == boost::get<3>(b) ;
+	}
+
+	bool operator!=(const Row_t& a, const Row_t& b)
+	{
+	    return boost::get<3>(a) == boost::get<3>(b) ;
+	}
+
+	bool operator!=( Row_t& a, Row_t& b )
+	{
+	    return boost::get<3>(a) == boost::get<3>(b) ;
+	}
 
         typedef std::vector<Row_t>			Model_t ;
         typedef boost::shared_ptr<Model_t>		Model_sp_t ;
@@ -238,7 +258,8 @@ namespace Tracks
 		typedef std::vector<Model_t::size_type>		ModelIdxVec_t ;
 		typedef std::vector<ModelIdxVec_t>		AlbumTrackMapping_t ;
 
-                Signal1         m_changed;
+                Signal1         m_SIGNAL__changed;
+
                 Model_sp_t      m_realmodel;
                 std::size_t     m_upper_bound ;
 
@@ -266,7 +287,7 @@ namespace Tracks
                 virtual Signal1&
                 signal_changed()
                 {
-                    return m_changed ;
+                    return m_SIGNAL__changed ;
                 }
 
                 virtual bool
@@ -387,7 +408,7 @@ namespace Tracks
                 IdVector_sp                 m_constraints_artist ;
                 TCVector_sp                 m_constraints_albums ;
                 bool                        m_cache_enabled ;
-                Gtk::Widget*                m_widget ;
+//                Gtk::Widget*                m_widget ;
 
                 DataModelFilter( DataModel_sp_t& model )
 
@@ -408,7 +429,7 @@ namespace Tracks
 		shuffle()
 		{
 			std::random_shuffle( m_mapping->begin(), m_mapping->end() ) ;
-                    	m_changed.emit( 0, false ) ;
+                    	m_SIGNAL__changed.emit( 0, false ) ;
 		}
 
                 void
@@ -447,13 +468,12 @@ namespace Tracks
                     m_mapping_unfiltered->clear() ;
                     clear_active_track() ;
 		    m_upper_bound = 0 ;
-                    m_changed.emit( 0, true ) ;
+                    m_SIGNAL__changed.emit( 0, true ) ;
                 } 
 
                 void
                 clear_active_track()
                 {
-		    g_message("Resetting cur.") ;
 		    m_id_currently_playing.reset() ;
 		    m_row_currently_playing_in_mapping.reset() ;
                 }
@@ -467,7 +487,6 @@ namespace Tracks
                 void
                 set_active_id(guint id)
                 {
-		    g_message("Resetting cur.") ;
 		    m_row_currently_playing_in_mapping.reset() ;
 
                     m_id_currently_playing = id ;
@@ -568,7 +587,7 @@ namespace Tracks
                     m_row_currently_playing_in_mapping.reset() ;
                     scan_for_currently_playing() ;
 
-                    m_changed.emit( m_upper_bound, false ) ;
+                    m_SIGNAL__changed.emit( m_upper_bound, false ) ;
                 }
 
                 void
@@ -582,7 +601,7 @@ namespace Tracks
                     m_row_currently_playing_in_mapping.reset() ;
                     scan_for_currently_playing() ;
 
-                    m_changed.emit( m_upper_bound, true ) ;
+                    m_SIGNAL__changed.emit( m_upper_bound, true ) ;
                 }
 
                 virtual void
@@ -675,9 +694,9 @@ namespace Tracks
                     {
                         m_current_filter = text ;
 			m_current_filter_noaque = Util::stdstrjoin( m_frags, " " ) ;
-                        Util::window_set_busy( * dynamic_cast<Gtk::Window*>(m_widget->get_toplevel()) ) ;
+                        //Util::window_set_busy( * dynamic_cast<Gtk::Window*>(m_widget->get_toplevel()) ) ;
                         regen_mapping() ;
-                        Util::window_set_idle( * dynamic_cast<Gtk::Window*>(m_widget->get_toplevel()) ) ;
+                        //Util::window_set_idle( * dynamic_cast<Gtk::Window*>(m_widget->get_toplevel()) ) ;
                     }
                 }
 
@@ -740,7 +759,6 @@ namespace Tracks
 			}
                     }
 
-		    g_message("Resetting cur.") ;
 		    m_row_currently_playing_in_mapping.reset() ;
                 }
 
@@ -862,7 +880,7 @@ namespace Tracks
                     using boost::algorithm::split;
                     using boost::algorithm::is_any_of;
                     using boost::algorithm::find_first;
-
+	
                     RowRowMapping_sp new_mapping( new RowRowMapping_t ), new_mapping_unfiltered( new RowRowMapping_t ) ;
 
 		    boost::optional<guint> id ;
@@ -879,8 +897,8 @@ namespace Tracks
 			AlbumTrackMapping_t::size_type n = m_constraint_single_album.get() ; 
 			const ModelIdxVec_t& v = m_album_track_mapping[n] ;
 
-                        //new_mapping->reserve( m_realmodel->size() ) ;
-                        //new_mapping_unfiltered->reserve( m_realmodel->size() ) ;
+                        new_mapping->reserve( m_realmodel->size() ) ;
+                        new_mapping_unfiltered->reserve( m_realmodel->size() ) ;
 
 			for( ModelIdxVec_t::const_iterator i = v.begin() ; i != v.end() ; ++i )
 			{
@@ -897,8 +915,8 @@ namespace Tracks
                         m_constraints_albums.reset() ;
                         m_constraints_artist.reset() ;
 
-                        //new_mapping->reserve( m_realmodel->size() ) ;
-                        //new_mapping_unfiltered->reserve( m_realmodel->size() ) ;
+                        new_mapping->reserve( m_realmodel->size() ) ;
+                        new_mapping_unfiltered->reserve( m_realmodel->size() ) ;
 
                         for( Model_t::iterator i = m_realmodel->begin(); i != m_realmodel->end(); ++i )
                         {
@@ -918,8 +936,8 @@ namespace Tracks
                         TCVector_t& constraints_albums = *(m_constraints_albums.get()) ;
                         IdVector_t& constraints_artist = *(m_constraints_artist.get()) ;
 
-                        //new_mapping->reserve( m_realmodel->size() ) ;
-                        //new_mapping_unfiltered->reserve( m_realmodel->size() ) ;
+                        new_mapping->reserve( m_realmodel->size() ) ;
+                        new_mapping_unfiltered->reserve( m_realmodel->size() ) ;
 
                         for( Model_t::const_iterator i = m_realmodel->begin(); i != m_realmodel->end(); ++i ) // determine all the matches
                         {
@@ -955,7 +973,7 @@ namespace Tracks
                     else
                     {
                         IntersectVector_t intersect ;
-                        //intersect.reserve( m_frags.size() ) ; 
+                        intersect.reserve( m_frags.size() ) ; 
 
                         StrV vec( 3 ) ;
 
@@ -1033,8 +1051,8 @@ namespace Tracks
                             }
                         }
 
-                        //new_mapping->reserve( output->size() ) ;
-                        //new_mapping_unfiltered->reserve( output->size() ) ;
+                        new_mapping->reserve( output->size() ) ;
+                        new_mapping_unfiltered->reserve( output->size() ) ;
 
                         m_constraints_albums = TCVector_sp( new TCVector_t ) ; 
                         m_constraints_albums->resize( m_max_size_constraints_albums + 1 ) ;
@@ -1076,15 +1094,18 @@ namespace Tracks
                         }
                     }
 
-		    m_mapping = new_mapping ;
-		    m_mapping_unfiltered = new_mapping_unfiltered ;
-
-		    if( id )
+		    if( !m_mapping || !vector_compare( *m_mapping, *new_mapping ))
 		    {
-			scan_for_upper_bound( id ) ;
-		    }
+                        m_mapping = new_mapping ;
+	                m_mapping_unfiltered = new_mapping_unfiltered ;
 
-                    m_changed.emit( m_upper_bound, true ) ; 
+			if( id )
+			{
+			    scan_for_upper_bound( id ) ;
+			}
+
+			m_SIGNAL__changed.emit( m_upper_bound, true ) ; 
+		    }
                 }
 
                 void
@@ -1112,8 +1133,8 @@ namespace Tracks
 			AlbumTrackMapping_t::size_type n = m_constraint_single_album.get() ; 
 			const ModelIdxVec_t& v = m_album_track_mapping[n] ;
 
-                        //new_mapping->reserve( m_realmodel->size() ) ;
-                        //new_mapping_unfiltered->reserve( m_realmodel->size() ) ;
+                        new_mapping->reserve( m_realmodel->size() ) ;
+                        new_mapping_unfiltered->reserve( m_realmodel->size() ) ;
 
 			for( ModelIdxVec_t::const_iterator i = v.begin() ; i != v.end() ; ++i )
 			{
@@ -1130,8 +1151,8 @@ namespace Tracks
                         m_constraints_albums.reset() ;
                         m_constraints_artist.reset() ;
 
-                        //new_mapping->reserve( m_mapping_unfiltered->size() ) ;
-                        //new_mapping_unfiltered->reserve( m_mapping_unfiltered->size() ) ;
+                        new_mapping->reserve( m_mapping_unfiltered->size() ) ;
+                        new_mapping_unfiltered->reserve( m_mapping_unfiltered->size() ) ;
 
                         for( RowRowMapping_t::iterator i = m_mapping_unfiltered->begin(); i != m_mapping_unfiltered->end(); ++i )
                         {
@@ -1151,8 +1172,8 @@ namespace Tracks
                         IdVector_t& constraints_artist = *(m_constraints_artist.get()) ;
                         TCVector_t& constraints_albums = *(m_constraints_albums.get()) ;
 
-                        //new_mapping->reserve( m_mapping_unfiltered->size() ) ;
-                        //new_mapping_unfiltered->reserve( m_mapping_unfiltered->size() ) ;
+                        new_mapping->reserve( m_mapping_unfiltered->size() ) ;
+                        new_mapping_unfiltered->reserve( m_mapping_unfiltered->size() ) ;
 
                         for( RowRowMapping_t::const_iterator i = m_mapping_unfiltered->begin(); i != m_mapping_unfiltered->end(); ++i )
                         {
@@ -1189,7 +1210,7 @@ namespace Tracks
                     else
                     {
                         IntersectVector_t intersect ; 
-                        //intersect.reserve( m_frags.size() ) ;
+                        intersect.reserve( m_frags.size() ) ;
 
                         StrV vec( 3 ) ;
 
@@ -1281,8 +1302,8 @@ namespace Tracks
                             }
                         }
 
-                        //new_mapping->reserve( m_realmodel->size() ) ;
-                        //new_mapping_unfiltered->reserve( m_realmodel->size() ) ; 
+                        new_mapping->reserve( m_realmodel->size() ) ;
+                        new_mapping_unfiltered->reserve( m_realmodel->size() ) ; 
 
                         m_constraints_albums = TCVector_sp( new TCVector_t ) ; 
                         m_constraints_albums->resize( m_max_size_constraints_albums + 1 ) ;
@@ -1324,15 +1345,18 @@ namespace Tracks
                         }
                     }
 
-                    m_mapping = new_mapping ;
-                    m_mapping_unfiltered = new_mapping_unfiltered ;
-
-		    if( id )
+		    if( !m_mapping || !vector_compare( *m_mapping, *new_mapping ))
 		    {
-			scan_for_upper_bound( id ) ;
-		    }
+                        m_mapping = new_mapping ;
+	                m_mapping_unfiltered = new_mapping_unfiltered ;
 
-                    m_changed.emit( m_upper_bound, true ) ; 
+			if( id )
+			{
+			    scan_for_upper_bound( id ) ;
+			}
+
+			m_SIGNAL__changed.emit( m_upper_bound, true ) ; 
+		    }
                 }
         };
 
@@ -2667,15 +2691,14 @@ namespace Tracks
                         boost::optional<guint> active_track = m_model->m_id_currently_playing ;
 
                         m_model = model;
-                        m_model->m_widget = this ;
-
+                        //m_model->m_widget = this ;
                         m_model->m_id_currently_playing = active_track ;
                         m_model->scan_for_currently_playing() ;
                     }
                     else
                     {
                         m_model = model;
-                        m_model->m_widget = this ;
+                        //m_model->m_widget = this ;
                     }
 
                     m_model->signal_changed().connect(
@@ -2859,11 +2882,6 @@ namespace Tracks
 			numeric = true ;
 		    } catch(...) {}
 
-                    if( text.empty() )
-                    {
-                        return ;
-                    }
-
                     DataModelFilter::RowRowMapping_t::iterator i = m_model->m_mapping->begin(); 
 
                     if( m_selection )
@@ -2913,11 +2931,6 @@ namespace Tracks
 			nr = boost::lexical_cast<int>( text ) ;
 			numeric = true ;
 		    } catch(...) {}
-
-                    if( text.empty() )
-                    {
-                        return ;
-                    }
 
                     DataModelFilter::RowRowMapping_t::iterator i = m_model->m_mapping->begin(); 
 
@@ -2969,12 +2982,6 @@ namespace Tracks
 			numeric = true ;
 		    } catch(...) {}
 
-                    if( text.empty() )
-                    {
-			cancel_search() ;
-                        return ;
-                    }
-
                     DataModelFilter::RowRowMapping_t::iterator i = m_model->m_mapping->begin(); 
 		
 	            std::size_t row = std::distance( m_model->m_mapping->begin(), i ) ;
@@ -3002,8 +3009,6 @@ namespace Tracks
 
 			++ row ;
                     }
-
-                    clear_selection() ;
                 }
 
                 void

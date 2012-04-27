@@ -234,13 +234,11 @@ namespace MPX
 	      Cairo::OPERATOR_OVER
 	) ;
 
-	RoundedRectangle(
-	      cairo
-	    , r.x 
+	cairo->rectangle(
+	      r.x 
 	    , r.y
 	    , r.width 
 	    , r.height
-	    , 2.
 	) ;
 
 	cairo->fill (); 

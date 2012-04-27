@@ -12,8 +12,8 @@ namespace MPX
 	if( a.size() != b.size())
 	    return false ;
 
-	std::vector<T>::iterator i_a = a.begin() ;
-	std::vector<T>::iterator i_b = b.begin() ;
+	typename std::vector<T>::const_iterator i_a = a.begin() ;
+	typename std::vector<T>::const_iterator i_b = b.begin() ;
 
 	while( i_a != a.end() && i_b != b.end() )
 	{

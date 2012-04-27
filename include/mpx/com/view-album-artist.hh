@@ -49,15 +49,15 @@ namespace Artist
 
         typedef boost::tuple<std::string, guint>           Row_t ;
 
-        typedef IndexedList<Row_t>                          Model_t ;
-        typedef boost::shared_ptr<Model_t>                  Model_sp_t ;
+        typedef IndexedList<Row_t>                         Model_t ;
+        typedef boost::shared_ptr<Model_t>                 Model_sp_t ;
         typedef std::map<guint, Model_t::iterator>         IdIterMap_t ;
 
-        typedef std::vector<Model_t::iterator>              RowRowMapping_t ;
+        typedef std::vector<Model_t::iterator>             RowRowMapping_t ;
 
-        typedef sigc::signal<void>                          Signal_0 ;
-        typedef sigc::signal<void, std::size_t>		    Signal_1 ;
-	typedef sigc::signal<void, guint>		    Signal_1a ;
+        typedef sigc::signal<void>                         Signal_0 ;
+        typedef sigc::signal<void, std::size_t>		   Signal_1 ;
+	typedef sigc::signal<void, guint>		   Signal_1a ;
 
         struct OrderFunc
         : public std::binary_function<Row_t, Row_t, bool>
