@@ -25,9 +25,7 @@ mpxlib/library-mlibman.cc
 mpxlib/library-scanner-thread-mlibman.cc
 mpxlib/main.cc
 mpxlib/mlibmanager.cc
-python/plugins/audioscrobbler/audioscrobbler.glade
 python/plugins/lastfmstuff/tag-track.glade
-python/plugins/lastfmvis/lastfmvis.glade
 python/plugins/mpxdj/mpxdj.glade
 python/plugins/musicbrainz-tools/musicbrainz-tools.glade
 python/plugins/ratings_export/ratings_export.glade

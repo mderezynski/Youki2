@@ -14,9 +14,6 @@ namespace MPX
 
             bool	m_clicked ;
             std::size_t	m_volume ;        
-	    std::size_t m_last_position ;
-	    std::size_t m_count ;
-
 	    Glib::Timer m_timer ;
 
 /* FIXME: future use

@@ -37,7 +37,6 @@ namespace MPX
     KoboVolume::KoboVolume()
         : m_clicked( false )
         , m_volume( 0 )
-	, m_last_position( m_volume )
     {
 	m_posv.push_back( m_volume ); // ha, let's play!
 
@@ -90,7 +89,6 @@ namespace MPX
 	const guint w = a.get_width() - 2 ;
 
         const ThemeColor& c_base /* :) */ = m_theme->get_color( THEME_COLOR_BACKGROUND ) ; 
-
         const ThemeColor& ct = m_theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
 
 	GdkRectangle r ;
@@ -361,12 +359,14 @@ namespace MPX
 	    if( new_volume != m_volume )
 	    {
 		m_volume = new_volume ; 
+
+/*
 		m_posv.push_back( m_volume ) ;
-		m_last_position = m_volume ;
-		m_count = 1 ;
 		m_timer.stop() ;
 		m_timer.reset() ;
 		m_timer.start() ;
+*/
+
 		m_SIGNAL_set_volume.emit( m_volume ) ;
 		queue_draw () ;
 	    }
@@ -380,39 +380,24 @@ namespace MPX
         GdkEventButton* event
     )
     {
+        m_clicked = false ;
+
+/*
 	m_timer.stop() ;
 
-        m_clicked = false ;
-	m_posv.push_back( m_volume ) ;
+	guint snap = m_volume ;
 
-	if( m_timer.elapsed() < 1.5 && m_posv.size() >= 2 ) // IMPORTANT: We don't snap if the user holds the mouse still for 1.5 seconds; it's our way of enabling users to still set a precise position
+	if( m_timer.elapsed() > 0.6 ) 
 	{
-	    std::size_t& a = m_posv[m_posv.size()-1] ;
-	    std::size_t& b = m_posv[m_posv.size()-2] ;
+	    guint tenth = m_volume / guint(10) ;
+	    guint   mod = m_volume % 10 ;
 
-	    std::size_t snap = m_volume ;
-
-	    g_message("abs(a-b): %u, m_count: %u", std::size_t(abs(a-b)), m_count) ;
-
-	    if( abs(a-b) <= 5 && m_count > 1 )
-	    {
-		std::size_t middle = (a+b)/2. ;
-
-		m_posv.clear() ;
-		snap = std::size_t((middle + 2.5) / 5.) * 5 ;
-	    }
+	    if( mod < 5 ) 
+		snap = std::min<guint>( tenth * 10, 100 ) ;
+	    else if( mod == 5 )
+		snap = m_volume ;
 	    else
-	    if(m_count == 1)
-	    {
-		m_posv.clear() ;
-		snap = std::size_t((m_volume + 2.5) / 5.) * 5 ;
-	    }
-	    else
-	    if( abs( m_volume - m_last_position ) > 10 && m_count >= 2 )
-	    {
-		m_posv.clear() ;
-		snap = std::size_t((m_volume + 2.5) / 5.) * 5 ;
-	    }
+		snap = std::min<guint>( tenth * 10 + 10,  100 ) ;
 
 	    if( snap != m_volume )
 	    {
@@ -421,7 +406,8 @@ namespace MPX
 		queue_draw() ;
 	    }
 	}
-	
+*/
+
         return true ;
     }
 
@@ -452,8 +438,7 @@ namespace MPX
 	    if( new_volume != m_volume )
 	    {
 		m_volume = new_volume ; 
-		++m_count ;
-		m_timer.reset() ;
+//		m_timer.reset() ;
 		m_SIGNAL_set_volume.emit( m_volume ) ;
 		queue_draw () ;
 	    }
