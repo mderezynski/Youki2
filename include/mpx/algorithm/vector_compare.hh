@@ -9,6 +9,9 @@ namespace MPX
     bool
     vector_compare(const std::vector<T>& a, const std::vector<T>& b)
     {
+	if( a.size() != b.size())
+	    return false ;
+
 	std::vector<T>::iterator i_a = a.begin() ;
 	std::vector<T>::iterator i_b = b.begin() ;
 
