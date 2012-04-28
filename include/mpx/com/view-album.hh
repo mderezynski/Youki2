@@ -35,8 +35,6 @@
 
 #include "mpx/com/indexed-list.hh"
 
-typedef Glib::Property<Gtk::Adjustment*> PropAdj;
-
 namespace
 {
     enum ReleaseType
@@ -1179,13 +1177,18 @@ namespace Albums
         typedef sigc::signal<void>              Signal_void ;
 
         class Class
-        : public Gtk::DrawingArea
+        : public Gtk::DrawingArea, public Gtk::Scrollable
         {
             public:
 
                 DataModelFilter_sp_t                m_model ;
 
             private:
+
+		typedef Glib::RefPtr<Gtk::Adjustment>	RPAdj ;
+		typedef Glib::Property<RPAdj>		PropAdjustment ;
+
+		PropAdjustment			    property_vadj_, property_hadj_ ;
 
                 std::size_t                         m_height__row ;
                 std::size_t                         m_height__current_viewport ;
@@ -1201,16 +1204,13 @@ namespace Albums
                     , SCROLL_DIRECTION_DOWN
                 } ;
 
-                sigc::connection                    m_scroll_sigc_connection ;
+                boost::optional<boost::tuple<Model_t::iterator, guint, std::size_t> >  m_selection ;
 
+                sigc::connection                    m_scroll_sigc_connection ;
                 ScrollDirection                     m_scroll_direction ;
+		sigc::connection		    m_sigcconn__redraw ;
 
                 Column_sp_t_vector_t                m_columns ;
-
-                PropAdj                             m_prop_vadj ;
-                PropAdj                             m_prop_hadj ;
-
-                boost::optional<boost::tuple<Model_t::iterator, guint, std::size_t> >  m_selection ;
 
                 Signal_void                         m_SIGNAL_selection_changed ;
                 Signal_void                         m_SIGNAL_find_accepted ;
@@ -1224,8 +1224,6 @@ namespace Albums
                 sigc::connection                    m_search_changed_conn ;
                 bool                                m_search_active ;
 		std::set<guint>			    m_caching ;
-		sigc::connection		    m_sigcconn__redraw ;
-
 
                 Glib::RefPtr<Gtk::UIManager> m_refUIManager ;
                 Glib::RefPtr<Gtk::ActionGroup> m_refActionGroup ;
@@ -1241,7 +1239,7 @@ namespace Albums
                 bool
                 scroll_timeout_func()
                 {
-                    int adj_value = m_prop_vadj.get_value()->get_value() ;
+                    int adj_value = vadj_value() ; 
 
                     if( m_scroll_direction == SCROLL_DIRECTION_UP )
                     {
@@ -1254,7 +1252,7 @@ namespace Albums
                         adj_value = std::min<int>( adj_value, m_dest_position ) ;
                     }
 
-                    m_prop_vadj.get_value()->set_value( adj_value ) ;
+                    vadj_value_set( adj_value ) ;
 
                     bool done = ( static_cast<int>(adj_value) == static_cast<int>(m_dest_position) ) ;
 
@@ -1307,8 +1305,8 @@ namespace Albums
                 inline std::size_t
                 get_upper_row ()
                 {
-                    if( m_prop_vadj.get_value() && m_height__row )
-                        return m_prop_vadj.get_value()->get_value() / m_height__row ;
+                    if( property_vadjustment().get_value() && m_height__row )
+                        return property_vadjustment().get_value()->get_value() / m_height__row ;
                     else
                         return 0 ;
                 }
@@ -1689,11 +1687,11 @@ namespace Albums
                     , std::size_t   step_increment
                 )
                 {
-                    if( m_prop_vadj.get_value() )
+                    if( property_vadjustment().get_value() )
                     {
-                        m_prop_vadj.get_value()->set_upper( upper ) ;
-                        m_prop_vadj.get_value()->set_page_size( page_size ) ;
-                        m_prop_vadj.get_value()->set_step_increment( step_increment ) ;
+                        property_vadjustment().get_value()->set_upper( upper ) ;
+                        property_vadjustment().get_value()->set_page_size( page_size ) ;
+                        property_vadjustment().get_value()->set_step_increment( step_increment ) ;
                     }
                 }
 
@@ -1731,16 +1729,15 @@ namespace Albums
 		    const Cairo::RefPtr<Cairo::Context>& cairo 
 		)	
                 {
-                    const Gtk::Allocation& a = get_allocation() ;
-
                     boost::shared_ptr<IYoukiThemeEngine> theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;
-
                     const ThemeColor& c_text		= theme->get_color( THEME_COLOR_TEXT ) ;
                     const ThemeColor& c_text_sel	= theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
                     const ThemeColor& c_base_rules_hint = theme->get_color( THEME_COLOR_BASE_ALTERNATE ) ;
 		    const ThemeColor& c_bg	= theme->get_color( THEME_COLOR_BACKGROUND ) ;
 		    const ThemeColor& c_base	= theme->get_color( THEME_COLOR_BASE ) ;
 		    const ThemeColor& c_outline	= theme->get_color( THEME_COLOR_ENTRY_OUTLINE ) ;
+
+                    const Gtk::Allocation& a = get_allocation() ;
 
                     std::size_t row     = get_upper_row() ;
                     std::size_t ypos    = 0 ;
@@ -1752,10 +1749,6 @@ namespace Albums
                     {
                         ypos -= offset ;
                     }
-
-		    cairo->set_operator( Cairo::OPERATOR_SOURCE ) ;
-		    Gdk::Cairo::set_source_rgba(cairo, c_bg);
-		    cairo->paint() ;
 
 		    cairo->save() ;
                     RoundedRectangle(
@@ -1793,9 +1786,8 @@ namespace Albums
 
 		    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 
-		    RowRowMapping_t::const_iterator iter = m_model->iter( row ) ;
-
 		    std::size_t n = 0 ;
+		    RowRowMapping_t::const_iterator iter = m_model->iter( row ) ;
 
 		    while( n < limit && m_Model_I.in(row+n) )
 		    {
@@ -1814,9 +1806,6 @@ namespace Albums
                             r.width     = a.get_width() ;
                             r.height    = m_height__row ;
 
-			    if( vadj_value() == 0 && (row+n == 0))
-				c = MPX::CairoCorners::CORNERS(3) ;
-
                             theme->draw_selection_rectangle(
                                   cairo
                                 , r
@@ -1825,76 +1814,48 @@ namespace Albums
 				, c
                             ) ;
                         }
-			else
-			if((row+n) % 2)
+			else if((row+n) % 2)
 			{
-                            GdkRectangle r ;
+			    GdkRectangle r ;
 
-                            r.x         = 0 ; 
-                            r.y         = ypos ; 
-                            r.width     = a.get_width() ; 
-                            r.height    = m_height__row ; 
+			    r.x         = 0 ;
+			    r.y         = ypos ;
+			    r.width     = a.get_width() ;
+			    r.height    = m_height__row ;
 
-                            RoundedRectangle(
-                                  cairo
-                                , r.x
-                                , r.y
-                                , r.width
-                                , r.height
-                                , rounding
-				, c
-                            ) ;
-
-					r.x         = 1 ;
-					r.y         = ypos ;
-					r.width     = a.get_width() - 8 ;
-					r.height    = m_height__row ;
-
-					theme->draw_selection_rectangle(cairo, r, has_focus(), rounding, c) ;
-				}
-				else if((row+n) % 2)
-				{
-					GdkRectangle r ;
-
-					r.x         = 1 ;
-					r.y         = ypos ;
-					r.width     = a.get_width() - 8 ;
-					r.height    = m_height__row ;
-
-					RoundedRectangle(cairo, r.x, r.y, r.width, r.height, rounding, c) ;
-
-                    Gdk::Cairo::set_source_rgba(cairo, c_base_rules_hint);
-
-					cairo->fill() ;
-				}
-
-				m_columns[0]->render(cairo
-									 , **iter
-									 , *this
-									 , row+n
-									 , xpos
-									 , ypos + 4
-									 , m_height__row
-									 , is_selected ? c_text_sel : c_text
-									 , m_model->size() - 1
-									 , m_model->m_realmodel->size() - 1
-									 , is_selected
-									 , m_show_year_label
-									 , m_model->m_constraints_albums
-									 ) ;
-
-				ypos += m_height__row;
-				++ iter ;
-				++ n ;
+			    RoundedRectangle(cairo, r.x, r.y, r.width, r.height, rounding, c) ;
+			    Gdk::Cairo::set_source_rgba(cairo, c_base_rules_hint);
+			    cairo->fill() ;
 			}
 
-#if 0
-		    if( m_model->size() * m_height__row < m_height__current_viewport )
-                return true ;
+			m_columns[0]->render(
+			      cairo
+			    , **iter
+			    , *this
+			    , row+n
+			    , xpos
+			    , ypos + 4
+			    , m_height__row
+			    , is_selected ? c_text_sel : c_text
+			    , m_model->size() - 1
+			    , m_model->m_realmodel->size() - 1
+			    , is_selected
+			    , m_show_year_label
+			    , m_model->m_constraints_albums
+			) ;
 
-		    int pos = m_prop_vadj.get_value()->get_value() ;
-		    int pgs = m_prop_vadj.get_value()->get_page_size() ;
-		    int upp = m_prop_vadj.get_value()->get_upper() ;
+			ypos += m_height__row;
+			++ iter ;
+			++ n ;
+		}
+
+#if 0
+		if( m_model->size() * m_height__row < m_height__current_viewport )
+		    return true ;
+
+		    int pos = property_vadjustment().get_value()->get_value() ;
+		    int pgs = property_vadjustment().get_value()->get_page_size() ;
+		    int upp = property_vadjustment().get_value()->get_upper() ;
 
 		    int dif_l = (upp-(pos+pgs)) ;
 
@@ -1969,8 +1930,8 @@ namespace Albums
 		double
 		vadj_value()
 		{
-		    if(  m_prop_vadj.get_value() )
-			return m_prop_vadj.get_value()->get_value() ;
+		    if(  property_vadjustment().get_value() )
+			return property_vadjustment().get_value()->get_value() ;
 
 		    return 0 ;
 		}
@@ -1978,8 +1939,8 @@ namespace Albums
 		double
 		vadj_upper()
 		{
-		    if(  m_prop_vadj.get_value() )
-			return m_prop_vadj.get_value()->get_upper() ;
+		    if(  property_vadjustment().get_value() )
+			return property_vadjustment().get_value()->get_upper() ;
 
 		    return 0 ;
 		}
@@ -1987,8 +1948,8 @@ namespace Albums
 		void
 		vadj_value_set( double v_ )
 		{
-		    if(  m_prop_vadj.get_value() )
-			return m_prop_vadj.get_value()->set_value( v_ ) ;
+		    if(  property_vadjustment().get_value() )
+			return property_vadjustment().get_value()->set_value( v_ ) ;
 		}
 
                 void
@@ -2032,25 +1993,24 @@ namespace Albums
                     queue_draw() ;
                 }
 
-			static gboolean
-            list_view_set_adjustments(GtkWidget     *obj,
-									  GtkAdjustment *hadj,
-									  GtkAdjustment *vadj,
-									  gpointer       data)
-			{
-				if( vadj )
-				{
-					g_object_set(G_OBJECT(obj), "vadjustment", vadj, NULL);
-					g_object_set(G_OBJECT(obj), "hadjustment", hadj, NULL);
+		void
+		on_vadj_prop_changed()
+		{
+		    if( !property_vadjustment().get_value() )
+			return ;
 
-					Class & view = *(reinterpret_cast<Class*>(data));
+		    property_vadjustment().get_value()->signal_value_changed().connect(
+			sigc::mem_fun(
+			    *this,
+			    &Class::on_vadj_value_changed
+		    ));
 
-					view.m_prop_vadj.get_value()->signal_value_changed().connect(
-						 sigc::mem_fun(view, &Class::on_vadj_value_changed));
-				}
-
-				return TRUE;
-			}
+		    configure_vadj(
+			  m_model->m_mapping.size() * m_height__row
+			, m_height__current_viewport
+			, 8
+		    ) ;
+		}
 
 			void
 			invalidate_covers()
@@ -2116,11 +2076,11 @@ namespace Albums
                       std::size_t row
                 )
                 {
-                    if( m_height__current_viewport && m_height__row && m_prop_vadj.get_value() )
+                    if( m_height__current_viewport && m_height__row && property_vadjustment().get_value() )
                     {
                         if( m_model->m_mapping.size() < std::size_t(m_height__current_viewport/m_height__row) )
                         {
-                            m_prop_vadj.get_value()->set_value( 0 ) ;
+                            property_vadjustment().get_value()->set_value( 0 ) ;
                         }
                         else
                         {
@@ -2131,7 +2091,7 @@ namespace Albums
                                 , (row*m_height__row)
                             ) ;
 
-                            m_prop_vadj.get_value()->set_value( d ) ;
+                            property_vadjustment().get_value()->set_value( d ) ;
                         }
                     }
                 }
@@ -2442,7 +2402,7 @@ namespace Albums
                 on_realize()
                 {
                     Gtk::DrawingArea::on_realize() ;
-					add_events(static_cast<Gdk::EventMask>( Gdk::EXPOSURE_MASK | Gdk::BUTTON_PRESS_MASK | Gdk::KEY_PRESS_MASK | Gdk::KEY_RELEASE_MASK )) ;
+                    add_events(Gdk::EventMask(GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_EXPOSURE_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_LEAVE_NOTIFY_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_MOTION_MASK | GDK_SCROLL_MASK ));
                     initialize_metrics();
                     queue_resize();
                 }
@@ -2453,7 +2413,7 @@ namespace Albums
                 clear_selection(
                 )
                 {
-                     m_selection.reset() ;
+                    m_selection.reset() ;
                     queue_draw() ;
                 }
 
@@ -2483,36 +2443,28 @@ namespace Albums
                 }
 
                 Class ()
-					: ObjectBase( "YoukiViewAlbums" )
-					, m_rt_viewmode( RT_VIEW_BOTTOM )
-					, m_show_year_label( false )
-					, m_prop_vadj( *this, "vadjustment", (Gtk::Adjustment*)( 0 ))
-					, m_prop_hadj( *this, "hadjustment", (Gtk::Adjustment*)( 0 ))
-					, m_search_active( false )
+			: ObjectBase( "YoukiViewAlbums" )
+
+			, property_vadj_(*this, "vadjustment", RPAdj(0))
+			, property_hadj_(*this, "hadjustment", RPAdj(0))
+
+			, m_rt_viewmode( RT_VIEW_BOTTOM )
+			, m_show_year_label( false )
+			, m_search_active( false )
                 {
+		    Scrollable::add_interface(G_OBJECT_TYPE(Glib::ObjectBase::gobj())) ;
+		    property_vadjustment().signal_changed().connect( sigc::mem_fun( *this, &Class::on_vadj_prop_changed )) ;
+
                     boost::shared_ptr<IYoukiThemeEngine> theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;
                     const ThemeColor& c = theme->get_color( THEME_COLOR_BASE ) ;
+
                     Gdk::RGBA cgdk ;
                     cgdk.set_rgba( c.get_red(), c.get_green(), c.get_blue() );
                     override_background_color( cgdk, Gtk::STATE_FLAG_NORMAL ) ;
 
                     set_can_focus(true);
 
-                    add_events(Gdk::EventMask(GDK_KEY_PRESS_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_LEAVE_NOTIFY_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK ));
-
-					// FIXME: Implement Gtk::Scrollable
-                    // GTK_WIDGET_GET_CLASS(gobj())->set_scroll_adjustments_signal =
-                    //         g_signal_new ("set_scroll_adjustments",
-                    //                   G_OBJECT_CLASS_TYPE (G_OBJECT_CLASS (G_OBJECT_GET_CLASS(G_OBJECT(gobj())))),
-                    //                   GSignalFlags (G_SIGNAL_RUN_FIRST),
-                    //                   0,
-                    //                   NULL, NULL,
-                    //                   g_cclosure_user_marshal_VOID__OBJECT_OBJECT, G_TYPE_NONE, 2, GTK_TYPE_ADJUSTMENT, GTK_TYPE_ADJUSTMENT);
-
-                    // g_signal_connect(gobj(), "set_scroll_adjustments", G_CALLBACK(list_view_set_adjustments), this);
-
                     m_SearchEntry = Gtk::manage( new Gtk::Entry ) ;
-                    //m_SearchEntry->realize();
                     m_SearchEntry->show() ;
 
                     m_search_changed_conn = m_SearchEntry->signal_changed().connect(

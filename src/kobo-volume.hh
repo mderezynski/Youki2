@@ -54,19 +54,14 @@ namespace MPX
         protected:
 
             virtual void
-            vol_up () ;
+            vol_up() ;
 
             virtual void
-            vol_down () ;
-
-            virtual void
-            on_size_request(
-                Gtk::Requisition*
-            ) ;
+            vol_down() ;
 
             virtual bool
-            on_expose_event(
-                GdkEventExpose*
+            on_draw(
+                const Cairo::RefPtr<Cairo::Context>&
             ) ;
 
             virtual bool

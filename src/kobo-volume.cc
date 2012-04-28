@@ -41,6 +41,7 @@ namespace MPX
 	m_posv.push_back( m_volume ); // ha, let's play!
 
         add_events(Gdk::EventMask(Gdk::LEAVE_NOTIFY_MASK | Gdk::ENTER_NOTIFY_MASK | Gdk::POINTER_MOTION_MASK | Gdk::POINTER_MOTION_HINT_MASK | Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK )) ;
+
         set_can_focus(false) ;
 
         m_theme = services->get<IYoukiThemeEngine>("mpx-service-theme").get() ;
@@ -59,13 +60,6 @@ namespace MPX
     }
 
     void
-    KoboVolume::on_size_request( Gtk::Requisition * req )
-    {
-        req->width  = 200 + 2*pad ;
-        req->height = 18 ;
-    }
-
-    void
     KoboVolume::set_volume(
           int volume
     )
@@ -75,19 +69,17 @@ namespace MPX
     }
 
     bool
-    KoboVolume::on_expose_event(
-        GdkEventExpose* G_GNUC_UNUSED
+    KoboVolume::on_draw(
+	const Cairo::RefPtr<Cairo::Context>& cairo
     )
     {
-        double percent = double(m_volume) / 100. ; 
-
-        Cairo::RefPtr<Cairo::Context> cairo = get_window()->create_cairo_context() ;
-
         const Gdk::Rectangle& a = get_allocation() ;
 	const guint w = a.get_width() - 2 ;
 
         const ThemeColor& c_base /* :) */ = m_theme->get_color( THEME_COLOR_BACKGROUND ) ; 
         const ThemeColor& ct = m_theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
+
+        double percent = m_volume / 100. ; 
 
 	GdkRectangle r ;
 	double h, s, b ;
@@ -209,12 +201,13 @@ namespace MPX
 	cairo->set_line_width( 1. ) ;
 
 	/// VOLUME
+
 	r.x         = 1 ; 
 	r.y         = 1 ; 
 	r.width     = fmax( 0, (a.get_width()-2) * double(percent)) ;
 	r.height    = 16 ; 
 
-	cairo->save () ;
+	cairo->save() ;
 
 	cairo->set_source_rgba(
 	      c_gradient.get_red()

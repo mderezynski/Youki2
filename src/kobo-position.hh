@@ -42,7 +42,6 @@ namespace MPX
 	    draw()
 	    {
 		queue_draw() ;
-
 		return true ;
 	    }
 	
@@ -111,19 +110,9 @@ namespace MPX
 
         protected:
 
-            virtual void
-            on_size_allocate(
-                   Gtk::Allocation&
-            ) ;
-
-            virtual void
-            on_size_request(
-                  Gtk::Requisition*
-            ) ;
-
             virtual bool
-            on_expose_event(
-                  GdkEventExpose*
+            on_draw(
+		const Cairo::RefPtr<Cairo::Context>&
             ) ;
 
             virtual bool

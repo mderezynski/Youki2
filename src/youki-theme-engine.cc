@@ -270,52 +270,29 @@ namespace MPX
         Gtk::Window tv ;
         gtk_widget_realize(GTK_WIDGET(tv.gobj())) ;
 
-        Gdk::RGBA csel = tv.get_style_context()->get_color( Gtk::STATE_FLAG_SELECTED ) ;
-        // csel.set_rgba( 0x53/255., 0x7f/255., 0xe9/255. ) ;
-
         ThemeColorMap_t colors ;
-        colors[THEME_COLOR_SELECT] = Util::make_rgba( csel, 1. ) ;
 
-        Gdk::RGBA ctit ;
-        ctit.set_rgba( 0x6d/255., 0x9c/255., 0xe9/255. ) ;
+        Gdk::RGBA csel, cbase, cbg, ctext, ctext_sel ;
 
-        Util::color_to_hsb( ctit, h, s, b ) ;
-        b = std::max( 0.20, b-0.01 ) ;
-        s = std::max( 0.20, s-0.02 ) ;
-        Gdk::RGBA c0 = Util::color_from_hsb( h, s, b ) ;
-        colors[THEME_COLOR_TITLEBAR_1] = Util::make_rgba( c0, 0.93 ) ;
+	tv.get_style_context()->lookup_color("base_color", cbase ) ;
+	tv.get_style_context()->lookup_color("bg_color", cbg ) ;
+	tv.get_style_context()->lookup_color("selected_bg_color", csel ) ;
+	tv.get_style_context()->lookup_color("text_color", ctext ) ;
+	tv.get_style_context()->lookup_color("selected_fg_color", ctext_sel ) ;
 
-        Util::color_to_hsb( ctit, h, s, b ) ;
-        b = std::max( 0.12, b-0.02 ) ;
-        s = std::max( 0.13, s-0.04 ) ;
-        Gdk::RGBA c1 = Util::color_from_hsb( h, s, b ) ;
-        colors[THEME_COLOR_TITLEBAR_2] = Util::make_rgba( c1, 0.93 ) ;
+        colors[THEME_COLOR_SELECT]     = Util::make_rgba( csel, 1. ) ;
+        colors[THEME_COLOR_BACKGROUND] = Util::make_rgba( cbg, 1. ) ;
+        colors[THEME_COLOR_BASE]       = Util::make_rgba( cbase, 1. ) ; 
 
-        Util::color_to_hsb( ctit, h, s, b ) ;
-        b = std::max( 0.05, b-0.04 ) ;
-        s = std::max( 0.09, s-0.06 ) ;
-        Gdk::RGBA c2 = Util::color_from_hsb( h, s, b ) ;
-        colors[THEME_COLOR_TITLEBAR_3] = Util::make_rgba( c2, 0.93 ) ;
-
-        Util::color_to_hsb( ctit, h, s, b ) ;
-        b = std::max( 0.21, b-0.02 ) ;
-        s = std::max( 0.22, s-0.10 ) ;
-        Gdk::RGBA c3 = Util::color_from_hsb( h, s, b ) ;
-        colors[THEME_COLOR_TITLEBAR_TOP] = Util::make_rgba( c3, 0.90 ) ;
-
-        colors[THEME_COLOR_BACKGROUND] = tv.get_style_context()->get_background_color( Gtk::STATE_FLAG_NORMAL ) ;
-        colors[THEME_COLOR_BASE]       = tv.get_style_context()->get_background_color( Gtk::STATE_FLAG_NORMAL ) ;
-
-        Util::color_to_hsb( tv.get_style_context()->get_color( Gtk::STATE_FLAG_NORMAL ), h, s, b ) ;
+        Util::color_to_hsb( cbase, h, s, b ) ;
         b *= 0.95 ;
         colors[THEME_COLOR_BASE_ALTERNATE] = Util::color_from_hsb ( h, s, b ) ;
 
-        colors[THEME_COLOR_TEXT]          = tv.get_style_context()->get_color( Gtk::STATE_FLAG_NORMAL ) ;
-        colors[THEME_COLOR_TEXT_SELECTED] = tv.get_style_context()->get_color( Gtk::STATE_FLAG_SELECTED ) ;
+        colors[THEME_COLOR_TEXT]          = Util::make_rgba( ctext, 1. ) ; 
+        colors[THEME_COLOR_TEXT_SELECTED] = Util::make_rgba( ctext_sel, 1. ) ; 
         colors[THEME_COLOR_DRAWER]        = Util::make_rgba( 0.65, 0.65, 0.65, .4 ) ;
         colors[THEME_COLOR_WINDOW_BORDER] = Util::make_rgba( 0.25, 0.25, 0.25, 1. ) ;
         colors[THEME_COLOR_ENTRY_OUTLINE] = Util::make_rgba( 0.2, 0.2, 0.2, 1. ) ;
-
         colors[THEME_COLOR_TREELINES]   = Util::make_rgba( .5, .5, .5, 1. ) ;
         colors[THEME_COLOR_INFO_AREA]   = tv.get_style_context()->get_background_color( Gtk::STATE_FLAG_NORMAL ) ;
         colors[THEME_COLOR_VOLUME]      = Util::make_rgba( .7, .7, .7, 1. ) ;

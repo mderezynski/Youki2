@@ -168,9 +168,9 @@ namespace MPX
         , double &          a
     )
     {
-      r = color.get_red()   / 65535.0 ;
-      g = color.get_green() / 65535.0 ;
-      b = color.get_blue()  / 65535.0 ;
+      r = color.get_red_u()   / 65535.0 ;
+      g = color.get_green_u() / 65535.0 ;
+      b = color.get_blue_u()  / 65535.0 ;
       a = 1.0 ;
     }
 
@@ -182,9 +182,10 @@ namespace MPX
     )
     {
         double min, max, delta ;
-        double red = color.get_red()/65535. ;
-        double green = color.get_green()/65535. ;
-        double blue = color.get_blue()/65535. ;
+
+        double red = color.get_red_u()/65535. ;
+        double green = color.get_green_u()/65535. ;
+        double blue = color.get_blue_u()/65535. ;
 
         hue = 0 ;
         saturation = 0 ;
@@ -272,9 +273,10 @@ namespace MPX
         }
 
         Gdk::RGBA color ;
-        color.set_red(color_shift[0]*65535) ;
-        color.set_green(color_shift[1]*65535) ;
-        color.set_blue(color_shift[2]*65535) ;
+
+        color.set_red_u(color_shift[0]*65535) ;
+        color.set_green_u(color_shift[1]*65535) ;
+        color.set_blue_u(color_shift[2]*65535) ;
 
         return color ;
     }

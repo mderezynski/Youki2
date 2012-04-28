@@ -463,6 +463,7 @@ namespace MPX
         background.set_rgb_p( 0.1, 0.1, 0.1 ) ;
 
         m_main_position = Gtk::manage( new KoboPosition ) ;
+	m_main_position->set_size_request( -1, 18 ) ;
         m_main_position->signal_seek_event().connect(
             sigc::mem_fun(
                   *this
@@ -484,6 +485,7 @@ namespace MPX
         m_VBox_Bottom->pack_start( *Controls_Align, false, false, 0 ) ;
 
         m_main_volume = Gtk::manage( new KoboVolume ) ;
+	m_main_volume->set_size_request( 204, 18 ) ;
         m_main_volume->set_volume(
             m_play->property_volume().get_value()
         ) ;
@@ -495,6 +497,9 @@ namespace MPX
 
         m_HBox_Controls->pack_start( *m_main_position, true, true, 0 ) ;
         m_HBox_Controls->pack_start( *m_main_volume, false, false, 0 ) ;
+	m_HBox_Controls->show_all() ;
+
+        m_VBox_Bottom->show_all() ;
 
         m_ScrolledWinArtist->set_policy( Gtk::POLICY_NEVER, Gtk::POLICY_ALWAYS ) ; 
         m_ScrolledWinAlbums->set_policy( Gtk::POLICY_NEVER, Gtk::POLICY_ALWAYS ) ; 

@@ -1630,7 +1630,7 @@ namespace Tracks
         typedef sigc::signal<void, const std::string&>  SignalFindPropagate ;
 
         class Class
-        : public Gtk::DrawingArea
+        : public Gtk::DrawingArea, public Gtk::Scrollable
         {
             public:
 
@@ -1638,14 +1638,16 @@ namespace Tracks
 
             private:
 
+		typedef Glib::RefPtr<Gtk::Adjustment>	RPAdj ;
+		typedef Glib::Property<RPAdj>		PropAdjustment ;
+
+		PropAdjustment			    property_vadj_, property_hadj_ ;
+
                 int                                 m_height__row ;
                 int                                 m_height__headers ;
                 int                                 m_height__current_viewport ;
 
                 Columns                             m_columns ;
-
-                PropAdj                             m_prop_vadj ;
-                PropAdj                             m_prop_hadj ;
 
                 boost::optional<boost::tuple<Model_t::const_iterator, std::size_t> >  m_selection ;
 
@@ -2110,11 +2112,11 @@ namespace Tracks
                     , std::size_t   step_increment
                 )
                 {
-                    if( m_prop_vadj.get_value() )
+                    if( property_vadjustment().get_value() ) 
                     {
-                        m_prop_vadj.get_value()->set_upper( upper ) ; 
-                        m_prop_vadj.get_value()->set_page_size( page_size ) ; 
-                        m_prop_vadj.get_value()->set_step_increment( step_increment ) ; 
+                        property_vadjustment().get_value()->set_upper( upper ) ; 
+                        property_vadjustment().get_value()->set_page_size( page_size ) ; 
+                        property_vadjustment().get_value()->set_step_increment( step_increment ) ; 
                     }
                 }
 
@@ -2194,9 +2196,11 @@ namespace Tracks
 
                     const Gtk::Allocation& a = get_allocation();
 
+/*
 		    cairo->set_operator( Cairo::OPERATOR_SOURCE ) ;
 		    Gdk::Cairo::set_source_rgba(cairo, c_bg);
 		    cairo->paint() ;
+*/
 
 		    cairo->save() ;
 		    RoundedRectangle(
@@ -2225,18 +2229,9 @@ namespace Tracks
 		    Gdk::Cairo::set_source_rgba(cairo, c_base);
 		    cairo->paint() ;
 
-		    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
-                    std::size_t row   = get_upper_row() ;
-                    std::size_t limit = Limiter<std::size_t>(
-				            Limiter<std::size_t>::ABS_ABS
-					  , 0
-					  , m_model->size()
-					  , get_page_size() + 1
-		  		      ) ;
-
-                    std::size_t xpos = 0 ;
-
+		    // RENDER HEADER BACKGROUND
 		    cairo->save() ;
+		    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 		    RoundedRectangle(
 			  cairo
 			, 0
@@ -2278,7 +2273,16 @@ namespace Tracks
 		    cairo->stroke() ;
 		    cairo->restore() ;
 
-		    xpos = 0 ;
+                    std::size_t row   = get_upper_row() ;
+
+                    std::size_t limit = Limiter<std::size_t>(
+				            Limiter<std::size_t>::ABS_ABS
+					  , 0
+					  , m_model->size()
+					  , get_page_size() + 1
+		  		      ) ;
+
+                    std::size_t xpos = 0 ;
 
 		    for( Columns::iterator i = m_columns.begin(); i != m_columns.end(); ++i )
 		    {
@@ -2326,7 +2330,7 @@ namespace Tracks
 		    }
 
 		    //// SELECTION
-		    boost::optional<std::size_t> d_sel ;
+		    boost::optional<std::size_t> n_sel ;
 
 		    if( m_selection )
 		    {
@@ -2336,14 +2340,14 @@ namespace Tracks
 			    , get_upper_row() + get_page_size() - 1
 			) ;
 
-			d_sel = boost::get<1>(m_selection.get()) ; 
+			n_sel = boost::get<1>(m_selection.get()) ; 
 
-			if( i.in( d_sel.get() ))
+			if( i.in( n_sel.get() ))
 			{
 			    GdkRectangle r ;
 
 			    r.x         = 0 ; 
-			    r.y         = (d_sel.get() - row) * m_height__row + m_height__headers ;
+			    r.y         = (n_sel.get() - row) * m_height__row + m_height__headers ;
 			    r.width     = a.get_width() ;
 			    r.height    = m_height__row ; 
 
@@ -2404,11 +2408,11 @@ namespace Tracks
 				, xpos
 				, m_height__headers + (n*m_height__row) - 1
 				, m_height__row
-				, compare_val_to_optional( row+n, d_sel ) ? c_text_sel : c_text
-				, 1.0 //m_model->m_id_currently_playing ? (compare_id_to_optional( model_row, m_model->m_id_currently_playing ) ? 1.0 : 0.5) : 1.0
+				, compare_val_to_optional( row+n, n_sel ) ? c_text_sel : c_text
+				, 1.0
 				, m_highlight
 				, m_model->m_current_filter_noaque
-				, bool(compare_val_to_optional( row+n, d_sel ))
+				, bool(compare_val_to_optional( row+n, n_sel ))
 			    ) ;
 
 			    xpos += (*i)->get_width() ; 
@@ -2417,14 +2421,14 @@ namespace Tracks
 
 		    //// TREELINES
 		    {
-                xpos = 0 ;
+			xpos = 0 ;
 
-                Columns::iterator i2 = m_columns.end() ;
-                --i2 ;
+			Columns::iterator i2 = m_columns.end() ;
+			--i2 ;
 
-                for( Columns::const_iterator i = m_columns.begin() ; i != i2; ++i )
-                {
-                    xpos += (*i)->get_width() ; // adjust us to the column's end
+			for( Columns::const_iterator i = m_columns.begin() ; i != i2; ++i )
+			{
+			    xpos += (*i)->get_width() ; // adjust us to the column's end
 
 			    cairo->save() ;
 			    cairo->set_antialias( Cairo::ANTIALIAS_NONE ) ;
@@ -2444,55 +2448,40 @@ namespace Tracks
 				, 0
 			    ) ;
 			    cairo->set_source_rgba(
-                  c_treelines.get_red()
-                , c_treelines.get_green()
-                , c_treelines.get_blue()
-                , c_treelines.get_alpha() * 0.8
+				  c_treelines.get_red()
+				, c_treelines.get_green()
+				, c_treelines.get_blue()
+				, c_treelines.get_alpha() * 0.8
 			    ) ;
 			    cairo->stroke() ;
 			    cairo->restore() ;
 
-                cairo->set_source_rgba(c_treelines.get_red()
-                                       , c_treelines.get_green()
-                                       , c_treelines.get_blue()
-                                       , c_treelines.get_alpha() * 0.8
-                                       ) ;
-                    cairo->stroke() ;
-                    cairo->restore() ;
+                            if( i == i2 )
+                                continue ;
 
-			    cairo->save() ;
-			    cairo->set_antialias( Cairo::ANTIALIAS_NONE ) ;
-			    cairo->set_line_width(
-				  1. 
-			    ) ;
-			    cairo->move_to(
-				  xpos
-				, 0 
-			    ) ; 
-			    cairo->line_to(
-				  xpos
-				, m_height__headers - 1
-			    ) ;
-			    cairo->set_source_rgba(
-                  c_outline.get_red()
-                , c_outline.get_green()
-                , c_outline.get_blue()
-				, 0.4
-			    ) ;
+                            cairo->save() ;
+                            cairo->set_antialias( Cairo::ANTIALIAS_NONE ) ;
+                            cairo->set_line_width(
+                                  1.
+                            ) ;
+                            cairo->move_to(
+                                  xpos
+                                , 0
+                            ) ;
+                            cairo->line_to(
+                                  xpos
+                                , m_height__headers - 1
+                            ) ;
+                            cairo->set_source_rgba(
+                                  c_outline.get_red()
+                                , c_outline.get_green()
+                                , c_outline.get_blue()
+                                , 0.4
+                            ) ;
 
-                    cairo->save() ;
-                    cairo->set_line_width(.75) ;
-                    cairo->move_to(xpos, 0) ;
-                    cairo->line_to(xpos, m_height__headers - 1) ;
-                    cairo->set_source_rgba(c_outline.get_red()
-                                           , c_outline.get_green()
-                                           , c_outline.get_blue()
-                                           , 0.6
-                                           ) ;
-
-                    cairo->stroke() ;
-                    cairo->restore();
-                }
+                            cairo->stroke() ;
+                            cairo->restore();
+		        }
 		    }
 
                     return true;
@@ -2501,8 +2490,8 @@ namespace Tracks
 		double
 		vadj_value()
 		{
-		    if(  m_prop_vadj.get_value() )
-			return m_prop_vadj.get_value()->get_value() ;
+		    if(  property_vadjustment().get_value() )
+			return property_vadjustment().get_value()->get_value() ;
 
 		    return 0 ;
 		}
@@ -2510,8 +2499,8 @@ namespace Tracks
 		double
 		vadj_upper()
 		{
-		    if(  m_prop_vadj.get_value() )
-			return m_prop_vadj.get_value()->get_upper() ;
+		    if(  property_vadjustment().get_value() )
+			return property_vadjustment().get_value()->get_upper() ;
 
 		    return 0 ;
 		}
@@ -2519,8 +2508,8 @@ namespace Tracks
 		void
 		vadj_value_set( double v_ )
 		{
-		    if(  m_prop_vadj.get_value() )
-			return m_prop_vadj.get_value()->set_value( v_ ) ;
+		    if(  property_vadjustment().get_value() )
+			return property_vadjustment().get_value()->set_value( v_ ) ;
 		}
 
                 void
@@ -2564,31 +2553,6 @@ namespace Tracks
 		    }
 
 		    queue_draw() ;
-                }
-
-                static gboolean
-                list_view_set_adjustments(
-                    GtkWidget*obj,
-                    GtkAdjustment*hadj,
-                    GtkAdjustment*vadj, 
-                    gpointer data
-                )
-                {
-                    if( vadj )
-                    {
-                            g_object_set(G_OBJECT(obj), "vadjustment", vadj, NULL); 
-                            g_object_set(G_OBJECT(obj), "hadjustment", hadj, NULL);
-
-                            Class & view = *(reinterpret_cast<Class*>(data));
-
-                            view.m_prop_vadj.get_value()->signal_value_changed().connect(
-                                sigc::mem_fun(
-                                    view,
-                                    &Class::on_vadj_value_changed
-                            ));
-                    }
-
-                    return TRUE;
                 }
 
                 bool
@@ -2640,8 +2604,8 @@ namespace Tracks
                 get_upper_row(
                 )
                 {
-                    if( m_prop_vadj.get_value() )
-                        return m_prop_vadj.get_value()->get_value() ;
+                    if( property_vadjustment().get_value() )
+                        return property_vadjustment().get_value()->get_value() ;
                     else
                         return 0 ;
                 }
@@ -2650,7 +2614,7 @@ namespace Tracks
                 get_lower_row(
                 )
                 {
-                    return m_prop_vadj.get_value()->get_value() + get_page_size() ;
+                    return property_vadjustment().get_value()->get_value() + get_page_size() ;
                 }
 
                 inline bool
@@ -2684,14 +2648,12 @@ namespace Tracks
                         boost::optional<guint> active_track = m_model->m_id_currently_playing ;
 
                         m_model = model;
-                        //m_model->m_widget = this ;
                         m_model->m_id_currently_playing = active_track ;
                         m_model->scan_for_currently_playing() ;
                     }
                     else
                     {
                         m_model = model;
-                        //m_model->m_widget = this ;
                     }
 
                     m_model->signal_changed().connect(
@@ -3091,6 +3053,25 @@ namespace Tracks
                     queue_resize();
                 }
 
+		void
+		on_vadj_prop_changed()
+		{
+		    if( !property_vadjustment().get_value())
+			return ;
+
+		    property_vadjustment().get_value()->signal_value_changed().connect(
+			sigc::mem_fun(
+			    *this,
+			    &Class::on_vadj_value_changed
+		    ));
+
+                    configure_vadj(
+                          m_model->size()
+                        , get_page_size()
+                        , 1
+                    ) ;
+		}
+
             public:
 
                 SignalMBID&
@@ -3105,19 +3086,23 @@ namespace Tracks
                     return _signal_1 ;
                 }
 
-                Class ()
+                Class()
 
                         : ObjectBase( "YoukiClassTracks" )
-                        , m_prop_vadj( *this, "vadjustment", (Gtk::Adjustment*)( 0 ))
-                        , m_prop_hadj( *this, "hadjustment", (Gtk::Adjustment*)( 0 ))
+
+			, property_vadj_(*this, "vadjustment", RPAdj(0))
+			, property_hadj_(*this, "hadjustment", RPAdj(0))
+
                         , m_dnd( false )
                         , m_highlight( false )
                         , m_fixed_total_width( 0 )
                         , m_search_active( false )
 
                 {
-                    boost::shared_ptr<IYoukiThemeEngine> theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;
+		    Scrollable::add_interface(G_OBJECT_TYPE(Glib::ObjectBase::gobj())) ;
+		    property_vadjustment().signal_changed().connect( sigc::mem_fun( *this, &Class::on_vadj_prop_changed )) ;
 
+                    boost::shared_ptr<IYoukiThemeEngine> theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;
                     const ThemeColor& c = theme->get_color( THEME_COLOR_BASE ) ;
 
                     Gdk::RGBA cgdk ;
@@ -3126,18 +3111,7 @@ namespace Tracks
 
                     set_can_focus(true);
 
-                    add_events(Gdk::EventMask(GDK_KEY_PRESS_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_LEAVE_NOTIFY_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK ));
-
-                    // FIXME: Port this to Gtk::Scrollable
-                    // GTK_WIDGET_GET_CLASS(gobj())->set_scroll_adjustments_signal =
-                    //         g_signal_new ("set_scroll_adjustments",
-                    //                   G_OBJECT_CLASS_TYPE (G_OBJECT_CLASS (G_OBJECT_GET_CLASS(G_OBJECT(gobj())))),
-                    //                   GSignalFlags (G_SIGNAL_RUN_FIRST),
-                    //                   0,
-                    //                   NULL, NULL,
-                    //                   g_cclosure_user_marshal_VOID__OBJECT_OBJECT, G_TYPE_NONE, 2, GTK_TYPE_ADJUSTMENT, GTK_TYPE_ADJUSTMENT);
-
-                    // g_signal_connect(G_OBJECT(gobj()), "set_scroll_adjustments", G_CALLBACK(list_view_set_adjustments), this);
+                    add_events(Gdk::EventMask(GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_EXPOSURE_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_LEAVE_NOTIFY_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_MOTION_MASK | GDK_SCROLL_MASK ));
 
                     /*
                     signal_query_tooltip().connect(
@@ -3205,8 +3179,6 @@ namespace Tracks
 
                     m_SearchWindow->add( *m_SearchHBox ) ;
                     m_SearchHBox->show_all() ;
-
-                    property_can_focus() = true ;
 
                     m_refActionGroup = Gtk::ActionGroup::create() ;
                     m_refActionGroup->add( Gtk::Action::create("ContextMenu", "Context Menu")) ;

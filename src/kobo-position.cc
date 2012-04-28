@@ -71,18 +71,6 @@ namespace MPX
     }
 
     void
-    KoboPosition::on_size_allocate( Gtk::Allocation& alloc )
-    {
-        Gtk::DrawingArea::on_size_allocate( alloc ) ;
-    }
-
-    void
-    KoboPosition::on_size_request( Gtk::Requisition * req )
-    {
-        req->height = 18 ;
-    }
-
-    void
     KoboPosition::set_position(
           guint    duration
         , guint    position
@@ -94,24 +82,22 @@ namespace MPX
     }
 
     bool
-    KoboPosition::on_expose_event(
-        GdkEventExpose* G_GNUC_UNUSED
+    KoboPosition::on_draw(
+	const Cairo::RefPtr<Cairo::Context>& cairo
     )
     {
-        Cairo::RefPtr<Cairo::Context> cairo = get_window()->create_cairo_context() ;
-
         const Gdk::Rectangle& a = get_allocation() ;
-
         const guint w = a.get_width() - 2 ;
+
         const guint position = m_clicked ? m_seek_position : m_position ;
 
         const ThemeColor& c = m_theme->get_color( THEME_COLOR_SELECT ) ;
-        const ThemeColor& c_base /* :) */ = m_theme->get_color( THEME_COLOR_BACKGROUND ) ; 
+        const ThemeColor& c_bg = m_theme->get_color( THEME_COLOR_BACKGROUND ) ; 
         const ThemeColor& ct = m_theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
 
         cairo->set_operator(Cairo::OPERATOR_SOURCE) ;
-        Gdk::Cairo::set_source_rgba(cairo, c_base);
-        cairo->paint () ;
+        Gdk::Cairo::set_source_rgba(cairo, c_bg);
+        cairo->paint() ;
 
         cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 
@@ -207,7 +193,7 @@ namespace MPX
         cairo->fill_preserve () ;
 
         cairo->save() ;
-        cairo->set_source_rgba( c1.get_red() , c1.get_green(), c1.get_blue(), 1. ) ;
+        cairo->set_source_rgba( c.get_red() , c.get_green(), c.get_blue(), 1. ) ;
         cairo->set_line_width( 0.75 ) ;
         cairo->stroke() ;
         cairo->restore() ;

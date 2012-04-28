@@ -1052,21 +1052,6 @@ namespace Artist
                     Gdk::Cairo::set_source_rgba(cairo, c_base) ;
                     cairo->paint() ;
 
-                    cairo->set_operator( Cairo::OPERATOR_SOURCE ) ;
-                    Gdk::Cairo::set_source_rgba(cairo, c_bg);
-                    cairo->paint() ;
-
-                    Gdk::Cairo::set_source_rgba(cairo, c_base) ;
-                    RoundedRectangle(cairo
-                                     , 1
-                                     , 1
-                                     , a.get_width() - 7
-                                     , a.get_height() - 2
-                                     , rounding
-                                     ) ;
-                    cairo->fill_preserve() ;
-                    cairo->clip() ;
-
                     cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 
                     std::size_t n = 0 ;
