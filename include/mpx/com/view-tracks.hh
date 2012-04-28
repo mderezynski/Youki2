@@ -1666,11 +1666,9 @@ namespace Tracks
 
                 boost::optional<guint>		    m_clicked_row ;
 
-                Glib::RefPtr<Gdk::Pixbuf>           m_pb_play_l ;
-
                 std::set<int>                       m_collapsed ;
                 std::set<int>                       m_fixed ;
-                guint                              m_fixed_total_width ;
+                guint                               m_fixed_total_width ;
         
                 Gtk::Entry                        * m_SearchEntry ;
                 Gtk::Window                       * m_SearchWindow ;
@@ -3129,8 +3127,6 @@ namespace Tracks
                     cgdk.set_rgb_p( c.r, c.g, c.b ) ; 
                     modify_bg( Gtk::STATE_NORMAL, cgdk ) ;
                     modify_base( Gtk::STATE_NORMAL, cgdk ) ;
-
-                    m_pb_play_l  = Gdk::Pixbuf::create_from_file( Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "row-play.png" )) ;
 
                     set_flags(Gtk::CAN_FOCUS);
                     add_events(Gdk::EventMask(GDK_KEY_PRESS_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_LEAVE_NOTIFY_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK ));
