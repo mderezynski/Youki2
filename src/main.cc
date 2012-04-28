@@ -33,7 +33,6 @@
 #include <gtkmm/main.h>
 #include <cstdlib>
 #include <string>
-#include <dbus-c++/glib-integration.h>
 #include <locale.h>
 
 #include "mpx/mpx-covers.hh"
@@ -53,8 +52,6 @@
 #include "mpx/mpx-hal.hh"
 #endif // HAVE_HAL
 
-#include "mpx/metadatareader-taglib.hh"
-
 #include "library.hh"
 #include "play.hh"
 #include "plugin-manager-gui.hh"
@@ -64,11 +61,6 @@
 #include "youki-controller.hh"
 #include "youki-theme-engine.hh"
 
-#include "mpx-mlibman-dbus-proxy-actual.hh"
-
-#include "xmlcpp/xsd-topalbums-2.0.hxx"
-#include "mpx/xml/xmltoc++.hh"
-
 #undef PACKAGE
 #define PACKAGE "youki"
 
@@ -77,7 +69,7 @@ using namespace Glib;
 
 namespace MPX
 {
-  Mcs::Config         * mcs      = 0;
+  Mcs::Config      * mcs      = 0;
   Mcs::Bind        * mcs_bind = 0;
   Service::Manager * services = 0;
 
@@ -282,12 +274,6 @@ main (int argc, char ** argv)
 
     services = new Service::Manager;
 
-    DBus::Glib::BusDispatcher dispatcher ;
-    DBus::default_dispatcher = &dispatcher ;
-    dispatcher.attach( g_main_context_default() ) ;
-    DBus::Connection conn = DBus::Connection::SessionBus () ;
-    conn.request_name( "org.mpris.MediaPlayer2.youki" ) ;
-
     Splashscreen* splash = new Splashscreen;
 
 #ifdef HAVE_HAL
@@ -299,10 +285,12 @@ main (int argc, char ** argv)
         services->add(boost::shared_ptr<Covers>(new MPX::Covers));
         services->get<Covers>("mpx-service-covers")->run() ;
 
+/*
         splash->set_message(_("Starting Library Manager..."), 2.5/10.);
-        info::backtrace::Youki::MLibMan_proxy_actual * p = new info::backtrace::Youki::MLibMan_proxy_actual( conn ) ;
+        info::backtrace::Youki::MLibMan_proxy_actual * p = new info::backtrace::Youki::MLibMan_proxy_actual() ;
         p->Start() ;
         services->add(boost::shared_ptr<info::backtrace::Youki::MLibMan_proxy_actual>( p ));
+*/
 
         splash->set_message(_("Starting Library"),3/10.);
         services->add(boost::shared_ptr<Library>(new MPX::Library));
@@ -322,7 +310,7 @@ main (int argc, char ** argv)
         services->add(boost::shared_ptr<YoukiThemeEngine>( new YoukiThemeEngine ));
 
         splash->set_message(_("Starting Youki..."),7.5/10.);
-        services->add(boost::shared_ptr<YoukiController>(new YoukiController( conn )));
+        services->add(boost::shared_ptr<YoukiController>(new YoukiController ));
 
         splash->set_message(_("Starting Plugins..."),8/10.);
         services->add(boost::shared_ptr<PluginManager>(new MPX::PluginManager));
