@@ -40,7 +40,9 @@
 #include "mpx/mpx-network.hh"
 #include "mpx/mpx-paths.hh"
 #include "mpx/mpx-plugin.hh"
+#if 0
 #include "mpx/mpx-python.hh"
+#endif
 #include "mpx/mpx-services.hh"
 #include "mpx/mpx-signals.hh"
 #include "mpx/mpx-stock.hh"
@@ -270,7 +272,7 @@ main (int argc, char ** argv)
     create_user_dirs ();
     setup_mcs ();
     gst_init(&argc, &argv);
-    mpx_py_init() ;
+//    mpx_py_init() ;
 
     services = new Service::Manager;
 

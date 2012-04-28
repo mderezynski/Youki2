@@ -67,29 +67,29 @@ SET(youki_bin_SOURCES
   youki-theme-engine.cc
   library.cc
   library.hh
-  mpx-mlibman-dbus-proxy-actual.hh
-  ${CMAKE_CURRENT_BINARY_DIR}/mpx-mlibman-dbus-proxy.hh
-  ${CMAKE_CURRENT_BINARY_DIR}/mpx-app-dbus-adaptor.hh
+# mpx-mlibman-dbus-proxy-actual.hh
+# ${CMAKE_CURRENT_BINARY_DIR}/mpx-mlibman-dbus-proxy.hh
+# ${CMAKE_CURRENT_BINARY_DIR}/mpx-app-dbus-adaptor.hh
   markov-analyzer-thread.cc
   markov-analyzer-thread.hh
   play.hh
   play.cc
   plugin.cc
-  plugin-loader-python.hh
-  plugin-loader-python.cc
-  plugin-types-python.cc
-  plugin-types-python.hh
+#  plugin-loader-python.hh
+#  plugin-loader-python.cc
+#  plugin-types-python.cc
+#  plugin-types-python.hh
   plugin-loader-cpp.cc
   plugin-loader-cpp.hh
   plugin-types-cpp.hh
   plugin-loader.hh
   plugin-manager-gui.hh
   plugin-manager-gui.cc
-  python.cc
-  pysigc.hh
-  gtkmm.cc
-  gtkmmmodule.cc
-  gtkmmmodule.h
+#  python.cc
+#  pysigc.hh
+#  gtkmm.cc
+#  gtkmmmodule.cc
+#  gtkmmmodule.h
   preferences.cc
   preferences.hh
   splash-screen.hh
