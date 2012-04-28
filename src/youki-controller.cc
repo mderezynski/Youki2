@@ -1087,7 +1087,7 @@ namespace MPX
 	album->track_count_release_total = r.count("album_disctotal") ? get<unsigned int>(r["album_disctotal"]) : album->track_count ; 
         album->album_playscore = get<gdouble>(r["album_playscore"]) ;
 	album->insert_date = get<unsigned int>(r["album_insert_date"]) ;
-	album->totaltime = get<unsigned int>(v3[0]["total"]) ;
+	album->total_time = get<unsigned int>(v3[0]["total"]) ;
 
         return album ;
     }

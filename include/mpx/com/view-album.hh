@@ -37,6 +37,9 @@
 
 namespace
 {
+    typedef Glib::RefPtr<Gtk::Adjustment>	RPAdj ;
+    typedef Glib::Property<RPAdj>		PropAdjustment ;
+
     enum ReleaseType
     {
           RT_ALBUM
@@ -100,7 +103,7 @@ namespace Albums
         struct Album
         {
             Cairo::RefPtr<Cairo::ImageSurface>      coverart ;
-            Cairo::RefPtr<Cairo::ImageSurface>      surfacecache ;
+            Cairo::RefPtr<Cairo::ImageSurface>      surface_cache ;
             guint                                   album_id ;
             guint                                   artist_id ;
             std::string                             album ;
@@ -111,11 +114,11 @@ namespace Albums
             std::string                             mbid_artist ;
             std::string                             label ;
             guint                                   track_count ;
-            guint				                    track_count_release_total ;
-            guint				                    insert_date ;
+            guint				    track_count_release_total ;
+            guint				    insert_date ;
             gdouble                                 album_playscore ;
-            int					                    totaltime ;
-            bool				                    caching ;
+            int					    total_time ;
+            bool				    caching ;
 
 	    bool operator==( const Album& other )
 	    {
@@ -129,7 +132,7 @@ namespace Albums
 
 	    Album()
 	    : coverart( Cairo::RefPtr<Cairo::ImageSurface>(0))
-	    , surfacecache( Cairo::RefPtr<Cairo::ImageSurface>(0))
+	    , surface_cache( Cairo::RefPtr<Cairo::ImageSurface>(0))
 	    , caching(false)
 	    {}
         };
@@ -152,55 +155,54 @@ namespace Albums
 	    return a->album_id != b->album_id ;
 	}
 
-        typedef sigc::signal<void, std::size_t, bool>       Signal_2 ;
-	typedef sigc::signal<void>			    Signal_0 ;
-	typedef sigc::signal<void, guint>		    Signal_1 ;
+        typedef sigc::signal<void, guint, bool>	    Signal_2 ;
+	typedef sigc::signal<void>		    Signal_0 ;
+	typedef sigc::signal<void, guint>	    Signal_1 ;
 
-    struct OrderFunc
+        struct OrderFunc
         : public std::binary_function<Album_sp, Album_sp, bool>
-    {
-        bool operator() (const Album_sp& a,
-						 const Album_sp& b)
-        {
-            if( a->album_id == -1 )
-				return true ;
+	{
+	    bool operator() (const Album_sp& a,
+			     const Album_sp& b)
+	    {
+		if( a->album_id == -1 )
+		    return true ;
 
-            if( b->album_id == -1 )
-				return false ;
+		if( b->album_id == -1 )
+		    return false ;
 
-            if( a->album_artist < b->album_artist )
-                return true ;
+		if( a->album_artist < b->album_artist )
+		    return true ;
 
-            if( b->album_artist < a->album_artist )
-                return false ;
+		if( b->album_artist < a->album_artist )
+		    return false ;
 
-            if( a->year < b->year )
-                return true ;
+		if( a->year < b->year )
+		    return true ;
 
-            if( b->year < a->year )
-                return false ;
+		if( b->year < a->year )
+		    return false ;
 
-			if( a->album < b->album )
-				return true ;
+		if( a->album < b->album )
+			return true ;
 
-			if( b->album < a->album )
-				return false ;
-
+		if( b->album < a->album )
 			return false ;
-		}
+
+		return false ;
+	    }
 	} ;
 
-    struct DataModel
+	struct DataModel
         : public sigc::trackable
 	{
 		Model_sp_t             m_realmodel ;
-
-        IdIterMap_t            m_iter_map ;
-        std::size_t            m_upper_bound ;
+		IdIterMap_t            m_iter_map ;
+		guint		       m_upper_bound ;
 
 		Signal_2               m_SIGNAL__changed ;
-		Signal_0			   m_SIGNAL__redraw ;
-		Signal_1			   m_SIGNAL__cover_updated ;
+		Signal_0	       m_SIGNAL__redraw ;
+		Signal_1	       m_SIGNAL__cover_updated ;
 
 /*
 		typedef std::vector<Model_t::iterator>	ModelIterVec_t ;
@@ -258,20 +260,20 @@ namespace Albums
             return bool(m_realmodel) ;
         }
 
-        virtual std::size_t
+        virtual guint
         size ()
         {
             return m_realmodel->size() ;
         }
 
         virtual Album_sp
-        row(std::size_t row)
+        row(guint row)
         {
             return (*m_realmodel)[row] ;
         }
 
         virtual void
-        set_current_row(std::size_t row)
+        set_current_row(guint row)
         {
             m_upper_bound = row ;
         }
@@ -378,7 +380,7 @@ namespace Albums
                 if( album )
                 {
                     album->coverart = is ;
-                    album->surfacecache.clear() ;
+                    album->surface_cache.clear() ;
                     album->caching = false ;
 
                     m_SIGNAL__cover_updated.emit( id ) ;
@@ -487,7 +489,7 @@ namespace Albums
 		    m_SIGNAL__redraw.emit() ;
                 }
 
-                virtual std::size_t
+                virtual guint
                 size()
                 {
                     return m_mapping.size();
@@ -495,7 +497,7 @@ namespace Albums
 
                 virtual Album_sp
                 row(
-                      std::size_t   row
+                      guint   row
                 )
                 {
                     return *(m_mapping[row]);
@@ -503,7 +505,7 @@ namespace Albums
 
                 virtual RowRowMapping_t::const_iterator
                 iter(
-                      std::size_t   row
+                      guint   row
                 )
                 {
                     RowRowMapping_t::const_iterator i = m_mapping.begin() ;
@@ -513,8 +515,8 @@ namespace Albums
 
                 void
                 swap(
-                      std::size_t   p1
-                    , std::size_t   p2
+                      guint   p1
+                    , guint   p2
                 )
                 {
                     std::swap( m_mapping[p1], m_mapping[p2] ) ;
@@ -681,8 +683,8 @@ namespace Albums
         {
 	    public:
 
-                std::size_t m_width ;
-                std::size_t m_column ;
+                guint m_width ;
+                guint m_column ;
 		RTViewMode  m_rt_viewmode ;
 		bool	    m_show_year_label ;
 
@@ -695,8 +697,8 @@ namespace Albums
                 )
                     : m_width( 0 )
                     , m_column( 0 )
-		    , m_rt_viewmode( RT_VIEW_NONE )
-		    , m_show_year_label( false )
+		    , m_rt_viewmode( RT_VIEW_BOTTOM )
+		    , m_show_year_label( true )
                 {
                     m_image_disc = Util::cairo_image_surface_from_pixbuf( Gdk::Pixbuf::create_from_file( Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "disc.png" ))->scale_simple(64, 64, Gdk::INTERP_BILINEAR)) ;
                     m_image_new = Util::cairo_image_surface_from_pixbuf( Gdk::Pixbuf::create_from_file( Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "new.png" ))) ;
@@ -936,15 +938,14 @@ namespace Albums
                       const Cairo::RefPtr<Cairo::Context>&  cairo
                     , Album_sp				    album
                     , Gtk::Widget&                          widget // FIXME: Do we still need this for the Pango style context in Gtk3?
-                    , std::size_t                           row
-                    , std::size_t                           xpos
+                    , guint				    row
+                    , guint				    xpos
                     , int                                   ypos
-                    , std::size_t                           row_height
+                    , guint				    row_height
                     , ThemeColor	                    color
-                    , std::size_t                           album_count
-		    , std::size_t			    model_size
+                    , guint				    model_mapping_size
+		    , guint				    model_size
 		    , bool				    is_selected
-		    , bool				    show_year_label
 		    , TCVector_sp&			    album_constraints
                 )
                 {
@@ -964,10 +965,10 @@ namespace Albums
 
 			if( !album->caching )
 			{
-			    if( !album->surfacecache ) 
-				    album->surfacecache = render_icon( album, widget, m_rt_viewmode ) ;
+			    if( !album->surface_cache ) 
+				    album->surface_cache = render_icon( album, widget, m_rt_viewmode ) ;
 
-			    cairo->set_source( album->surfacecache, r.x, r.y ) ;
+			    cairo->set_source( album->surface_cache, r.x, r.y ) ;
 			    cairo->rectangle( r.x, r.y , 68, 68 ) ;
 			    cairo->fill() ;
 			}
@@ -1067,7 +1068,7 @@ namespace Albums
 			    //// YEAR + LABEL
 			    if( m_show_year_label )
 			    {
-				    std::size_t sx = xpos + 8 ;
+				    guint sx = xpos + 8 ;
 
 				    if( !album->year.empty() )
 				    {
@@ -1108,18 +1109,24 @@ namespace Albums
 				layout[L3]->set_ellipsize( Pango::ELLIPSIZE_NONE ) ;
 
 				guint tm = 0 ;
-				guint totaltracks = 0 ;
 
 				if( album_constraints )
 				{
 					tm = ((*album_constraints)[album->album_id]).Time ;
-					totaltracks = ((*album_constraints)[album->album_id]).Count ;
-					layout[L3]->set_markup((boost::format("<b>%u</b> / <b>%u</b> %s") % totaltracks % album->track_count % ((album->track_count>1) ? "Tracks" : "Track")).str()) ;
+
+					guint totaltracks = ((*album_constraints)[album->album_id]).Count ;
+
+					if( totaltracks != album->track_count )
+					    layout[L3]->set_markup((boost::format("<b>%u</b> / <b>%u</b> %s") % totaltracks % album->track_count % ((album->track_count>1) ? "Tracks" : "Track")).str()) ;
+					else
+					    layout[L3]->set_markup((boost::format("<b>%u</b> %s") % totaltracks % ((totaltracks>1) ? "Tracks" : "Track")).str()) ;
 				}
 				else
 				{
-					tm = album->totaltime ;
-					totaltracks = album->track_count ;
+					tm = album->total_time ;
+
+					guint totaltracks = album->track_count ;
+
 					layout[L3]->set_markup((boost::format("<b>%u</b> %s") % totaltracks % ((totaltracks>1) ? "Tracks" : "Track")).str()) ;
 				}
 
@@ -1146,9 +1153,9 @@ namespace Albums
                             layout[L1]->set_ellipsize( Pango::ELLIPSIZE_END ) ;
                             layout[L1]->set_width( m_width * PANGO_SCALE ) ;
 
-			    if( album_count != model_size )
+			    if( model_mapping_size != model_size )
 			    {
-                            	layout[L1]->set_text( (boost::format(("%u %s")) % album_count % ( (album_count > 1) ? ("Albums") : ("Album"))).str()) ;
+                            	layout[L1]->set_text( (boost::format(("%u %s")) % model_mapping_size % ( (model_mapping_size > 1) ? ("Albums") : ("Album"))).str()) ;
 			    }
 		            else
 			    {
@@ -1185,18 +1192,10 @@ namespace Albums
 
             private:
 
-		typedef Glib::RefPtr<Gtk::Adjustment>	RPAdj ;
-		typedef Glib::Property<RPAdj>		PropAdjustment ;
+		PropAdjustment	property_vadj_, property_hadj_ ;
 
-		PropAdjustment			    property_vadj_, property_hadj_ ;
-
-                std::size_t                         m_height__row ;
-                std::size_t                         m_height__current_viewport ;
-                std::size_t                         m_dest_position ;
-
-		RTViewMode			    m_rt_viewmode ;
-
-		bool				    m_show_year_label ;
+                guint				    m_height__row ;
+                guint				    m_height__current_viewport ;
 
                 enum ScrollDirection
                 {
@@ -1204,11 +1203,7 @@ namespace Albums
                     , SCROLL_DIRECTION_DOWN
                 } ;
 
-                boost::optional<boost::tuple<Model_t::iterator, guint, std::size_t> >  m_selection ;
-
-                sigc::connection                    m_scroll_sigc_connection ;
-                ScrollDirection                     m_scroll_direction ;
-		sigc::connection		    m_sigcconn__redraw ;
+                boost::optional<boost::tuple<Model_t::iterator, guint, guint> >  m_selection ;
 
                 Column_sp_t_vector_t                m_columns ;
 
@@ -1216,18 +1211,20 @@ namespace Albums
                 Signal_void                         m_SIGNAL_find_accepted ;
                 Signal_void                         m_SIGNAL_start_playback ;
 
-                Interval<std::size_t>               m_Model_I ;
+                Interval<guint>			    m_Model_I ;
 
                 Gtk::Entry                        * m_SearchEntry ;
                 Gtk::Window                       * m_SearchWindow ;
 
                 sigc::connection                    m_search_changed_conn ;
                 bool                                m_search_active ;
-		std::set<guint>			    m_caching ;
 
-                Glib::RefPtr<Gtk::UIManager> m_refUIManager ;
-                Glib::RefPtr<Gtk::ActionGroup> m_refActionGroup ;
-                Gtk::Menu* m_pMenuPopup ;
+		std::set<guint>			    m_caching ;
+		sigc::connection		    m_redraw_spinner_conn ;
+
+                Glib::RefPtr<Gtk::UIManager>	    m_refUIManager ;
+                Glib::RefPtr<Gtk::ActionGroup>	    m_refActionGroup ;
+                Gtk::Menu*			    m_pMenuPopup ;
 
                 typedef sigc::signal<void, const std::string&> SignalMBID ;
                 typedef sigc::signal<void, guint>	       SignalID ;
@@ -1235,56 +1232,6 @@ namespace Albums
                 SignalMBID _signal_0 ;
                 SignalMBID _signal_1 ;
                 SignalID   _signal_2 ;
-
-                bool
-                scroll_timeout_func()
-                {
-                    int adj_value = vadj_value() ; 
-
-                    if( m_scroll_direction == SCROLL_DIRECTION_UP )
-                    {
-                        adj_value -= 4 ;
-                        adj_value = std::max<int>( adj_value, m_dest_position ) ;
-                    }
-                    else
-                    {
-                        adj_value += 4 ;
-                        adj_value = std::min<int>( adj_value, m_dest_position ) ;
-                    }
-
-                    vadj_value_set( adj_value ) ;
-
-                    bool done = ( static_cast<int>(adj_value) == static_cast<int>(m_dest_position) ) ;
-
-                    if( done )
-                    {
-                        m_scroll_sigc_connection.disconnect() ;
-                        return false ;
-                    }
-
-                    return true ;
-                }
-
-                void
-                init_scroll(
-                      std::size_t       dest_pos
-                    , ScrollDirection   scroll_direction
-                )
-                {
-                    if( m_scroll_sigc_connection )
-                    {
-                        m_scroll_sigc_connection.disconnect() ;
-                    }
-
-                    m_dest_position = dest_pos ;
-                    m_scroll_direction = scroll_direction ;
-
-                    m_scroll_sigc_connection = Glib::signal_timeout().connect(
-                          sigc::mem_fun(
-                              *this
-                            , &Class::scroll_timeout_func
-                    ), 10 ) ;
-                }
 
                 void
                 initialize_metrics ()
@@ -1302,7 +1249,7 @@ namespace Albums
                     }
                 }
 
-                inline std::size_t
+                inline guint
                 get_upper_row ()
                 {
                     if( property_vadjustment().get_value() && m_height__row )
@@ -1313,14 +1260,13 @@ namespace Albums
 
                 inline bool
                 get_row_is_visible(
-                      std::size_t row
+                      guint row
                 )
                 {
+                    guint up = get_upper_row() ;
 
-                    std::size_t up = get_upper_row() ;
-
-                    Interval<std::size_t> i (
-                          Interval<std::size_t>::IN_IN
+                    Interval<guint> i (
+                          Interval<guint>::IN_IN
                         , up
                         , up + (m_height__current_viewport / m_height__row)
                     ) ;
@@ -1379,16 +1325,17 @@ namespace Albums
                         }
 
                         GdkEvent *new_event = gdk_event_copy( (GdkEvent*)(event) ) ;
-                        g_object_unref( ((GdkEventKey*)new_event)->window ) ;
+                        //g_object_unref( ((GdkEventKey*)new_event)->window ) ;
                         ((GdkEventKey *) new_event)->window = m_SearchWindow->get_window()->gobj();
                         m_SearchEntry->event(new_event) ;
-                        gdk_event_free(new_event) ;
+                        //gdk_event_free(new_event) ;
 
                         return true ;
                     }
 
+
                     int step = 0 ;
-                    int row = 0 ;
+                    int d = 0 ;
 
                     switch( event->keyval )
                     {
@@ -1408,11 +1355,11 @@ namespace Albums
 
                             if( event->keyval == GDK_KEY_Page_Up )
                             {
-                                step = - (m_height__current_viewport / m_height__row) ;
+                                step = -(m_height__current_viewport / m_height__row) ;
                             }
                             else
                             {
-                                step = - 1 ;
+                                step = -1 ;
                             }
 
                             if( !m_selection )
@@ -1426,14 +1373,14 @@ namespace Albums
 
                                 if( origin > 0 )
                                 {
-                                    if( get_row_is_visible( origin ) )
+                                    if( get_row_is_visible( origin ))
                                     {
-                                        row = std::max<int>( origin+step, 0 ) ;
-                                        select_row( row ) ;
+                                        d = std::max<int>( origin+step, 0 ) ;
+                                        select_row( d ) ;
 
                                         double adj_value = vadj_value() ; 
 
-                                        if( (row * m_height__row) < adj_value )
+                                        if((d * m_height__row) < adj_value )
                                         {
                                             if( event->keyval == GDK_KEY_Page_Up )
                                             {
@@ -1441,7 +1388,7 @@ namespace Albums
                                             }
                                             else
                                             {
-                                                scroll_to_row( row ) ;
+                                                scroll_to_row( d ) ;
                                             }
                                         }
                                     }
@@ -1468,8 +1415,8 @@ namespace Albums
 
                         case GDK_KEY_End:
                         {
-                            select_row( m_model->size() - 1 ) ;
-                            scroll_to_row( m_model->size() -1 ) ;
+                            select_row( m_model->size()-1 ) ;
+                            scroll_to_row( m_model->size()-1 ) ;
 
                             return true ;
                         }
@@ -1498,19 +1445,19 @@ namespace Albums
 
                                 if( get_row_is_visible( origin ))
                                 {
-                                    row = std::min<int>( origin+step, m_model->size() - 1 ) ;
+                                    d = std::min<int>( origin+step, m_model->size()-1 ) ;
 
-                                    select_row( row ) ;
+                                    select_row( d ) ;
 
                                     double adj_value = vadj_value() ; 
 
                                     if( event->keyval == GDK_KEY_Page_Down )
                                     {
-                                        std::size_t new_val = adj_value + (step*m_height__row) ;
+                                        guint new_val = adj_value + (step*m_height__row) ;
 
                                         if( new_val > (vadj_upper()-m_height__current_viewport))
                                         {
-                                            scroll_to_row( row ) ;
+                                            scroll_to_row( d ) ;
                                         }
                                         else
                                         {
@@ -1519,19 +1466,19 @@ namespace Albums
                                     }
                                     else
                                     {
-                                        std::size_t offset = adj_value - ((std::size_t(adj_value)/m_height__row) * m_height__row) ;
-                                        std::size_t excess = (((m_height__current_viewport/m_height__row)+1)*m_height__row) - m_height__current_viewport ;
+                                        guint offset = adj_value - ((guint(adj_value)/m_height__row) * m_height__row) ;
+                                        guint excess = (((m_height__current_viewport/m_height__row)+1)*m_height__row) - m_height__current_viewport ;
 
                                         if( offset == 0 )
                                         {
-                                            if( (row-get_upper_row()+1)*m_height__row > m_height__current_viewport )
+                                            if((d-get_upper_row()+1)*m_height__row > m_height__current_viewport )
                                             {
 						vadj_value_set( adj_value + excess ) ;
                                             }
                                         }
                                         else
                                         {
-                                            std::size_t endpos = ((64-offset) + ((row-get_upper_row())*m_height__row)) ;
+                                            guint endpos = ((77-offset) + ((d-get_upper_row())*m_height__row)) ;
 
                                             if( endpos > m_height__current_viewport )
                                             {
@@ -1554,26 +1501,22 @@ namespace Albums
                             {
                                 if( !m_search_active && event->keyval != GDK_KEY_Tab )
                                 {
-                                    int x, y, x_root, y_root ;
+                                    int x, y ;
 
-                                    dynamic_cast<Gtk::Window*>(get_toplevel())->get_position( x_root, y_root ) ;
-
-                                    x = x_root + get_allocation().get_x() ;
-                                    y = y_root + get_allocation().get_y() + get_allocation().get_height() ;
+				    get_window()->get_origin( x, y ) ;
+				    y += get_allocation().get_height() ;
 
                                     m_SearchWindow->set_size_request( get_allocation().get_width(), -1 ) ;
                                     m_SearchWindow->move( x, y ) ;
                                     m_SearchWindow->show() ;
 
-                                    send_focus_change( *m_SearchEntry, true ) ;
+                                    focus_entry( true ) ;
 
                                     GdkEvent *new_event = gdk_event_copy( (GdkEvent*)(event) ) ;
-                                    g_object_unref( ((GdkEventKey*)new_event)->window ) ;
-                                    //m_SearchWindow->realize () ;
+                                    //g_object_unref( ((GdkEventKey*)new_event)->window ) ;
                                     ((GdkEventKey *) new_event)->window = m_SearchWindow->get_window()->gobj();
-
-									m_SearchEntry->event(new_event) ;
-                                    gdk_event_free(new_event) ;
+				    m_SearchEntry->event(new_event) ;
+                                    //gdk_event_free(new_event) ;
 
                                     m_search_active = true ;
 
@@ -1586,21 +1529,20 @@ namespace Albums
                 }
 
                 void
-                send_focus_change(
-                      Gtk::Widget&  widget
-                    , bool          in
-                    )
+                focus_entry(
+		    bool in 
+		)
                 {
-                    GdkEvent *fevent = gdk_event_new (GDK_FOCUS_CHANGE);
+                    GdkEvent *event = gdk_event_new (GDK_FOCUS_CHANGE);
 
-                    fevent->focus_change.type   = GDK_FOCUS_CHANGE;
-                    fevent->focus_change.window = widget.get_window()->gobj ();
-                    fevent->focus_change.in     = in;
+                    event->focus_change.type   = GDK_FOCUS_CHANGE;
+                    event->focus_change.window = (*m_SearchEntry).get_window()->gobj ();
+                    event->focus_change.in     = in;
 
-                    widget.event( fevent ) ;
-                    widget.property_has_focus () = in;
+                    (*m_SearchEntry).send_focus_change( event ) ;
+                    (*m_SearchEntry).property_has_focus () = in;
 
-                    gdk_event_free( fevent ) ;
+                    //gdk_event_free( event ) ;
                 }
 
                 bool
@@ -1618,12 +1560,12 @@ namespace Albums
 		            return false ;
 		        }
 
-                        std::size_t row  = vadj_value() / m_height__row ; 
-                        std::size_t off  = m_height__row - (vadj_value() - (row*m_height__row)) ;
+                        guint row  = vadj_value() / m_height__row ; 
+                        guint off  = m_height__row - (vadj_value() - (row*m_height__row)) ;
 
                         if( event->y > off || off == 0 )
                         {
-                            std::size_t row2 = row + (event->y + (off ? (m_height__row-off) : 0)) / m_height__row ;
+                            guint row2 = row + (event->y + (off ? (m_height__row-off) : 0)) / m_height__row ;
 
 			    if( m_selection && boost::get<2>(m_selection.get()) == row2 && event->button != 3 )
 				return false ;
@@ -1682,9 +1624,9 @@ namespace Albums
 
                 void
                 configure_vadj(
-                      std::size_t   upper
-                    , std::size_t   page_size
-                    , std::size_t   step_increment
+                      guint   upper
+                    , guint   page_size
+                    , guint   step_increment
                 )
                 {
                     if( property_vadjustment().get_value() )
@@ -1714,7 +1656,7 @@ namespace Albums
                     double n                       = m_columns.size() ;
                     double column_width_calculated = event->width / n ;
 
-                    for( std::size_t n = 0; n < m_columns.size(); ++n )
+                    for( guint n = 0; n < m_columns.size(); ++n )
                     {
                         m_columns[n]->set_width( column_width_calculated ) ;
                     }
@@ -1730,19 +1672,21 @@ namespace Albums
 		)	
                 {
                     boost::shared_ptr<IYoukiThemeEngine> theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;
+
                     const ThemeColor& c_text		= theme->get_color( THEME_COLOR_TEXT ) ;
                     const ThemeColor& c_text_sel	= theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
                     const ThemeColor& c_base_rules_hint = theme->get_color( THEME_COLOR_BASE_ALTERNATE ) ;
-		    const ThemeColor& c_bg	= theme->get_color( THEME_COLOR_BACKGROUND ) ;
+
 		    const ThemeColor& c_base	= theme->get_color( THEME_COLOR_BASE ) ;
 		    const ThemeColor& c_outline	= theme->get_color( THEME_COLOR_ENTRY_OUTLINE ) ;
 
                     const Gtk::Allocation& a = get_allocation() ;
 
-                    std::size_t row     = get_upper_row() ;
-                    std::size_t ypos    = 0 ;
-                    std::size_t xpos    = 0 ;
-                    std::size_t limit   = Limiter<std::size_t>( Limiter<std::size_t>::ABS_ABS, 0, m_model->size(), m_height__current_viewport / m_height__row + 2 ) ;
+                    guint row     = get_upper_row() ;
+                    guint ypos    = 0 ;
+                    guint xpos    = 0 ;
+                    guint limit   = Limiter<guint>( Limiter<guint>::ABS_ABS, 0, m_model->size(), m_height__current_viewport / m_height__row + 2 ) ;
+
                     int offset = vadj_value() - (row*m_height__row) ;
 
                     if( offset )
@@ -1786,7 +1730,7 @@ namespace Albums
 
 		    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 
-		    std::size_t n = 0 ;
+		    guint n = 0 ;
 		    RowRowMapping_t::const_iterator iter = m_model->iter( row ) ;
 
 		    while( n < limit && m_Model_I.in(row+n) )
@@ -1837,10 +1781,9 @@ namespace Albums
 			    , ypos + 4
 			    , m_height__row
 			    , is_selected ? c_text_sel : c_text
-			    , m_model->size() - 1
-			    , m_model->m_realmodel->size() - 1
+			    , m_model->size()-1
+			    , m_model->m_realmodel->size()-1
 			    , is_selected
-			    , m_show_year_label
 			    , m_model->m_constraints_albums
 			) ;
 
@@ -1954,7 +1897,7 @@ namespace Albums
 
                 void
                 on_model_changed(
-                      std::size_t   position
+                      guint   position
                     , bool          size_changed
                 )
 		{
@@ -1964,14 +1907,14 @@ namespace Albums
 			, 8
 		    ) ;
 
-		    m_Model_I = Interval<std::size_t>(
-			  Interval<std::size_t>::IN_EX
+		    m_Model_I = Interval<guint>(
+			  Interval<guint>::IN_EX
 			, 0
 			, m_model->m_mapping.size()
 		    ) ;
 
 			/*
-                    boost::optional<std::size_t> row ;
+                    boost::optional<guint> row ;
 
                     if( m_selection )
                     {
@@ -2012,33 +1955,31 @@ namespace Albums
 		    ) ;
 		}
 
-			void
-			invalidate_covers()
-			{
-				for( Model_t::iterator i = m_model->m_realmodel->begin() ; i != m_model->m_realmodel->end() ; ++i )
-				{
-					(*i)->surfacecache.clear() ;
-				}
-			}
+		void
+		invalidate_covers()
+		{
+		    for( Model_t::iterator i = m_model->m_realmodel->begin() ; i != m_model->m_realmodel->end() ; ++i )
+		    {
+			(*i)->surface_cache.clear() ;
+		    }
+		}
 
 		public:
 
-			void
-			set_show_year_label( bool show )
-			{
-				m_show_year_label = show ;
-				(m_columns[0])->m_show_year_label = show ;
-				queue_draw() ;
-			}
+		void
+		set_show_year_label( bool show )
+		{
+		    m_columns[0]->m_show_year_label = show ;
+		    queue_draw() ;
+		}
 
-			void
-			set_rt_viewmode( RTViewMode mode )
-			{
-				m_rt_viewmode = mode ;
-				(m_columns[0])->m_rt_viewmode = mode ;
-				invalidate_covers() ;
-				queue_draw() ;
-			}
+		void
+		set_rt_viewmode( RTViewMode mode )
+		{
+		    m_columns[0]->m_rt_viewmode = mode ;
+		    invalidate_covers() ;
+		    queue_draw() ;
+		}
 
                 void
                 select_id(
@@ -2051,7 +1992,7 @@ namespace Albums
                     {
                         const guint& real_id = id.get() ;
 
-						std::size_t row = 0 ;
+			guint row = 0 ;
 
                         for( RowRowMapping_t::iterator i = m_model->m_mapping.begin(); i != m_model->m_mapping.end(); ++i )
                         {
@@ -2059,33 +2000,32 @@ namespace Albums
                             {
                                 select_row( row ) ;
 
-								if( !get_row_is_visible( row))
-	                                scroll_to_row( row ) ;
+				if( !get_row_is_visible( row))
+				    scroll_to_row( row ) ;
+
                                 return ;
                             }
 
-							++ row ;
+			    ++row ;
                         }
                     }
-
-                    clear_selection() ;
                 }
 
                 void
                 scroll_to_row(
-                      std::size_t row
+                      guint row
                 )
                 {
                     if( m_height__current_viewport && m_height__row && property_vadjustment().get_value() )
                     {
-                        if( m_model->m_mapping.size() < std::size_t(m_height__current_viewport/m_height__row) )
+                        if( m_model->m_mapping.size() < guint(m_height__current_viewport/m_height__row) )
                         {
                             property_vadjustment().get_value()->set_value( 0 ) ;
                         }
                         else
                         {
-                            Limiter<std::size_t> d (
-                                  Limiter<std::size_t>::ABS_ABS
+                            Limiter<guint> d (
+                                  Limiter<guint>::ABS_ABS
                                 , 0
                                 , (m_model->size() * m_height__row) - m_height__current_viewport
                                 , (row*m_height__row)
@@ -2098,7 +2038,7 @@ namespace Albums
 
                 void
                 select_row(
-                      std::size_t   row
+                      guint   row
                     , bool          quiet = false
                 )
                 {
@@ -2220,7 +2160,7 @@ namespace Albums
                         ++i ;
                     }
 
-					std::size_t row = std::distance( m_model->m_mapping.begin(), i ) ;
+		    guint d = std::distance( m_model->m_mapping.begin(), i ) ;
 
                     for( ; i != m_model->m_mapping.end(); ++i )
                     {
@@ -2228,12 +2168,12 @@ namespace Albums
 
                         if( match.length() && match.substr( 0, text.length()) == text.substr( 0, text.length()))
                         {
-                            scroll_to_row( row - 2 ) ;
-                            select_row( row ) ;
+                            scroll_to_row( std::max<int>(0, d-get_page_size()/2)) ;
+                            select_row( d ) ;
                             return ;
                         }
 
-						++ row ;
+			++d ;
                     }
                 }
 
@@ -2257,7 +2197,7 @@ namespace Albums
                         --i ;
                     }
 
-					std::size_t row = std::distance( m_model->m_mapping.begin(), i ) ;
+		    guint d = std::distance( m_model->m_mapping.begin(), i ) ;
 
                     for( ; i >= m_model->m_mapping.begin(); --i )
                     {
@@ -2265,12 +2205,12 @@ namespace Albums
 
                         if( match.length() && match.substr( 0, text.length()) == text.substr( 0, text.length()))
                         {
-                            scroll_to_row( row - 2 ) ;
-                            select_row( row ) ;
+                            scroll_to_row( std::max<int>(0, d-get_page_size()/2)) ;
+                            select_row( d ) ;
                             return ;
                         }
 
-						-- row ;
+			--d ;
                     }
                 }
 
@@ -2289,7 +2229,7 @@ namespace Albums
                     RowRowMapping_t::iterator i = m_model->m_mapping.begin();
                     ++i ;
 
-					std::size_t row = std::distance( m_model->m_mapping.begin(), i ) ;
+		    guint d = std::distance( m_model->m_mapping.begin(), i ) ;
 
                     for( ; i != m_model->m_mapping.end(); ++i )
                     {
@@ -2297,16 +2237,13 @@ namespace Albums
 
                         if( match.length() && match.substr( 0, text.length()) == text.substr( 0, text.length()))
                         {
-                            scroll_to_row( row - 2 ) ;
-                            select_row( row ) ;
+                            scroll_to_row( std::max<int>(0,d-get_page_size()/2)) ;
+                            select_row( d ) ;
                             return ;
                         }
 
-						++ row ;
+			++d ;
                     }
-
-                    scroll_to_row( 0 ) ;
-                    clear_selection() ;
                 }
 
                 void
@@ -2351,15 +2288,15 @@ namespace Albums
                     if( m_selection )
                     {
                         Album_sp album = *(boost::get<0>(m_selection.get())) ;
-						album->caching = true ;
-						m_caching.insert( album->album_id ) ;
+			album->caching = true ;
+			m_caching.insert( album->album_id ) ;
                         _signal_2.emit( album->album_id ) ;
-						queue_draw() ;
+			queue_draw() ;
 
-						if( !m_sigcconn__redraw )
-						{
-							m_sigcconn__redraw = Glib::signal_timeout().connect( sigc::mem_fun( *this, &Class::handle_redraw ), 100 ) ;
-						}
+			if( !m_redraw_spinner_conn )
+			{
+			     m_redraw_spinner_conn = Glib::signal_timeout().connect( sigc::mem_fun( *this, &Class::handle_redraw ), 100 ) ;
+			}
                     }
                 }
 
@@ -2369,7 +2306,7 @@ namespace Albums
 		    m_columns[0]->m_image_album_loading_iter->advance() ;
 		    queue_draw() ;
 		    while(gtk_events_pending()) gtk_main_iteration() ;
-		    if(m_caching.empty()) m_sigcconn__redraw.disconnect() ;
+		    if(m_caching.empty()) m_redraw_spinner_conn.disconnect() ;
 		    return !m_caching.empty() ;
 		}
 
@@ -2384,16 +2321,15 @@ namespace Albums
                 void
                 cancel_search()
                 {
-                    if( !m_search_active )
-                        return ;
-
-                    send_focus_change( *m_SearchEntry, false ) ;
-
-                    m_SearchWindow->hide() ;
-                    m_search_changed_conn.block () ;
-                    m_SearchEntry->set_text("") ;
-                    m_search_changed_conn.unblock () ;
-                    m_search_active = false ;
+                    if( m_search_active )
+		    {
+			focus_entry( false ) ;
+			m_SearchWindow->hide() ;
+			m_search_changed_conn.block () ;
+			m_SearchEntry->set_text("") ;
+			m_search_changed_conn.unblock () ;
+			m_search_active = false ;
+		    }
                 }
 
             protected:
@@ -2402,12 +2338,21 @@ namespace Albums
                 on_realize()
                 {
                     Gtk::DrawingArea::on_realize() ;
-                    add_events(Gdk::EventMask(GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_EXPOSURE_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_LEAVE_NOTIFY_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_MOTION_MASK | GDK_SCROLL_MASK ));
                     initialize_metrics();
                     queue_resize();
                 }
 
             public:
+
+                inline guint
+                get_page_size(
+                )
+                {
+                    if( m_height__current_viewport && m_height__row )
+                        return m_height__current_viewport / m_height__row ; 
+                    else
+                        return 0 ;
+                }
 
                 void
                 clear_selection(
@@ -2448,8 +2393,6 @@ namespace Albums
 			, property_vadj_(*this, "vadjustment", RPAdj(0))
 			, property_hadj_(*this, "hadjustment", RPAdj(0))
 
-			, m_rt_viewmode( RT_VIEW_BOTTOM )
-			, m_show_year_label( false )
 			, m_search_active( false )
                 {
 		    Scrollable::add_interface(G_OBJECT_TYPE(Glib::ObjectBase::gobj())) ;
@@ -2463,6 +2406,7 @@ namespace Albums
                     override_background_color( cgdk, Gtk::STATE_FLAG_NORMAL ) ;
 
                     set_can_focus(true);
+                    add_events(Gdk::EventMask(GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_EXPOSURE_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_LEAVE_NOTIFY_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_MOTION_MASK | GDK_SCROLL_MASK ));
 
                     m_SearchEntry = Gtk::manage( new Gtk::Entry ) ;
                     m_SearchEntry->show() ;

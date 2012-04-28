@@ -55,7 +55,7 @@ namespace Artist
         typedef std::vector<Model_t::iterator>             RowRowMapping_t ;
 
         typedef sigc::signal<void>                         Signal_0 ;
-        typedef sigc::signal<void, std::size_t>		   Signal_1 ;
+        typedef sigc::signal<void, guint>		   Signal_1 ;
 	typedef sigc::signal<void, guint>		   Signal_1a ;
 
         struct OrderFunc
@@ -87,9 +87,9 @@ namespace Artist
         {
                 Model_sp_t                      m_realmodel ;
                 IdIterMap_t                     m_iter_map ;
-                std::size_t                     m_top_row ;
+                guint                     m_top_row ;
                 boost::optional<guint>          m_selected ;
-                boost::optional<std::size_t>    m_selected_row ;
+                boost::optional<guint>    m_selected_row ;
                 Signal_1                        m_changed ;
 
                 DataModel()
@@ -126,21 +126,21 @@ namespace Artist
                     return bool(m_realmodel);
                 }
 
-                virtual std::size_t
+                virtual guint
                 size()
                 {
                     return m_realmodel->size();
                 }
 
                 virtual Row_t&
-                row(std::size_t row)
+                row(guint row)
                 {
                     return (*m_realmodel)[row];
                 }
 
                 virtual void
                 set_current_row(
-                    std::size_t row
+                    guint row
                 )
                 {
                     m_top_row = row ;
@@ -154,7 +154,7 @@ namespace Artist
                     m_selected = row ;
                 }
 
-                virtual boost::optional<std::size_t>
+                virtual boost::optional<guint>
                 get_selected_row(
                 )
                 {
@@ -206,7 +206,7 @@ namespace Artist
 
         struct DataModelFilter : public DataModel
         {
-                typedef std::vector<guint>             IdVector_t ;
+                typedef std::vector<guint>              IdVector_t ;
                 typedef boost::shared_ptr<IdVector_t>   IdVector_sp ;
 
                 RowRowMapping_t        m_mapping ;
@@ -250,7 +250,7 @@ namespace Artist
                     m_changed.emit( m_top_row ) ;
                 }
 
-                virtual std::size_t
+                virtual guint
                 size()
                 {
                     return m_mapping.size();
@@ -258,7 +258,7 @@ namespace Artist
 
                 virtual Row_t&
                 row(
-                      std::size_t row
+                      guint row
                 )
                 {
                     return *(m_mapping[row]);
@@ -266,7 +266,7 @@ namespace Artist
 
                 virtual RowRowMapping_t::const_iterator
                 row_iter(
-                      std::size_t row
+                      guint row
                 )
                 {
                     RowRowMapping_t::const_iterator i  = m_mapping.begin() ;
@@ -340,7 +340,7 @@ namespace Artist
 
                     Model_t::iterator i = m_realmodel->begin() ;
                     new_mapping.push_back( i++ ) ;
-		    std::size_t n = std::distance( m_realmodel->begin(), i ) ;
+		    guint n = std::distance( m_realmodel->begin(), i ) ;
 
                     for( ; i != m_realmodel->end(); ++i )
                     {
@@ -359,7 +359,7 @@ namespace Artist
 			++n ;
                     }
 
-		    std::size_t d = 0 ;
+		    guint d = 0 ;
 
 		    if( m_selected_row )
 		    {
@@ -375,7 +375,7 @@ namespace Artist
                 update_count(
                 )
                 {
-                    std::size_t model_size = m_mapping.size() - 1 ; // -1, because of our dummy album
+                    guint model_size = m_mapping.size() - 1 ; // -1, because of our dummy album
 
                     Row_t& row = **m_mapping.begin() ;
 
@@ -541,7 +541,7 @@ namespace Artist
 			    cairo->fill() ;
 		    }
 
-            Gdk::Cairo::set_source_rgba(cairo, color);
+	            Gdk::Cairo::set_source_rgba(cairo, color);
 
                     cairo->move_to(
                           xpos + 6
@@ -560,28 +560,36 @@ namespace Artist
 
         typedef boost::shared_ptr<Column>       Column_sp_t ;
         typedef std::vector<Column_sp_t>        Column_SP_vector_t ;
-        typedef sigc::signal<void>              Signal_void ;
+        typedef sigc::signal<void>              Signal_0 ;
 
-        class Class : public Gtk::DrawingArea
+        class Class 
+	: public Gtk::DrawingArea, public Gtk::Scrollable
         {
-                int                                 m_height__row ;
-                int                                 m_height__current_viewport ;
+	    public:
 
                 DataModelFilter_sp_t                m_model ;
+
+	    private:
+
+		typedef Glib::RefPtr<Gtk::Adjustment>	RPAdj ;
+		typedef Glib::Property<RPAdj>		PropAdjustment ;
+
+		PropAdjustment	property_vadj_, property_hadj_ ;
+
+                guint                                 m_height__row ;
+                guint                                 m_height__current_viewport ;
+
+                boost::optional<boost::tuple<Model_t::iterator, guint, guint> > m_selection ;
+
                 Column_SP_vector_t                  m_columns ;
-
-                PropAdj                             m_prop_vadj ;
-                PropAdj                             m_prop_hadj ;
-
-                boost::optional<boost::tuple<Model_t::iterator, guint, std::size_t> > m_selection ;
 
                 std::set<int>                       m_collapsed ;
                 std::set<int>                       m_fixed ;
                 int                                 m_fixed_total_width ;
 
-                Signal_void                         m_SIGNAL_selection_changed ;
-                Signal_void                         m_SIGNAL_find_accepted ;
-                Signal_void                         m_SIGNAL_start_playback ;
+                Signal_0			    m_SIGNAL_selection_changed ;
+                Signal_0			    m_SIGNAL_find_accepted ;
+                Signal_0			    m_SIGNAL_start_playback ;
 
                 Gtk::Entry                        * m_SearchEntry ;
                 Gtk::Window                       * m_SearchWindow ;
@@ -592,17 +600,36 @@ namespace Artist
                 void
                 initialize_metrics ()
                 {
-                    Glib::RefPtr<Pango::Context> context = get_pango_context ();
+                    Glib::RefPtr<Pango::Context> context = get_pango_context();
 
                     Pango::FontMetrics metrics = context->get_metrics(
-                          get_style_context ()->get_font ()
-                        , context->get_language ()
+			                              get_style_context ()->get_font()
+			                            , context->get_language()
                     ) ;
 
                     m_height__row =
-                        (metrics.get_ascent () / PANGO_SCALE) +
-                        (metrics.get_descent () / PANGO_SCALE) + 5 ;
+                        (metrics.get_ascent() / PANGO_SCALE) +
+                        (metrics.get_descent() / PANGO_SCALE) + 5 ;
                 }
+
+		void
+		on_vadj_prop_changed()
+		{
+		    if( !property_vadjustment().get_value() )
+			return ;
+
+		    property_vadjustment().get_value()->signal_value_changed().connect(
+			sigc::mem_fun(
+			    *this,
+			    &Class::on_vadj_value_changed
+		    ));
+
+		    configure_vadj(
+			  (m_model->size() * m_height__row) + 4
+			, m_height__current_viewport
+			, 3
+		    ) ;
+		}
 
                 void
                 on_vadj_value_changed ()
@@ -614,7 +641,7 @@ namespace Artist
                     }
                 }
 
-                inline std::size_t
+                inline guint
                 get_page_size(
                 )
                 {
@@ -624,22 +651,22 @@ namespace Artist
                         return 0 ;
                 }
 
-                inline std::size_t
+                inline guint
                 get_upper_row ()
                 {
-                    if( m_prop_vadj.get_value() )
-                        return m_prop_vadj.get_value()->get_value() / m_height__row ;
-                    else
-                        return 0 ;
+                    if( property_vadjustment().get_value() )
+                        return property_vadjustment().get_value()->get_value() / m_height__row ;
+
+		    return 0 ;
                 }
 
                 inline bool
                 get_row_is_visible (int row)
                 {
-                    std::size_t up = get_upper_row() ;
+                    guint up = get_upper_row() ;
 
-                    Interval<std::size_t> i (
-                          Interval<std::size_t>::IN_IN
+                    Interval<guint> i (
+                          Interval<guint>::IN_IN
                         , up
                         , up + (m_height__current_viewport / m_height__row)
                     ) ;
@@ -686,16 +713,16 @@ namespace Artist
                         }
 
                         GdkEvent *new_event = gdk_event_copy( (GdkEvent*)(event) ) ;
-                        g_object_unref( ((GdkEventKey*)new_event)->window ) ;
+                        //g_object_unref( ((GdkEventKey*)new_event)->window ) ;
                         ((GdkEventKey *) new_event)->window = m_SearchWindow->get_window()->gobj();
                         m_SearchEntry->event (new_event) ;
-                        gdk_event_free(new_event) ;
+                        //gdk_event_free(new_event) ;
 
                         return true ;
                     }
 
                     Limiter<guint> row ;
-                    Interval<std::size_t> i ;
+                    Interval<guint> i ;
                     guint origin = m_selection ? boost::get<2>(m_selection.get()) : 0 ;
 
                     switch( event->keyval )
@@ -714,7 +741,7 @@ namespace Artist
                                 break ;
                             }
 
-                            std::size_t step ;
+                            guint step ;
 
                             if( event->keyval == GDK_KEY_Page_Up )
                             {
@@ -734,8 +761,8 @@ namespace Artist
 
                             select_row( row ) ;
 
-                            i = Interval<std::size_t> (
-                                  Interval<std::size_t>::IN_EX
+                            i = Interval<guint> (
+                                  Interval<guint>::IN_EX
                                 , 0
                                 , get_upper_row()
                             ) ;
@@ -777,7 +804,7 @@ namespace Artist
                                 break ;
                             }
 
-                            std::size_t step ;
+                            guint step ;
 
                             if( event->keyval == GDK_KEY_Page_Down )
                             {
@@ -797,8 +824,8 @@ namespace Artist
 
                             select_row( row ) ;
 
-                            i = Interval<std::size_t> (
-                                  Interval<std::size_t>::IN_EX
+                            i = Interval<guint> (
+                                  Interval<guint>::IN_EX
                                 , get_upper_row() + (get_page_size())
                                 , m_model->size()
                             ) ;
@@ -815,26 +842,26 @@ namespace Artist
 
                             if( !m_search_active )
                             {
-                                int x, y, x_root, y_root ;
+                                gtk_widget_realize( GTK_WIDGET( m_SearchWindow->gobj() ) ); //m_SearchWindow->realize ();
 
-                                dynamic_cast<Gtk::Window*>(get_toplevel())->get_position( x_root, y_root ) ;
+                                int x, y ;
 
-                                x = x_root + get_allocation().get_x() ;
-                                y = y_root + get_allocation().get_y() + get_allocation().get_height() ;
+				get_window()->get_origin( x, y ) ;
+				y += get_allocation().get_height() ;
 
                                 m_SearchWindow->set_size_request( get_allocation().get_width(), -1 ) ;
                                 m_SearchWindow->move( x, y ) ;
                                 m_SearchWindow->show() ;
 
-                                send_focus_change( *m_SearchEntry, true ) ;
+                                focus_entry( true ) ;
 
                                 GdkEvent *new_event = gdk_event_copy( (GdkEvent*)(event) ) ;
-                                g_object_unref( ((GdkEventKey*)new_event)->window ) ;
-                                gtk_widget_realize( GTK_WIDGET( m_SearchWindow->gobj() ) ); //m_SearchWindow->realize ();
+                                //g_object_unref( ((GdkEventKey*)new_event)->window ) ;
                                 ((GdkEventKey *) new_event)->window = m_SearchWindow->get_window()->gobj();
 
                                 m_SearchEntry->event(new_event) ;
-                                gdk_event_free(new_event) ;
+
+                                //gdk_event_free(new_event) ;
 
                                 m_search_active = true ;
 
@@ -846,27 +873,22 @@ namespace Artist
                 }
 
                 void
-                send_focus_change(
-                      Gtk::Widget&  w
-                    , bool          in
-                    )
+                focus_entry(
+		    bool in 
+		)
                 {
-                    GtkWidget * widget = w.gobj() ;
+                    GdkEvent *event = gdk_event_new (GDK_FOCUS_CHANGE);
 
-                    GdkEvent *fevent = gdk_event_new (GDK_FOCUS_CHANGE);
+                    event->focus_change.type   = GDK_FOCUS_CHANGE;
+                    event->focus_change.window = (*m_SearchEntry).get_window()->gobj ();
+                    event->focus_change.in     = in;
 
-                    w.property_has_focus () = in;
+                    (*m_SearchEntry).send_focus_change( event ) ;
+                    (*m_SearchEntry).property_has_focus() = in;
 
-                    fevent->focus_change.type   = GDK_FOCUS_CHANGE;
-                    fevent->focus_change.window = w.get_window()->gobj();
-                    fevent->focus_change.in     = in;
-
-                    w.event( fevent ) ;
-
-                    g_object_notify(G_OBJECT (widget), "has-focus") ;
-
-                    gdk_event_free( fevent ) ;
+                    //gdk_event_free( event ) ;
                 }
+
 
                 bool
                 on_button_press_event (GdkEventButton * event)
@@ -882,12 +904,12 @@ namespace Artist
                         return false ;
                     }
 
-                    std::size_t row  = vadj_value() / m_height__row ;
-                    std::size_t off  = m_height__row - (vadj_value() - (row*m_height__row)) ;
+                    guint row  = vadj_value() / m_height__row ;
+                    guint off  = m_height__row - (vadj_value() - (row*m_height__row)) ;
 
                     if( event->y > off || off == 0 )
                     {
-                        std::size_t row2 = row + (event->y + (off ? (m_height__row-off) : 0)) / m_height__row ;
+                        guint row2 = row + (event->y + (off ? (m_height__row-off) : 0)) / m_height__row ;
 
                         if( m_selection && boost::get<2>(m_selection.get()) == row2 )
                             return true ;
@@ -933,16 +955,16 @@ namespace Artist
 
                 void
                 configure_vadj(
-                      std::size_t   upper
-                    , std::size_t   page_size
-                    , std::size_t   step_increment
+                      guint   upper
+                    , guint   page_size
+                    , guint   step_increment
                 )
                 {
-                    if( m_prop_vadj.get_value() )
+                    if( property_vadjustment().get_value() )
                     {
-                        m_prop_vadj.get_value()->set_upper( upper ) ;
-                        m_prop_vadj.get_value()->set_page_size( page_size ) ;
-                        m_prop_vadj.get_value()->set_step_increment( step_increment ) ;
+                        property_vadjustment().get_value()->set_upper( upper ) ;
+                        property_vadjustment().get_value()->set_page_size( page_size ) ;
+                        property_vadjustment().get_value()->set_step_increment( step_increment ) ;
                     }
                 }
 
@@ -956,7 +978,7 @@ namespace Artist
                     if( m_height__row )
                     {
                         configure_vadj(
-                              (m_model->size() * m_height__row) + 3
+                              (m_model->size() * m_height__row) + 4
                             , m_height__current_viewport
                             , 3
                         ) ;
@@ -964,7 +986,7 @@ namespace Artist
 
                     double column_width = (double(event->width) - m_fixed_total_width - (40*m_collapsed.size()) ) / double(m_columns.size()-m_collapsed.size()-m_fixed.size());
 
-                    for( std::size_t n = 0 ; n < m_columns.size() ; ++n )
+                    for( guint n = 0 ; n < m_columns.size() ; ++n )
                     {
                         if( m_fixed.count( n ) )
                         {
@@ -1002,17 +1024,17 @@ namespace Artist
                     const ThemeColor& c_base	= theme->get_color( THEME_COLOR_BASE ) ;
                     const ThemeColor& c_outline	= theme->get_color( THEME_COLOR_ENTRY_OUTLINE ) ;
 
-                    std::size_t row = get_upper_row() ;
+                    guint row = get_upper_row() ;
 
-                    std::size_t limit = Limiter<std::size_t>(
-                                            Limiter<std::size_t>::ABS_ABS
+                    guint limit = Limiter<guint>(
+                                            Limiter<guint>::ABS_ABS
                                           , 0
                                           , m_model->size()
                                           , get_page_size()
                                       ) + 2 ;
 
-                    std::size_t ypos = 2 ;
-                    std::size_t xpos = 0 ;
+                    guint ypos = 2 ;
+                    guint xpos = 0 ;
 
                     int offset  = vadj_value() - (row*m_height__row) ;
 
@@ -1054,7 +1076,7 @@ namespace Artist
 
                     cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 
-                    std::size_t n = 0 ;
+                    guint n = 0 ;
 
                     while( (row+n) < m_model->size() && n < limit )
                     {
@@ -1129,16 +1151,14 @@ namespace Artist
                         ++iter;
                     }
 
-                    cairo->reset_clip() ;
-
                     return true;
 	    }
 
 	    double
 	    vadj_value()
 	    {
-		if(  m_prop_vadj.get_value() )
-		    return m_prop_vadj.get_value()->get_value() ;
+		if(  property_vadjustment().get_value() )
+		    return property_vadjustment().get_value()->get_value() ;
 
 		return 0 ;
 	    }
@@ -1146,8 +1166,8 @@ namespace Artist
 	    double
 	    vadj_upper()
 	    {
-		if(  m_prop_vadj.get_value() )
-		    return m_prop_vadj.get_value()->get_upper() ;
+		if(  property_vadjustment().get_value() )
+		    return property_vadjustment().get_value()->get_upper() ;
 
 		return 0 ;
 	    }
@@ -1155,17 +1175,17 @@ namespace Artist
 	    void
 	    vadj_value_set( double v_ )
 	    {
-		if(  m_prop_vadj.get_value() )
-		    return m_prop_vadj.get_value()->set_value( v_ ) ;
+		if(  property_vadjustment().get_value() )
+		    return property_vadjustment().get_value()->set_value( v_ ) ;
 	    }
 
             void
             on_model_changed(
-		std::size_t position
+		guint position
 	    )
             {
                 configure_vadj(
-                               (m_model->size() * m_height__row) + 3
+                               (m_model->size() * m_height__row) + 4
                                , m_height__current_viewport
                                , 3
                                ) ;
@@ -1173,31 +1193,6 @@ namespace Artist
                 select_row( position ) ;
                 scroll_to_row( position ) ;
             }
-
-                static gboolean
-                list_view_set_adjustments(
-                    GtkWidget*obj,
-                    GtkAdjustment*hadj,
-                    GtkAdjustment*vadj,
-                    gpointer data
-                )
-                {
-                    if( vadj )
-                    {
-                            g_object_set(G_OBJECT(obj), "vadjustment", vadj, NULL);
-                            g_object_set(G_OBJECT(obj), "hadjustment", hadj, NULL);
-
-                            Class & view = *(reinterpret_cast<Class*>(data));
-
-                            view.m_prop_vadj.get_value()->signal_value_changed().connect(
-                                sigc::mem_fun(
-                                    view,
-                                    &Class::on_vadj_value_changed
-                            ));
-                    }
-
-                    return TRUE;
-                }
 
             public:
 
@@ -1216,7 +1211,7 @@ namespace Artist
                         {
                             if( real_id == get<1>(**i))
                             {
-                                std::size_t row = std::distance( m_model->m_mapping.begin(), i ) ;
+                                guint row = std::distance( m_model->m_mapping.begin(), i ) ;
 
                                 select_row( row ) ;
 
@@ -1233,7 +1228,7 @@ namespace Artist
 
                 void
                 scroll_to_row(
-                      std::size_t row
+                      guint row
                 )
                 {
                     if( m_height__current_viewport && m_height__row )
@@ -1244,8 +1239,8 @@ namespace Artist
                         }
                         else
                         {
-                            Limiter<std::size_t> d (
-                                  Limiter<std::size_t>::ABS_ABS
+                            Limiter<guint> d (
+                                  Limiter<guint>::ABS_ABS
                                 , 0
                                 , m_model->m_mapping.size() - get_page_size()
                                 , row
@@ -1271,7 +1266,7 @@ namespace Artist
 
                 void
                 select_row(
-                      std::size_t   row
+                      guint   row
                 )
                 {
                     if( row < m_model->size() )
@@ -1285,19 +1280,19 @@ namespace Artist
                     }
                 }
 
-                Signal_void&
+                Signal_0&
                 signal_selection_changed()
                 {
                     return m_SIGNAL_selection_changed ;
                 }
 
-                Signal_void&
+                Signal_0&
                 signal_find_accepted()
                 {
                     return m_SIGNAL_find_accepted ;
                 }
 
-                Signal_void&
+                Signal_0&
                 signal_start_playback()
                 {
                     return m_SIGNAL_start_playback ;
@@ -1418,17 +1413,20 @@ namespace Artist
                         ++i ;
                     }
 
+		    guint d = std::distance( m_model->m_mapping.begin(), i ) ;
+
                     for( ; i != m_model->m_mapping.end(); ++i )
                     {
                         Glib::ustring match = Glib::ustring(get<0>(**i)).casefold() ;
 
                         if( match.length() && match.substr( 0, text.length()) == text.substr( 0, text.length()) )
                         {
-                            std::size_t d = std::distance( m_model->m_mapping.begin(), i ) ;
-                            scroll_to_row( d ) ;
+                            scroll_to_row( std::max<int>(0, d-get_page_size()/2)) ;
                             select_row( d ) ;
-                            return ;
+                            break ;
                         }
+
+			++d ;
                     }
                 }
 
@@ -1452,17 +1450,20 @@ namespace Artist
                         --i ;
                     }
 
+		    guint d = std::distance( m_model->m_mapping.begin(), i ) ;
+
                     for( ; i >= m_model->m_mapping.begin(); --i )
                     {
                         Glib::ustring match = Glib::ustring(get<0>(**i)).casefold() ;
 
                         if( match.length() && match.substr( 0, text.length()) == text.substr( 0, text.length()) )
                         {
-                            std::size_t d = std::distance( m_model->m_mapping.begin(), i ) ;
-                            scroll_to_row( d ) ;
+                            scroll_to_row( std::max<int>(0, d-get_page_size()/2)) ;
                             select_row( d ) ;
-                            return ;
+                            break ;
                         }
+
+			--d ;
                     }
                 }
 
@@ -1481,21 +1482,21 @@ namespace Artist
                     RowRowMapping_t::iterator i = m_model->m_mapping.begin();
                     ++i ;
 
+		    guint d = std::distance( m_model->m_mapping.begin(), i ) ;
+
                     for( ; i != m_model->m_mapping.end(); ++i )
                     {
                         Glib::ustring match = Glib::ustring(get<0>(**i)).casefold() ;
 
                         if( match.length() && match.substr( 0, text.length()) == text.substr( 0, text.length()) )
                         {
-                            std::size_t d = std::distance( m_model->m_mapping.begin(), i ) ;
-                            scroll_to_row( d ) ;
+                            scroll_to_row( std::max<int>(0, d-get_page_size()/2)) ;
                             select_row( d ) ;
-                            return ;
+                            break ;
                         }
-                    }
 
-                    clear_selection() ;
-                    scroll_to_row(0) ;
+			++d ;
+                    }
                 }
 
                 void
@@ -1519,16 +1520,15 @@ namespace Artist
                 void
                 cancel_search()
                 {
-                    if( !m_search_active )
-                        return ;
-
-                    send_focus_change( *m_SearchEntry, false ) ;
-
-                    m_SearchWindow->hide() ;
-                    m_search_changed_conn.block () ;
-                    m_SearchEntry->set_text("") ;
-                    m_search_changed_conn.unblock () ;
-                    m_search_active = false ;
+                    if( m_search_active )
+		    {
+			focus_entry( false ) ;
+			m_SearchWindow->hide() ;
+			m_search_changed_conn.block () ;
+			m_SearchEntry->set_text("") ;
+			m_search_changed_conn.unblock () ;
+			m_search_active = false ;
+		    }
                 }
 
             protected:
@@ -1546,34 +1546,28 @@ namespace Artist
                 Class ()
 
                         : ObjectBase( "YoukiViewArtists" )
-                        , m_prop_vadj( *this, "vadjustment", (Gtk::Adjustment*)( 0 ))
-                        , m_prop_hadj( *this, "hadjustment", (Gtk::Adjustment*)( 0 ))
+
+			, property_vadj_(*this, "vadjustment", RPAdj(0))
+			, property_hadj_(*this, "hadjustment", RPAdj(0))
+
                         , m_fixed_total_width( 0 )
                         , m_search_active( false )
 
                 {
+		    Scrollable::add_interface(G_OBJECT_TYPE(Glib::ObjectBase::gobj())) ;
+		    property_vadjustment().signal_changed().connect( sigc::mem_fun( *this, &Class::on_vadj_prop_changed )) ;
+
                     boost::shared_ptr<IYoukiThemeEngine> theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;
                     const ThemeColor& c = theme->get_color( THEME_COLOR_BASE ) ;
+
                     Gdk::RGBA cgdk ;
                     cgdk.set_rgba( c.get_red(), c.get_green(), c.get_blue(), 1.0 ) ;
                     override_background_color ( cgdk, Gtk::STATE_FLAG_NORMAL ) ;
 
                     set_can_focus (true);
-                    add_events(Gdk::EventMask( GDK_KEY_PRESS_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_LEAVE_NOTIFY_MASK | GDK_BUTTON_PRESS_MASK ));
-
-                    // FIXME: Implement Gtk::Scrollable
-                    // GTK_WIDGET_GET_CLASS(gobj())->set_scroll_adjustments_signal =
-                    //         g_signal_new ("set_scroll_adjustments",
-                    //                   G_OBJECT_CLASS_TYPE (G_OBJECT_CLASS (G_OBJECT_GET_CLASS(G_OBJECT(gobj())))),
-                    //                   GSignalFlags (G_SIGNAL_RUN_FIRST),
-                    //                   0,
-                    //                   NULL, NULL,
-                    //                   g_cclosure_user_marshal_VOID__OBJECT_OBJECT, G_TYPE_NONE, 2, GTK_TYPE_ADJUSTMENT, GTK_TYPE_ADJUSTMENT);
-
-                    // g_signal_connect(G_OBJECT(gobj()), "set_scroll_adjustments", G_CALLBACK(list_view_set_adjustments), this);
+                    add_events(Gdk::EventMask(GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_EXPOSURE_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_LEAVE_NOTIFY_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_MOTION_MASK | GDK_SCROLL_MASK ));
 
                     m_SearchEntry = Gtk::manage( new Gtk::Entry ) ;
-                    gtk_widget_realize( GTK_WIDGET(m_SearchEntry->gobj() )) ;
                     m_SearchEntry->show() ;
 
                     m_search_changed_conn = m_SearchEntry->signal_changed().connect(

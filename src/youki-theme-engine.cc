@@ -284,9 +284,13 @@ namespace MPX
         colors[THEME_COLOR_BACKGROUND] = Util::make_rgba( cbg, 1. ) ;
         colors[THEME_COLOR_BASE]       = Util::make_rgba( cbase, 1. ) ; 
 
+/*
         Util::color_to_hsb( cbase, h, s, b ) ;
         b *= 0.95 ;
         colors[THEME_COLOR_BASE_ALTERNATE] = Util::color_from_hsb ( h, s, b ) ;
+*/
+
+	colors[THEME_COLOR_BASE_ALTERNATE] = Util::make_rgba( 0.95, 0.95, 0.95, 1. ) ;
 
         colors[THEME_COLOR_TEXT]          = Util::make_rgba( ctext, 1. ) ; 
         colors[THEME_COLOR_TEXT_SELECTED] = Util::make_rgba( ctext_sel, 1. ) ; 
