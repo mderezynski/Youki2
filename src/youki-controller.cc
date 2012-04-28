@@ -155,49 +155,14 @@ namespace MPX
     } ;
 
     YoukiController::YoukiController(
-        DBus::Connection conn
     )
     : Glib::ObjectBase( "YoukiController" )
-    , DBus::ObjectAdaptor( conn, "/org/mpris/MediaPlayer2" )
     , Service::Base("mpx-service-controller")
     , private_( new Private )
     , m_main_window( 0 )
     , m_follow_track( false )
     , m_history_ignore_save( false )
     {
-	CanQuit = true ;
-	CanRaise = true ; 
-	CanSetFullscreen = false ; 
-	HasTrackList = false ;
-	Identity = "Youki" ;
-	DesktopEntry = "youki" ; 
-
-	std::vector<std::string> v1 ;
-	v1.push_back("audio/mpeg") ;
-
-	std::vector<std::string> v2 ;
-	v2.push_back("file") ;
-
-	SupportedMimeTypes = v1 ;
-	SupportedUriSchemes = v2 ;
-
-	PlaybackStatus = "Stopped" ;
-	LoopStatus = "None" ;
-	Rate = 1 ;
-	Shuffle = false ; 
-	Metadata = std::map<std::string, DBus::Variant>() ;
-	Volume = 50 ;
-	Position = 0 ;
-	MinimumRate = 1 ;
-	MaximumRate = 1 ;
-
-	CanGoNext = true ; 
-	CanGoPrevious = true ; 
-	CanPlay = true ; 
-	CanPause = true ; 
-	CanSeek = false ; 
-	CanControl = true ;
-
 	IndicateServer* is = indicate_server_ref_default() ;
 	indicate_server_set_type( is, "music.youki" ) ;
 	indicate_server_set_desktop_file( is, "/usr/share/applications/youki.desktop") ;
@@ -246,6 +211,7 @@ namespace MPX
         m_play      = services->get<MPX::Play>("mpx-service-play").get() ;
         m_library   = services->get<Library>("mpx-service-library").get() ;
 
+/*
         m_mlibman_dbus_proxy = services->get<info::backtrace::Youki::MLibMan_proxy_actual>("mpx-service-mlibman").get() ; 
 
         m_mlibman_dbus_proxy->signal_scan_start().connect(
@@ -289,7 +255,7 @@ namespace MPX
                   *this
                 , &YoukiController::on_library_entity_updated
         )) ;
-
+*/
 
         m_library->signal_album_updated().connect(
             sigc::mem_fun(
@@ -1495,8 +1461,6 @@ namespace MPX
         }
 
         m_main_position->set_position( duration, position ) ;
-
-	Position = position * 1000 ;
     }
 
     void
@@ -1620,7 +1584,6 @@ namespace MPX
             case PLAYSTATUS_PLAYING:
 		m_Label_Error->set_text("") ;
 		m_main_position->unpause() ;
-		PlaybackStatus = "Playing" ;
                 break ;
 
             case PLAYSTATUS_STOPPED:
@@ -1638,8 +1601,6 @@ namespace MPX
 
                 if( m_main_window )
                     m_main_window->queue_draw () ;    
-
-		PlaybackStatus = "Stopped" ;
 
                 break ;
 
@@ -1664,8 +1625,6 @@ namespace MPX
 		{
 		    m_main_window->iconify() ;
 		}			
-
-		PlaybackStatus = "Paused" ;
 
                 break ;
 
@@ -2053,8 +2012,6 @@ namespace MPX
         ) ;
 
         m_play->property_volume().set_value( volume ) ;
-
-	Volume = volume ; 
     }
 
     void
@@ -2112,7 +2069,7 @@ namespace MPX
 		break; 
 
             case 1:
-                m_mlibman_dbus_proxy->ShowWindow () ;
+                //m_mlibman_dbus_proxy->ShowWindow () ;
 		break; 
 
             case 2:
@@ -2208,14 +2165,12 @@ namespace MPX
 void
     YoukiController::assign_metadata_to_DBus_property()
     {
-	return ;
 /*
         if( !m_track_current )
         {
 	    Metadata = std::map<std::string, DBus::Variant>() ;
 	    return ;
         }
-*/
 
         const MPX::Track& track = *(m_track_current.get()) ;
 
@@ -2268,6 +2223,7 @@ void
 	}
 
 	i_out.close_container( i_arr ) ;
+*/
     }
 
     void

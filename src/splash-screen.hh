@@ -50,8 +50,8 @@ namespace MPX
       protected:
 
           virtual bool
-          on_expose_event(
-                GdkEventExpose*
+          on_draw(
+	    const Cairo::RefPtr<Cairo::Context>&
           ) ;
 
       private:

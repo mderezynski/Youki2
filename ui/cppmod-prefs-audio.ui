@@ -1,55 +1,52 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <interface>
+  <!-- interface-requires gtk+ 2.6 -->
+  <!-- interface-naming-policy toplevel-contextual -->
   <object class="GtkAdjustment" id="adjustment1">
-    <property name="upper">9.2233720368499999e+18</property>
     <property name="lower">-1</property>
-    <property name="page_increment">500000</property>
-    <property name="step_increment">100000</property>
-    <property name="page_size">0</property>
+    <property name="upper">9.2233720368499999e+18</property>
     <property name="value">200000</property>
+    <property name="step_increment">100000</property>
+    <property name="page_increment">500000</property>
   </object>
   <object class="GtkAdjustment" id="adjustment2">
-    <property name="upper">9.2233720368499999e+18</property>
     <property name="lower">-1</property>
-    <property name="page_increment">500000</property>
-    <property name="step_increment">100000</property>
-    <property name="page_size">0</property>
+    <property name="upper">9.2233720368499999e+18</property>
     <property name="value">200000</property>
+    <property name="step_increment">100000</property>
+    <property name="page_increment">500000</property>
   </object>
   <object class="GtkAdjustment" id="adjustment3">
-    <property name="upper">9.2233720368499999e+18</property>
     <property name="lower">-1</property>
-    <property name="page_increment">500000</property>
-    <property name="step_increment">100000</property>
-    <property name="page_size">0</property>
+    <property name="upper">9.2233720368499999e+18</property>
     <property name="value">200000</property>
+    <property name="step_increment">100000</property>
+    <property name="page_increment">500000</property>
   </object>
   <object class="GtkAdjustment" id="adjustment4">
-    <property name="upper">9.2233720368499999e+18</property>
     <property name="lower">-1</property>
-    <property name="page_increment">500000</property>
-    <property name="step_increment">100000</property>
-    <property name="page_size">0</property>
+    <property name="upper">9.2233720368499999e+18</property>
     <property name="value">200000</property>
+    <property name="step_increment">100000</property>
+    <property name="page_increment">500000</property>
   </object>
   <object class="GtkAdjustment" id="adjustment5">
-    <property name="upper">9.2233720368499999e+18</property>
     <property name="lower">-1</property>
-    <property name="page_increment">500000</property>
-    <property name="step_increment">100000</property>
-    <property name="page_size">0</property>
+    <property name="upper">9.2233720368499999e+18</property>
     <property name="value">200000</property>
+    <property name="step_increment">100000</property>
+    <property name="page_increment">500000</property>
   </object>
   <object class="GtkAdjustment" id="adjustment6">
-    <property name="upper">9.2233720368499999e+18</property>
     <property name="lower">-1</property>
-    <property name="page_increment">500000</property>
-    <property name="step_increment">100000</property>
-    <property name="page_size">0</property>
+    <property name="upper">9.2233720368499999e+18</property>
     <property name="value">200000</property>
+    <property name="step_increment">100000</property>
+    <property name="page_increment">500000</property>
   </object>
   <object class="GtkListStore" id="model1">
     <columns>
+      <!-- column-name gchararray -->
       <column type="gchararray"/>
     </columns>
     <data>
@@ -60,6 +57,7 @@
   </object>
   <object class="GtkListStore" id="model2">
     <columns>
+      <!-- column-name gchararray -->
       <column type="gchararray"/>
     </columns>
     <data>
@@ -68,11 +66,9 @@
       </row>
     </data>
   </object>
-  <!-- interface-requires gtk+ 2.6 -->
-  <!-- interface-naming-policy toplevel-contextual -->
   <object class="GtkWindow" id="cppmod-prefs-audio-window">
     <property name="can_focus">False</property>
-    <signal handler="gtk_widget_hide" name="delete_event" object="dialog_preferences" swapped="yes"/>
+    <signal name="delete-event" handler="gtk_widget_hide" object="dialog_preferences" swapped="yes"/>
     <child>
       <object class="GtkVBox" id="cppmod-prefs-audio">
         <property name="visible">True</property>
@@ -188,6 +184,9 @@
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                       </object>
+                      <packing>
+                        <property name="position">1</property>
+                      </packing>
                     </child>
                     <child type="tab">
                       <object class="GtkLabel" id="label389">
@@ -247,8 +246,8 @@
                                     <property name="label" translatable="yes">Card:</property>
                                   </object>
                                   <packing>
-                                    <property name="x_options"/>
-                                    <property name="y_options"/>
+                                    <property name="x_options"></property>
+                                    <property name="y_options"></property>
                                   </packing>
                                 </child>
                                 <child>
@@ -261,8 +260,8 @@
                                   <packing>
                                     <property name="top_attach">1</property>
                                     <property name="bottom_attach">2</property>
-                                    <property name="x_options"/>
-                                    <property name="y_options"/>
+                                    <property name="x_options"></property>
+                                    <property name="y_options"></property>
                                   </packing>
                                 </child>
                               </object>
@@ -323,7 +322,7 @@
                                           <object class="GtkEntry" id="alsa_device_string">
                                             <property name="visible">True</property>
                                             <property name="can_focus">True</property>
-                                            <property name="invisible_char">&#x25CF;</property>
+                                            <property name="invisible_char">●</property>
                                             <property name="primary_icon_activatable">False</property>
                                             <property name="secondary_icon_activatable">False</property>
                                             <property name="primary_icon_sensitive">True</property>
@@ -432,6 +431,9 @@
                           </packing>
                         </child>
                       </object>
+                      <packing>
+                        <property name="position">2</property>
+                      </packing>
                     </child>
                     <child type="tab">
                       <object class="GtkLabel" id="label126">
@@ -464,14 +466,21 @@
                                 <property name="label" translatable="yes">Device:</property>
                               </object>
                               <packing>
-                                <property name="x_options"/>
-                                <property name="y_options"/>
+                                <property name="x_options"></property>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
                               <object class="GtkComboBoxEntry" id="oss_cbe_device">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
+                                <property name="model">model1</property>
+                                <child>
+                                  <object class="GtkCellRendererText" id="renderer1"/>
+                                  <attributes>
+                                    <attribute name="text">0</attribute>
+                                  </attributes>
+                                </child>
                                 <child internal-child="entry">
                                   <object class="GtkEntry" id="comboboxentry-entry2">
                                     <property name="can_focus">False</property>
@@ -480,13 +489,6 @@
                                     <property name="primary_icon_sensitive">True</property>
                                     <property name="secondary_icon_sensitive">True</property>
                                   </object>
-                                </child>
-                                <property name="model">model1</property>
-                                <child>
-                                  <object class="GtkCellRendererText" id="renderer1"/>
-                                  <attributes>
-                                    <attribute name="text">0</attribute>
-                                  </attributes>
                                 </child>
                               </object>
                               <packing>
@@ -594,6 +596,9 @@
                           </packing>
                         </child>
                       </object>
+                      <packing>
+                        <property name="position">3</property>
+                      </packing>
                     </child>
                     <child type="tab">
                       <object class="GtkLabel" id="label127">
@@ -626,14 +631,21 @@
                                 <property name="label" translatable="yes">Device:</property>
                               </object>
                               <packing>
-                                <property name="x_options"/>
-                                <property name="y_options"/>
+                                <property name="x_options"></property>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
                               <object class="GtkComboBoxEntry" id="sun_cbe_device">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
+                                <property name="model">model2</property>
+                                <child>
+                                  <object class="GtkCellRendererText" id="renderer2"/>
+                                  <attributes>
+                                    <attribute name="text">0</attribute>
+                                  </attributes>
+                                </child>
                                 <child internal-child="entry">
                                   <object class="GtkEntry" id="comboboxentry-entry4">
                                     <property name="can_focus">False</property>
@@ -642,13 +654,6 @@
                                     <property name="primary_icon_sensitive">True</property>
                                     <property name="secondary_icon_sensitive">True</property>
                                   </object>
-                                </child>
-                                <property name="model">model2</property>
-                                <child>
-                                  <object class="GtkCellRendererText" id="renderer2"/>
-                                  <attributes>
-                                    <attribute name="text">0</attribute>
-                                  </attributes>
                                 </child>
                               </object>
                               <packing>
@@ -756,6 +761,9 @@
                           </packing>
                         </child>
                       </object>
+                      <packing>
+                        <property name="position">4</property>
+                      </packing>
                     </child>
                     <child type="tab">
                       <object class="GtkLabel" id="label151">
@@ -788,15 +796,15 @@
                                 <property name="label" translatable="yes">Host:</property>
                               </object>
                               <packing>
-                                <property name="x_options"/>
-                                <property name="y_options"/>
+                                <property name="x_options"></property>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
                               <object class="GtkEntry" id="esd_host">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
-                                <property name="invisible_char">&#x2022;</property>
+                                <property name="invisible_char">•</property>
                                 <property name="primary_icon_activatable">False</property>
                                 <property name="secondary_icon_activatable">False</property>
                                 <property name="primary_icon_sensitive">True</property>
@@ -942,6 +950,9 @@
                           </packing>
                         </child>
                       </object>
+                      <packing>
+                        <property name="position">5</property>
+                      </packing>
                     </child>
                     <child type="tab">
                       <object class="GtkLabel" id="label156">
@@ -974,15 +985,15 @@
                                 <property name="label" translatable="yes">UDI:</property>
                               </object>
                               <packing>
-                                <property name="x_options"/>
-                                <property name="y_options"/>
+                                <property name="x_options"></property>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
                               <object class="GtkEntry" id="halaudio_udi">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
-                                <property name="invisible_char">&#x2022;</property>
+                                <property name="invisible_char">•</property>
                                 <property name="primary_icon_activatable">False</property>
                                 <property name="secondary_icon_activatable">False</property>
                                 <property name="primary_icon_sensitive">True</property>
@@ -1001,6 +1012,9 @@
                           </packing>
                         </child>
                       </object>
+                      <packing>
+                        <property name="position">6</property>
+                      </packing>
                     </child>
                     <child type="tab">
                       <object class="GtkLabel" id="label204">
@@ -1034,8 +1048,8 @@
                                 <property name="label" translatable="yes">Server:</property>
                               </object>
                               <packing>
-                                <property name="x_options"/>
-                                <property name="y_options"/>
+                                <property name="x_options"></property>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
@@ -1048,15 +1062,15 @@
                               <packing>
                                 <property name="top_attach">1</property>
                                 <property name="bottom_attach">2</property>
-                                <property name="x_options"/>
-                                <property name="y_options"/>
+                                <property name="x_options"></property>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
                               <object class="GtkEntry" id="pulse_server">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
-                                <property name="invisible_char">&#x2022;</property>
+                                <property name="invisible_char">•</property>
                                 <property name="primary_icon_activatable">False</property>
                                 <property name="secondary_icon_activatable">False</property>
                                 <property name="primary_icon_sensitive">True</property>
@@ -1071,7 +1085,7 @@
                               <object class="GtkEntry" id="pulse_device">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
-                                <property name="invisible_char">&#x2022;</property>
+                                <property name="invisible_char">•</property>
                                 <property name="primary_icon_activatable">False</property>
                                 <property name="secondary_icon_activatable">False</property>
                                 <property name="primary_icon_sensitive">True</property>
@@ -1184,6 +1198,9 @@
                           </packing>
                         </child>
                       </object>
+                      <packing>
+                        <property name="position">7</property>
+                      </packing>
                     </child>
                     <child type="tab">
                       <object class="GtkLabel" id="label277">
@@ -1216,15 +1233,15 @@
                                 <property name="label" translatable="yes">Server:</property>
                               </object>
                               <packing>
-                                <property name="x_options"/>
-                                <property name="y_options"/>
+                                <property name="x_options"></property>
+                                <property name="y_options"></property>
                               </packing>
                             </child>
                             <child>
                               <object class="GtkEntry" id="jack_server">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
-                                <property name="invisible_char">&#x2022;</property>
+                                <property name="invisible_char">•</property>
                                 <property name="primary_icon_activatable">False</property>
                                 <property name="secondary_icon_activatable">False</property>
                                 <property name="primary_icon_sensitive">True</property>
@@ -1335,6 +1352,9 @@
                           </packing>
                         </child>
                       </object>
+                      <packing>
+                        <property name="position">8</property>
+                      </packing>
                     </child>
                     <child type="tab">
                       <object class="GtkLabel" id="label332">
@@ -1401,6 +1421,7 @@
                 <property name="left_padding">16</property>
                 <child>
                   <object class="GtkCheckButton" id="cb-accurate-seek">
+                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
@@ -1483,6 +1504,7 @@
                 <property name="layout_style">end</property>
                 <child>
                   <object class="GtkButton" id="audio-system-reset-changes">
+                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="sensitive">False</property>
                     <property name="can_focus">True</property>
@@ -1538,6 +1560,7 @@
                 <child>
                   <object class="GtkButton" id="audio-system-apply-changes">
                     <property name="label">gtk-apply</property>
+                    <property name="use_action_appearance">False</property>
                     <property name="visible">True</property>
                     <property name="sensitive">False</property>
                     <property name="can_focus">True</property>

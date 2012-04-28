@@ -137,8 +137,10 @@ namespace Albums
         };
 
         typedef boost::shared_ptr<Album>		    Album_sp ;
-        typedef std::vector<Album_sp>                       Model_t ;
+
+        typedef IndexedList<Album_sp>                       Model_t ;
         typedef boost::shared_ptr<Model_t>                  Model_sp_t ;
+
         typedef std::map<guint, Model_t::iterator>          IdIterMap_t ;
         typedef std::vector<Model_t::iterator>              RowRowMapping_t ;
 
@@ -1107,56 +1109,30 @@ namespace Albums
 				layout[L3]->set_width( -1 ) ;
 				layout[L3]->set_ellipsize( Pango::ELLIPSIZE_NONE ) ;
 
-//				guint tm = 0 ;
+				guint tm = 0 ;
 				guint totaltracks = 0 ;
 
 				if( album_constraints )
 				{
-//					tm = ((*album_constraints)[album->album_id]).Time ;
+					tm = ((*album_constraints)[album->album_id]).Time ;
 					totaltracks = ((*album_constraints)[album->album_id]).Count ;
+					layout[L3]->set_markup((boost::format("<b>%u</b> / <b>%u</b> %s") % totaltracks % album->track_count % ((album->track_count>1) ? "Tracks" : "Track")).str()) ;
 				}
 				else
 				{
-//					tm = album->totaltime ;
+					tm = album->totaltime ;
 					totaltracks = album->track_count ;
+					layout[L3]->set_markup((boost::format("<b>%u</b> %s") % totaltracks % ((totaltracks>1) ? "Tracks" : "Track")).str()) ;
 				}
 
-#if 0
-				guint min = (tm+60) / 60 ;
-
-/*
-				if( hrs > 0 )
-				{
-					if( min != 0 )
-						layout[L3]->set_markup((boost::format("<b>%d</b>h <b>%d</b>m") % hrs % min).str()) ;
-					else
-						layout[L3]->set_markup((boost::format("<b>%d</b>h") % hrs).str()) ;
-				}
-				else
-*/
-				if( min == 0 )
-				{
-					layout[L3]->set_markup((boost::format("< <b>1</b> %s") % _("Minute")).str()) ;
-				}
-				else
-				{
-					layout[L3]->set_markup((boost::format("<b>%d</b> %s") % min % ((min > 1) ? _("Minutes") : _("Minute"))).str()) ;
-				}
+				guint hrs = tm / 3600 ;
+				guint min = (tm-hrs*3600) / 60 ; 
+				guint sec = tm % 60 ;
 
 				layout[L3]->get_pixel_size( width, height ) ;
 				cairo->move_to(
-				      m_width - width - 8 
-				    , r.y + row_height - height - 14
-				) ;
-				cairo->set_source_rgba(color.get_red(), color.get_green(), color.get_blue(), 0.9);
-				pango_cairo_show_layout( cairo->cobj(), layout[L3]->gobj() ) ;
-#endif
-
-				layout[L3]->set_markup((boost::format("<b>%d</b> %s") % totaltracks % ((totaltracks>1) ? "Tracks" : "Track")).str()) ;
-				layout[L3]->get_pixel_size( width, height ) ;
-				cairo->move_to(
-				      m_width - width - 8 
-				    , r.y + row_height - height - 27 
+				      xpos + 8 
+				    , r.y + row_height - height - 12 
 				) ;
 				cairo->set_source_rgba(color.get_red(), color.get_green(), color.get_blue(), 0.9);
 				pango_cairo_show_layout( cairo->cobj(), layout[L3]->gobj() ) ;

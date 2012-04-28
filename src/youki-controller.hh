@@ -18,9 +18,6 @@
 #include "kobo-volume.hh"
 #include "youki-spectrum-titleinfo.hh"
 
-#include "mpx-mlibman-dbus-proxy-actual.hh"
-#include "mpx-app-dbus-adaptor.hh"
-
 #include <sigx/sigx.h>
 
 namespace MPX
@@ -52,11 +49,6 @@ namespace MPX
 
     class YoukiController
     : public IYoukiController
-    , public ::org::mpris::MediaPlayer2_adaptor
-    , public ::org::mpris::MediaPlayer2::Player_adaptor
-    , public DBus::IntrospectableAdaptor
-    , public DBus::PropertiesAdaptor
-    , public DBus::ObjectAdaptor
     , public sigx::glib_auto_dispatchable
     , public Service::Base
     {
@@ -141,8 +133,8 @@ namespace MPX
 
         public:
 
-            YoukiController( DBus::Connection ) ;
-            virtual ~YoukiController () ;
+            YoukiController() ;
+            virtual ~YoukiController() ;
 
             Gtk::Window*
             get_widget () ;
@@ -267,8 +259,6 @@ namespace MPX
             boost::optional<guint>            m_seek_position ;
             bool                              m_follow_track ;
 
-            info::backtrace::Youki::MLibMan_proxy_actual * m_mlibman_dbus_proxy ;
-
             sigc::connection                  m_conn1
                                             , m_conn2
                                             , m_conn3
@@ -279,7 +269,7 @@ namespace MPX
             guint                             m_C_SIG_ID_track_out ;
             guint                             m_C_SIG_ID_track_cancelled ;
 
-            std::vector<guint>               m_new_tracks ;
+            std::vector<guint>                m_new_tracks ;
 
 	    Glib::Timer			      m_keytimer ;
 	    bool			      m_switchfocus ;
@@ -584,8 +574,10 @@ namespace MPX
 	    virtual void
 	    Seek( const int64_t& s ){ on_position_seek( s/1000 ); }
 
+/*
 	    virtual void
 	    SetPosition( const DBus::Path&, const int64_t& ){} 
+*/
 
 	    virtual void
 	    OpenUri( const std::string& ){}

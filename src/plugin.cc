@@ -29,9 +29,12 @@
 #include "mpx/mpx-plugin.hh"
 #include "mpx/mpx-main.hh"
 
+#if 0
 #include "plugin-types-python.hh"
-#include "plugin-types-cpp.hh"
 #include "plugin-loader-python.hh"
+#endif
+
+#include "plugin-types-cpp.hh"
 #include "plugin-loader-cpp.hh"
 
 using namespace Glib;
@@ -68,17 +71,19 @@ namespace MPX
 	}
 
 	PluginManager::PluginManager ()
-    : Service::Base("mpx-service-plugins")
+	: Service::Base("mpx-service-plugins")
 	, m_Id(1)
 	{
         mcs->domain_register("plugins");
 
+/*
         m_PluginLoader_Python = new PluginLoaderPython;
         m_PluginLoader_Python->signal_plugin_loaded().connect(
             sigc::mem_fun(
                 *this,
                 &PluginManager::on_plugin_loaded
         ));
+*/
 
         m_PluginLoader_CPP = new PluginLoaderCPP;
         m_PluginLoader_CPP->signal_plugin_loaded().connect(
@@ -87,9 +92,9 @@ namespace MPX
                 &PluginManager::on_plugin_loaded
         ));
 
-        m_PluginLoader_Python->load_plugins( m_Id ); 
+//        m_PluginLoader_Python->load_plugins( m_Id ); 
         m_PluginLoader_CPP->load_plugins( m_Id ); 
-	}
+    }
 
     void
     PluginManager::on_plugin_loaded(
@@ -130,10 +135,10 @@ namespace MPX
 
 	PluginManager::~PluginManager ()
 	{
-        shutdown();
+            shutdown();
 
-        delete m_PluginLoader_Python ;
-        delete m_PluginLoader_CPP ;
+//	    delete m_PluginLoader_Python ;
+            delete m_PluginLoader_CPP ;
 	}
 
 	const PluginHoldMap_t&

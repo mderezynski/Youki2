@@ -20,7 +20,7 @@ namespace
 namespace MPX
 {
     void
-    YoukiSpectrumTitleinfo::clear ()
+    YoukiSpectrumTitleinfo::clear()
     {
         m_info.clear() ;
 	m_audio_bitrate.reset() ;
@@ -71,12 +71,10 @@ namespace MPX
     }
 
     bool
-    YoukiSpectrumTitleinfo::on_expose_event(
-        GdkEventExpose* G_GNUC_UNUSED 
+    YoukiSpectrumTitleinfo::on_draw(
+	const Cairo::RefPtr<Cairo::Context>& cairo
     )
     {
-        Cairo::RefPtr<Cairo::Context> cairo = get_window ()->create_cairo_context ();
-
         draw_background( cairo ) ;
         draw_titleinfo( cairo ) ;
         draw_cover( cairo ) ;
@@ -90,7 +88,7 @@ namespace MPX
 		cairo->save() ;
 		cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 
-		int text_size_pt = static_cast<int>( (12 * 72) / Util::screen_get_y_resolution( Gdk::Screen::get_default() )) ;
+		int text_size_pt = static_cast<int>((12 * 72) / Util::screen_get_y_resolution( Gdk::Screen::get_default())) ;
 
 		Pango::FontDescription font_desc = get_style_context()->get_font() ;
 		font_desc.set_size( text_size_pt * PANGO_SCALE ) ;
@@ -170,7 +168,7 @@ namespace MPX
 
     void
     YoukiSpectrumTitleinfo::draw_background(
-          Cairo::RefPtr<Cairo::Context>& 	cairo
+          const Cairo::RefPtr<Cairo::Context>& cairo
     )
     {
         cairo->save() ;
@@ -280,7 +278,7 @@ namespace MPX
 
     void
     YoukiSpectrumTitleinfo::draw_titleinfo(
-          Cairo::RefPtr<Cairo::Context>&	cairo
+          const Cairo::RefPtr<Cairo::Context>& cairo
     )
     {
         if( m_info.empty())
@@ -343,7 +341,7 @@ namespace MPX
 
     void
     YoukiSpectrumTitleinfo::draw_cover(
-          Cairo::RefPtr<Cairo::Context>&	cairo
+          const Cairo::RefPtr<Cairo::Context>& cairo
     )
     {
 	if( !m_cover )

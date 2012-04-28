@@ -83,7 +83,7 @@ namespace MPX
         m_Name = "Multimedia Keys" ;
         m_Description = "This plugin allows Youki to be controlled using the keyboard's multimedia keys" ;
         m_Authors = "Rhythmbox developers (original code), M. Derezynski (adaptation for Youki)" ;
-        m_Copyright = "(C) 2009 MPX Project" ;
+        m_Copyright = "(C) 2012 Youki" ;
         m_IAge = 0 ;
         m_Website = "http://redmine.sivashs.org/projects/mpx" ;
         m_Active = false ;
@@ -108,6 +108,9 @@ namespace MPX
         mcs->key_register ("hotkeys", "key-5-mask", int (0));
 
         // MM-Keys
+
+        m_Builder->get_widget ("mm-revert", m_revert_button);
+        m_Builder->get_widget ("mm-apply", m_apply_button);
 
         const int N_MM_KEYS = 4 ;
         const int N_MM_KEY_SYSTEMS = 3 ;
@@ -171,9 +174,6 @@ namespace MPX
                 button->set_active ();
             }
         }
-
-        m_Builder->get_widget ("mm-revert", m_revert_button);
-        m_Builder->get_widget ("mm-apply", m_apply_button);
 
         m_revert_button->signal_clicked().connect(sigc::mem_fun( *this, &MMKeys::mm_load));
         m_apply_button->signal_clicked().connect(sigc::mem_fun( *this, &MMKeys::mm_apply));
@@ -269,7 +269,7 @@ namespace MPX
                 keytext = XKeysymToString(keysym);
             }
 
-            for (int i = 0, j=0; j<7; j++)
+            for (int j=0; j<7; j++)
             {
                 if( mask & modifiers[j] )
                     strings.push_back (modifier_string[j]);
@@ -371,7 +371,9 @@ namespace MPX
                 table->set_sensitive (true);
                 break;
         }
+
         m_mm_option = option - 1;
+
         m_apply_button->set_sensitive (true);
     }
 

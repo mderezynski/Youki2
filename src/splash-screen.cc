@@ -60,7 +60,9 @@ namespace MPX
 
         Glib::RefPtr<Gdk::Screen> screen = Gdk::Screen::get_default();
 
-        m_has_alpha = screen->is_composited();
+	Gdk::RGBA rgba ;
+	rgba.set_rgba( 0., 0., 0., 0. ) ;
+	override_background_color( rgba ) ;
 
         // FIXME: Port this to use Cairo
         // if( m_has_alpha )
@@ -91,7 +93,7 @@ namespace MPX
         //     ) ;
         // }
 
-        show ();
+        show();
     }
 
     void
@@ -110,13 +112,13 @@ namespace MPX
     }
 
     bool
-    Splashscreen::on_expose_event (GdkEventExpose *event)
+    Splashscreen::on_draw(
+	const Cairo::RefPtr<Cairo::Context>& cairo
+    )
     {
-        Cairo::RefPtr<Cairo::Context> cairo = get_window ()->create_cairo_context () ;
-
         cairo->set_operator( Cairo::OPERATOR_SOURCE ) ;
 
-        if(m_has_alpha)
+        if( m_has_alpha )
         {
             cairo->set_source_rgba( .0, .0, .0, .0 ) ;
             cairo->paint ();
@@ -197,6 +199,6 @@ namespace MPX
             , layout->gobj()
         ) ;
 
-        return false;
+        return true ;
     }
 } // namespace MPX

@@ -2,6 +2,5 @@ ADD_DEFINITIONS(-DPLUGIN_BUILD=1)
 
 ADD_SUBDIRECTORY(lastfmscrobbler)
 ADD_SUBDIRECTORY(mmkeys)
-ADD_SUBDIRECTORY(prefs-audio)
 ADD_SUBDIRECTORY(prefs-audio-quality)
 ADD_SUBDIRECTORY(prefs-library)

@@ -73,7 +73,6 @@ namespace MPX
     {
         StockIconSpecV v; 
 
-        v.push_back(StockIconSpec( "icon-equalizer.png",           MPX_STOCK_EQUALIZER         ));
         v.push_back(StockIconSpec( "icon-plugins.png",             MPX_STOCK_PLUGIN            ));
         v.push_back(StockIconSpec( "icon-preferences.png",         "mpx-stock-preferences"     ));
         v.push_back(StockIconSpec( "icon-musiclibrary.png",        "mpx-stock-musiclibrary"    ));

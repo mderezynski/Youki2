@@ -47,23 +47,23 @@ namespace MPX
             ) ;
 
             virtual bool
-            on_expose_event(
-                  GdkEventExpose*
+            on_draw(
+                  const Cairo::RefPtr<Cairo::Context>&
             ) ;
 
             void
             draw_titleinfo(
-                  Cairo::RefPtr<Cairo::Context>&
+                  const Cairo::RefPtr<Cairo::Context>&
             );
 
             void
             draw_background(
-                  Cairo::RefPtr<Cairo::Context>&
+                  const Cairo::RefPtr<Cairo::Context>&
             );
 
             void
             draw_cover(
-                  Cairo::RefPtr<Cairo::Context>&
+                  const Cairo::RefPtr<Cairo::Context>&
             );
 
       public:
