@@ -1441,13 +1441,13 @@ namespace Tracks
 
                 void
                 render_header(
-                      Cairo::RefPtr<Cairo::Context>&    cairo
-                    , Gtk::Widget&                      widget
-                    , int                               xpos
-                    , int                               ypos
-                    , int                               rowheight
-                    , int                               column
-                    , const ThemeColor&                 color
+                      const Cairo::RefPtr<Cairo::Context>&  cairo
+                    , Gtk::Widget&			    widget
+                    , int				    xpos
+                    , int				    ypos
+                    , int				    rowheight
+                    , int				    column
+                    , const ThemeColor&			    color
                 )
                 {
                     using boost::get;
@@ -1495,18 +1495,18 @@ namespace Tracks
 
                 void
                 render(
-                      Cairo::RefPtr<Cairo::Context>&    cairo
-                    , Gtk::Widget&                      widget
-                    , const Row_t&                      datarow
-                    , int                               row
-                    , int                               xpos
-                    , int                               ypos
-                    , int                               rowheight
-                    , const ThemeColor&                 color
-                    , double                            alpha
-		    , bool				highlight
-		    , const std::string&		matches
-		    , bool				selected
+                      const Cairo::RefPtr<Cairo::Context>&  cairo
+                    , Gtk::Widget&			    widget
+                    , const Row_t&			    datarow
+                    , int				    row
+                    , int				    xpos
+                    , int				    ypos
+                    , int				    rowheight
+                    , const ThemeColor&			    color
+                    , double				    alpha
+		    , bool				    highlight
+		    , const std::string&		    matches
+		    , bool				    selected
                 )
                 {
 		      using boost::get ;
@@ -1917,7 +1917,6 @@ namespace Tracks
                                 if( row >= get_lower_row() )
                                 {
                                     scroll_to_row( row ) ;
-                                    // m_prop_vadj.get_value()->set_value( std::min<std::size_t>(get_upper_row()+step, row )) ;
                                 }
 
                                 select_row( row ) ;
@@ -2175,7 +2174,9 @@ namespace Tracks
                 }
 
                 bool
-                on_expose_event (GdkEventExpose *event)
+                on_expose_event(
+		    const Cairo::RefPtr<Cairo::Context>& cairo
+		)
                 {
                     boost::shared_ptr<IYoukiThemeEngine> theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;
 
@@ -2193,27 +2194,25 @@ namespace Tracks
 
                     const Gtk::Allocation& a = get_allocation();
 
-                    Cairo::RefPtr<Cairo::Context> cairo = get_window()->create_cairo_context(); 
-
 		    cairo->set_operator( Cairo::OPERATOR_SOURCE ) ;
-            Gdk::Cairo::set_source_rgba(cairo, c_bg);
+		    Gdk::Cairo::set_source_rgba(cairo, c_bg);
 		    cairo->paint() ;
 
 		    cairo->save() ;
-            RoundedRectangle(
-                             cairo
+		    RoundedRectangle(
+                               cairo
                              , 1
                              , 1
                              , a.get_width() - 2 
                              , a.get_height() - 2 
                              , rounding
-                             ) ;
-            cairo->set_source_rgba( c_outline.get_red(), c_outline.get_green(), c_outline.get_blue(), 1.0) ; 
-            cairo->set_line_width( 0.75 ) ;
-            cairo->stroke() ;
+                    ) ;
+		    Gdk::Cairo::set_source_rgba(cairo, c_outline) ;
+	            cairo->set_line_width( 0.75 ) ;
+		    cairo->stroke() ;
 		    cairo->restore() ;
 
-            RoundedRectangle(
+		    RoundedRectangle(
                              cairo
                              , 2
                              , 2
@@ -2221,14 +2220,12 @@ namespace Tracks
                              , a.get_height() - 4 
                              , rounding
                              ) ;
-            cairo->clip() ;
+		    cairo->clip() ;
 
-            Gdk::Cairo::set_source_rgba(cairo, c_base);
-
+		    Gdk::Cairo::set_source_rgba(cairo, c_base);
 		    cairo->paint() ;
 
 		    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
-
                     std::size_t row   = get_upper_row() ;
                     std::size_t limit = Limiter<std::size_t>(
 				            Limiter<std::size_t>::ABS_ABS
@@ -2240,7 +2237,6 @@ namespace Tracks
                     std::size_t xpos = 0 ;
 
 		    cairo->save() ;
-
 		    RoundedRectangle(
 			  cairo
 			, 0
@@ -2265,7 +2261,6 @@ namespace Tracks
 		    c2 = Util::color_from_hsb( h, s, b ) ;
 
 		    Cairo::RefPtr<Cairo::LinearGradient> gr = Cairo::LinearGradient::create( a.get_width()/2., 1, a.get_width() / 2., m_height__headers - 2 ) ;
-
 		    gr->add_color_stop_rgba( 0., c1.get_red(), c1.get_green(), c1.get_blue(), 1. ) ;
 		    gr->add_color_stop_rgba( .35, c1.get_red(), c1.get_green(), c1.get_blue(), 1. ) ;
 		    gr->add_color_stop_rgba( 1., c2.get_red(), c2.get_green(), c2.get_blue(), 1. ) ;
@@ -2500,10 +2495,33 @@ namespace Tracks
                 }
 		    }
 
-		    cairo->reset_clip() ;
-
                     return true;
                 }
+
+		double
+		vadj_value()
+		{
+		    if(  m_prop_vadj.get_value() )
+			return m_prop_vadj.get_value()->get_value() ;
+
+		    return 0 ;
+		}
+
+		double
+		vadj_upper()
+		{
+		    if(  m_prop_vadj.get_value() )
+			return m_prop_vadj.get_value()->get_upper() ;
+
+		    return 0 ;
+		}
+
+		void
+		vadj_value_set( double v_ )
+		{
+		    if(  m_prop_vadj.get_value() )
+			return m_prop_vadj.get_value()->set_value( v_ ) ;
+		}
 
                 void
                 on_model_changed(
@@ -2775,7 +2793,7 @@ namespace Tracks
                                 , row 
                             ) ;
 
-                            m_prop_vadj.get_value()->set_value( d ) ; 
+                            vadj_value_set( d ) ; 
                             break ;
                         }
 
@@ -2788,7 +2806,7 @@ namespace Tracks
                       std::size_t row
                 )
                 {
-                    if( m_height__current_viewport && m_height__row && m_prop_vadj.get_value() && m_model )
+                    if( m_height__current_viewport && m_height__row && m_model )
                     {
                         Limiter<std::size_t> d ( 
                               Limiter<std::size_t>::ABS_ABS
@@ -2798,12 +2816,12 @@ namespace Tracks
                         ) ;
 
                         if( m_model->m_mapping->size() < get_page_size()) 
-                            m_prop_vadj.get_value()->set_value( 0 ) ; 
+                            vadj_value_set( 0 ) ; 
                         else
                         if( row > (m_model->m_mapping->size() - get_page_size()) )
-                            m_prop_vadj.get_value()->set_value( m_model->m_mapping->size() - get_page_size() ) ; 
+                            vadj_value_set( m_model->m_mapping->size() - get_page_size() ) ; 
                         else
-                            m_prop_vadj.get_value()->set_value( d ) ; 
+                            vadj_value_set( d ) ; 
                     }
                 }
 

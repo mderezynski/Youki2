@@ -935,9 +935,9 @@ namespace Albums
 
                 void
                 render(
-                      Cairo::RefPtr<Cairo::Context>&        cairo
+                      const Cairo::RefPtr<Cairo::Context>&  cairo
                     , Album_sp				    album
-                    , Gtk::Widget&                          widget
+                    , Gtk::Widget&                          widget // FIXME: Do we still need this for the Pango style context in Gtk3?
                     , std::size_t                           row
                     , std::size_t                           xpos
                     , int                                   ypos
@@ -1223,7 +1223,7 @@ namespace Albums
 
                 sigc::connection                    m_search_changed_conn ;
                 bool                                m_search_active ;
-		std::set<guint>		    m_caching ;
+		std::set<guint>			    m_caching ;
 		sigc::connection		    m_sigcconn__redraw ;
 
 
@@ -1433,13 +1433,13 @@ namespace Albums
                                         row = std::max<int>( origin+step, 0 ) ;
                                         select_row( row ) ;
 
-                                        double adj_value = m_prop_vadj.get_value()->get_value() ;
+                                        double adj_value = vadj_value() ; 
 
                                         if( (row * m_height__row) < adj_value )
                                         {
                                             if( event->keyval == GDK_KEY_Page_Up )
                                             {
-                                                m_prop_vadj.get_value()->set_value( std::max<int>( adj_value + (step*int(m_height__row)), 0 )) ;
+                                                vadj_value_set( std::max<int>( adj_value + (step*int(m_height__row)), 0 )) ;
                                             }
                                             else
                                             {
@@ -1501,21 +1501,22 @@ namespace Albums
                                 if( get_row_is_visible( origin ))
                                 {
                                     row = std::min<int>( origin+step, m_model->size() - 1 ) ;
+
                                     select_row( row ) ;
 
-                                    double adj_value = m_prop_vadj.get_value()->get_value() ;
+                                    double adj_value = vadj_value() ; 
 
                                     if( event->keyval == GDK_KEY_Page_Down )
                                     {
                                         std::size_t new_val = adj_value + (step*m_height__row) ;
 
-                                        if( new_val > (m_prop_vadj.get_value()->get_upper()-m_height__current_viewport))
+                                        if( new_val > (vadj_upper()-m_height__current_viewport))
                                         {
                                             scroll_to_row( row ) ;
                                         }
                                         else
                                         {
-                                            m_prop_vadj.get_value()->set_value( adj_value + (step*m_height__row)) ;
+                                            vadj_value_set( adj_value + (step*m_height__row)) ;
                                         }
                                     }
                                     else
@@ -1527,9 +1528,7 @@ namespace Albums
                                         {
                                             if( (row-get_upper_row()+1)*m_height__row > m_height__current_viewport )
                                             {
-                                                m_prop_vadj.get_value()->set_value(
-                                                      adj_value + excess
-                                                ) ;
+						vadj_value_set( adj_value + excess ) ;
                                             }
                                         }
                                         else
@@ -1538,9 +1537,7 @@ namespace Albums
 
                                             if( endpos > m_height__current_viewport )
                                             {
-                                                m_prop_vadj.get_value()->set_value(
-                                                      (adj_value + (m_height__row-offset) + excess)
-                                                ) ;
+						vadj_value_set( (adj_value + (m_height__row-offset) + excess)) ;
                                             }
                                         }
                                     }
@@ -1623,8 +1620,8 @@ namespace Albums
 		            return false ;
 		        }
 
-                        std::size_t row  = double(m_prop_vadj.get_value()->get_value()) / double(m_height__row) ;
-                        std::size_t off  = m_height__row - (m_prop_vadj.get_value()->get_value() - (row*m_height__row)) ;
+                        std::size_t row  = vadj_value() / m_height_row ; 
+                        std::size_t off  = m_height__row - (vadj_value() - (row*m_height__row)) ;
 
                         if( event->y > off || off == 0 )
                         {
@@ -1730,7 +1727,9 @@ namespace Albums
                 }
 
                 bool
-                on_expose_event (GdkEventExpose *event)
+                on_draw(
+		    const Cairo::RefPtr<Cairo::Context>& cairo 
+		)	
                 {
                     const Gtk::Allocation& a = get_allocation() ;
 
@@ -1747,17 +1746,15 @@ namespace Albums
                     std::size_t ypos    = 0 ;
                     std::size_t xpos    = 0 ;
                     std::size_t limit   = Limiter<std::size_t>( Limiter<std::size_t>::ABS_ABS, 0, m_model->size(), m_height__current_viewport / m_height__row + 2 ) ;
-                    int offset = m_prop_vadj.get_value()->get_value() - (row*m_height__row) ;
+                    int offset = vadj_value() - (row*m_height__row) ;
 
                     if( offset )
                     {
                         ypos -= offset ;
                     }
 
-			Cairo::RefPtr<Cairo::Context> cairo = get_window()->create_cairo_context() ;
-
 		    cairo->set_operator( Cairo::OPERATOR_SOURCE ) ;
-            Gdk::Cairo::set_source_rgba(cairo, c_bg);
+		    Gdk::Cairo::set_source_rgba(cairo, c_bg);
 		    cairo->paint() ;
 
 		    cairo->save() ;
@@ -1769,7 +1766,7 @@ namespace Albums
                         , a.get_height() - 2 
                         , rounding
                     ) ;
-                    cairo->set_source_rgba( c_outline.get_red(), c_outline.get_green(), c_outline.get_blue(), 1.0) ;
+		    Gdk::Cairo::set_source_rgba(cairo, c_outline);
 		    cairo->set_line_width( 0.75 ) ;
                     cairo->stroke() ;
 		    cairo->restore() ;
@@ -1785,7 +1782,6 @@ namespace Albums
                     cairo->clip() ;
 
                     Gdk::Cairo::set_source_rgba(cairo, c_base);
-
 		    cairo->paint() ;
 
 #if 0
@@ -1797,17 +1793,17 @@ namespace Albums
 
 		    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 
-            RowRowMapping_t::const_iterator iter = m_model->iter( row ) ;
+		    RowRowMapping_t::const_iterator iter = m_model->iter( row ) ;
 
 		    std::size_t n = 0 ;
 
-            while( n < limit && m_Model_I.in(row+n) )
-			{
-				MPX::CairoCorners::CORNERS c = MPX::CairoCorners::CORNERS(0) ;
+		    while( n < limit && m_Model_I.in(row+n) )
+		    {
+			MPX::CairoCorners::CORNERS c = MPX::CairoCorners::CORNERS(0) ;
 
-				xpos = 0 ;
+			xpos = 0 ;
 
-				bool is_selected = m_selection && boost::get<2>(m_selection.get()) == row+n ;
+			bool is_selected = m_selection && boost::get<2>(m_selection.get()) == row+n ;
 
                         if( is_selected )
                         {
@@ -1818,7 +1814,7 @@ namespace Albums
                             r.width     = a.get_width() ;
                             r.height    = m_height__row ;
 
-			    if( m_prop_vadj.get_value()->get_value() == 0 && (row+n == 0))
+			    if( vadj_value() == 0 && (row+n == 0))
 				c = MPX::CairoCorners::CORNERS(3) ;
 
                             theme->draw_selection_rectangle(
@@ -1966,10 +1962,34 @@ namespace Albums
 		    cairo->rectangle( 0, 0, w, h ) ;
 		    cairo->mask( gradient ) ;
 #endif
-		    cairo->reset_clip() ;
 
                     return true;
                 }
+
+		double
+		vadj_value()
+		{
+		    if(  m_prop_vadj.get_value() )
+			return m_prop_vadj.get_value()->get_value() ;
+
+		    return 0 ;
+		}
+
+		double
+		vadj_upper()
+		{
+		    if(  m_prop_vadj.get_value() )
+			return m_prop_vadj.get_value()->get_upper() ;
+
+		    return 0 ;
+		}
+
+		void
+		vadj_value_set( double v_ )
+		{
+		    if(  m_prop_vadj.get_value() )
+			return m_prop_vadj.get_value()->set_value( v_ ) ;
+		}
 
                 void
                 on_model_changed(
