@@ -2174,7 +2174,7 @@ namespace Tracks
                 }
 
                 bool
-                on_expose_event(
+                on_draw(
 		    const Cairo::RefPtr<Cairo::Context>& cairo
 		)
                 {

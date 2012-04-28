@@ -1620,7 +1620,7 @@ namespace Albums
 		            return false ;
 		        }
 
-                        std::size_t row  = vadj_value() / m_height_row ; 
+                        std::size_t row  = vadj_value() / m_height__row ; 
                         std::size_t off  = m_height__row - (vadj_value() - (row*m_height__row)) ;
 
                         if( event->y > off || off == 0 )

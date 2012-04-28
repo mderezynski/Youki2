@@ -59,10 +59,7 @@ namespace MPX
         set_type_hint (Gdk::WINDOW_TYPE_HINT_SPLASHSCREEN);
 
         Glib::RefPtr<Gdk::Screen> screen = Gdk::Screen::get_default();
-
-	Gdk::RGBA rgba ;
-	rgba.set_rgba( 0., 0., 0., 0. ) ;
-	override_background_color( rgba ) ;
+	gtk_widget_set_visual(GTK_WIDGET(gobj()), GDK_VISUAL(screen->get_rgba_visual()->gobj())) ;
 
         // FIXME: Port this to use Cairo
         // if( m_has_alpha )

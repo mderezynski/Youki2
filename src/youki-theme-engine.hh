@@ -54,7 +54,7 @@ namespace MPX
 
             void
             draw_selection_rectangle(
-                  Cairo::RefPtr<Cairo::Context>&                /*cairo ctx*/
+                  const Cairo::RefPtr<Cairo::Context>&          /*cairo ctx*/
                 , const GdkRectangle&                           /*rectangle*/
                 , bool                                          /*sensitive*/
                 , double = 4.                                   /*rounding*/
@@ -63,7 +63,7 @@ namespace MPX
 
             void
             draw_focus(
-                  Cairo::RefPtr<Cairo::Context>&                /*cairo ctx*/
+                  const Cairo::RefPtr<Cairo::Context>&          /*cairo ctx*/
                 , const GdkRectangle&                           /*rectangle*/
                 , bool                                          /*sensitive*/
                 , double = 4.                                   /*rounding*/

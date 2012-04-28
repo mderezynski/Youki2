@@ -369,11 +369,11 @@ namespace MPX
 
     void
     YoukiThemeEngine::draw_selection_rectangle(
-          Cairo::RefPtr<Cairo::Context>&    cairo
-        , const GdkRectangle&               r
-        , bool                              sensitive
-        , double                            rounding
-	, MPX::CairoCorners::CORNERS	    corners
+          const Cairo::RefPtr<Cairo::Context>&  cairo
+        , const GdkRectangle&			r
+        , bool					sensitive
+        , double				rounding
+	, MPX::CairoCorners::CORNERS		corners
     )
     {
         const ThemeColor& c = get_color( THEME_COLOR_SELECT ) ;
@@ -445,11 +445,11 @@ namespace MPX
 
     void
     YoukiThemeEngine::draw_focus(
-          Cairo::RefPtr<Cairo::Context>&    cairo
-        , const GdkRectangle&               r
-        , bool                              sensitive
-        , double                            rounding
-	, MPX::CairoCorners::CORNERS	    corners
+          const Cairo::RefPtr<Cairo::Context>&	cairo
+        , const GdkRectangle&			r
+        , bool					sensitive
+        , double				rounding
+	, MPX::CairoCorners::CORNERS		corners
     )
     {
         double h, s, b ;
