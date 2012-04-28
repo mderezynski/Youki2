@@ -120,11 +120,15 @@ namespace
 	d.set_copyright("(C) 2012") ;
 	d.set_license("GPL v3 or later") ;
 
-	const char* v1[] = {"Milosz Derezynski", "Chong Kai Xiong", "David Le Brun", NULL } ;
-	d.set_authors( v1 ) ;
+	std::vector<Glib::ustring> authors;
+    authors.push_back ("Milosz Derezynski");
+    authors.push_back ("Chong Kai Xiong");
+    authors.push_back ("David Le Brun");
+	d.set_authors( authors ) ;
 
-	const char* v2[] = {"Milosz Derezynski", NULL } ;
-	d.set_artists( v2 ) ;
+	std::vector<Glib::ustring> artists;
+    artists.push_back ("Milosz Derezynski");
+	d.set_artists( artists ) ;
 
 	Glib::RefPtr<Gdk::Pixbuf> p_logo = Gdk::Pixbuf::create_from_file( Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "youki256x256.png" )) ;
 
@@ -1129,10 +1133,10 @@ namespace MPX
         const ThemeColor& c_base = theme->get_color( THEME_COLOR_BASE ) ; 
 
         Gdk::RGBA c ;
-        c.set_rgba( c_base.r, c_base.g, c_base.b, 1.0 ) ;
+        c.set_rgba( c_base.get_red(), c_base.get_green(), c_base.get_blue(), 1.0 ) ;
 
         Gdk::RGBA c2 ;
-        c2.set_rgba( c_bg.r, c_bg.g, c_bg.b, 1.0 ) ;
+        c2.set_rgba( c_bg.get_red(), c_bg.get_green(), c_bg.get_blue(), 1.0 ) ;
 
         m_ListViewArtist->override_background_color( c, Gtk::STATE_FLAG_NORMAL ) ;
         m_ListViewAlbums->override_background_color( c, Gtk::STATE_FLAG_NORMAL ) ;
@@ -2215,7 +2219,8 @@ void
 
         const MPX::Track& track = *(m_track_current.get()) ;
 
-	DBus::MessageIter i_out = Metadata.get_value_writer() ;
+        //DBus::MessageIter i_out = Metadata.get_value_writer() ;
+    DBus::MessageIter i_out;
 	DBus::MessageIter i_arr = i_out.new_array("{sv}") ;
 
         for( guint n = 0 ; n < G_N_ELEMENTS(mpris_attribute_id_str) ; ++n )

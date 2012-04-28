@@ -44,7 +44,7 @@ namespace MPX
 		    bool
 		    evbox_on_button_press_event( GdkEventButton* ) 
 	            {
-			g_message( G_STRFUNC ) ;
+            g_message( "%s", G_STRFUNC ) ;
 			
 			m_button_timeout.stop() ;
 			m_button_timeout.reset() ;
@@ -58,7 +58,7 @@ namespace MPX
 		    bool 
 		    evbox_on_button_release_event( GdkEventButton* )
 		    {
-			g_message( G_STRFUNC ) ;
+            g_message( "%s", G_STRFUNC ) ;
 
 			m_do_disconnect = true ;
 			m_button_timeout_conn.disconnect() ;

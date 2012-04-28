@@ -181,12 +181,7 @@ namespace MPX
         const ThemeColor& c_info = m_theme->get_color( THEME_COLOR_INFO_AREA ) ; 
 
         cairo->set_operator(Cairo::OPERATOR_SOURCE) ;
-        cairo->set_source_rgba(
-              c_base.r
-            , c_base.g
-            , c_base.b
-            , c_base.a
-        ) ;
+        Gdk::Cairo::set_source_rgba (cairo, c_base) ;
         cairo->paint () ;
 
         GdkRectangle r ;
@@ -197,18 +192,13 @@ namespace MPX
 
         cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 
-	if( m_cover )
-	{
-	    cairo->rectangle( 8, r.y, r.width + 2, r.height ) ;
-	    cairo->clip() ;
-	}
+        if( m_cover )
+        {
+            cairo->rectangle( 8, r.y, r.width + 2, r.height ) ;
+            cairo->clip() ;
+        }
 
-        cairo->set_source_rgba(
-              c_info.r 
-            , c_info.g
-            , c_info.b
-            , c_info.a
-        ) ;
+        Gdk::Cairo::set_source_rgba (cairo, c_info);
         RoundedRectangle(
               cairo
             , r.x 
@@ -219,8 +209,8 @@ namespace MPX
         ) ;
         cairo->fill () ;
 
-        Gdk::Color cgdk ;
-        cgdk.set_rgb_p( 0.25, 0.25, 0.25 ) ; 
+        Gdk::RGBA cgdk ;
+        cgdk.set_rgba( 0.25, 0.25, 0.25, 1.0 ) ;
 
         Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create(
               r.x + r.width / 2
@@ -236,36 +226,36 @@ namespace MPX
         Util::color_to_hsb( cgdk, h, s, b ) ;
         b *= 1.05 ; 
         s *= 0.55 ; 
-        Gdk::Color c1 = Util::color_from_hsb( h, s, b ) ;
+        Gdk::RGBA c1 = Util::color_from_hsb( h, s, b ) ;
 
         Util::color_to_hsb( cgdk, h, s, b ) ;
         s *= 0.55 ; 
-        Gdk::Color c2 = Util::color_from_hsb( h, s, b ) ;
+        Gdk::RGBA c2 = Util::color_from_hsb( h, s, b ) ;
 
         Util::color_to_hsb( cgdk, h, s, b ) ;
         b *= 0.9 ; 
         s *= 0.60 ;
-        Gdk::Color c3 = Util::color_from_hsb( h, s, b ) ;
+        Gdk::RGBA c3 = Util::color_from_hsb( h, s, b ) ;
 
         gradient->add_color_stop_rgba(
               0
-            , c1.get_red_p()
-            , c1.get_green_p()
-            , c1.get_blue_p()
+            , c1.get_red()
+            , c1.get_green()
+            , c1.get_blue()
             , alpha / 1.05
         ) ;
         gradient->add_color_stop_rgba(
               .20
-            , c2.get_red_p()
-            , c2.get_green_p()
-            , c2.get_blue_p()
+            , c2.get_red()
+            , c2.get_green()
+            , c2.get_blue()
             , alpha / 1.05
         ) ;
         gradient->add_color_stop_rgba(
               1. 
-            , c3.get_red_p()
-            , c3.get_green_p()
-            , c3.get_blue_p()
+            , c3.get_red()
+            , c3.get_green()
+            , c3.get_blue()
             , alpha
         ) ;
         cairo->set_source( gradient ) ;
@@ -317,14 +307,8 @@ namespace MPX
             , 8
         ) ;
 
-        cairo->set_source_rgba(
-              c_text.r 
-            , c_text.g 
-            , c_text.b 
-            , 1.
-        ) ; 
+        Gdk::Cairo::set_source_rgba(cairo, c_text);
         pango_cairo_show_layout( cairo->cobj(), layout->gobj() ) ;
-
 
         layout->set_text( m_info[1] ) ;
         layout->get_pixel_size( width, height ) ;
@@ -333,12 +317,7 @@ namespace MPX
               112 
             , 8 + height
         ) ;
-        cairo->set_source_rgba(
-              c_text.r 
-            , c_text.g 
-            , c_text.b 
-            , 0.60 
-        ) ;
+        cairo->set_source_rgba(c_text.get_red(), c_text.get_green(), c_text.get_blue(), 0.60);
         pango_cairo_show_layout( cairo->cobj(), layout->gobj() ) ;
 
         text_size_pt = static_cast<int>( (20 * 72) / Util::screen_get_y_resolution( Gdk::Screen::get_default() )) ;
@@ -355,12 +334,8 @@ namespace MPX
               112 
             , 112 - height - 8 
         ) ;
-        cairo->set_source_rgba(
-              c_text.r 
-            , c_text.g 
-            , c_text.b 
-            , 1. 
-        ) ;
+
+        Gdk::Cairo::set_source_rgba(cairo, c_text);
         pango_cairo_show_layout( cairo->cobj(), layout->gobj() ) ;
 
         cairo->restore() ;

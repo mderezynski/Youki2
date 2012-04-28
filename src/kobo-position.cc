@@ -13,20 +13,16 @@
 
 namespace
 {
-    MPX::ThemeColor 
-    fade_colors(
-    	  const MPX::ThemeColor& c_a
-	, const MPX::ThemeColor& c_b
-        , double position
-    )
+    MPX::ThemeColor
+    fade_colors(const MPX::ThemeColor& c_a, const MPX::ThemeColor& c_b, double position)
     {
-	MPX::ThemeColor r ;
+        MPX::ThemeColor r ;
 
-	r.r = c_a.r + (c_b.r - c_a.r) * position ; 
-        r.g = c_a.g + (c_b.g - c_a.g) * position ;
-        r.b = c_a.b + (c_b.b - c_a.b) * position ;
+        r.set_red   (c_a.get_red()   + (c_b.get_red()   - c_a.get_red())   * position);
+        r.set_green (c_a.get_green() + (c_b.get_green() - c_a.get_green()) * position);
+        r.set_blue  (c_a.get_blue()  + (c_b.get_blue()  - c_a.get_blue())  * position);
 
-	return r ;
+        return r ;
     }
 }
 
@@ -106,7 +102,7 @@ namespace MPX
 
         const Gdk::Rectangle& a = get_allocation() ;
 
-	const guint w = a.get_width() - 2 ;
+        const guint w = a.get_width() - 2 ;
         const guint position = m_clicked ? m_seek_position : m_position ;
 
         const ThemeColor& c = m_theme->get_color( THEME_COLOR_SELECT ) ;
@@ -114,20 +110,15 @@ namespace MPX
         const ThemeColor& ct = m_theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
 
         cairo->set_operator(Cairo::OPERATOR_SOURCE) ;
-        cairo->set_source_rgba(
-              c_base.r
-            , c_base.g
-            , c_base.b
-            , c_base.a
-        ) ;
+        Gdk::Cairo::set_source_rgba(cairo, c_base);
         cairo->paint () ;
 
         cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 
-        Gdk::Color cgdk ;
-        Gdk::Color c_text_dark, c1, c2, c3 ; 
+        Gdk::RGBA cgdk ;
+        Gdk::RGBA c_text_dark, c1, c2, c3 ; 
 
-	cgdk.set_rgb_p( c.r, c.g, c.b) ;
+        cgdk.set_rgba( c.get_red(), c.get_green(), c.get_blue(), 1.0);
 
 	double h, s, b ;
 	
@@ -158,49 +149,49 @@ namespace MPX
 
         position_bar_back_gradient->add_color_stop_rgba(
               0. 
-            , cgdk.get_red_p()
-            , cgdk.get_green_p()
-            , cgdk.get_blue_p()
+            , cgdk.get_red()
+            , cgdk.get_green()
+            , cgdk.get_blue()
             , 0.2 
         ) ;
 
         position_bar_back_gradient->add_color_stop_rgba(
               .2
-            , cgdk.get_red_p()
-            , cgdk.get_green_p()
-            , cgdk.get_blue_p()
+            , cgdk.get_red()
+            , cgdk.get_green()
+            , cgdk.get_blue()
             , 0.195 
         ) ;
 
         position_bar_back_gradient->add_color_stop_rgba(
               .4
-            , cgdk.get_red_p()
-            , cgdk.get_green_p()
-            , cgdk.get_blue_p()
+            , cgdk.get_red()
+            , cgdk.get_green()
+            , cgdk.get_blue()
             , 0.185
         ) ;
 
         position_bar_back_gradient->add_color_stop_rgba(
               .6
-            , cgdk.get_red_p()
-            , cgdk.get_green_p()
-            , cgdk.get_blue_p()
+            , cgdk.get_red()
+            , cgdk.get_green()
+            , cgdk.get_blue()
             , 0.185
         ) ;
         
         position_bar_back_gradient->add_color_stop_rgba(
               .9
-            , cgdk.get_red_p()
-            , cgdk.get_green_p()
-            , cgdk.get_blue_p()
+            , cgdk.get_red()
+            , cgdk.get_green()
+            , cgdk.get_blue()
             , 0.195
         ) ;
 
         position_bar_back_gradient->add_color_stop_rgba(
               1. 
-            , cgdk.get_red_p()
-            , cgdk.get_green_p()
-            , cgdk.get_blue_p()
+            , cgdk.get_red()
+            , cgdk.get_green()
+            , cgdk.get_blue()
             , 0.2 
         ) ;
 
@@ -216,7 +207,7 @@ namespace MPX
         cairo->fill_preserve () ;
 
         cairo->save() ;
-        cairo->set_source_rgba( c1.get_red_p() , c1.get_green_p(), c1.get_blue_p(), 1. ) ;
+        cairo->set_source_rgba( c1.get_red() , c1.get_green(), c1.get_blue(), 1. ) ;
         cairo->set_line_width( 0.75 ) ;
         cairo->stroke() ;
         cairo->restore() ;
@@ -260,25 +251,25 @@ namespace MPX
 
             position_bar_gradient->add_color_stop_rgba(
                   0. 
-                , c1.get_red_p()
-                , c1.get_green_p()
-                , c1.get_blue_p()
+                , c1.get_red()
+                , c1.get_green()
+                , c1.get_blue()
                 , 1 // factor 
             ) ;
 
             position_bar_gradient->add_color_stop_rgba(
                   .60
-                , c2.get_red_p()
-                , c2.get_green_p()
-                , c2.get_blue_p()
+                , c2.get_red()
+                , c2.get_green()
+                , c2.get_blue()
                 , 1 // factor
             ) ;
             
             position_bar_gradient->add_color_stop_rgba(
                   1. 
-                , c3.get_red_p()
-                , c3.get_green_p()
-                , c3.get_blue_p()
+                , c3.get_red()
+                , c3.get_green()
+                , c3.get_blue()
                 , 1 // factor
             ) ;
 
@@ -319,18 +310,18 @@ namespace MPX
 		xoff = r.width ;
 
 		cairo->set_source_rgba(
-		      c_text_dark.get_red_p()
-		    , c_text_dark.get_green_p()
-		    , c_text_dark.get_blue_p()
+		      c_text_dark.get_red()
+		    , c_text_dark.get_green()
+		    , c_text_dark.get_blue()
 		    , 1. * get_alpha_at_time()
 		) ;
 	    }
 	    else
 	    {
 		cairo->set_source_rgba(
-		      ct.r
-		    , ct.g
-		    , ct.b
+              ct.get_red()
+            , ct.get_green()
+            , ct.get_blue()
 		    , 0.95 * get_alpha_at_time()
 		) ;
 	    }
@@ -377,9 +368,9 @@ namespace MPX
 	    ) ;
 
 	    cairo->set_source_rgba(
-		  c_text_dark.get_red_p()
-		, c_text_dark.get_green_p()
-		, c_text_dark.get_blue_p()
+		  c_text_dark.get_red()
+		, c_text_dark.get_green()
+		, c_text_dark.get_blue()
 		, 1. * factor
 	    ) ;
 

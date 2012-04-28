@@ -1037,12 +1037,8 @@ namespace Albums
                                   xpos + 8
                                 , ypos + yoff
                             ) ;
-                            cairo->set_source_rgba(
-                                  color.r
-                                , color.g
-                                , color.b
-                                , .6
-                            ) ;
+                            cairo->set_source_rgba(color.get_red(), color.get_green(), color.get_blue(), 0.6);
+
                             pango_cairo_show_layout( cairo->cobj(), layout[L1]->gobj() ) ;
 
                             //// ALBUM
@@ -1053,25 +1049,16 @@ namespace Albums
                                   xpos + 8
                                 , ypos + yoff
                             ) ;
-                            cairo->set_source_rgba(
-                                  color.r
-                                , color.g
-                                , color.b
-                                , .8
-                            ) ;
+                            cairo->set_source_rgba(color.get_red(), color.get_green(), color.get_blue(), 0.8);
                             pango_cairo_show_layout( cairo->cobj(), layout[L2]->gobj() ) ;
 
 			    if( is_selected )
 			    {
-				    color.r = 0xe0 / 255. ;
-				    color.g = 0xe0 / 255. ;
-				    color.b = 0xe0 / 255. ;
+				    color.set_rgba (0xe0 / 255.0, 0xe0 / 255.0, 0xe0 / 255.0);
 			    }
 			    else
 			    {
-				    color.r = 0x90 / 255. ;
-				    color.g = 0x90 / 255. ;
-				    color.b = 0x90 / 255. ;
+				    color.set_rgba (0x90 / 255.0, 0x90 / 255.0, 0x90 / 255.0);
 			    }
 
 			    font_desc[L3].set_style( Pango::STYLE_NORMAL ) ;
@@ -1091,12 +1078,7 @@ namespace Albums
 					      sx
 					    , r.y + row_height - height - 27
 					) ;
-					cairo->set_source_rgba(
-					      color.r
-					    , color.g
-					    , color.b
-					    , 0.9
-					) ;
+					cairo->set_source_rgba(color.get_red(), color.get_green(), color.get_blue(), 0.9);
 					pango_cairo_show_layout( cairo->cobj(), layout[L3]->gobj() ) ;
 
 					sx += width + 2 ;
@@ -1111,12 +1093,7 @@ namespace Albums
 					      sx
 					    , r.y + row_height - height - 27
 					) ;
-					cairo->set_source_rgba(
-					      color.r
-					    , color.g
-					    , color.b
-					    , 0.9
-					) ;
+					cairo->set_source_rgba(color.get_red(), color.get_green(), color.get_blue(), 0.9);
 
 					layout[L3]->set_width( (m_width / 2.15) * PANGO_SCALE ) ;
 					layout[L3]->set_ellipsize( Pango::ELLIPSIZE_END ) ;
@@ -1171,12 +1148,7 @@ namespace Albums
 				      m_width - width - 8 
 				    , r.y + row_height - height - 14
 				) ;
-				cairo->set_source_rgba(
-				      color.r
-				    , color.g
-				    , color.b
-				    , 0.9
-				) ;
+				cairo->set_source_rgba(color.get_red(), color.get_green(), color.get_blue(), 0.9);
 				pango_cairo_show_layout( cairo->cobj(), layout[L3]->gobj() ) ;
 #endif
 
@@ -1186,12 +1158,7 @@ namespace Albums
 				      m_width - width - 8 
 				    , r.y + row_height - height - 27 
 				) ;
-				cairo->set_source_rgba(
-				      color.r
-				    , color.g
-				    , color.b
-				    , 0.9
-				) ;
+				cairo->set_source_rgba(color.get_red(), color.get_green(), color.get_blue(), 0.9);
 				pango_cairo_show_layout( cairo->cobj(), layout[L3]->gobj() ) ;
 			    }
                     }
@@ -1222,19 +1189,9 @@ namespace Albums
                             ) ;
 
 			    if( is_selected )
-				    cairo->set_source_rgba(
-					  1.
-					, 1.
-					, 1.
-					, 1.
-				    ) ;
+				    cairo->set_source_rgba(1.0, 1.0, 1.0, 1.0);
 			    else
-				    cairo->set_source_rgba(
-					  color.r
-					, color.g
-					, color.b
-					, 1
-				    ) ;
+				    cairo->set_source_rgba(color.get_red(), color.get_green(), color.get_blue(), 1.0);
 
                             pango_cairo_show_layout( cairo->cobj(), layout[L1]->gobj() ) ;
                     }
@@ -1824,7 +1781,7 @@ namespace Albums
 			Cairo::RefPtr<Cairo::Context> cairo = get_window()->create_cairo_context() ;
 
 		    cairo->set_operator( Cairo::OPERATOR_SOURCE ) ;
-		    cairo->set_source_rgba(c_bg.r, c_bg.g, c_bg.b, c_bg.a) ;
+            Gdk::Cairo::set_source_rgba(cairo, c_bg);
 		    cairo->paint() ;
 
 		    cairo->save() ;
@@ -1836,7 +1793,7 @@ namespace Albums
                         , a.get_height() - 2 
                         , rounding
                     ) ;
-		    cairo->set_source_rgba( c_outline.r, c_outline.g, c_outline.b, 1. ) ;
+                    cairo->set_source_rgba( c_outline.get_red(), c_outline.get_green(), c_outline.get_blue(), 1.0) ;
 		    cairo->set_line_width( 0.75 ) ;
                     cairo->stroke() ;
 		    cairo->restore() ;
@@ -1851,12 +1808,8 @@ namespace Albums
                     ) ;
                     cairo->clip() ;
 
-		    cairo->set_source_rgba(
-			  c_base.r
-			, c_base.g
-			, c_base.b
-			, c_base.a
-		    ) ;
+                    Gdk::Cairo::set_source_rgba(cairo, c_base);
+
 		    cairo->paint() ;
 
 #if 0
@@ -1938,11 +1891,7 @@ namespace Albums
 
 					RoundedRectangle(cairo, r.x, r.y, r.width, r.height, rounding, c) ;
 
-					cairo->set_source_rgba(c_base_rules_hint.r
-										   , c_base_rules_hint.g
-										   , c_base_rules_hint.b
-										   , c_base_rules_hint.a
-										   ) ;
+                    Gdk::Cairo::set_source_rgba(cairo, c_base_rules_hint);
 
 					cairo->fill() ;
 				}
@@ -2508,7 +2457,7 @@ namespace Albums
                 clear_selection(
                 )
                 {
-                    m_selection.reset() ;
+                     m_selection.reset() ;
                     queue_draw() ;
                 }
 
@@ -2548,9 +2497,8 @@ namespace Albums
                     boost::shared_ptr<IYoukiThemeEngine> theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;
                     const ThemeColor& c = theme->get_color( THEME_COLOR_BASE ) ;
                     Gdk::RGBA cgdk ;
-                    cgdk.set_rgba( c.r, c.g, c.b, 1.0 ) ;
+                    cgdk.set_rgba( c.get_red(), c.get_green(), c.get_blue() );
                     override_background_color( cgdk, Gtk::STATE_FLAG_NORMAL ) ;
-                    override_color( cgdk, Gtk::STATE_FLAG_NORMAL ) ;
 
                     set_can_focus(true);
 

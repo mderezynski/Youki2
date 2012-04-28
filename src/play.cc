@@ -565,8 +565,8 @@ namespace MPX
                             }
                             break ;
 
-/*
                             case URI::PROTOCOL_CDDA:
+/*
                             {
                                             unsigned int track = static_cast<unsigned int>( std::atoi( uri.path.c_str()) + 1 ) ;
 
@@ -587,8 +587,8 @@ namespace MPX
                                             gst_object_unref( src ) ;
 
                             }
-                            break ;
 */
+                            break ;
 
                             case URI::PROTOCOL_ITPC:
                             case URI::PROTOCOL_FTP:

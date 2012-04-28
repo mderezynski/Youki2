@@ -108,7 +108,7 @@ namespace MPX
                 pColumn->pack_start(*m_pRendererPixbuf, true);
                 pColumn->add_attribute(m_pRendererPixbuf->property_pixbuf(), Columns.Pixbuf);
 
-				std::vector<Gtk::CellRenderer*> renderers = pColumn->get_cell_renderers();
+				std::vector<Gtk::CellRenderer*> renderers = pColumn->get_cells();
 
 				Gtk::CellRendererToggle * cell_toggle =	dynamic_cast<Gtk::CellRendererToggle*>(renderers[0]);
 

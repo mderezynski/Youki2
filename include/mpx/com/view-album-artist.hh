@@ -541,12 +541,7 @@ namespace Artist
 			    cairo->fill() ;
 		    }
 
-                    cairo->set_source_rgba(
-                          color.r
-                        , color.g
-                        , color.b
-                        , color.a
-                    ) ;
+            Gdk::Cairo::set_source_rgba(cairo, color);
 
                     cairo->move_to(
                           xpos + 6
@@ -1028,11 +1023,7 @@ namespace Artist
                     Cairo::RefPtr<Cairo::Context> cairo = get_window()->create_cairo_context(); 
 
                     cairo->set_operator( Cairo::OPERATOR_SOURCE ) ;
-                    cairo->set_source_rgba(c_bg.r
-                                           , c_bg.g
-                                           , c_bg.b
-                                           , c_bg.a
-                                           ) ;
+                    Gdk::Cairo::set_source_rgba(cairo, c_bg);
                     cairo->paint() ;
 
                     cairo->save() ;
@@ -1044,7 +1035,7 @@ namespace Artist
                                      , a.get_height() - 2 
                                      , rounding
                                      ) ;
-                    cairo->set_source_rgba( c_outline.r, c_outline.g, c_outline.b, 1. ) ; 
+                    cairo->set_source_rgba( c_outline.get_red(), c_outline.get_green(), c_outline.get_blue(), 1. ) ; 
                     cairo->set_line_width( 0.75 ) ;
                     cairo->stroke() ;
                     cairo->restore() ;
@@ -1059,14 +1050,14 @@ namespace Artist
                     ) ;
                     cairo->clip() ;
 
-                    cairo->set_source_rgba(c_base.r, c_base.g, c_base.b, c_base.a) ;
+                    Gdk::Cairo::set_source_rgba(cairo, c_base) ;
                     cairo->paint() ;
 
                     cairo->set_operator( Cairo::OPERATOR_SOURCE ) ;
-                    cairo->set_source_rgba(c_bg.r, c_bg.g, c_bg.b, c_bg.a) ;
+                    Gdk::Cairo::set_source_rgba(cairo, c_bg);
                     cairo->paint() ;
 
-                    cairo->set_source_rgba(c_base.r, c_base.g, c_base.b, c_base.a) ;
+                    Gdk::Cairo::set_source_rgba(cairo, c_base) ;
                     RoundedRectangle(cairo
                                      , 1
                                      , 1
@@ -1127,13 +1118,7 @@ namespace Artist
                                 , c
                             ) ;
 
-                            cairo->set_source_rgba(
-                                  c_base_rules_hint.r
-                                , c_base_rules_hint.g
-                                , c_base_rules_hint.b
-                                , c_base_rules_hint.a
-                            ) ;
-
+                            Gdk::Cairo::set_source_rgba(cairo, c_base_rules_hint);
                             cairo->fill() ;
                         }
 
@@ -1559,9 +1544,8 @@ namespace Artist
                     boost::shared_ptr<IYoukiThemeEngine> theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;
                     const ThemeColor& c = theme->get_color( THEME_COLOR_BASE ) ;
                     Gdk::RGBA cgdk ;
-                    cgdk.set_rgba( c.r, c.g, c.b, 1.0 ) ;
+                    cgdk.set_rgba( c.get_red(), c.get_green(), c.get_blue(), 1.0 ) ;
                     override_background_color ( cgdk, Gtk::STATE_FLAG_NORMAL ) ;
-                    override_color( cgdk, Gtk::STATE_FLAG_NORMAL ) ;
 
                     set_can_focus (true);
                     add_events(Gdk::EventMask( GDK_KEY_PRESS_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_LEAVE_NOTIFY_MASK | GDK_BUTTON_PRESS_MASK ));

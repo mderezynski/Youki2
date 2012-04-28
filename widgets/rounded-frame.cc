@@ -118,12 +118,7 @@ namespace MPX
 //        const ThemeColor& c_base	= theme->get_color( THEME_COLOR_BASE ) ;
 //        const ThemeColor& c_outline	= theme->get_color( THEME_COLOR_ENTRY_OUTLINE ) ;
 
-        cairo->set_source_rgba(
-              c_bg.r
-            , c_bg.g
-            , c_bg.b
-            , c_bg.a
-        ) ;
+        Gdk::Cairo::set_source_rgba(cairo, c_bg) ;
         cairo->rectangle(
               a.get_x() 
             , a.get_y() 

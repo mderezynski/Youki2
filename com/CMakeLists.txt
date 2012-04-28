@@ -2,7 +2,6 @@ INCLUDE_DIRECTORIES(
   ${PROJECT_BINARY_DIR}
   ${PROJECT_SOURCE_DIR}/include
   ${Boost_INCLUDE_DIR}
-  ${GLADEMM_INCLUDE_DIRS}
   ${GLIBMM_INCLUDE_DIRS}
   ${GTKMM_INCLUDE_DIRS}
 #  ${SIGX_INCLUDE_DIRS}
@@ -24,7 +23,6 @@ SET_TARGET_PROPERTIES(mpx-view-components
 )
 
 TARGET_LINK_LIBRARIES(mpx-view-components
-  ${GLADEMM_LIBRARIES}
   ${GLIBMM_LIBRARIES}
   ${GTKMM_LIBRARIES}
 #  ${SIGX_LIBRARIES}
@@ -34,7 +32,7 @@ TARGET_LINK_LIBRARIES(mpx-view-components
 INSTALL(TARGETS mpx-view-components LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 INSTALL(
-  FILES album-info-window.glade
-        mb-import-album.glade
-  DESTINATION ${MPX_PKGDATA_DIR}/glade
+  FILES album-info-window.ui
+        mb-import-album.ui
+  DESTINATION ${MPX_PKGDATA_DIR}/ui
 )

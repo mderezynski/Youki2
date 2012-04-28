@@ -27,7 +27,7 @@
 #include "config.h"
 
 #include <cairomm/cairomm.h>
-#include <gdk/gdk.h>
+#include <gdkmm.h>
 
 #include <map>
 #include <vector>
@@ -58,29 +58,7 @@ namespace MPX
         , THEME_COLOR_RESIZE_GRIP
     } ;
 
-    struct ThemeColor
-    {
-        double r ;
-        double g ;
-        double b ;
-        double a ;
-
-        ThemeColor(
-        )
-        {}
-
-        ThemeColor(
-              double r_
-            , double g_
-            , double b_
-            , double a_
-        )
-            : r( r_ ) 
-            , g( g_ )
-            , b( b_ )
-            , a( a_ )
-        {}
-    } ;
+    typedef Gdk::RGBA ThemeColor;
 
     typedef std::map<ThemeColorID, ThemeColor>  ThemeColorMap_t ;
 

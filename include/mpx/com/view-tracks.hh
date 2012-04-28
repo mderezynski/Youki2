@@ -1468,13 +1468,7 @@ namespace Tracks
                     ) ;
 
                     cairo->set_operator(Cairo::OPERATOR_OVER);
-
-                    cairo->set_source_rgba(
-                          color.r
-                        , color.g
-                        , color.b
-                        , color.a * 0.8 
-                    ) ; 
+                    cairo->set_source_rgba(color.get_red(), color.get_green(), color.get_blue(), color.get_alpha() * 0.8);
 
                     Glib::RefPtr<Pango::Layout> layout = widget.create_pango_layout(m_title) ;
 
@@ -1612,12 +1606,7 @@ namespace Tracks
 			    cairo->fill() ;
 		      }
 
-		      cairo->set_source_rgba(
-			    color.r
-			  , color.g
-			  , color.b
-			  , color.a * alpha 
-		      ) ; 
+		      cairo->set_source_rgba(color.get_red(), color.get_green(), color.get_blue(), color.get_alpha() * alpha);
 		      cairo->move_to(
 			      xpos + 6
 			    , ypos + 3
@@ -2209,44 +2198,35 @@ namespace Tracks
                     Cairo::RefPtr<Cairo::Context> cairo = get_window()->create_cairo_context(); 
 
 		    cairo->set_operator( Cairo::OPERATOR_SOURCE ) ;
-		    cairo->set_source_rgba(
-			  c_bg.r
-			, c_bg.g
-			, c_bg.b
-			, c_bg.a
-		    ) ;
+            Gdk::Cairo::set_source_rgba(cairo, c_bg);
 		    cairo->paint() ;
 
 		    cairo->save() ;
-                    RoundedRectangle(
-                          cairo
-                        , 1
-                        , 1
-                        , a.get_width() - 2 
-                        , a.get_height() - 2 
-                        , rounding
-                    ) ;
-		    cairo->set_source_rgba( c_outline.r, c_outline.g, c_outline.b, 1.) ; 
-		    cairo->set_line_width( 0.75 ) ;
-                    cairo->stroke() ;
+            RoundedRectangle(
+                             cairo
+                             , 1
+                             , 1
+                             , a.get_width() - 2 
+                             , a.get_height() - 2 
+                             , rounding
+                             ) ;
+            cairo->set_source_rgba( c_outline.get_red(), c_outline.get_green(), c_outline.get_blue(), 1.0) ; 
+            cairo->set_line_width( 0.75 ) ;
+            cairo->stroke() ;
 		    cairo->restore() ;
 
-                    RoundedRectangle(
-                          cairo
-                        , 2
-                        , 2
-                        , a.get_width() - 4 
-                        , a.get_height() - 4 
-                        , rounding
-                    ) ;
-                    cairo->clip() ;
+            RoundedRectangle(
+                             cairo
+                             , 2
+                             , 2
+                             , a.get_width() - 4 
+                             , a.get_height() - 4 
+                             , rounding
+                             ) ;
+            cairo->clip() ;
 
-		    cairo->set_source_rgba(
-			  c_base.r
-			, c_base.g
-			, c_base.b
-			, c_base.a
-		    ) ;
+            Gdk::Cairo::set_source_rgba(cairo, c_base);
+
 		    cairo->paint() ;
 
 		    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
@@ -2274,23 +2254,23 @@ namespace Tracks
 		
 		    double h,s,b ;
 
-		    Gdk::Color c1 ;
-		    c1.set_rgb_p( c_rules_hint.r, c_rules_hint.g, c_rules_hint.b) ; 
+		    Gdk::RGBA c1 ;
+		    c1.set_rgba( c_rules_hint.get_red(), c_rules_hint.get_green(), c_rules_hint.get_blue()) ;
 		    Util::color_to_hsb( c1, h, s, b ) ;
-		    b *= 1.05 ; 
+		    b *= 1.05 ;
 		    c1 = Util::color_from_hsb( h, s, b ) ;
 
-		    Gdk::Color c2 ;
-		    c2.set_rgb_p( c_rules_hint.r, c_rules_hint.g, c_rules_hint.b) ; 
+		    Gdk::RGBA c2 ;
+		    c2.set_rgba( c_rules_hint.get_red(), c_rules_hint.get_green(), c_rules_hint.get_blue()) ;
 		    Util::color_to_hsb( c2, h, s, b ) ;
 		    b *= 0.92 ;
 		    c2 = Util::color_from_hsb( h, s, b ) ;
 
 		    Cairo::RefPtr<Cairo::LinearGradient> gr = Cairo::LinearGradient::create( a.get_width()/2., 1, a.get_width() / 2., m_height__headers - 2 ) ;
 
-		    gr->add_color_stop_rgba( 0., c1.get_red_p(), c1.get_green_p(), c1.get_blue_p(), 1. ) ;
-		    gr->add_color_stop_rgba( .35, c1.get_red_p(), c1.get_green_p(), c1.get_blue_p(), 1. ) ;
-		    gr->add_color_stop_rgba( 1., c2.get_red_p(), c2.get_green_p(), c2.get_blue_p(), 1. ) ;
+		    gr->add_color_stop_rgba( 0., c1.get_red(), c1.get_green(), c1.get_blue(), 1. ) ;
+		    gr->add_color_stop_rgba( .35, c1.get_red(), c1.get_green(), c1.get_blue(), 1. ) ;
+		    gr->add_color_stop_rgba( 1., c2.get_red(), c2.get_green(), c2.get_blue(), 1. ) ;
 
 		    cairo->set_source( gr ) ;
 		    cairo->fill() ;
@@ -2299,7 +2279,7 @@ namespace Tracks
 		    cairo->save() ;
 		    cairo->set_antialias( Cairo::ANTIALIAS_NONE ) ;
 		    cairo->set_line_width( 1. ) ;
-		    cairo->set_source_rgba( c_outline.r, c_outline.g, c_outline.b, 0.6 ) ;
+		    cairo->set_source_rgba( c_outline.get_red(), c_outline.get_green(), c_outline.get_blue(), 0.6 ) ;
 		    cairo->move_to( 0, m_height__headers ) ;
 		    cairo->line_to( a.get_width(), m_height__headers ) ;
 		    cairo->stroke() ;
@@ -2330,12 +2310,7 @@ namespace Tracks
 			r.width   = a.get_width() ; 
 			r.height  = m_height__row ; 
 
-			cairo->set_source_rgba(
-			      c_rules_hint.r 
-			    , c_rules_hint.g
-			    , c_rules_hint.b 
-			    , c_rules_hint.a
-			) ;
+			Gdk::Cairo::set_source_rgba(cairo, c_rules_hint);
 
 			for( std::size_t n = 0 ; n < limit ; ++n ) 
 			{
@@ -2476,19 +2451,19 @@ namespace Tracks
 				, 0
 			    ) ;
 			    cairo->set_source_rgba(
-				  c_treelines.r
-				, c_treelines.g
-				, c_treelines.b
-				, c_treelines.a * 0.8
+                  c_treelines.get_red()
+                , c_treelines.get_green()
+                , c_treelines.get_blue()
+                , c_treelines.get_alpha() * 0.8
 			    ) ;
 			    cairo->stroke() ;
 			    cairo->restore() ;
 
-                    cairo->set_source_rgba(c_treelines.r
-                                           , c_treelines.g
-                                           , c_treelines.b
-                                           , c_treelines.a * 0.8
-                                           ) ;
+                cairo->set_source_rgba(c_treelines.get_red()
+                                       , c_treelines.get_green()
+                                       , c_treelines.get_blue()
+                                       , c_treelines.get_alpha() * 0.8
+                                       ) ;
                     cairo->stroke() ;
                     cairo->restore() ;
 
@@ -2506,9 +2481,9 @@ namespace Tracks
 				, m_height__headers - 1
 			    ) ;
 			    cairo->set_source_rgba(
-				  c_outline.r
-				, c_outline.g
-				, c_outline.b
+                  c_outline.get_red()
+                , c_outline.get_green()
+                , c_outline.get_blue()
 				, 0.4
 			    ) ;
 
@@ -2516,9 +2491,9 @@ namespace Tracks
                     cairo->set_line_width(.75) ;
                     cairo->move_to(xpos, 0) ;
                     cairo->line_to(xpos, m_height__headers - 1) ;
-                    cairo->set_source_rgba(c_outline.r
-                                           , c_outline.g
-                                           , c_outline.b
+                    cairo->set_source_rgba(c_outline.get_red()
+                                           , c_outline.get_green()
+                                           , c_outline.get_blue()
                                            , 0.6
                                            ) ;
 
@@ -3128,9 +3103,8 @@ namespace Tracks
                     boost::shared_ptr<IYoukiThemeEngine> theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;
                     const ThemeColor& c = theme->get_color( THEME_COLOR_BASE ) ;
                     Gdk::RGBA cgdk ;
-                    cgdk.set_rgba( c.r, c.g, c.b, 1.0 ) ;
+                    cgdk.set_rgba( c.get_red(), c.get_green(), c.get_blue() ) ;
                     override_background_color( cgdk, Gtk::STATE_FLAG_NORMAL ) ;
-                    override_color( cgdk, Gtk::STATE_FLAG_NORMAL ) ;
 
                     m_pb_play_l  = Gdk::Pixbuf::create_from_file( Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "row-play.png" )) ;
 

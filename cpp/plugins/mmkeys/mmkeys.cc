@@ -258,10 +258,8 @@ namespace MPX
 
             std::string keytext;
             std::vector<std::string> strings;
-            int i, j;
-            KeySym keysym;
 
-            keysym = XKeycodeToKeysym(gdk_x11_display_get_xdisplay (get_display()->gobj()), key, 0);
+            KeySym keysym = XKeycodeToKeysym(gdk_x11_display_get_xdisplay (get_display()->gobj()), key, 0);
             if( keysym == 0 || keysym == NoSymbol )
             {
                 keytext = (boost::format ("#%3d") % key).str();
@@ -271,7 +269,7 @@ namespace MPX
                 keytext = XKeysymToString(keysym);
             }
 
-            for (i = 0, j=0; j<7; j++)
+            for (int i = 0, j=0; j<7; j++)
             {
                 if( mask & modifiers[j] )
                     strings.push_back (modifier_string[j]);

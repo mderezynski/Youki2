@@ -219,10 +219,8 @@ namespace MPX
 
             Cairo::RefPtr<Cairo::Context> cr = get_window()->create_cairo_context();
 
-            int x, y, w, h;
+            int w, h;
             Gtk::Allocation a = get_allocation();
-            x = a.get_x();
-            y = a.get_y();
             w = a.get_width();
             h = a.get_height();
 

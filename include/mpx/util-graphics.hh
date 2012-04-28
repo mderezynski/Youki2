@@ -80,26 +80,26 @@ namespace MPX
 
     void
     color_to_rgba(
-          const Gdk::Color&
+          const Gdk::RGBA&
         , double& /*r*/
         , double& /*g*/
         , double& /*b*/
         , double& /*a*/
     ) ;
 
-    Gdk::Color
+    Gdk::RGBA
     color_adjust_brightness(
-          const Gdk::Color&
+          const Gdk::RGBA&
         , double /*brightness*/
     ) ;
 
-    Gdk::Color
+    Gdk::RGBA
     color_shade(
-          const Gdk::Color&
+          const Gdk::RGBA&
         , double /*ratio*/
     ) ;
 
-    Gdk::Color
+    Gdk::RGBA
     color_from_hsb(
           double /*hue*/
         , double /*saturation*/
@@ -108,7 +108,7 @@ namespace MPX
 
     void
     color_to_hsb(
-          const Gdk::Color&
+          const Gdk::RGBA&
         , double & /*hue*/
         , double & /*saturation*/
         , double & /*brightness*/
@@ -187,10 +187,25 @@ namespace MPX
         , double                                /*alpha*/
     ) ;
 
-    Gdk::Color
+    Gdk::RGBA
     get_mean_color_for_pixbuf(
           Glib::RefPtr<Gdk::Pixbuf>
     ) ;
+
+    inline Gdk::RGBA make_rgba (double r, double g, double b, double a = 1.0)
+    {
+        Gdk::RGBA color;
+        color.set_rgba (r, g, b, a);
+        return color;
+    }
+
+    inline Gdk::RGBA make_rgba (Gdk::RGBA const& source, double a)
+    {
+        Gdk::RGBA color;
+        color.set_rgba (source.get_red(), source.get_green(), source.get_blue(), a);
+        return color;
+    }
+
   } // Util
 } // MPX
 

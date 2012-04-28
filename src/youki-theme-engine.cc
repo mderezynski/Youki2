@@ -109,25 +109,18 @@ namespace
         std::string s_b = hex.substr(5, 2);
         std::string s_a = hex.substr(7, 2);
 
-        color.r = int_from_hexbyte(s_r) / 255. ;
-        color.g = int_from_hexbyte(s_g) / 255. ;
-        color.b = int_from_hexbyte(s_b) / 255. ;
-        color.a = int_from_hexbyte(s_a) / 255. ;
+        color.set_rgba (int_from_hexbyte(s_r) / 255.,
+                        int_from_hexbyte(s_g) / 255.,
+                        int_from_hexbyte(s_b) / 255.,
+                        int_from_hexbyte(s_a) / 255.);
     }
 
     using namespace MPX ;
 
     ThemeColor
-    theme_color_from_gdk( const Gdk::Color& gdk )
+    theme_color_from_gdk( const Gdk::RGBA& gdk )
     {
-        ThemeColor c ;
-    
-        c.r = gdk.get_red_p() ;
-        c.g = gdk.get_green_p() ;
-        c.b = gdk.get_blue_p() ;
-        c.a = 1 ;
-
-        return c ;
+        return gdk;
     }
 }
 
@@ -267,6 +260,20 @@ namespace MPX
         }
     }
 
+    inline Gdk::RGBA make_rgba (double r, double g, double b, double a = 1.0)
+    {
+        Gdk::RGBA color;
+        color.set_rgba (r, g, b, a);
+        return color;
+    }
+
+    inline Gdk::RGBA make_rgba (Gdk::RGBA const& source, double a)
+    {
+        Gdk::RGBA color;
+        color.set_rgba (source.get_red(), source.get_green(), source.get_blue(), a);
+        return color;
+    }
+
     void
     YoukiThemeEngine::reload(
     )
@@ -278,55 +285,55 @@ namespace MPX
         gtk_widget_realize(GTK_WIDGET(tv.gobj())) ;
 
         Gdk::RGBA csel = tv.get_style_context()->get_color( Gtk::STATE_FLAG_SELECTED ) ;
-	// csel.set_rgb_p( 0x53/255., 0x7f/255., 0xe9/255. ) ; 
+        // csel.set_rgba( 0x53/255., 0x7f/255., 0xe9/255. ) ;
 
         ThemeColorMap_t colors ;
-        colors[THEME_COLOR_SELECT] = ThemeColor( csel.get_red_p(), csel.get_green_p(), csel.get_blue_p(), 1. ) ;
+        colors[THEME_COLOR_SELECT] = make_rgba( csel, 1. ) ;
 
-	Gdk::RGBA ctit ;
-	ctit.set_rgb_p( 0x6d/255., 0x9c/255., 0xe9/255. ) ;
+        Gdk::RGBA ctit ;
+        ctit.set_rgba( 0x6d/255., 0x9c/255., 0xe9/255. ) ;
 
         Util::color_to_hsb( ctit, h, s, b ) ;
         b = std::max( 0.20, b-0.01 ) ;
         s = std::max( 0.20, s-0.02 ) ;
-        Gdk::Color c0 = Util::color_from_hsb( h, s, b ) ;
-        colors[THEME_COLOR_TITLEBAR_1] = ThemeColor( c0.get_red_p(), c0.get_green_p(), c0.get_blue_p(), 0.93 ) ;
+        Gdk::RGBA c0 = Util::color_from_hsb( h, s, b ) ;
+        colors[THEME_COLOR_TITLEBAR_1] = make_rgba( c0, 0.93 ) ;
 
         Util::color_to_hsb( ctit, h, s, b ) ;
         b = std::max( 0.12, b-0.02 ) ;
         s = std::max( 0.13, s-0.04 ) ;
-        Gdk::Color c1 = Util::color_from_hsb( h, s, b ) ;
-        colors[THEME_COLOR_TITLEBAR_2] = ThemeColor( c1.get_red_p(), c1.get_green_p(), c1.get_blue_p(), 0.93 ) ;
+        Gdk::RGBA c1 = Util::color_from_hsb( h, s, b ) ;
+        colors[THEME_COLOR_TITLEBAR_2] = make_rgba( c1, 0.93 ) ;
 
         Util::color_to_hsb( ctit, h, s, b ) ;
         b = std::max( 0.05, b-0.04 ) ;
         s = std::max( 0.09, s-0.06 ) ;
-        Gdk::Color c2 = Util::color_from_hsb( h, s, b ) ;
-        colors[THEME_COLOR_TITLEBAR_3] = ThemeColor( c2.get_red_p(), c2.get_green_p(), c2.get_blue_p(), 0.93 ) ;
+        Gdk::RGBA c2 = Util::color_from_hsb( h, s, b ) ;
+        colors[THEME_COLOR_TITLEBAR_3] = make_rgba( c2, 0.93 ) ;
 
         Util::color_to_hsb( ctit, h, s, b ) ;
         b = std::max( 0.21, b-0.02 ) ;
         s = std::max( 0.22, s-0.10 ) ;
-        Gdk::Color c3 = Util::color_from_hsb( h, s, b ) ;
-        colors[THEME_COLOR_TITLEBAR_TOP] = ThemeColor( c3.get_red_p(), c3.get_green_p(), c3.get_blue_p(), 0.90 ) ; 
+        Gdk::RGBA c3 = Util::color_from_hsb( h, s, b ) ;
+        colors[THEME_COLOR_TITLEBAR_TOP] = make_rgba( c3, 0.90 ) ;
 
-        colors[THEME_COLOR_BACKGROUND] = theme_color_from_gdk(  tv.get_style_context()->get_background_color( Gtk::STATE_FLAG_NORMAL )) ;
-        colors[THEME_COLOR_BASE] = theme_color_from_gdk( tv.get_style_context()->get_color( Gtk::STATE_FLAG_NORMAL )) ;
+        colors[THEME_COLOR_BACKGROUND] = tv.get_style_context()->get_background_color( Gtk::STATE_FLAG_NORMAL ) ;
+        colors[THEME_COLOR_BASE]       = tv.get_style_context()->get_color( Gtk::STATE_FLAG_NORMAL ) ;
 
         Util::color_to_hsb( tv.get_style_context()->get_color( Gtk::STATE_FLAG_NORMAL ), h, s, b ) ;
-	b *= 0.95 ;
-        colors[THEME_COLOR_BASE_ALTERNATE] = theme_color_from_gdk( Util::color_from_hsb ( h, s, b )) ; 
+        b *= 0.95 ;
+        colors[THEME_COLOR_BASE_ALTERNATE] = Util::color_from_hsb ( h, s, b ) ;
 
-        colors[THEME_COLOR_TEXT] = theme_color_from_gdk(  tv.get_style_context()->get_text( Gtk::STATE_NORMAL )) ;
-        colors[THEME_COLOR_TEXT_SELECTED] = theme_color_from_gdk(  tv.get_style_context()->get_color( Gtk::STATE_FLAG_SELECTED )) ;
-        colors[THEME_COLOR_DRAWER] = ThemeColor( 0.65, 0.65, 0.65, .4 ) ;
-        colors[THEME_COLOR_WINDOW_BORDER] = ThemeColor( 0.25, 0.25, 0.25, 1. ) ; 
-        colors[THEME_COLOR_ENTRY_OUTLINE] = ThemeColor( 0.2, 0.2, 0.2, 1. ) ; 
+        colors[THEME_COLOR_TEXT]          = tv.get_style_context()->get_color( Gtk::STATE_FLAG_NORMAL ) ;
+        colors[THEME_COLOR_TEXT_SELECTED] = tv.get_style_context()->get_color( Gtk::STATE_FLAG_SELECTED ) ;
+        colors[THEME_COLOR_DRAWER]        = make_rgba( 0.65, 0.65, 0.65, .4 ) ;
+        colors[THEME_COLOR_WINDOW_BORDER] = make_rgba( 0.25, 0.25, 0.25, 1. ) ;
+        colors[THEME_COLOR_ENTRY_OUTLINE] = make_rgba( 0.2, 0.2, 0.2, 1. ) ;
 
-        colors[THEME_COLOR_TREELINES] = ThemeColor( .5, .5, .5, 1. ) ; 
-        colors[THEME_COLOR_INFO_AREA] = theme_color_from_gdk( tv.get_style_context()->get_color( Gtk::STATE_FLAG_NORMAL )) ;
-        colors[THEME_COLOR_VOLUME] = ThemeColor( .7, .7, .7, 1. ) ;
-        colors[THEME_COLOR_RESIZE_GRIP] = ThemeColor( 1., 1., 1., .10 ) ; 
+        colors[THEME_COLOR_TREELINES]   = make_rgba( .5, .5, .5, 1. ) ;
+        colors[THEME_COLOR_INFO_AREA]   = tv.get_style_context()->get_color( Gtk::STATE_FLAG_NORMAL ) ;
+        colors[THEME_COLOR_VOLUME]      = make_rgba( .7, .7, .7, 1. ) ;
+        colors[THEME_COLOR_RESIZE_GRIP] = make_rgba( 1., 1., 1., .10 ) ;
 
         Theme theme (
               "Youki-Default"
@@ -386,7 +393,7 @@ namespace MPX
         const ThemeColor& c = get_color( THEME_COLOR_SELECT ) ;
 
         Gdk::RGBA cgdk ;
-        cgdk.set_rgba( c.r, c.g, c.b, 1.0 ) ;
+        cgdk.set_rgba( c.get_red(), c.get_green(), c.get_blue() ) ;
 
         cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 
@@ -464,12 +471,12 @@ namespace MPX
         const ThemeColor& c = get_color( THEME_COLOR_SELECT ) ;
 
         Gdk::RGBA cgdk ;
-        cgdk.set_rgba( c.r, c.g, c.b, 1.0 ) ;
+        cgdk.set_rgba( c.get_red(), c.get_green(), c.get_blue() ) ;
 
         Util::color_to_hsb( cgdk, h, s, b ) ;
         b = std::min( 1., b+0.04 ) ;
         s = std::min( 1., s+0.05 ) ;
-        Gdk::Color c1 = Util::color_from_hsb( h, s, b ) ;
+        Gdk::RGBA c1 = Util::color_from_hsb( h, s, b ) ;
 
         cairo->save() ;
         cairo->set_operator( Cairo::OPERATOR_OVER ) ;

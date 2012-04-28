@@ -13,20 +13,20 @@ namespace
 {
     const int pad = 1 ;
 
-    Gdk::Color
+    Gdk::RGBA
     get_color_at_pos(
-          const Gdk::Color&     c1
-        , const Gdk::Color&     c2
+          const Gdk::RGBA&     c1
+        , const Gdk::RGBA&     c2
         , const double          ratio
     )
     {
-        Gdk::Color c ;
+        Gdk::RGBA c ;
 
-        double r = ( c1.get_red_p() * ( 1 - ratio ) + c2.get_red_p() * ratio ) ;
-        double g = ( c1.get_green_p() * ( 1 - ratio ) + c2.get_green_p() * ratio ) ;
-        double b = ( c1.get_blue_p() * ( 1 - ratio ) + c2.get_blue_p() * ratio ) ; 
+        double r = ( c1.get_red()   * ( 1 - ratio ) + c2.get_red()   * ratio ) ;
+        double g = ( c1.get_green() * ( 1 - ratio ) + c2.get_green() * ratio ) ;
+        double b = ( c1.get_blue()  * ( 1 - ratio ) + c2.get_blue()  * ratio ) ;
 
-        c.set_rgb_p( r, g, b ) ;
+        c.set_rgba( r, g, b ) ;
 
         return c ;
     }
@@ -48,9 +48,8 @@ namespace MPX
         const ThemeColor& c = m_theme->get_color( THEME_COLOR_BASE ) ;
 
         Gdk::RGBA cgdk ;
-        cgdk.set_rgba( c.r, c.g, c.b, 1.0 ) ;
+        cgdk.set_rgba( c.get_red(), c.get_green(), c.get_blue() ) ;
         override_background_color( cgdk, Gtk::STATE_FLAG_NORMAL ) ;
-        override_color( cgdk, Gtk::STATE_FLAG_NORMAL ) ;
 
         m_image_mute = Util::cairo_image_surface_from_pixbuf( Gdk::Pixbuf::create_from_file( Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "mute-small-14x14px.png" ))) ;
     }
@@ -93,9 +92,9 @@ namespace MPX
 	GdkRectangle r ;
 	double h, s, b ;
 
-        Gdk::Color cgdk, c1, c2 ;
+        Gdk::RGBA cgdk, c1, c2 ;
 
-	cgdk.set_rgb_p( 0.35, 0.35, 0.35 ) ;
+	cgdk.set_rgba( 0.35, 0.35, 0.35 ) ;
 	
 	Util::color_to_hsb( cgdk, h, s, b ) ;
 	// b *= 0.85 ;
@@ -112,15 +111,10 @@ namespace MPX
 	//s *= 0.75 ;
 	c2 = Util::color_from_hsb( h, s, b ) ;
 
-	Gdk::Color c_gradient = get_color_at_pos( c1, c2, percent ) ;
+	Gdk::RGBA c_gradient = get_color_at_pos( c1, c2, percent ) ;
 
         cairo->set_operator(Cairo::OPERATOR_SOURCE) ;
-        cairo->set_source_rgba(
-              c_base.r
-            , c_base.g
-            , c_base.b
-            , c_base.a
-        ) ;
+        Gdk::Cairo::set_source_rgba(cairo, c_base);
         cairo->paint () ;
 
         cairo->set_operator( Cairo::OPERATOR_OVER ) ;
@@ -142,49 +136,49 @@ namespace MPX
 
         position_bar_back_gradient->add_color_stop_rgba(
               0. 
-            , cgdk.get_red_p()
-            , cgdk.get_green_p()
-            , cgdk.get_blue_p()
+            , cgdk.get_red()
+            , cgdk.get_green()
+            , cgdk.get_blue()
             , 0.2 
         ) ;
 
         position_bar_back_gradient->add_color_stop_rgba(
               .2
-            , cgdk.get_red_p()
-            , cgdk.get_green_p()
-            , cgdk.get_blue_p()
+            , cgdk.get_red()
+            , cgdk.get_green()
+            , cgdk.get_blue()
             , 0.195 
         ) ;
 
         position_bar_back_gradient->add_color_stop_rgba(
               .4
-            , cgdk.get_red_p()
-            , cgdk.get_green_p()
-            , cgdk.get_blue_p()
+            , cgdk.get_red()
+            , cgdk.get_green()
+            , cgdk.get_blue()
             , 0.185
         ) ;
 
         position_bar_back_gradient->add_color_stop_rgba(
               .6
-            , cgdk.get_red_p()
-            , cgdk.get_green_p()
-            , cgdk.get_blue_p()
+            , cgdk.get_red()
+            , cgdk.get_green()
+            , cgdk.get_blue()
             , 0.185
         ) ;
         
         position_bar_back_gradient->add_color_stop_rgba(
               .9
-            , cgdk.get_red_p()
-            , cgdk.get_green_p()
-            , cgdk.get_blue_p()
+            , cgdk.get_red()
+            , cgdk.get_green()
+            , cgdk.get_blue()
             , 0.195
         ) ;
 
         position_bar_back_gradient->add_color_stop_rgba(
               1. 
-            , cgdk.get_red_p()
-            , cgdk.get_green_p()
-            , cgdk.get_blue_p()
+            , cgdk.get_red()
+            , cgdk.get_green()
+            , cgdk.get_blue()
             , 0.2 
         ) ;
 
@@ -202,9 +196,9 @@ namespace MPX
         cairo->fill_preserve () ;
 
 	cairo->set_source_rgba(
-	      c_gradient.get_red_p()
-	    , c_gradient.get_green_p()
-	    , c_gradient.get_blue_p()
+	      c_gradient.get_red()
+	    , c_gradient.get_green()
+	    , c_gradient.get_blue()
 	    , 1. 
 	) ;
 
@@ -223,9 +217,9 @@ namespace MPX
 	cairo->save () ;
 
 	cairo->set_source_rgba(
-	      c_gradient.get_red_p()
-	    , c_gradient.get_green_p()
-	    , c_gradient.get_blue_p()
+	      c_gradient.get_red()
+	    , c_gradient.get_green()
+	    , c_gradient.get_blue()
 	    , 1. 
 	) ;
 
@@ -285,20 +279,15 @@ namespace MPX
 		xoff = r.width ;
 
 		cairo->set_source_rgba(
-		      c1.get_red_p()
-		    , c1.get_green_p()
-		    , c1.get_blue_p()
+		      c1.get_red()
+		    , c1.get_green()
+		    , c1.get_blue()
 		    , 1. 
 		) ;
 	    }
 	    else
 	    {
-		cairo->set_source_rgba(
-		      ct.r
-		    , ct.g
-		    , ct.b
-		    , ct.a
-		) ;
+            Gdk::Cairo::set_source_rgba(cairo, ct);
 	    } 
 
 	    int x = 3 ;

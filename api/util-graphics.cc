@@ -161,7 +161,7 @@ namespace MPX
 
     void
     color_to_rgba(
-          const Gdk::Color& color
+          const Gdk::RGBA& color
         , double &          r
         , double &          g
         , double &          b
@@ -175,7 +175,7 @@ namespace MPX
     }
 
     void color_to_hsb(
-          Gdk::Color const& color
+          Gdk::RGBA const& color
         , double & hue
         , double & saturation
         , double & brightness
@@ -225,7 +225,7 @@ namespace MPX
         }
     }
 
-    Gdk::Color
+    Gdk::RGBA
     color_from_hsb(
           double hue
         , double saturation
@@ -271,7 +271,7 @@ namespace MPX
             }
         }
 
-        Gdk::Color color ;
+        Gdk::RGBA color ;
         color.set_red(color_shift[0]*65535) ;
         color.set_green(color_shift[1]*65535) ;
         color.set_blue(color_shift[2]*65535) ;
@@ -279,9 +279,9 @@ namespace MPX
         return color ;
     }
 
-    Gdk::Color
+    Gdk::RGBA
     color_shade(
-          const Gdk::Color& base
+          const Gdk::RGBA& base
         , double            ratio
     )
     {
@@ -295,9 +295,9 @@ namespace MPX
         return color_from_hsb(h, s, b) ;
     }
 
-    Gdk::Color
+    Gdk::RGBA
     color_adjust_brightness(
-          const Gdk::Color& base
+          const Gdk::RGBA& base
         , double            brightness
     )
     {
@@ -495,16 +495,16 @@ namespace MPX
         return pixbuf ;
     }
 
-    Gdk::Color
+    Gdk::RGBA
     get_mean_color_for_pixbuf(
           Glib::RefPtr<Gdk::Pixbuf>             image
     )
     {
-        Gdk::Color c ;
+        Gdk::RGBA c ;
 
         Glib::RefPtr<Gdk::Pixbuf> tiny = image->scale_simple( 1, 1 , Gdk::INTERP_NEAREST ) ;
         guchar * pixels = gdk_pixbuf_get_pixels( GDK_PIXBUF(tiny->gobj()) ) ;
-        c.set_rgb_p( double(pixels[0])/255., double(pixels[1])/255., double(pixels[2])/255. ) ;
+        c.set_rgba( double(pixels[0])/255., double(pixels[1])/255., double(pixels[2])/255., 1.0 ) ;
 
         return c ;
     }

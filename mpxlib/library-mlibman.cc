@@ -472,6 +472,10 @@ namespace MPX
                                         case VALUE_TYPE_REAL:
                                                 column += (" REAL DEFAULT NULL ");
                                                 break;
+
+                                        case VALUE_TYPE_BLOB:
+                                                g_message ("Invalid blob received for column");
+                                                break;
                                 }
 
                                 columns.push_back (column);
