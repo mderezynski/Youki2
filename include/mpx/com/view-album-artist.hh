@@ -33,7 +33,12 @@
 
 using boost::get ;
 
-typedef Glib::Property<Gtk::Adjustment*> PropAdj;
+namespace
+{
+    typedef Glib::RefPtr<Gtk::Adjustment>		    RPAdj ;
+    typedef Glib::Property<RPAdj>			    PropAdjustment ;
+    typedef Glib::Property<Gtk::ScrollablePolicy>	    PropScrollPolicy ;
+}
 
 namespace MPX
 {
@@ -571,21 +576,19 @@ namespace Artist
 
 	    private:
 
-		typedef Glib::RefPtr<Gtk::Adjustment>	RPAdj ;
-		typedef Glib::Property<RPAdj>		PropAdjustment ;
+		PropAdjustment			    property_vadj_, property_hadj_ ;
+		PropScrollPolicy		    property_vsp_ , property_hsp_ ;
 
-		PropAdjustment	property_vadj_, property_hadj_ ;
-
-                guint                                 m_height__row ;
-                guint                                 m_height__current_viewport ;
+                guint                               m_height__row ;
+                guint                               m_height__current_viewport ;
 
                 boost::optional<boost::tuple<Model_t::iterator, guint, guint> > m_selection ;
 
                 Column_SP_vector_t                  m_columns ;
 
-                std::set<int>                       m_collapsed ;
-                std::set<int>                       m_fixed ;
-                int                                 m_fixed_total_width ;
+                std::set<int>                       m_columns__collapsed ;
+                std::set<int>                       m_columns__fixed ;
+                int                                 m_columns__fixed_total_width ;
 
                 Signal_0			    m_SIGNAL_selection_changed ;
                 Signal_0			    m_SIGNAL_find_accepted ;
@@ -984,16 +987,16 @@ namespace Artist
                         ) ;
                     }
 
-                    double column_width = (double(event->width) - m_fixed_total_width - (40*m_collapsed.size()) ) / double(m_columns.size()-m_collapsed.size()-m_fixed.size());
+                    double column_width = (double(event->width) - m_columns__fixed_total_width - (40*m_columns__collapsed.size()) ) / double(m_columns.size()-m_columns__collapsed.size()-m_columns__fixed.size());
 
                     for( guint n = 0 ; n < m_columns.size() ; ++n )
                     {
-                        if( m_fixed.count( n ) )
+                        if( m_columns__fixed.count( n ) )
                         {
                             continue ;
                         }
 
-                        if( m_collapsed.count( n ) )
+                        if( m_columns__collapsed.count( n ) )
                         {
                             m_columns[n]->set_width( 40 ) ;
                         }
@@ -1355,13 +1358,13 @@ namespace Artist
                 {
                     if( collapsed )
                     {
-                        m_collapsed.insert( column ) ;
+                        m_columns__collapsed.insert( column ) ;
                         queue_resize () ;
                         queue_draw () ;
                     }
                     else
                     {
-                        m_collapsed.erase( column ) ;
+                        m_columns__collapsed.erase( column ) ;
                         queue_resize () ;
                         queue_draw () ;
                     }
@@ -1376,16 +1379,16 @@ namespace Artist
                 {
                     if( fixed )
                     {
-                        m_fixed.insert( column ) ;
-                        m_fixed_total_width += width ;
+                        m_columns__fixed.insert( column ) ;
+                        m_columns__fixed_total_width += width ;
                         m_columns[column]->set_width( width ) ;
                         queue_resize () ;
                         queue_draw () ;
                     }
                     else
                     {
-                        m_fixed.erase( column ) ;
-                        m_fixed_total_width -= m_columns[column]->get_width() ;
+                        m_columns__fixed.erase( column ) ;
+                        m_columns__fixed_total_width -= m_columns[column]->get_width() ;
                         queue_resize () ;
                         queue_draw () ;
                     }
@@ -1550,11 +1553,13 @@ namespace Artist
 			, property_vadj_(*this, "vadjustment", RPAdj(0))
 			, property_hadj_(*this, "hadjustment", RPAdj(0))
 
-                        , m_fixed_total_width( 0 )
+			, property_vsp_(*this, "vscroll-policy", Gtk::SCROLL_NATURAL )
+			, property_hsp_(*this, "hscroll-policy", Gtk::SCROLL_NATURAL )
+
+                        , m_columns__fixed_total_width( 0 )
                         , m_search_active( false )
 
                 {
-		    Scrollable::add_interface(G_OBJECT_TYPE(Glib::ObjectBase::gobj())) ;
 		    property_vadjustment().signal_changed().connect( sigc::mem_fun( *this, &Class::on_vadj_prop_changed )) ;
 
                     boost::shared_ptr<IYoukiThemeEngine> theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;

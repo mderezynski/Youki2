@@ -131,7 +131,7 @@ namespace MPX
             , cgdk.get_red()
             , cgdk.get_green()
             , cgdk.get_blue()
-            , 0.2 
+            , 0.3 
         ) ;
 
         position_bar_back_gradient->add_color_stop_rgba(
@@ -139,7 +139,7 @@ namespace MPX
             , cgdk.get_red()
             , cgdk.get_green()
             , cgdk.get_blue()
-            , 0.195 
+            , 0.250 
         ) ;
 
         position_bar_back_gradient->add_color_stop_rgba(
@@ -159,11 +159,11 @@ namespace MPX
         ) ;
         
         position_bar_back_gradient->add_color_stop_rgba(
-              .9
+              .8
             , cgdk.get_red()
             , cgdk.get_green()
             , cgdk.get_blue()
-            , 0.195
+            , 0.250
         ) ;
 
         position_bar_back_gradient->add_color_stop_rgba(
@@ -171,7 +171,7 @@ namespace MPX
             , cgdk.get_red()
             , cgdk.get_green()
             , cgdk.get_blue()
-            , 0.2 
+            , 0.3 
         ) ;
 
         cairo->set_source( position_bar_back_gradient ) ;

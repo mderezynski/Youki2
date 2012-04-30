@@ -457,8 +457,6 @@ namespace MPX
 
         m_main_window->set_icon_list( pixvector ) ; 
 	m_main_window->signal_delete_event().connect( sigc::bind_return( sigc::hide<-1>( sigc::mem_fun( *this, &YoukiController::initiate_quit )), false)) ;
-	m_main_window->w().signal_key_press_event().connect( sigc::mem_fun( *this, &YoukiController::on_main_window_key_press_event_after )) ;
-
         Gdk::Color background ;
         background.set_rgb_p( 0.1, 0.1, 0.1 ) ;
 
@@ -826,8 +824,8 @@ namespace MPX
 	m_UI_Actions_Main->add( Gtk::Action::create( "FocusEntry", "FocusEntry" ), Gtk::AccelKey("<F6>"), sigc::mem_fun( *m_Entry, &Gtk::Widget::grab_focus)) ; 
 
 	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuViewActionUnderlineMatches", "Underline Search Matches" ), sigc::mem_fun( *this, &YoukiController::handle_action_underline_matches)) ; 
-	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuPlaybackControlActionStartAlbumAtFavorite", "Start Albums at favorite Track on double Click" )) ; 
-	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuPlaybackControlActionContinueCurrentAlbum", "Continue playing current Album regardless of Filtering" )) ; 
+	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuPlaybackControlActionStartAlbumAtFavorite", "Start Albums at Favorite Track")) ; 
+	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuPlaybackControlActionContinueCurrentAlbum", "Always Continue Playing Current Album" )) ; 
 	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuViewActionAlbumRTViewModeBottom", "Show Release Type" ), sigc::mem_fun( *this, &YoukiController::on_rt_viewmode_change  )) ; 
 	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuViewActionAlbumsShowYearLabel", "Show Year and Release Label" ), sigc::mem_fun( *this, &YoukiController::handle_action_underline_matches ) ); 
 

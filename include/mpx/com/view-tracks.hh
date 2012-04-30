@@ -36,10 +36,12 @@
 
 #include "mpx/i-youki-theme-engine.hh"
 
-#include "glib-marshalers.h"
-// ugh
-
-typedef Glib::Property<Gtk::Adjustment*> PropAdj;
+namespace
+{
+    typedef Glib::RefPtr<Gtk::Adjustment>		    RPAdj ;
+    typedef Glib::Property<RPAdj>			    PropAdjustment ;
+    typedef Glib::Property<Gtk::ScrollablePolicy>	    PropScrollPolicy ;
+}
 
 namespace MPX
 {
@@ -1638,10 +1640,8 @@ namespace Tracks
 
             private:
 
-		typedef Glib::RefPtr<Gtk::Adjustment>	RPAdj ;
-		typedef Glib::Property<RPAdj>		PropAdjustment ;
-
 		PropAdjustment			    property_vadj_, property_hadj_ ;
+		PropScrollPolicy		    property_vsp_ , property_hsp_ ;
 
                 int                                 m_height__row ;
                 int                                 m_height__headers ;
@@ -1651,15 +1651,11 @@ namespace Tracks
 
                 boost::optional<boost::tuple<Model_t::const_iterator, guint> >  m_selection ;
 
-                IdV                                 m_dnd_idv ;
-                bool                                m_dnd ;
-                bool                                m_highlight ;
+                boost::optional<guint>		    m_row__button_press ;
 
-                boost::optional<guint>		    m_clicked_row ;
-
-                std::set<int>                       m_collapsed ;
-                std::set<int>                       m_fixed ;
-                guint                               m_fixed_total_width ;
+                std::set<guint>                     m_columns__collapsed ;
+                std::set<guint>                     m_columns__fixed ;
+                guint                               m_columns__fixed_total_width ;
         
                 Gtk::Entry                        * m_SearchEntry ;
                 Gtk::Window                       * m_SearchWindow ;
@@ -1668,6 +1664,8 @@ namespace Tracks
 
                 sigc::connection                    m_search_changed_conn ; 
                 bool                                m_search_active ;
+
+		bool				    m_highlight_matches ;
 
                 Glib::RefPtr<Gtk::UIManager> m_refUIManager ;
                 Glib::RefPtr<Gtk::ActionGroup> m_refActionGroup ;
@@ -1682,23 +1680,20 @@ namespace Tracks
                 SignalVAdjChanged                   m_SIGNAL_vadj_changed ;
                 SignalFindAccepted                  m_SIGNAL_find_accepted ;
                 SignalFindPropagate                 m_SIGNAL_find_propagate ;
-
-                Interval<guint>               m_Model_I ;
+                Interval<guint>			    m_Model_I ;
 
                 void
                 initialize_metrics ()
                 {
                     Glib::RefPtr<Pango::Context> context = get_pango_context ();
-
-                    Pango::FontMetrics metrics = context->get_metrics (get_style_context ()->get_font (),
-                                                                       context->get_language ());
+                    Pango::FontMetrics metrics = context->get_metrics(get_style_context()->get_font(), context->get_language());
 
                     m_height__row = (metrics.get_ascent ()/PANGO_SCALE) +
                                     (metrics.get_descent ()/PANGO_SCALE) + 5 ;
 
-                    const int visible_area_pad = 5 ;
+                    const int header_pad = 5 ;
 
-                    m_height__headers = m_height__row + visible_area_pad ;
+                    m_height__headers = m_height__row + header_pad ;
                 }
 
                 void
@@ -1716,7 +1711,7 @@ namespace Tracks
             protected:
 
                 virtual bool
-                on_focus_in_event (GdkEventFocus* G_GNUC_UNUSED)
+                on_focus_in_event(GdkEventFocus* G_GNUC_UNUSED)
                 {
                     if( !m_selection && m_model->size() )
                     {
@@ -1975,97 +1970,101 @@ namespace Tracks
 		    bool in
                 )
                 {
-
                     GdkEvent *event = gdk_event_new (GDK_FOCUS_CHANGE);
 
                     event->focus_change.type   = GDK_FOCUS_CHANGE;
-                    event->focus_change.window = (*m_SearchEntry).get_window()->gobj() ;
+                    event->focus_change.window = GDK_WINDOW(g_object_ref((*m_SearchEntry).get_window()->gobj())) ;
                     event->focus_change.in     = in;
 
                     (*m_SearchEntry).send_focus_change( event ) ;
-                    (*m_SearchEntry).property_has_focus() = in;
 
-                    //gdk_event_free( event ) ;
+                    gdk_event_free( event ) ;
                 }
 
+		void
+		on_size_allocate( Gtk::Allocation& a )
+		{
+		    g_message("x: %d, y: %d, w: %d, h: %d", a.get_x(), a.get_y(), a.get_width(), a.get_height()) ;
+		    Gtk::DrawingArea::on_size_allocate( a ) ;
+		}
+
                 bool
-                on_button_press_event (GdkEventButton * event)
+                on_button_press_event(
+		    GdkEventButton* event
+		)
                 {
-                    using boost::get;
+                    using boost::get ;
 
-                    int x_orig = event->x ;
+                    guint x_orig = event->x ;
 
-		    Limiter<guint> row ( 
+		    Limiter<guint> d ( 
 			  Limiter<guint>::ABS_ABS
 			, 0
 			, m_model->size() - 1
 			, get_upper_row() + (event->y-m_height__headers) / m_height__row
 		    ) ;
 
-                    if( (event->type == GDK_BUTTON_PRESS) && event->button == 1 )
+                    if((event->type == GDK_BUTTON_PRESS) && event->button == 1)
                     {
-                        if( event->y < (m_height__row+4))
+                        if( event->y < m_height__headers ) 
                         {
-                            int p = 16 ;
+                            guint p = 16 ;
 
-                            for( guint n = 0; n < m_columns.size() ; ++n )
+                            for( guint n = 0; n < m_columns.size(); ++n )
                             {
                                 int w = m_columns[n]->get_width() ;
 
-                                if( (x_orig >= p) && (x_orig <= p + w) && !m_fixed.count(n) )
+                                if( (x_orig >= p) && (x_orig <= p + w) && !m_columns__fixed.count(n) )
                                 {
-                                    column_set_collapsed( n, !m_collapsed.count( n ) ) ;
+                                    column_set_collapsed( n, !m_columns__collapsed.count(n)) ;
                                     break ;
                                 }
 
                                 p += w ;
                             }
-                            return true;
-                        }
 
-                        if( x_orig >= 16 ) 
+                            return true ;
+                        }
+			else
                         {
-                            m_clicked_row = row ;
-                            cancel_search() ;
+			    cancel_search() ;
 	                    grab_focus() ;
-			    select_row( row ) ;
+			    select_row( d ) ;
+                            m_row__button_press = d ;
                         }
                     }
 		    else
-                    if( (event->type == GDK_2BUTTON_PRESS) && event->button == 1 )
+                    if((event->type == GDK_2BUTTON_PRESS) && event->button == 1 )
                     {
-                        if( event->y < m_height__row )
-                            return false ;
+                        if( event->y > m_height__row )
+			{
+			    Interval<guint> i (
+				  Interval<guint>::IN_EX
+				, 0
+				, m_model->size()
+			    ) ;
 
-                        Interval<guint> i (
-                              Interval<guint>::IN_EX
-                            , 0
-                            , m_model->size()
-                        ) ;
-
-                        if( i.in( row )) 
-                        {
-                            MPX::Track_sp track = get<4>(m_model->row(row)) ;
-                            m_SIGNAL_track_activated.emit( track, true ) ;
-                        }
-                    
-                        return true ;
+			    if( i.in( d )) 
+			    {
+				MPX::Track_sp track = get<4>(m_model->row(d)) ;
+				m_SIGNAL_track_activated.emit( track, true ) ;
+			    }
+			}
                     }
 		    else 
                     if( event->button == 3 )
                     {
-                        m_clicked_row.reset() ; 
+                        m_row__button_press.reset() ; 
                         m_pMenuPopup->popup(event->button, event->time) ;                            
-                        return true ;
                     }
 
-                    return false;
+                    return true ;
                 }
 
                 bool
                 on_button_release_event (GdkEventButton * event)
                 {
-                    m_clicked_row.reset() ; 
+                    m_row__button_press.reset() ; 
                     return false ;
                 }
 
@@ -2099,13 +2098,13 @@ namespace Tracks
 
                     guint row = get_upper_row() + ( y_orig - m_height__headers ) / m_height__row ;
 
-                    if( m_clicked_row && row != m_clicked_row.get() ) 
+                    if( m_row__button_press && row != m_row__button_press.get() ) 
                     {
 			if( m_Model_I.in( row )) 
 			{
-			    m_model->swap( row, m_clicked_row.get() ) ;
+			    m_model->swap( row, m_row__button_press.get() ) ;
 			    select_row( row ) ;	
-			    m_clicked_row = row ;
+			    m_row__button_press = row ;
 			}
                     }
 
@@ -2144,13 +2143,13 @@ namespace Tracks
 
                     int width = event->width - 16 ;
 
-                    double column_width_calculated = (double(width) - double(m_fixed_total_width) - double(column_width_collapsed*double(m_collapsed.size()))) / (m_columns.size() - m_collapsed.size() - m_fixed.size()) ;
+                    double column_width_calculated = (double(width) - double(m_columns__fixed_total_width) - double(column_width_collapsed*double(m_columns__collapsed.size()))) / (m_columns.size() - m_columns__collapsed.size() - m_columns__fixed.size()) ;
 
                     for( guint n = 0; n < m_columns.size(); ++n )
                     {
-                        if( !m_fixed.count( n ) )
+                        if( !m_columns__fixed.count( n ) )
                         {
-                            m_columns[n]->set_width(m_collapsed.count( n ) ? column_width_collapsed : column_width_calculated ) ; 
+                            m_columns[n]->set_width(m_columns__collapsed.count( n ) ? column_width_collapsed : column_width_calculated ) ; 
                         }
                     }
 
@@ -2163,10 +2162,7 @@ namespace Tracks
                     , const boost::optional<guint>&    id
                 )
                 {
-                    if( id && id.get() == boost::get<3>( row ))
-                        return true ;
-
-                    return false ;
+                    return( id && id.get() == boost::get<3>( row )) ;
                 }
 
                 template <typename T>
@@ -2176,10 +2172,7 @@ namespace Tracks
                     , const boost::optional<T>&         cmp
                 )
                 {
-                    if( cmp && cmp.get() == val ) 
-                        return true ;
-
-                    return false ;
+                    return( cmp && cmp.get() == val ) ;
                 }
 
                 bool
@@ -2193,7 +2186,6 @@ namespace Tracks
                     const ThemeColor& c_text_sel    = theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
                     const ThemeColor& c_rules_hint  = theme->get_color( THEME_COLOR_BASE_ALTERNATE ) ;
 		    const ThemeColor& c_treelines   = theme->get_color( THEME_COLOR_TREELINES ) ;
-		    const ThemeColor& c_bg	    = theme->get_color( THEME_COLOR_BACKGROUND ) ;
 		    const ThemeColor& c_base	    = theme->get_color( THEME_COLOR_BASE ) ;
 		    const ThemeColor& c_outline	    = theme->get_color( THEME_COLOR_ENTRY_OUTLINE ) ;
 
@@ -2203,20 +2195,14 @@ namespace Tracks
 
                     const Gtk::Allocation& a = get_allocation();
 
-/*
-		    cairo->set_operator( Cairo::OPERATOR_SOURCE ) ;
-		    Gdk::Cairo::set_source_rgba(cairo, c_bg);
-		    cairo->paint() ;
-*/
-
 		    cairo->save() ;
 		    RoundedRectangle(
-                               cairo
-                             , 1
-                             , 1
-                             , a.get_width() - 2 
-                             , a.get_height() - 2 
-                             , rounding
+			   cairo
+			 , 1
+			 , 1
+			 , a.get_width() - 2 
+			 , a.get_height() - 2 
+			 , rounding
                     ) ;
 		    Gdk::Cairo::set_source_rgba(cairo, c_outline) ;
 	            cairo->set_line_width( 0.75 ) ;
@@ -2224,13 +2210,13 @@ namespace Tracks
 		    cairo->restore() ;
 
 		    RoundedRectangle(
-                             cairo
-                             , 2
-                             , 2
-                             , a.get_width() - 4 
-                             , a.get_height() - 4 
-                             , rounding
-                             ) ;
+			   cairo
+			 , 2
+			 , 2
+			 , a.get_width() - 4 
+			 , a.get_height() - 4 
+			 , rounding
+		    ) ;
 		    cairo->clip() ;
 
 		    Gdk::Cairo::set_source_rgba(cairo, c_base);
@@ -2280,27 +2266,32 @@ namespace Tracks
 		    cairo->stroke() ;
 		    cairo->restore() ;
 
-                    guint row   = get_upper_row() ;
-
-                    guint limit = Limiter<guint>(
+		    /// Variables mostly for viewport vertical and horizontal iteration 
+                    guint upper_row   = get_upper_row() ;
+                    guint row_limit   = Limiter<guint>(
 				            Limiter<guint>::ABS_ABS
 					  , 0
 					  , m_model->size()
 					  , get_page_size() + 1
-		  		      ) ;
+					) ;
+                    guint xpos        = 0 ;
 
-                    guint xpos = 0 ;
+		    Interval<guint> current_viewport (
+			  Interval<guint>::IN_IN
+			, get_upper_row()
+			, get_upper_row() + get_page_size() - 1
+		    ) ;
 
 		    for( Columns::iterator i = m_columns.begin(); i != m_columns.end(); ++i )
 		    {
 			(*i)->render_header(
-			    cairo
-			  , *this
-			  , xpos
-			  , 0
-			  , m_height__headers
-			  , std::distance( m_columns.begin(), i )
-			  , c_text
+				cairo
+			      , *this
+			      , xpos
+			      , 0
+			      , m_height__headers
+			      , std::distance( m_columns.begin(), i )
+			      , c_text
 			) ;
 
 			xpos += (*i)->get_width() ; 
@@ -2308,101 +2299,94 @@ namespace Tracks
 
 		    //// RULES HINT
 		    {
-			GdkRectangle r ;
+			GdkRectangle rect ;
 
-			r.x       = 0 ;
-			r.width   = a.get_width() ; 
-			r.height  = m_height__row ; 
+			rect.x       = 0 ;
+			rect.width   = a.get_width() ; 
+			rect.height  = m_height__row ; 
 
 			Gdk::Cairo::set_source_rgba(cairo, c_rules_hint);
 
-			for( guint n = 0 ; n < limit ; ++n ) 
+			for( guint n = 0 ; n < row_limit ; ++n ) 
 			{
-			    if(!(n%2))
-				continue ; 
+			    if( n % 2 )
+			    {
+				rect.y = m_height__headers + (n*m_height__row) ;
 
-			    r.y = m_height__headers + (n*m_height__row) + 1 ;
+				RoundedRectangle(
+				      cairo
+				    , rect.x
+				    , rect.y
+				    , rect.width
+				    , rect.height
+				    , rounding
+				    , MPX::CairoCorners::CORNERS(0)
+				) ;
 
-			    RoundedRectangle(
-				  cairo
-				, r.x
-				, r.y
-				, r.width
-				, r.height
-				, rounding
-				, MPX::CairoCorners::CORNERS(0)
-			    ) ;
-			    cairo->fill() ;
+				cairo->fill() ;
+			    }
 			}
 		    }
 
 		    //// SELECTION
-		    boost::optional<guint> n_sel ;
+		    boost::optional<guint> d_sel ;
 
 		    if( m_selection )
 		    {
-			Interval<guint> i (
-			      Interval<guint>::IN_IN
-			    , get_upper_row()
-			    , get_upper_row() + get_page_size() - 1
+			d_sel = boost::get<1>(m_selection.get()) ; 
+		    }
+
+		    //// Selection Rectangle, if any
+		    if( d_sel && current_viewport.in(d_sel.get()))
+		    {
+			GdkRectangle rect ;
+
+			rect.x         = 0 ; 
+			rect.width     = a.get_width() ;
+			rect.height    = m_height__row ; 
+
+			rect.y = m_height__headers + ((d_sel.get() - upper_row)*m_height__row) ;
+
+			theme->draw_selection_rectangle(
+			      cairo
+			    , rect
+			    , has_focus()
+			    , rounding
+			    , MPX::CairoCorners::CORNERS(0)
 			) ;
-
-			n_sel = boost::get<1>(m_selection.get()) ; 
-
-			if( i.in( n_sel.get() ))
-			{
-			    GdkRectangle r ;
-
-			    r.x         = 0 ; 
-			    r.y         = (n_sel.get() - row) * m_height__row + m_height__headers ;
-			    r.width     = a.get_width() ;
-			    r.height    = m_height__row ; 
-
-			    theme->draw_selection_rectangle(
-				  cairo
-				, r
-				, has_focus()
-				, rounding
-				, MPX::CairoCorners::CORNERS(0)
-			    ) ;
-			}
 		    }
 
 		    //// ROW DATA
-		    for( guint n = 0 ; n < limit && m_Model_I.in(row+n) ; ++n ) 
+		    for( guint n = 0 ; n < row_limit && m_Model_I.in( n + upper_row ) ; ++n ) 
 		    {
 			xpos = 0 ;
 
-			const Row_t& model_row = m_model->row( row + n ) ;
+			const Row_t& r = m_model->row( n + upper_row ) ;
 
-			if( m_model->m_id_currently_playing )
+			// RENDER "playing" ARROW
+			if( compare_id_to_optional( r, m_model->m_id_currently_playing )) 
 			{
-			    if( compare_id_to_optional( model_row, m_model->m_id_currently_playing )) 
-			    {
-				const guint x = 3, y = m_height__headers + n*m_height__row + 2 ;
+			    const guint x = 4, y = m_height__headers + n*m_height__row + 2 ;
 
-				cairo->save() ;
+			    cairo->save() ;
+			    cairo->set_line_join( Cairo::LINE_JOIN_ROUND ) ;
+			    cairo->set_line_cap( Cairo::LINE_CAP_ROUND ) ;
+			    cairo->move_to( x+4, y+3 ) ; 
+			    cairo->line_to( x+13, y+9 ) ; 
+			    cairo->line_to( x+4, y+15 ) ;
+			    cairo->close_path() ;
 
-				cairo->set_line_join( Cairo::LINE_JOIN_ROUND ) ;
-				cairo->set_line_cap( Cairo::LINE_CAP_ROUND ) ;
-
-				cairo->move_to( x+4, y+3 ) ; 
-				cairo->line_to( x+13, y+9 ) ; 
-				cairo->line_to( x+4, y+15 ) ;
-				cairo->close_path() ;
-
-				if( m_selection && boost::get<1>(m_selection.get()) == row+n )
-				{ 
-				    cairo->set_source_rgba( 1., 1., 1., 0.9 ) ;	
-				}
-				else
-				{
-				    cairo->set_source_rgba( 0.2, 0.2, 0.2, 0.9 ) ;
-				}
-			
-				cairo->fill() ;	
-				cairo->restore() ;
+			    if( m_selection && boost::get<1>(m_selection.get()) == n + upper_row )
+			    { 
+				cairo->set_source_rgba( 1., 1., 1., 0.9 ) ;	
 			    }
+			    else
+			    {
+				cairo->set_source_rgba( 0.2, 0.2, 0.2, 0.9 ) ;
+			    }
+		    
+			    cairo->fill() ;	
+			    cairo->restore() ;
 			}
 
 			for( Columns::const_iterator i = m_columns.begin(); i != m_columns.end(); ++i )
@@ -2410,16 +2394,16 @@ namespace Tracks
 			    (*i)->render(
 				  cairo
 				, *this
-				, model_row 
-				, row+n
+				, r 
+				, n + upper_row
 				, xpos
 				, m_height__headers + (n*m_height__row) - 1
 				, m_height__row
-				, compare_val_to_optional( row+n, n_sel ) ? c_text_sel : c_text
+				, compare_val_to_optional( n + upper_row, d_sel ) ? c_text_sel : c_text
 				, 1.0
-				, m_highlight
+				, m_highlight_matches
 				, m_model->m_current_filter_noaque
-				, bool(compare_val_to_optional( row+n, n_sel ))
+				, compare_val_to_optional( n + upper_row, d_sel )
 			    ) ;
 
 			    xpos += (*i)->get_width() ; 
@@ -2428,14 +2412,25 @@ namespace Tracks
 
 		    //// TREELINES
 		    {
-			xpos = 0 ;
-
 			Columns::iterator i2 = m_columns.end() ;
-			--i2 ;
+			std::advance( i2, -1 ) ;	
+
+			std::vector<guint> xpos_v ;
+
+			guint xpos = 0 ;
 
 			for( Columns::const_iterator i = m_columns.begin() ; i != i2; ++i )
 			{
 			    xpos += (*i)->get_width() ; // adjust us to the column's end
+			    xpos_v.push_back( xpos ) ; 
+			}
+
+			std::vector<guint>::iterator ix = xpos_v.end() ;
+			std::advance( ix, -1 ) ;
+
+			for( std::vector<guint>::iterator i = xpos_v.begin() ; i != xpos_v.end() ; ++i ) 
+			{
+			    guint xpos = *i ; 
 
 			    cairo->save() ;
 			    cairo->set_antialias( Cairo::ANTIALIAS_NONE ) ;
@@ -2463,8 +2458,7 @@ namespace Tracks
 			    cairo->stroke() ;
 			    cairo->restore() ;
 
-                            if( i == i2 )
-                                continue ;
+                            if( i == ix ) continue ;
 
                             cairo->save() ;
                             cairo->set_antialias( Cairo::ANTIALIAS_NONE ) ;
@@ -2522,15 +2516,15 @@ namespace Tracks
                 void
                 on_model_changed(
                       guint   position
-                    , bool          size_changed
+                    , bool    size_changed
                 )
                 {
                     if( size_changed ) 
                     {
                         m_Model_I = Interval<guint> (
-                                 Interval<guint>::IN_EX
-                                , 0
-                                , m_model->size()
+			      Interval<guint>::IN_EX
+			    , 0
+			    , m_model->size()
                         ) ;
 
                         configure_vadj(
@@ -2641,7 +2635,7 @@ namespace Tracks
                 void
                 set_highlight(bool highlight)
                 {
-                    m_highlight = highlight;
+                    m_highlight_matches = highlight;
                     queue_draw ();
                 }
 
@@ -2710,12 +2704,12 @@ namespace Tracks
                 {
                     if( collapsed )
                     {
-                        m_collapsed.insert( column ) ;
+                        m_columns__collapsed.insert( column ) ;
                         queue_resize () ;
                     }
                     else
                     {
-                        m_collapsed.erase( column ) ;
+                        m_columns__collapsed.erase( column ) ;
                         queue_resize () ;
                     }
                 }
@@ -2729,15 +2723,15 @@ namespace Tracks
                 {
                     if( fixed )
                     {
-                        m_fixed.insert( column ) ;
-                        m_fixed_total_width += width ;
+                        m_columns__fixed.insert( column ) ;
+                        m_columns__fixed_total_width += width ;
                         m_columns[column]->set_width( width ) ;
                         queue_resize () ;
                     }
                     else
                     {
-                        m_fixed.erase( column ) ;
-                        m_fixed_total_width -= m_columns[column]->get_width() ; 
+                        m_columns__fixed.erase( column ) ;
+                        m_columns__fixed_total_width -= m_columns[column]->get_width() ; 
                         queue_resize () ;
                     }
                 }
@@ -3087,13 +3081,14 @@ namespace Tracks
 			, property_vadj_(*this, "vadjustment", RPAdj(0))
 			, property_hadj_(*this, "hadjustment", RPAdj(0))
 
-                        , m_dnd( false )
-                        , m_highlight( false )
-                        , m_fixed_total_width( 0 )
+			, property_vsp_(*this, "vscroll-policy", Gtk::SCROLL_NATURAL )
+			, property_hsp_(*this, "hscroll-policy", Gtk::SCROLL_NATURAL )
+
+                        , m_columns__fixed_total_width( 0 )
                         , m_search_active( false )
+                        , m_highlight_matches( false )
 
                 {
-		    Scrollable::add_interface(G_OBJECT_TYPE(Glib::ObjectBase::gobj())) ;
 		    property_vadjustment().signal_changed().connect( sigc::mem_fun( *this, &Class::on_vadj_prop_changed )) ;
 
                     boost::shared_ptr<IYoukiThemeEngine> theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;

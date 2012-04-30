@@ -31,15 +31,17 @@
 #include "mpx/mpx-main.hh"
 #include "mpx/i-youki-theme-engine.hh"
 
-#include "glib-marshalers.h"
-
 #include "mpx/com/indexed-list.hh"
 
 namespace
 {
-    typedef Glib::RefPtr<Gtk::Adjustment>	RPAdj ;
-    typedef Glib::Property<RPAdj>		PropAdjustment ;
+    typedef Glib::RefPtr<Gtk::Adjustment>		    RPAdj ;
+    typedef Glib::Property<RPAdj>			    PropAdjustment ;
+    typedef Glib::Property<Gtk::ScrollablePolicy>	    PropScrollPolicy ;
+}
 
+namespace
+{
     enum ReleaseType
     {
           RT_ALBUM
@@ -92,10 +94,10 @@ namespace Albums
 
 	enum RTViewMode
 	{
-	 	   RT_VIEW_NONE
-		,  RT_VIEW_BOTTOM
-		,  RT_VIEW_STRIPE
-		,  RT_VIEW_RANDOM
+		RT_VIEW_NONE
+	     ,  RT_VIEW_BOTTOM
+	     ,  RT_VIEW_STRIPE
+	     ,  RT_VIEW_RANDOM
 	} ;
 
     // Album
@@ -1096,7 +1098,7 @@ namespace Albums
 					) ;
 					cairo->set_source_rgba(color.get_red(), color.get_green(), color.get_blue(), 0.9);
 
-					layout[L3]->set_width( (m_width / 2.15) * PANGO_SCALE ) ;
+					layout[L3]->set_width(( m_width - 108 - 30) * PANGO_SCALE ) ;
 					layout[L3]->set_ellipsize( Pango::ELLIPSIZE_END ) ;
 
 					pango_cairo_show_layout( cairo->cobj(), layout[L3]->gobj() ) ;
@@ -1192,7 +1194,8 @@ namespace Albums
 
             private:
 
-		PropAdjustment	property_vadj_, property_hadj_ ;
+		PropAdjustment	    property_vadj_, property_hadj_ ;
+		PropScrollPolicy    property_vsp_ , property_hsp_ ;
 
                 guint				    m_height__row ;
                 guint				    m_height__current_viewport ;
@@ -1533,26 +1536,27 @@ namespace Albums
 		    bool in 
 		)
                 {
+		    g_message( G_STRFUNC ) ;
+
                     GdkEvent *event = gdk_event_new (GDK_FOCUS_CHANGE);
 
                     event->focus_change.type   = GDK_FOCUS_CHANGE;
-                    event->focus_change.window = (*m_SearchEntry).get_window()->gobj ();
+                    event->focus_change.window = GDK_WINDOW(g_object_ref((*m_SearchEntry).get_window()->gobj())) ;
                     event->focus_change.in     = in;
 
                     (*m_SearchEntry).send_focus_change( event ) ;
-                    (*m_SearchEntry).property_has_focus () = in;
 
-                    //gdk_event_free( event ) ;
+                    gdk_event_free( event ) ;
                 }
 
                 bool
-                on_button_press_event (GdkEventButton * event)
+                on_button_press_event(GdkEventButton * event)
                 {
                     using boost::get;
 
                     {
                         cancel_search() ;
-                        grab_focus() ;
+//                        grab_focus() ;
 
                         if( event->button == 1 && event->type == GDK_2BUTTON_PRESS )
 	                {
@@ -1568,7 +1572,9 @@ namespace Albums
                             guint row2 = row + (event->y + (off ? (m_height__row-off) : 0)) / m_height__row ;
 
 			    if( m_selection && boost::get<2>(m_selection.get()) == row2 && event->button != 3 )
+			    {
 				return false ;
+			    }
 
                             if( m_Model_I.in( row2 ))
                             {
@@ -1582,7 +1588,9 @@ namespace Albums
                         else
                         {
 			    if( m_selection && boost::get<2>(m_selection.get()) == row && event->button != 3 )
+			    {
 				return false ;
+			    }
 
                             if( m_Model_I.in( row ))
                             {
@@ -2393,9 +2401,11 @@ namespace Albums
 			, property_vadj_(*this, "vadjustment", RPAdj(0))
 			, property_hadj_(*this, "hadjustment", RPAdj(0))
 
+			, property_vsp_(*this, "vscroll-policy", Gtk::SCROLL_NATURAL )
+			, property_hsp_(*this, "hscroll-policy", Gtk::SCROLL_NATURAL )
+
 			, m_search_active( false )
                 {
-		    Scrollable::add_interface(G_OBJECT_TYPE(Glib::ObjectBase::gobj())) ;
 		    property_vadjustment().signal_changed().connect( sigc::mem_fun( *this, &Class::on_vadj_prop_changed )) ;
 
                     boost::shared_ptr<IYoukiThemeEngine> theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;

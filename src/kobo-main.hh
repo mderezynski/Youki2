@@ -21,7 +21,6 @@ namespace MPX
 		    Glib::Timer			m_button_timeout ;
 		    sigc::connection		m_button_timeout_conn ;
 		    bool			m_do_disconnect ;
-		    Gtk::EventBox*		m_evbox ;
 
 		    bool
 		    timer_check_func()
@@ -76,12 +75,6 @@ namespace MPX
                     {
                         return SignalPause ;
                     }
-
-		    Gtk::EventBox&
-		    w()
-		    {
-			return *m_evbox ;
-		    }
 
                     void
                     set_widget_top( Gtk::Widget & w ) ;

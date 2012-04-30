@@ -25,13 +25,8 @@ namespace MPX
     {
         set_title( "Youki" ) ;
 
-	m_evbox = Gtk::manage( new Gtk::EventBox ) ;
-	add( *m_evbox ) ;
-
-	m_evbox->signal_button_press_event().connect( sigc::mem_fun( *this, &MainWindow::evbox_on_button_press_event), false ) ;
-	m_evbox->signal_button_release_event().connect( sigc::mem_fun( *this, &MainWindow::evbox_on_button_release_event), false ) ;
-
         a1 = Gtk::manage( new Gtk::Alignment  ) ;
+	add( *a1 ) ;
 
         a1->property_top_padding() = 0 ;
 	a1->property_left_padding() = 0 ;
@@ -41,7 +36,6 @@ namespace MPX
         a1->set_border_width( 0 ) ;
 
 	set_border_width( 0 ) ;
-        m_evbox->add( *a1 ) ;
 
         gtk_widget_realize( GTK_WIDGET( gobj() )) ;
 
