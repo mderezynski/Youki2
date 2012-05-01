@@ -35,6 +35,7 @@ SET(mpx_widgets_SOURCES
   rounded-frame.cc
   task-dialog.cc
   timed-confirmation.cc
+  cairo-blur.cc
   ${CMAKE_CURRENT_BINARY_DIR}/widget-marshalers.c
   ${CMAKE_CURRENT_BINARY_DIR}/widget-marshalers.h
 )

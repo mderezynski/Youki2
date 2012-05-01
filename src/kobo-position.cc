@@ -8,7 +8,7 @@
 #include "mpx/algorithm/limiter.hh"
 #include "mpx/algorithm/interval.hh"
 #include "mpx/widgets/cairo-extensions.hh"
-#include "mpx/i-youki-play.hh"
+#include "mpx/widgets/cairo-blur.hh"
 #include "mpx/util-graphics.hh"
 
 namespace
@@ -283,56 +283,118 @@ namespace MPX
 
         if( m_duration && m_position >= 0 ) // position 
         {
+	    // Set layout
             layout->set_markup(
                 (boost::format("<b>%02d</b>:<b>%02d</b>") % ( position / 60 ) % ( position % 60 )).str()
             ) ;
-
             layout->get_extents( rl, ri ) ; 
 
-	    int xoff = 0 ;
+	    // Render text shadow
+	    Cairo::RefPtr<Cairo::ImageSurface> s = Cairo::ImageSurface::create( Cairo::FORMAT_ARGB32, 100, 48 ) ; // FIXME: Our blur implementation doesn't like small surfaces
+	    Cairo::RefPtr<Cairo::Context> c2 = Cairo::Context::create( s ) ;
 
-	    if( r.width-7 < (ri.get_width() / PANGO_SCALE)) 
+	    c2->set_operator( Cairo::OPERATOR_CLEAR ) ;
+	    c2->paint() ;
+
+	    c2->set_operator( Cairo::OPERATOR_OVER ) ;
+	    c2->set_source_rgba(
+		      0. 
+		    , 0. 
+		    , 0.
+		    , 0.40
+	    ) ;
+	    c2->move_to(
+		      2
+		    , 2
+	    ) ;
+	    pango_cairo_show_layout(
+		  c2->cobj()
+		, layout->gobj()
+	    ) ;
+
+	    Util::cairo_image_surface_blur( s->cobj(), 1 ) ;
+
+	    double alpha = get_alpha_at_time() ;
+
+	    // Render text, split in 2 parts if necessary
+	    if( r.width-6 < (ri.get_width() / PANGO_SCALE)) 
 	    {
-		xoff = r.width ;
+		GdkRectangle r1 ;
 
+		r1.width  = ri.get_width() / PANGO_SCALE ;
+		r1.height = ri.get_height() / PANGO_SCALE ;
+		r1.y      = (a.get_height() - r1.height) / 2 ; 
+		r1.x      = 3 ; 
+
+		cairo->rectangle( 1, 1, w * percent, 16 ) ; 
+		cairo->clip() ;
+
+		if( alpha ) 
+		{
+		    cairo->set_source( s, r1.x, r1.y ) ;
+		    cairo->rectangle( r1.x, r1.y, ri.get_width()+1, 16 ) ;
+		    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
+		    cairo->fill() ;
+		}
+
+		cairo->move_to(
+		      r1.x                  
+		    , r1.y 
+		) ;
+		cairo->set_source_rgba(
+		      ct.get_red()
+		    , ct.get_green()
+		    , ct.get_blue()
+		    , 0.95 * alpha 
+		) ;
+		pango_cairo_show_layout( cairo->cobj(), layout->gobj() ) ;
+
+		cairo->reset_clip() ;
+		cairo->rectangle( 1+w*percent, 1, 1+(2*(ri.get_width()/PANGO_SCALE)), 16 ) ; 
+		cairo->clip() ;
+
+		cairo->move_to(
+		      r1.x                  
+		    , r1.y 
+		) ;
 		cairo->set_source_rgba(
 		      c_text_dark.get_red()
 		    , c_text_dark.get_green()
 		    , c_text_dark.get_blue()
-		    , 1. * get_alpha_at_time()
-		) ;
-	    }
-	    else
-	    {
-		cairo->set_source_rgba(
-              ct.get_red()
-            , ct.get_green()
-            , ct.get_blue()
 		    , 0.95 * get_alpha_at_time()
 		) ;
-	    }
-
-	    GdkRectangle r1 ;
-
-            r1.width  = ri.get_width() / PANGO_SCALE ;
-            r1.height = ri.get_height() / PANGO_SCALE ;
-            r1.y      = (a.get_height() - r1.height) / 2 ; 
-
-	    if( xoff == 0 )
-	    {
-		r1.x = r.width - r1.width - 2 ;
+		pango_cairo_show_layout( cairo->cobj(), layout->gobj() ) ;
+		cairo->reset_clip() ;
 	    }
 	    else
 	    {
-		r1.x = xoff + 4 ;
+		GdkRectangle r1 ;
+
+		r1.width  = ri.get_width() / PANGO_SCALE ;
+		r1.height = ri.get_height() / PANGO_SCALE ;
+		r1.y      = (a.get_height() - r1.height) / 2 ; 
+		r1.x      = r.width - r1.width - 2 ;
+
+		if( alpha )
+		{
+		    cairo->set_source( s, r1.x, r1.y ) ;
+		    cairo->rectangle( r1.x, r1.y, ri.get_width()+1, 16 ) ;
+		    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
+		    cairo->fill() ;
+		}
+
+		cairo->move_to(
+		      r1.x                  
+		    , r1.y 
+		) ;
+		cairo->set_source_rgba(
+		      ct.get_red()
+		    , ct.get_green()
+		    , ct.get_blue()
+		    , 0.95 * alpha
+		) ;
+		pango_cairo_show_layout( cairo->cobj(), layout->gobj() ) ;
 	    }
-
-            cairo->move_to(
-                  r1.x                  
-                , r1.y 
-            ) ;
-
-            pango_cairo_show_layout( cairo->cobj(), layout->gobj() ) ;
 	}
 
 	if( m_duration ) // duration

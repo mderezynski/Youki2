@@ -88,7 +88,7 @@ namespace MPX
 		cairo->save() ;
 		cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 
-		int text_size_pt = static_cast<int>((12 * 72) / Util::screen_get_y_resolution( Gdk::Screen::get_default())) ;
+		int text_size_pt = static_cast<int>((13 * 72) / Util::screen_get_y_resolution( Gdk::Screen::get_default())) ;
 
 		Pango::FontDescription font_desc = get_style_context()->get_font() ;
 		font_desc.set_size( text_size_pt * PANGO_SCALE ) ;
@@ -100,7 +100,7 @@ namespace MPX
 
 		if( m_audio_bitrate ) 
 		{
-		    audioinfo += (boost::format("<b>%u kbps</b>") % m_audio_bitrate.get()).str() ;
+		    audioinfo += (boost::format("Bitrate[<b>%u kbps</b>]") % m_audio_bitrate.get()).str() ;
 		}
 
 		if( m_audio_codec )
@@ -114,7 +114,7 @@ namespace MPX
 		    else
 			    transformed = m_audio_codec.get() ;
 
-		    audioinfo += (boost::format(" <b>%s</b>") % transformed).str() ;
+		    audioinfo += (boost::format(" Codec[<b>%s</b>]") % transformed).str() ;
 		}
 
 		layout->set_markup(audioinfo) ;

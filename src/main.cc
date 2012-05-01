@@ -66,8 +66,8 @@
 #undef PACKAGE
 #define PACKAGE "youki"
 
-using namespace MPX;
-using namespace Glib;
+using namespace MPX ;
+using namespace Glib ;
 
 namespace MPX
 {
@@ -77,7 +77,7 @@ namespace MPX
 
   namespace
   {
-    Gtk::Main * gtk = 0;
+    Glib::RefPtr<Gtk::Application> gtk ;
 
     const int signal_check_interval = 1000;
 
@@ -95,9 +95,9 @@ namespace MPX
         delete mcs; // try to save config
 
 #ifdef HANDLE_SIGSEGV
-        std::exit (EXIT_FAILURE);
+        std::exit(EXIT_FAILURE) ;
 #else
-        std::abort ();
+        std::abort() ;
 #endif
     }
 
@@ -117,9 +117,9 @@ namespace MPX
             bool gtk_running = Gtk::Main::level();
 
             if (gtk_running)
-                Gtk::Main::quit ();
+                Gtk::Main::quit() ;
             else
-                std::exit (EXIT_SUCCESS);
+                std::exit(EXIT_SUCCESS) ;
 
             return false;
         }
@@ -128,14 +128,14 @@ namespace MPX
     }
 
     void
-    signal_handlers_install ()
+    signal_handlers_install()
     {
-        install_handler (SIGPIPE, empty_handler);
-        install_handler (SIGSEGV, sigsegv_handler);
-        install_handler (SIGINT, sigterm_handler);
-        install_handler (SIGTERM, sigterm_handler);
+        install_handler(SIGPIPE, empty_handler) ;
+        install_handler(SIGSEGV, sigsegv_handler) ;
+        install_handler(SIGINT, sigterm_handler) ;
+        install_handler(SIGTERM, sigterm_handler) ;
 
-        Glib::signal_timeout ().connect( sigc::ptr_fun (&process_signals), signal_check_interval );
+        Glib::signal_timeout().connect( sigc::ptr_fun (&process_signals), signal_check_interval ) ;
     }
 
     void
@@ -236,43 +236,36 @@ namespace MPX
     void
     setup_i18n ()
     {
-        setlocale (LC_ALL, "");
-        bindtextdomain (PACKAGE, LOCALE_DIR);
-        bind_textdomain_codeset (PACKAGE, "UTF-8");
-        textdomain (PACKAGE);
+        setlocale(LC_ALL, "") ;
+        bindtextdomain(PACKAGE, LOCALE_DIR) ;
+        bind_textdomain_codeset(PACKAGE, "UTF-8") ;
+        textdomain(PACKAGE) ;
     }
+  }
+}
 
-  } // anonymous namespace
-} // MPX
-
-int
-main (int argc, char ** argv)
+int main(int argc, char ** argv)
 {
     setup_i18n();
 
-    Glib::thread_init(0);
-    Glib::init();
-    Gio::init();
-
-    GOptionContext * context_c = g_option_context_new (_(" - run Youki"));
-    g_option_context_add_group (context_c, gst_init_get_option_group ());
-    Glib::OptionContext context (context_c, true);
+    //Glib::thread_init(0);
+    //Glib::init();
+    //Gio::init();
 
     try{
-        gtk = new Gtk::Main (argc, argv, context);
+        gtk = Gtk::Application::create(argc, argv, "info.backtrace.Youki") ;
     } catch( Glib::OptionError & cxe )
     {
         g_warning(G_STRLOC ": %s", cxe.what().c_str());
         std::exit(EXIT_FAILURE);
     }
 
-    register_default_stock_icons();
-
-    signal_handlers_install ();
-    create_user_dirs ();
-    setup_mcs ();
+    signal_handlers_install();
+    create_user_dirs();
+    setup_mcs();
     gst_init(&argc, &argv);
-//    mpx_py_init() ;
+//  mpx_py_init() ;
+    register_default_stock_icons();
 
     services = new Service::Manager;
 
@@ -280,9 +273,11 @@ main (int argc, char ** argv)
 
 #ifdef HAVE_HAL
     try{
+
         splash->set_message(_("Starting HAL..."),1/10.);
         services->add(boost::shared_ptr<HAL>(new MPX::HAL));
 #endif //HAVE_HAL
+
         splash->set_message(_("Starting Covers"),2/10.);
         services->add(boost::shared_ptr<Covers>(new MPX::Covers));
         services->get<Covers>("mpx-service-covers")->run() ;
@@ -322,15 +317,15 @@ main (int argc, char ** argv)
 
         splash->set_message(_(""),10/10.);
 
+	gtk->add_window( *(services->get<YoukiController>("mpx-service-controller")->get_widget())) ;
+
         services->get<YoukiController>("mpx-service-controller")->get_widget()->show_all() ;
         services->get<YoukiController>("mpx-service-controller")->get_widget()->present() ;
         services->get<YoukiController>("mpx-service-controller")->get_widget()->raise() ;
 
         delete splash;
+
         gtk->run() ;
-
-        // p->Exit () ;
-
 #ifdef HAVE_HAL
     }
     catch( HAL::NotInitializedError& cxe )
@@ -342,7 +337,6 @@ main (int argc, char ** argv)
     services->get<Covers>("mpx-service-covers")->finish() ;
 
     delete services ;
-    delete gtk ;
     delete mcs ;
 
     return EXIT_SUCCESS;

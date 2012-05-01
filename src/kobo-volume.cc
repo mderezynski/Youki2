@@ -86,7 +86,7 @@ namespace MPX
 
         Gdk::RGBA cgdk, c1, c2 ;
 
-	cgdk.set_rgba( 0.35, 0.35, 0.35 ) ;
+	cgdk.set_rgba( 0.55, 0.55, 0.55 ) ;
 	
 	Util::color_to_hsb( cgdk, h, s, b ) ;
 	// b *= 0.85 ;
@@ -99,7 +99,7 @@ namespace MPX
 	c1 = Util::color_from_hsb( h, s, b ) ;
 
 	Util::color_to_hsb( cgdk, h, s, b ) ;
-	b *= 0.70 ;
+	b *= 0.45 ;
 	//s *= 0.75 ;
 	c2 = Util::color_from_hsb( h, s, b ) ;
 
@@ -201,7 +201,6 @@ namespace MPX
 	cairo->set_line_width( 1. ) ;
 
 	/// VOLUME
-
 	r.x         = 1 ; 
 	r.y         = 1 ; 
 	r.width     = fmax( 0, (a.get_width()-2) * double(percent)) ;
@@ -263,45 +262,78 @@ namespace MPX
 	    ) ;
 
 	    Pango::Rectangle rl, ri ;
+
 	    layout->get_extents( rl, ri ) ;
 
-	    int xoff = 0 ;
-
-	    if( r.width-6 < (ri.get_width()/PANGO_SCALE))
+	    if( r.width < ((ri.get_width() / PANGO_SCALE)+6)) 
 	    {
-		xoff = r.width ;
+		GdkRectangle r1 ;
+
+		r1.width  = ri.get_width() / PANGO_SCALE ;
+		r1.height = ri.get_height() / PANGO_SCALE ;
+		r1.y      = (a.get_height() - r1.height) / 2 ; 
+		r1.x      = 3 ; 
+
+		cairo->rectangle( 1, 1, w * percent, 16 ) ; 
+		cairo->clip() ;
+
+		cairo->set_source_rgba(
+		      ct.get_red()
+		    , ct.get_green()
+		    , ct.get_blue()
+		    , 0.95
+		) ;
+
+		cairo->move_to(
+		      r1.x                  
+		    , r1.y 
+		) ;
+
+		pango_cairo_show_layout( cairo->cobj(), layout->gobj() ) ;
+
+		cairo->reset_clip() ;
+
+		cairo->rectangle( 1+w*percent, 1, 1+(2*(ri.get_width()/PANGO_SCALE)), 16 ) ; 
+		cairo->clip() ;
 
 		cairo->set_source_rgba(
 		      c1.get_red()
 		    , c1.get_green()
 		    , c1.get_blue()
-		    , 1. 
+		    , 0.95
 		) ;
+
+		cairo->move_to(
+		      r1.x                  
+		    , r1.y 
+		) ;
+
+		pango_cairo_show_layout( cairo->cobj(), layout->gobj() ) ;
+
+		cairo->reset_clip() ;
 	    }
 	    else
 	    {
-            Gdk::Cairo::set_source_rgba(cairo, ct);
-	    } 
+		GdkRectangle r1 ;
 
-	    int x = 3 ;
-	    int y = (get_height() - (ri.get_height()/PANGO_SCALE))/2. ;
+		r1.width  = ri.get_width() / PANGO_SCALE ;
+		r1.height = ri.get_height() / PANGO_SCALE ;
+		r1.y      = (a.get_height() - r1.height) / 2 ; 
+		r1.x      = r.width - r1.width - 2 ;
 
-	    if( xoff == 0 )
-	    {
-		x = r.width - (ri.get_width() / PANGO_SCALE) - 3 ; 
+		cairo->move_to(
+		      r1.x                  
+		    , r1.y 
+		) ;
+
+		cairo->set_source_rgba(
+		      ct.get_red()
+		    , ct.get_green()
+		    , ct.get_blue()
+		    , 0.95
+		) ;
+		pango_cairo_show_layout( cairo->cobj(), layout->gobj() ) ;
 	    }
-	    else
-	    {
-		x = xoff + 4 ;
-	    }
-
-	    cairo->move_to(
-		  x 
-		, y
-	    ) ;
-
-	    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
-	    pango_cairo_show_layout (cairo->cobj (), layout->gobj ()) ;
 	}
 
         return true ;

@@ -42,6 +42,14 @@ namespace MPX
                 , b( b_ )
             {}
 
+	    inline bool
+	    operator()(
+                  const T&  i
+	    ) 
+	    {
+		return in( i ) ;
+	    }
+
             inline bool
             in(
                   const T&  i

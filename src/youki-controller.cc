@@ -113,17 +113,18 @@ namespace
     void
     show_about_window( Gtk::Window* win )
     {
-	Gtk::AboutDialog d ;	
+	Gtk::AboutDialog d ;  
 
-	d.set_name("Youki") ;
-	d.set_version("0.1") ;
-	d.set_copyright("(C) 2012") ;
+	d.set_program_name("Youki") ;
+	d.set_version("0.10") ;
+	d.set_copyright("(C) 2006-2012 Milosz Derezynki, Chong Kaixiong") ;
 	d.set_license("GPL v3 or later") ;
+	d.set_license_type(Gtk::LICENSE_GPL_3_0) ;
 
 	std::vector<Glib::ustring> authors;
-    authors.push_back ("Milosz Derezynski");
-    authors.push_back ("Chong Kai Xiong");
-    authors.push_back ("David Le Brun");
+	authors.push_back ("Milosz Derezynski");
+	authors.push_back ("Chong Kai Xiong");
+	authors.push_back ("David Le Brun");
 	d.set_authors( authors ) ;
 
 	std::vector<Glib::ustring> artists;
@@ -441,24 +442,23 @@ namespace MPX
         m_ScrolledWinAlbums = Gtk::manage( new Gtk::ScrolledWindow ) ;
         m_ScrolledWinTracks = Gtk::manage( new Gtk::ScrolledWindow ) ;
 
-        m_ScrolledWinArtist->set_shadow_type( Gtk::SHADOW_NONE ) ;
-        m_ScrolledWinAlbums->set_shadow_type( Gtk::SHADOW_NONE ) ;
-        m_ScrolledWinTracks->set_shadow_type( Gtk::SHADOW_NONE ) ;
+        m_ScrolledWinArtist->set_shadow_type( Gtk::SHADOW_IN ) ;
+        m_ScrolledWinAlbums->set_shadow_type( Gtk::SHADOW_IN ) ;
+        m_ScrolledWinTracks->set_shadow_type( Gtk::SHADOW_IN ) ;
 
-        m_main_window = new MainWindow ;
+        m_ScrolledWinArtist->set_kinetic_scrolling() ;
+        m_ScrolledWinAlbums->set_kinetic_scrolling() ;
+        m_ScrolledWinTracks->set_kinetic_scrolling() ;
 
 	std::vector<Glib::RefPtr<Gdk::Pixbuf> > pixvector ;
-
 	pixvector.push_back( Gdk::Pixbuf::create_from_file( Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "youki16x16.png" ))) ;
 	pixvector.push_back( Gdk::Pixbuf::create_from_file( Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "youki32x32.png" ))) ;
 	pixvector.push_back( Gdk::Pixbuf::create_from_file( Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "youki64x64.png" ))) ;
 	pixvector.push_back( Gdk::Pixbuf::create_from_file( Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "youki96x96.png" ))) ;
 	pixvector.push_back( Gdk::Pixbuf::create_from_file( Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "youki128x128.png" ))) ;
 
+        m_main_window = new MainWindow ;
         m_main_window->set_icon_list( pixvector ) ; 
-	m_main_window->signal_delete_event().connect( sigc::bind_return( sigc::hide<-1>( sigc::mem_fun( *this, &YoukiController::initiate_quit )), false)) ;
-        Gdk::Color background ;
-        background.set_rgb_p( 0.1, 0.1, 0.1 ) ;
 
         m_main_position = Gtk::manage( new KoboPosition ) ;
 	m_main_position->set_size_request( -1, 18 ) ;
@@ -833,8 +833,6 @@ namespace MPX
 	m_UI_Actions_Main->add( action_MOP ) ; 
 	mcs_bind->bind_toggle_action( action_MOP, "mpx", "minimize-on-pause" ) ;
 
-	m_UI_Actions_Main->add( action_MOP ) ;
-
 	m_UI_Manager->insert_action_group( m_UI_Actions_Main ) ;
 	m_UI_Manager->add_ui_from_string( main_menubar_ui ) ;
 
@@ -1116,12 +1114,6 @@ namespace MPX
     YoukiController::initiate_quit ()
     {
         Gtk::Main::quit() ;
-    }
-
-    bool
-    YoukiController::quit_timeout ()
-    {
-	return false ;
     }
 
     void

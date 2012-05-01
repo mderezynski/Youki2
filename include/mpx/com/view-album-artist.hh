@@ -13,6 +13,7 @@
 #include "mpx/algorithm/aque.hh"
 #include "mpx/algorithm/interval.hh"
 #include "mpx/algorithm/limiter.hh"
+#include "mpx/algorithm/minus.hh"
 
 #include "mpx/aux/glibaddons.hh"
 
@@ -22,7 +23,7 @@
 #include "mpx/util-graphics.hh"
 
 #include "mpx/widgets/cairo-extensions.hh"
-#include "mpx/widgets/cairo-blur.h"
+#include "mpx/widgets/cairo-blur.hh"
 
 #include "glib-marshalers.h"
 
@@ -538,7 +539,7 @@ namespace Artist
 				, layout->gobj()
 			    ) ;
 
-			    cairo_image_surface_blur( srf->cobj(), 1 ) ;
+			    Util::cairo_image_surface_blur( srf->cobj(), 1 ) ;
 
 			    cairo->set_source( srf, xpos, ypos ) ;
 			    cairo->rectangle( xpos, ypos, m_width, rowheight ) ;
@@ -581,6 +582,10 @@ namespace Artist
 
                 guint                               m_height__row ;
                 guint                               m_height__current_viewport ;
+
+		Interval<guint>			    m_Model_I ;
+		Interval<guint>			    m_Viewport_I ;
+		Minus<int>			    ModelCount ;
 
                 boost::optional<boost::tuple<Model_t::iterator, guint, guint> > m_selection ;
 
@@ -628,7 +633,7 @@ namespace Artist
 		    ));
 
 		    configure_vadj(
-			  (m_model->size() * m_height__row) + 4
+			  (m_model->size() * m_height__row)
 			, m_height__current_viewport
 			, 3
 		    ) ;
@@ -639,6 +644,12 @@ namespace Artist
                 {
                     if( m_model->m_mapping.size() )
                     {
+			m_Viewport_I = Interval<guint>(
+                              Interval<guint>::IN_IN
+	                    , get_upper_row()
+	                    , get_upper_row() + (m_height__current_viewport / m_height__row)
+			) ;
+
                         m_model->set_current_row( get_upper_row() ) ;
                         queue_draw() ;
                     }
@@ -661,20 +672,6 @@ namespace Artist
                         return property_vadjustment().get_value()->get_value() / m_height__row ;
 
 		    return 0 ;
-                }
-
-                inline bool
-                get_row_is_visible (int row)
-                {
-                    guint up = get_upper_row() ;
-
-                    Interval<guint> i (
-                          Interval<guint>::IN_IN
-                        , up
-                        , up + (m_height__current_viewport / m_height__row)
-                    ) ;
-
-                    return i.in( row ) ;
                 }
 
             protected:
@@ -724,9 +721,8 @@ namespace Artist
                         return true ;
                     }
 
-                    Limiter<guint> row ;
-                    Interval<guint> i ;
-                    guint origin = m_selection ? boost::get<2>(m_selection.get()) : 0 ;
+		    int step = 0 ;
+		    int d = 0 ;
 
                     switch( event->keyval )
                     {
@@ -734,45 +730,54 @@ namespace Artist
                         case GDK_KEY_KP_Up:
                         case GDK_KEY_Page_Up:
                         {
-
-                            if( origin == 0 )
-                                break ;
-
-                            if( !m_selection )
-                            {
-                                select_row( get_upper_row() ) ;
-                                break ;
-                            }
-
-                            guint step ;
-
                             if( event->keyval == GDK_KEY_Page_Up )
                             {
-                                step = get_page_size() ;
+                                step = -(m_height__current_viewport / m_height__row) ;
                             }
                             else
                             {
-                                step = 1 ;
+                                step = -1 ;
                             }
 
-                            row = Limiter<guint> (
-                                  Limiter<guint>::ABS_ABS
-                                , 0
-                                , m_model->size()-1
-                                , origin - step
-                            ) ;
-
-                            select_row( row ) ;
-
-                            i = Interval<guint> (
-                                  Interval<guint>::IN_EX
-                                , 0
-                                , get_upper_row()
-                            ) ;
-
-                            if( i.in( row ))
+                            if( !m_selection )
                             {
-                                scroll_to_row( row ) ;
+                                mark_first_row_up:
+                                select_row( get_upper_row() ) ;
+                            }
+                            else
+                            {
+                                int origin = boost::get<2>(m_selection.get()) ;
+
+                                if( origin > 0 )
+                                {
+                                    if( m_Viewport_I( origin ))
+                                    {
+                                        d = std::max<int>( origin+step, 0 ) ;
+                                        select_row( d ) ;
+
+                                        double adj_value = vadj_value() ; 
+
+                                        if((d * m_height__row) < adj_value )
+                                        {
+                                            if( event->keyval == GDK_KEY_Page_Up )
+                                            {
+                                                vadj_value_set( std::max<int>( adj_value + (step*int(m_height__row)), 0 )) ;
+                                            }
+                                            else
+                                            {
+                                                scroll_to_row( d ) ;
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        goto mark_first_row_up ;
+                                    }
+                                }
+                                else
+                                {
+                                    scroll_to_row( 0 ) ;
+                                }
                             }
 
                             return true;
@@ -780,17 +785,16 @@ namespace Artist
 
                         case GDK_KEY_Home:
                         {
-                            scroll_to_row( 0 ) ;
-                            select_row( 0 ) ;
+                            scroll_to_row(0) ;
+                            select_row(0) ;
 
                             return true ;
                         }
 
                         case GDK_KEY_End:
                         {
-                            scroll_to_row( m_model->size() - get_page_size() ) ;
-                            select_row( m_model->size() - 1 ) ;
-
+                            scroll_to_row( m_model->size()-get_page_size()) ;
+                            select_row( ModelCount(m_model->size())) ; 
                             return true ;
                         }
 
@@ -798,45 +802,61 @@ namespace Artist
                         case GDK_KEY_KP_Down:
                         case GDK_KEY_Page_Down:
                         {
-                            if( origin == (m_model->size()-1) )
-                                break ;
-
-                            if( !m_selection )
-                            {
-                                select_row( get_upper_row() ) ;
-                                break ;
-                            }
-
-                            guint step ;
-
                             if( event->keyval == GDK_KEY_Page_Down )
                             {
-                                step = get_page_size() ;
+                                step = (m_height__current_viewport / m_height__row) ;
                             }
                             else
                             {
                                 step = 1 ;
                             }
 
-                            row = Limiter<guint> (
-                                  Limiter<guint>::ABS_ABS
-                                , 0
-                                , m_model->size() - 1
-                                , origin + step
-                            ) ;
-
-                            select_row( row ) ;
-
-                            i = Interval<guint> (
-                                  Interval<guint>::IN_EX
-                                , get_upper_row() + (get_page_size())
-                                , m_model->size()
-                            ) ;
-
-                            if( i.in( row ))
+                            if( !m_selection )
                             {
-                                scroll_to_row( row ) ;
+                                mark_first_row_down:
+                                select_row( get_upper_row() ) ;
                             }
+                            else
+                            {
+                                int origin = boost::get<2>(m_selection.get()) ;
+
+                                if( m_Viewport_I( origin ))
+                                {
+                                    d = std::min<int>( origin+step, ModelCount(m_model->size())) ;
+
+                                    select_row( d ) ;
+
+                                    if( event->keyval == GDK_KEY_Page_Down )
+                                    {
+                                        guint new_val = vadj_value() + ( step * m_height__row ) ;
+
+                                        if( new_val > ( vadj_upper() - m_height__current_viewport ))
+                                        {
+                                            scroll_to_row( d ) ;
+                                        }
+                                        else
+                                        {
+                                            vadj_value_set( vadj_value() + ( step*m_height__row )) ;
+                                        }
+                                    }
+                                    else
+                                    {
+					guint d_adjust  = vadj_value() / m_height__row + m_height__current_viewport / m_height__row ;
+					guint diff = m_height__current_viewport - (m_height__current_viewport/m_height__row)*m_height__row ;
+	
+					if( d >= d_adjust ) 
+					{
+					    guint position_new = (get_upper_row()+1+(d-d_adjust)) * m_height__row - diff ; 
+					    vadj_value_set( std::min<int>(vadj_upper(), position_new )) ; 
+					}
+                                    }
+                               }
+                                else
+                                {
+                                    goto mark_first_row_down ;
+                                }
+                            }
+
 
                             return true ;
                         }
@@ -892,52 +912,52 @@ namespace Artist
                     //gdk_event_free( event ) ;
                 }
 
-
                 bool
-                on_button_press_event (GdkEventButton * event)
+                on_button_press_event( GdkEventButton* event )
                 {
                     using boost::get;
 
-                    cancel_search() ;
-                    grab_focus() ;
+		    cancel_search() ;
+		    grab_focus() ;
 
-                    if( event->button == 1 && event->type == GDK_2BUTTON_PRESS )
+		    if( event->button == 1 ) 
                     {
-                        m_SIGNAL_start_playback.emit() ;
-                        return false ;
+			if( event->type == GDK_2BUTTON_PRESS )
+			{
+			    m_SIGNAL_start_playback.emit() ;
+			}
+			else
+			{
+			    double ymod = fmod( vadj_value(), m_height__row ) ;
+
+			    guint d = (vadj_value() + event->y) / m_height__row ;
+
+			    if( m_selection && get<2>(m_selection.get()) == d )
+			    {
+				return false ;
+			    }
+
+			    if( m_Model_I( d ))
+			    {
+				select_row( d ) ;
+			    }
+
+			    if( ymod != 0 )
+			    {
+				if( d == get_upper_row() ) 
+				{
+				    vadj_value_set( std::max<int>(0, vadj_value() - ymod + 1)) ;
+				}
+				else if( d >= (get_upper_row()+get_page_size()-1))
+				{
+				    double Excess = get_allocation().get_height() - (get_page_size()*m_height__row) ;
+				    vadj_value_set( std::min<int>(vadj_upper(), vadj_value() + (m_height__row - ymod) - Excess )) ;
+				}
+			    }
+			}
                     }
 
-                    guint row  = vadj_value() / m_height__row ;
-                    guint off  = m_height__row - (vadj_value() - (row*m_height__row)) ;
-
-                    if( event->y > off || off == 0 )
-                    {
-                        guint row2 = row + (event->y + (off ? (m_height__row-off) : 0)) / m_height__row ;
-
-                        if( m_selection && boost::get<2>(m_selection.get()) == row2 )
-                            return true ;
-
-                        if( row2 < m_model->size() )
-                        {
-                            if( row2 >= (row + m_height__current_viewport/m_height__row))
-                            {
-                            }
-                            select_row( row2 ) ;
-                        }
-
-                    }
-                    else
-                    {
-                        if( m_selection && boost::get<2>(m_selection.get()) == row )
-                            return false ;
-
-                        if(row < m_model->size())
-                        {
-                            select_row( row ) ;
-                        }
-                    }
-
-                    return false ;
+                    return true ;
                 }
 
                 bool
@@ -980,8 +1000,14 @@ namespace Artist
 
                     if( m_height__row )
                     {
+			m_Viewport_I = Interval<guint> (
+			      Interval<guint>::IN_IN
+			    , get_upper_row()
+			    , get_upper_row() + (m_height__current_viewport / m_height__row)
+			) ;
+
                         configure_vadj(
-                              (m_model->size() * m_height__row) + 4
+                              (m_model->size() * m_height__row)
                             , m_height__current_viewport
                             , 3
                         ) ;
@@ -1036,7 +1062,7 @@ namespace Artist
                                           , get_page_size()
                                       ) + 2 ;
 
-                    guint ypos = 2 ;
+                    guint ypos = 0 ;
                     guint xpos = 0 ;
 
                     int offset  = vadj_value() - (row*m_height__row) ;
@@ -1045,34 +1071,6 @@ namespace Artist
                     {
                         ypos -= offset ;
                     }
-
-                    cairo->set_operator( Cairo::OPERATOR_SOURCE ) ;
-                    Gdk::Cairo::set_source_rgba(cairo, c_bg);
-                    cairo->paint() ;
-
-                    cairo->save() ;
-                    RoundedRectangle(
-                                     cairo
-                                     , 1
-                                     , 1
-                                     , a.get_width() - 2 
-                                     , a.get_height() - 2 
-                                     , rounding
-                                     ) ;
-		    Gdk::Cairo::set_source_rgba(cairo, c_outline) ;
-                    cairo->set_line_width( 0.75 ) ;
-                    cairo->stroke() ;
-                    cairo->restore() ;
-
-                    RoundedRectangle(
-                          cairo
-                        , 2
-                        , 2
-                        , a.get_width() - 4 
-                        , a.get_height() - 4 
-                        , rounding
-                    ) ;
-                    cairo->clip() ;
 
                     Gdk::Cairo::set_source_rgba(cairo, c_base) ;
                     cairo->paint() ;
@@ -1188,13 +1186,19 @@ namespace Artist
 	    )
             {
                 configure_vadj(
-                               (m_model->size() * m_height__row) + 4
-                               , m_height__current_viewport
-                               , 3
-                               ) ;
+		     (m_model->size() * m_height__row)
+                   , m_height__current_viewport
+                   , 3
+                ) ;
 
-                select_row( position ) ;
+		m_Model_I = Interval<guint>(
+		      Interval<guint>::IN_EX
+		    , 0
+		    , m_model->m_mapping.size()
+		) ;
+
                 scroll_to_row( position ) ;
+                select_row( position ) ;
             }
 
             public:
@@ -1215,18 +1219,11 @@ namespace Artist
                             if( real_id == get<1>(**i))
                             {
                                 guint row = std::distance( m_model->m_mapping.begin(), i ) ;
-
                                 select_row( row ) ;
-
-				if( !get_row_is_visible( row ))
-	                                scroll_to_row( row ) ;
-
-                                return ;
+                                break ;
                             }
                         }
                     }
-
-                    clear_selection() ;
                 }
 
                 void
@@ -1561,6 +1558,8 @@ namespace Artist
 
                 {
 		    property_vadjustment().signal_changed().connect( sigc::mem_fun( *this, &Class::on_vadj_prop_changed )) ;
+
+		    ModelCount = Minus<int>( -1 ) ;
 
                     boost::shared_ptr<IYoukiThemeEngine> theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;
                     const ThemeColor& c = theme->get_color( THEME_COLOR_BASE ) ;

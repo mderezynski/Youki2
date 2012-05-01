@@ -23,15 +23,14 @@
 #include "mpx/algorithm/limiter.hh"
 #include "mpx/algorithm/interval.hh"
 #include "mpx/algorithm/vector_compare.hh"
+#include "mpx/algorithm/minus.hh"
+#include "mpx/algorithm/range.hh"
 
 #include "mpx/aux/glibaddons.hh"
-
 #include "mpx/widgets/cairo-extensions.hh"
-
+#include "mpx/com/indexed-list.hh"
 #include "mpx/mpx-main.hh"
 #include "mpx/i-youki-theme-engine.hh"
-
-#include "mpx/com/indexed-list.hh"
 
 namespace
 {
@@ -86,11 +85,63 @@ namespace
 
 namespace MPX
 {
+	class ViewMetrics_type
+	{
+	    public:
+
+		guint		RowHeight ;
+		guint		Height ;	
+		guint		Excess ;
+		Range<guint>	ViewPortPx ;
+		Range<guint>	ViewPort ;
+
+	    public:
+
+		ViewMetrics_type()
+		    : RowHeight(0)
+		    , Height(0)
+		    , Excess(0)
+		    , ViewPortPx(0,0)
+		    , ViewPort(0,0)
+		{}
+
+		virtual ~ViewMetrics_type()
+		{}
+
+		void
+		set_base__row_height(
+		      guint v_
+		)	
+		{
+		    RowHeight = v_ ;
+		}
+
+		void
+		set(
+		      guint height
+		    , guint top
+		)
+		{
+		    Height = height ;
+
+		    ViewPortPx = Range<guint>( top, top+height ) ;
+
+		    if( RowHeight )
+		    {
+			ViewPort = Range<guint>( ViewPortPx.upper()/RowHeight, ViewPortPx.upper()/RowHeight + Height/RowHeight ) ;
+			Excess = ViewPortPx.size() - (ViewPortPx.size()/RowHeight)*RowHeight ;
+		    }	
+		}
+	} ;
+}
+
+namespace MPX
+{
 namespace View
 {
 namespace Albums
 {
-    const double rounding = 1. ;
+        const double rounding = 1. ;
 
 	enum RTViewMode
 	{
@@ -99,8 +150,6 @@ namespace Albums
 	     ,  RT_VIEW_STRIPE
 	     ,  RT_VIEW_RANDOM
 	} ;
-
-    // Album
 
         struct Album
         {
@@ -212,31 +261,30 @@ namespace Albums
 		ArtistAlbumMapping_t			m_artist_album_mapping ;
 */
 
-        DataModel()
-            : m_upper_bound( 0 )
-        {
-            m_realmodel = Model_sp_t(new Model_t);
-        }
+		DataModel()
+		: m_upper_bound( 0 )
+		{
+		    m_realmodel = Model_sp_t(new Model_t);
+		}
 
-        DataModel(Model_sp_t model)
-            : m_upper_bound( 0 )
-        {
-            m_realmodel = model;
-        }
+		DataModel(Model_sp_t model)
+		: m_upper_bound( 0 )
+		{
+		    m_realmodel = model;
+		}
 
 		virtual void
 		set_max_artist_id( guint id )
 		{
-		    //m_artist_album_mapping.resize( id + 1 ) ;
 		}
 
-        virtual void
-        clear()
-        {
-            m_realmodel->clear() ;
-            m_iter_map.clear() ;
-            m_upper_bound = 0 ;
-        }
+		virtual void
+		clear()
+		{
+		    m_realmodel->clear() ;
+		    m_iter_map.clear() ;
+		    m_upper_bound = 0 ;
+		}
 
 		virtual Signal_2&
 		signal_changed ()
@@ -250,146 +298,150 @@ namespace Albums
 			return m_SIGNAL__redraw ;
 		}
 
-        virtual Signal_1&
-        signal_cover_updated ()
-        {
-            return m_SIGNAL__cover_updated ;
-        }
+		virtual Signal_1&
+		signal_cover_updated ()
+		{
+		    return m_SIGNAL__cover_updated ;
+		}
 
-        virtual bool
-        is_set ()
-        {
-            return bool(m_realmodel) ;
-        }
+		virtual bool
+		is_set ()
+		{
+		    return bool(m_realmodel) ;
+		}
 
-        virtual guint
-        size ()
-        {
-            return m_realmodel->size() ;
-        }
+		virtual guint
+		size ()
+		{
+		    return m_realmodel->size() ;
+		}
 
-        virtual Album_sp
-        row(guint row)
-        {
-            return (*m_realmodel)[row] ;
-        }
+		virtual Album_sp
+		row(guint row)
+		{
+		    return (*m_realmodel)[row] ;
+		}
 
-        virtual void
-        set_current_row(guint row)
-        {
-            m_upper_bound = row ;
-        }
+		virtual void
+		set_current_row(guint row)
+		{
+		    m_upper_bound = row ;
+		}
 
-        virtual void
-        append_album(const Album_sp album)
-        {
-            m_realmodel->push_back( album ) ;
-            Model_t::iterator i = m_realmodel->end() ;
-            std::advance( i, -1 ) ;
-            m_iter_map.insert( std::make_pair( album->album_id, i )) ;
+		virtual void
+		append_album(const Album_sp album)
+		{
+		    m_realmodel->push_back( album ) ;
+		    Model_t::iterator i = m_realmodel->end() ;
+		    std::advance( i, -1 ) ;
+		    m_iter_map.insert( std::make_pair( album->album_id, i )) ;
 
-            /*
-              if( album->album_id != -1 )
-              {
-                  guint artist_id = album->artist_id ;
-                  ModelIterVec_t& v = m_artist_album_mapping[artist_id] ;
-                  v.push_back( i ) ;
-              }
-            */
-        }
+		    /*
+		      if( album->album_id != -1 )
+		      {
+			  guint artist_id = album->artist_id ;
+			  ModelIterVec_t& v = m_artist_album_mapping[artist_id] ;
+			  v.push_back( i ) ;
+		      }
+		    */
+		}
 
-        virtual void
-        insert_album(const Album_sp album)
-        {
-            static OrderFunc order ;
+		virtual void
+		insert_album(const Album_sp album)
+		{
+		    static OrderFunc order ;
 
-            Model_t::iterator i = m_realmodel->insert(
-                std::lower_bound(
-                    m_realmodel->begin()
-                  , m_realmodel->end()
-                  , album
-                  , order
-                )
-              , album
-            ) ;
+		    Model_t::iterator i = m_realmodel->insert(
+			std::lower_bound(
+			    m_realmodel->begin()
+			  , m_realmodel->end()
+			  , album
+			  , order
+			)
+		      , album
+		    ) ;
 
-            m_iter_map.insert( std::make_pair( album->album_id, i )) ;
+		    m_iter_map.insert( std::make_pair( album->album_id, i )) ;
 
-            /*
-                    if( album->album_id != -1 )
-                    {
-                        guint artist_id = album->artist_id ;
-                        ModelIterVec_t& v = m_artist_album_mapping[artist_id] ;
-                        v.push_back( i ) ;
-                    }
-                    */
-        }
-
-        void
-        erase_album(guint id_album)
-        {
-            IdIterMap_t::iterator i = m_iter_map.find( id_album ) ;
-
-            if( i != m_iter_map.end() )
-            {
-                m_realmodel->erase( i->second );
-                m_iter_map.erase( id_album );
-            }
-        }
-
-        void
-        update_album(const Album_sp album)
-        {
-            if( album && m_iter_map.find( album->album_id ) != m_iter_map.end() )
-            {
-                *(m_iter_map[album->album_id]) = album ;
-                m_SIGNAL__redraw.emit() ;
-            }
-        }
+		    /*
+			    if( album->album_id != -1 )
+			    {
+				guint artist_id = album->artist_id ;
+				ModelIterVec_t& v = m_artist_album_mapping[artist_id] ;
+				v.push_back( i ) ;
+			    }
+			    */
+		}
 
 		void
-		update_album_cover_cancel(
-		      guint				 id
-		)
+		erase_album(guint id_album)
 		{
-			IdIterMap_t::iterator i = m_iter_map.find( id ) ;
+		    IdIterMap_t::iterator i = m_iter_map.find( id_album ) ;
 
 		    if( i != m_iter_map.end() )
 		    {
-				Album_sp & album = *i->second ;
-
-				if( album )
-				{
-					album->caching = false ;
-
-					m_SIGNAL__cover_updated.emit( id ) ;
-					m_SIGNAL__redraw.emit() ;
-				}
+			m_realmodel->erase( i->second );
+			m_iter_map.erase( id_album );
 		    }
 		}
 
-        void
-        update_album_cover(guint				 id
-                         , Cairo::RefPtr<Cairo::ImageSurface> is
-                           )
-        {
-            IdIterMap_t::iterator i = m_iter_map.find( id ) ;
+		void
+		update_album(
+		    const Album_sp album
+		)
+		{
+		    if( album && m_iter_map.find( album->album_id ) != m_iter_map.end() )
+		    {
+			*(m_iter_map[album->album_id]) = album ;
+			m_SIGNAL__redraw.emit() ;
+		    }
+		}
 
-            if( i != m_iter_map.end() )
-            {
-                Album_sp & album = *i->second ;
+		void
+		update_album_cover_cancel(
+		      guint id
+		)
+		{
+		    IdIterMap_t::iterator i = m_iter_map.find( id ) ;
 
-                if( album )
-                {
-                    album->coverart = is ;
-                    album->surface_cache.clear() ;
-                    album->caching = false ;
+		    if( i != m_iter_map.end())
+		    {
+			Album_sp & album = *i->second ;
 
-                    m_SIGNAL__cover_updated.emit( id ) ;
-                    m_SIGNAL__redraw.emit() ;
-                }
-            }
-        }
+			if( album )
+			{
+			    album->caching = false ;
+
+			    m_SIGNAL__cover_updated.emit( id ) ;
+			    m_SIGNAL__redraw.emit() ;
+			}
+		    }
+		}
+
+		void
+		update_album_cover(
+		    guint				id
+		  , Cairo::RefPtr<Cairo::ImageSurface>	is
+		)
+		{
+		    IdIterMap_t::iterator i = m_iter_map.find( id ) ;
+
+		    if( i != m_iter_map.end() )
+		    {
+			Album_sp & album = *i->second ;
+
+			if( album )
+			{
+			    album->caching = false ;
+
+			    album->coverart = is ;
+			    album->surface_cache.clear() ;
+
+			    m_SIGNAL__cover_updated.emit( id ) ;
+			    m_SIGNAL__redraw.emit() ;
+			}
+		    }
+		}
 	};
 
         typedef boost::shared_ptr<DataModel> DataModel_sp_t;
@@ -415,9 +467,7 @@ namespace Albums
                 DataModelFilter(
                       DataModel_sp_t model
                 )
-
-                    : DataModel( model->m_realmodel )
-
+		: DataModel( model->m_realmodel )
                 {
                     regen_mapping() ;
                 }
@@ -435,7 +485,7 @@ namespace Albums
                     if( constraint != m_constraints_albums )
                     {
                         m_constraints_albums = constraint ;
-                    }
+		    }    
                 }
 
                 virtual void
@@ -947,7 +997,7 @@ namespace Albums
                     , ThemeColor	                    color
                     , guint				    model_mapping_size
 		    , guint				    model_size
-		    , bool				    is_selected
+		    , bool				    selected
 		    , TCVector_sp&			    album_constraints
                 )
                 {
@@ -957,7 +1007,7 @@ namespace Albums
 			return ;
 
                     GdkRectangle r ;
-                    r.y = ypos ;
+                    r.y = ypos + 4 ;
 
 		    cairo->set_operator( Cairo::OPERATOR_ATOP ) ;
 
@@ -1008,175 +1058,180 @@ namespace Albums
 
                     layout[L1]->set_font_description( font_desc[L1] ) ;
                     layout[L1]->set_ellipsize( Pango::ELLIPSIZE_END ) ;
-                    layout[L1]->set_width(( m_width - 108 ) * PANGO_SCALE ) ;
+                    layout[L1]->set_width(( m_width - 80 ) * PANGO_SCALE ) ;
 
                     if( row > 0 )
                     {
-			    font_desc[L2] = widget.get_style_context()->get_font() ;
-			    font_desc[L2].set_size( text_size_pt[L2] * PANGO_SCALE ) ;
-			    font_desc[L2].set_weight( Pango::WEIGHT_BOLD ) ;
-			    font_desc[L2].set_stretch( Pango::STRETCH_EXTRA_CONDENSED ) ;
+			font_desc[L2] = widget.get_style_context()->get_font() ;
+			font_desc[L2].set_size( text_size_pt[L2] * PANGO_SCALE ) ;
+			font_desc[L2].set_weight( Pango::WEIGHT_BOLD ) ;
+			font_desc[L2].set_stretch( Pango::STRETCH_EXTRA_CONDENSED ) ;
 
-			    font_desc[L3] = widget.get_style_context()->get_font() ;
-			    font_desc[L3].set_size( text_size_pt[L3] * PANGO_SCALE ) ;
+			font_desc[L3] = widget.get_style_context()->get_font() ;
+			font_desc[L3].set_size( text_size_pt[L3] * PANGO_SCALE ) ;
 
-			    layout[L2]->set_font_description( font_desc[L2] ) ;
-			    layout[L2]->set_ellipsize( Pango::ELLIPSIZE_END ) ;
-			    layout[L2]->set_width(( m_width - 108 ) * PANGO_SCALE ) ;
+			layout[L2]->set_font_description( font_desc[L2] ) ;
+			layout[L2]->set_ellipsize( Pango::ELLIPSIZE_END ) ;
+			layout[L2]->set_width(( m_width - 80 ) * PANGO_SCALE ) ;
 
-			    layout[L3]->set_font_description( font_desc[L3] ) ;
-			    layout[L3]->set_ellipsize( Pango::ELLIPSIZE_END ) ;
-			    layout[L3]->set_width(( m_width - 108 ) * PANGO_SCALE ) ;
+			layout[L3]->set_font_description( font_desc[L3] ) ;
+			layout[L3]->set_ellipsize( Pango::ELLIPSIZE_END ) ;
+			layout[L3]->set_width(( m_width - 80 ) * PANGO_SCALE ) ;
 
-			    layout[L1]->set_width(( m_width - 145 ) * PANGO_SCALE ) ;
+			layout[L1]->set_width(( m_width - 80 ) * PANGO_SCALE ) ;
 
-                            xpos += 7 + 64 ;
+			xpos += 7 + 64 ;
 
-                            //// ARTIST
-                            int yoff  = 1 ;
-                            layout[L1]->set_text( album->album_artist )  ;
-                            layout[L1]->get_pixel_size( width, height ) ;
-                            cairo->move_to(
-                                  xpos + 8
-                                , ypos + yoff
-                            ) ;
-                            cairo->set_source_rgba(color.get_red(), color.get_green(), color.get_blue(), 0.6);
+			//// ARTIST
+			guint yoff  = 1 ;
 
-                            pango_cairo_show_layout( cairo->cobj(), layout[L1]->gobj() ) ;
+			layout[L1]->set_text( album->album_artist ) ;
+			layout[L1]->get_pixel_size( width, height ) ;
 
-                            //// ALBUM
-                            yoff = 17 ;
-                            layout[L2]->set_text( album->album )  ;
-                            layout[L2]->get_pixel_size( width, height ) ;
-                            cairo->move_to(
-                                  xpos + 8
-                                , ypos + yoff
-                            ) ;
-                            cairo->set_source_rgba(color.get_red(), color.get_green(), color.get_blue(), 0.8);
-                            pango_cairo_show_layout( cairo->cobj(), layout[L2]->gobj() ) ;
+			cairo->move_to(
+			      xpos + 8
+			    , r.y + yoff
+			) ;
 
-			    if( is_selected )
+			cairo->set_source_rgba(color.get_red(), color.get_green(), color.get_blue(), 0.6) ;
+			pango_cairo_show_layout( cairo->cobj(), layout[L1]->gobj() ) ;
+
+			//// ALBUM
+			yoff = 17 ;
+
+			layout[L2]->set_text( album->album )  ;
+			layout[L2]->get_pixel_size( width, height ) ;
+
+			cairo->move_to(
+			      xpos + 8
+			    , r.y + yoff
+			) ;
+
+			cairo->set_source_rgba(color.get_red(), color.get_green(), color.get_blue(), 0.8) ;
+			pango_cairo_show_layout( cairo->cobj(), layout[L2]->gobj() ) ;
+
+			if( selected )
+			{
+			    color.set_rgba (0xe0 / 255.0, 0xe0 / 255.0, 0xe0 / 255.0);
+			}
+			else
+			{
+			    color.set_rgba (0x90 / 255.0, 0x90 / 255.0, 0x90 / 255.0);
+			}
+
+			font_desc[L3].set_style( Pango::STYLE_NORMAL ) ;
+			layout[L3]->set_font_description( font_desc[L3] ) ;
+
+			//// YEAR + LABEL
+			if( m_show_year_label )
+			{
+			    guint sx = xpos + 8 ;
+
+			    if( !album->year.empty() )
 			    {
-				    color.set_rgba (0xe0 / 255.0, 0xe0 / 255.0, 0xe0 / 255.0);
-			    }
-			    else
-			    {
-				    color.set_rgba (0x90 / 255.0, 0x90 / 255.0, 0x90 / 255.0);
-			    }
-
-			    font_desc[L3].set_style( Pango::STYLE_NORMAL ) ;
-			    layout[L3]->set_font_description( font_desc[L3] ) ;
-
-			    //// YEAR + LABEL
-			    if( m_show_year_label )
-			    {
-				    guint sx = xpos + 8 ;
-
-				    if( !album->year.empty() )
-				    {
-					layout[L3]->set_text( album->year.substr(0,4) ) ;
-					layout[L3]->get_pixel_size( width, height ) ;
-
-					cairo->move_to(
-					      sx
-					    , r.y + row_height - height - 27
-					) ;
-					cairo->set_source_rgba(color.get_red(), color.get_green(), color.get_blue(), 0.9);
-					pango_cairo_show_layout( cairo->cobj(), layout[L3]->gobj() ) ;
-
-					sx += width + 2 ;
-				    }
-
-				    if( !album->label.empty() )
-				    {
-					layout[L3]->set_text( album->label ) ;
-					layout[L3]->get_pixel_size( width, height ) ;
-
-					cairo->move_to(
-					      sx
-					    , r.y + row_height - height - 27
-					) ;
-					cairo->set_source_rgba(color.get_red(), color.get_green(), color.get_blue(), 0.9);
-
-					layout[L3]->set_width(( m_width - 108 - 30) * PANGO_SCALE ) ;
-					layout[L3]->set_ellipsize( Pango::ELLIPSIZE_END ) ;
-
-					pango_cairo_show_layout( cairo->cobj(), layout[L3]->gobj() ) ;
-				    }
-			    }
-
-			    //// DISC TIME AND TRACK COUNT
-			    {
-				layout[L3]->set_width( -1 ) ;
-				layout[L3]->set_ellipsize( Pango::ELLIPSIZE_NONE ) ;
-
-				guint tm = 0 ;
-
-				if( album_constraints )
-				{
-					tm = ((*album_constraints)[album->album_id]).Time ;
-
-					guint totaltracks = ((*album_constraints)[album->album_id]).Count ;
-
-					if( totaltracks != album->track_count )
-					    layout[L3]->set_markup((boost::format("<b>%u</b> / <b>%u</b> %s") % totaltracks % album->track_count % ((album->track_count>1) ? "Tracks" : "Track")).str()) ;
-					else
-					    layout[L3]->set_markup((boost::format("<b>%u</b> %s") % totaltracks % ((totaltracks>1) ? "Tracks" : "Track")).str()) ;
-				}
-				else
-				{
-					tm = album->total_time ;
-
-					guint totaltracks = album->track_count ;
-
-					layout[L3]->set_markup((boost::format("<b>%u</b> %s") % totaltracks % ((totaltracks>1) ? "Tracks" : "Track")).str()) ;
-				}
-
-				guint hrs = tm / 3600 ;
-				guint min = (tm-hrs*3600) / 60 ; 
-				guint sec = tm % 60 ;
-
+				layout[L3]->set_text( album->year.substr(0,4) ) ;
 				layout[L3]->get_pixel_size( width, height ) ;
+
 				cairo->move_to(
-				      xpos + 8 
-				    , r.y + row_height - height - 12 
+				      sx
+				    , r.y + row_height - height - 27
 				) ;
 				cairo->set_source_rgba(color.get_red(), color.get_green(), color.get_blue(), 0.9);
 				pango_cairo_show_layout( cairo->cobj(), layout[L3]->gobj() ) ;
+
+				sx += width + 2 ;
 			    }
-                    }
-                    else // display album count only
-                    {
-                            font_desc[L1] = widget.get_style_context()->get_font() ;
-                            font_desc[L1].set_size( text_size_pt[L1] * PANGO_SCALE * 1.5 ) ;
-                            font_desc[L1].set_weight( Pango::WEIGHT_BOLD ) ;
 
-                            layout[L1]->set_font_description( font_desc[L1] ) ;
-                            layout[L1]->set_ellipsize( Pango::ELLIPSIZE_END ) ;
-                            layout[L1]->set_width( m_width * PANGO_SCALE ) ;
-
-			    if( model_mapping_size != model_size )
+			    if( !album->label.empty() )
 			    {
-                            	layout[L1]->set_text( (boost::format(("%u %s")) % model_mapping_size % ( (model_mapping_size > 1) ? ("Albums") : ("Album"))).str()) ;
+				layout[L3]->set_text( album->label ) ;
+				layout[L3]->get_pixel_size( width, height ) ;
+
+				cairo->move_to(
+				      sx
+				    , r.y + row_height - height - 27
+				) ;
+				cairo->set_source_rgba(color.get_red(), color.get_green(), color.get_blue(), 0.9);
+
+				layout[L3]->set_width(( m_width - 108 - 30) * PANGO_SCALE ) ;
+				layout[L3]->set_ellipsize( Pango::ELLIPSIZE_END ) ;
+
+				pango_cairo_show_layout( cairo->cobj(), layout[L3]->gobj() ) ;
 			    }
-		            else
+			}
+
+			//// DISC TIME AND TRACK COUNT
+			{
+			    layout[L3]->set_width( -1 ) ;
+			    layout[L3]->set_ellipsize( Pango::ELLIPSIZE_NONE ) ;
+
+			    guint tm = 0 ;
+
+			    if( album_constraints )
 			    {
-                            	layout[L1]->set_text( _("All Albums")) ;
+				tm = ((*album_constraints)[album->album_id]).Time ;
+
+				guint totaltracks = ((*album_constraints)[album->album_id]).Count ;
+
+				if( totaltracks != album->track_count )
+				    layout[L3]->set_markup((boost::format("<b>%u</b> / <b>%u</b> %s") % totaltracks % album->track_count % ((album->track_count>1) ? "Tracks" : "Track")).str()) ;
+				else
+				    layout[L3]->set_markup((boost::format("<b>%u</b> %s") % totaltracks % ((totaltracks>1) ? "Tracks" : "Track")).str()) ;
 			    }
-
-                            layout[L1]->get_pixel_size( width, height ) ;
-
-                            cairo->move_to(
-                                  xpos + (m_width - width) / 2
-                                , r.y + (row_height - height) / 2
-                            ) ;
-
-			    if( is_selected )
-				    cairo->set_source_rgba(1.0, 1.0, 1.0, 1.0);
 			    else
-				    cairo->set_source_rgba(color.get_red(), color.get_green(), color.get_blue(), 1.0);
+			    {
+				tm = album->total_time ;
 
-                            pango_cairo_show_layout( cairo->cobj(), layout[L1]->gobj() ) ;
+				guint totaltracks = album->track_count ;
+
+				layout[L3]->set_markup((boost::format("<b>%u</b> %s") % totaltracks % ((totaltracks>1) ? "Tracks" : "Track")).str()) ;
+			    }
+
+			    guint hrs = tm / 3600 ;
+			    guint min = (tm-hrs*3600) / 60 ; 
+			    guint sec = tm % 60 ;
+
+			    layout[L3]->get_pixel_size( width, height ) ;
+			    cairo->move_to(
+				  xpos + 8 
+				, r.y + row_height - height - 11 
+			    ) ;
+			    cairo->set_source_rgba(color.get_red(), color.get_green(), color.get_blue(), 0.9);
+			    pango_cairo_show_layout( cairo->cobj(), layout[L3]->gobj() ) ;
+			}
+		    }
+		    else //// ALBUM COUNT ONLY 
+		    {
+			font_desc[L1] = widget.get_style_context()->get_font() ;
+			font_desc[L1].set_size( text_size_pt[L1] * PANGO_SCALE * 1.5 ) ;
+			font_desc[L1].set_weight( Pango::WEIGHT_BOLD ) ;
+
+			layout[L1]->set_font_description( font_desc[L1] ) ;
+			layout[L1]->set_ellipsize( Pango::ELLIPSIZE_END ) ;
+			layout[L1]->set_width( m_width * PANGO_SCALE ) ;
+
+			if( model_mapping_size != model_size )
+			{
+			    layout[L1]->set_text( (boost::format(("%u %s")) % model_mapping_size % ( (model_mapping_size > 1) ? ("Albums") : ("Album"))).str()) ;
+			}
+			else
+			{
+			    layout[L1]->set_text( _("All Albums")) ;
+			}
+
+			layout[L1]->get_pixel_size( width, height ) ;
+
+			cairo->move_to(
+			      xpos + (m_width - width) / 2
+			    , r.y + (row_height - height) / 2
+			) ;
+
+			if( selected )
+				cairo->set_source_rgba(1.0, 1.0, 1.0, 1.0);
+			else
+				cairo->set_source_rgba(color.get_red(), color.get_green(), color.get_blue(), 1.0);
+
+			pango_cairo_show_layout( cairo->cobj(), layout[L1]->gobj() ) ;
                     }
                 }
         };
@@ -1194,19 +1249,17 @@ namespace Albums
 
             private:
 
+                boost::optional<boost::tuple<Model_t::iterator, guint, guint> >  m_selection ;
+
 		PropAdjustment	    property_vadj_, property_hadj_ ;
 		PropScrollPolicy    property_vsp_ , property_hsp_ ;
 
-                guint				    m_height__row ;
-                guint				    m_height__current_viewport ;
-
-                enum ScrollDirection
-                {
-                      SCROLL_DIRECTION_UP
-                    , SCROLL_DIRECTION_DOWN
-                } ;
-
-                boost::optional<boost::tuple<Model_t::iterator, guint, guint> >  m_selection ;
+		enum SelDatum
+		{
+		      S_ITERATOR
+		    , S_ID
+		    , S_ROW
+		} ;
 
                 Column_sp_t_vector_t                m_columns ;
 
@@ -1215,6 +1268,9 @@ namespace Albums
                 Signal_void                         m_SIGNAL_start_playback ;
 
                 Interval<guint>			    m_Model_I ;
+		Minus<int>			    ModelCount ;
+
+		ViewMetrics_type		    ViewMetrics ;
 
                 Gtk::Entry                        * m_SearchEntry ;
                 Gtk::Window                       * m_SearchWindow ;
@@ -1229,6 +1285,8 @@ namespace Albums
                 Glib::RefPtr<Gtk::ActionGroup>	    m_refActionGroup ;
                 Gtk::Menu*			    m_pMenuPopup ;
 
+		sigc::connection		    conn_vadj ;
+
                 typedef sigc::signal<void, const std::string&> SignalMBID ;
                 typedef sigc::signal<void, guint>	       SignalID ;
 
@@ -1239,7 +1297,9 @@ namespace Albums
                 void
                 initialize_metrics ()
                 {
-                   m_height__row = 77 ;
+		    ViewMetrics.set_base__row_height(
+			  77
+		    ) ;
                 }
 
                 void
@@ -1247,40 +1307,30 @@ namespace Albums
                 {
                     if( m_model->m_mapping.size() )
                     {
-                        m_model->set_current_row( get_upper_row() ) ;
-                        queue_draw ();
+			int y1 = ViewMetrics.ViewPortPx.upper() ;
+			int y2 = vadj_value() ;
+
+			ViewMetrics.set( 
+			      get_allocation().get_height() 
+			    , vadj_value()
+			) ;
+
+                        m_model->set_current_row( ViewMetrics.ViewPort.upper() ) ;
+
+			get_window()->scroll( 0, y1 - y2 ) ; 
                     }
                 }
 
                 inline guint
-                get_upper_row ()
+                get_upper_row()
                 {
-                    if( property_vadjustment().get_value() && m_height__row )
-                        return property_vadjustment().get_value()->get_value() / m_height__row ;
-                    else
-                        return 0 ;
-                }
-
-                inline bool
-                get_row_is_visible(
-                      guint row
-                )
-                {
-                    guint up = get_upper_row() ;
-
-                    Interval<guint> i (
-                          Interval<guint>::IN_IN
-                        , up
-                        , up + (m_height__current_viewport / m_height__row)
-                    ) ;
-
-                    return i.in( row ) ;
+		    return ViewMetrics.ViewPort.upper() ;
                 }
 
             protected:
 
                 bool
-                key_press_event (GdkEventKey * event)
+                key_press_event(GdkEventKey* event)
                 {
                     if( event->is_modifier )
                         return false ;
@@ -1295,36 +1345,36 @@ namespace Albums
 	                    case GDK_KEY_Return:
         	            case GDK_KEY_KP_Enter:
                 	    case GDK_KEY_ISO_Enter:
-                        case GDK_KEY_3270_Enter:
-                            cancel_search() ;
-                            return true ;
+			    case GDK_KEY_3270_Enter:
+				cancel_search() ;
+                                return true ;
 
-                        case GDK_KEY_Page_Up:
-                        case GDK_KEY_Page_Down:
-                        case GDK_KEY_Home:
-                        case GDK_KEY_End:
-                            error_bell() ;
-                            return true ;
+			    case GDK_KEY_Page_Up:
+			    case GDK_KEY_Page_Down:
+			    case GDK_KEY_Home:
+			    case GDK_KEY_End:
+				error_bell() ;
+                                return true ;
 
-                        case GDK_KEY_Up:
-                        case GDK_KEY_KP_Up:
-                            find_prev_match() ;
-                            return true ;
+			    case GDK_KEY_Up:
+			    case GDK_KEY_KP_Up:
+				find_prev_match() ;
+				return true ;
 
-                        case GDK_KEY_Down:
-                        case GDK_KEY_KP_Down:
-                            find_next_match() ;
-                            return true ;
+			    case GDK_KEY_Down:
+			    case GDK_KEY_KP_Down:
+				find_next_match() ;
+				return true ;
 
-                        case GDK_KEY_Escape:
-                            cancel_search() ;
-                            return true ;
+			    case GDK_KEY_Escape:
+				cancel_search() ;
+				return true ;
 
-                        case GDK_KEY_Tab:
-                            cancel_search() ;
-                            return false ;
+			    case GDK_KEY_Tab:
+				cancel_search() ;
+				return false ;
 
-                        default: ;
+			    default: ;
                         }
 
                         GdkEvent *new_event = gdk_event_copy( (GdkEvent*)(event) ) ;
@@ -1336,7 +1386,6 @@ namespace Albums
                         return true ;
                     }
 
-
                     int step = 0 ;
                     int d = 0 ;
 
@@ -1346,6 +1395,7 @@ namespace Albums
                         case GDK_KEY_KP_Enter:
                         case GDK_KEY_ISO_Enter:
                         case GDK_KEY_3270_Enter:
+
                             if( m_selection )
                             {
                                 m_SIGNAL_start_playback.emit() ;
@@ -1358,7 +1408,7 @@ namespace Albums
 
                             if( event->keyval == GDK_KEY_Page_Up )
                             {
-                                step = -(m_height__current_viewport / m_height__row) ;
+                                step = -ViewMetrics.ViewPort.size() ;
                             }
                             else
                             {
@@ -1368,42 +1418,32 @@ namespace Albums
                             if( !m_selection )
                             {
                                 mark_first_row_up:
-                                select_row( get_upper_row() ) ;
+                                select_row( ViewMetrics.ViewPort.upper() ) ;
                             }
                             else
                             {
-                                int origin = boost::get<2>(m_selection.get()) ;
+                                guint origin = boost::get<S_ROW>(m_selection.get()) ;
 
-                                if( origin > 0 )
-                                {
-                                    if( get_row_is_visible( origin ))
-                                    {
-                                        d = std::max<int>( origin+step, 0 ) ;
-                                        select_row( d ) ;
+				if( ViewMetrics.ViewPort( origin ))
+				{
+				    d = std::max<int>( origin+step, 0 ) ;
+				    select_row( d ) ;
 
-                                        double adj_value = vadj_value() ; 
+				    double ymod = fmod( vadj_value(), ViewMetrics.RowHeight ) ;
 
-                                        if((d * m_height__row) < adj_value )
-                                        {
-                                            if( event->keyval == GDK_KEY_Page_Up )
-                                            {
-                                                vadj_value_set( std::max<int>( adj_value + (step*int(m_height__row)), 0 )) ;
-                                            }
-                                            else
-                                            {
-                                                scroll_to_row( d ) ;
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        goto mark_first_row_up ;
-                                    }
-                                }
-                                else
-                                {
-                                    scroll_to_row( 0 ) ;
-                                }
+				    if( event->keyval == GDK_KEY_Page_Up || d < ViewMetrics.ViewPort ) 
+				    {
+					scroll_to_row( std::max<int>( ViewMetrics.ViewPort.upper() + step, 0 )) ;
+				    }
+				    else if( ymod && d == ViewMetrics.ViewPort.upper() ) 
+				    {
+					vadj_value_set( std::max<int>( ViewMetrics.ViewPortPx.upper() - ymod, 0 )) ;
+				    }
+				}
+				else
+				{
+				    goto mark_first_row_up ;
+				}
                             }
 
                             return true;
@@ -1418,8 +1458,8 @@ namespace Albums
 
                         case GDK_KEY_End:
                         {
-                            select_row( m_model->size()-1 ) ;
-                            scroll_to_row( m_model->size()-1 ) ;
+                            select_row(ModelCount(m_model->size())) ;
+                            scroll_to_row(ModelCount(m_model->size())) ; 
 
                             return true ;
                         }
@@ -1430,7 +1470,7 @@ namespace Albums
 
                             if( event->keyval == GDK_KEY_Page_Down )
                             {
-                                step = (m_height__current_viewport / m_height__row) ;
+                                step = ViewMetrics.ViewPort.size() ; 
                             }
                             else
                             {
@@ -1440,92 +1480,57 @@ namespace Albums
                             if( !m_selection )
                             {
                                 mark_first_row_down:
-                                select_row( get_upper_row() ) ;
+                                select_row( ViewMetrics.ViewPort.upper() ) ;
                             }
                             else
                             {
-                                int origin = boost::get<2>(m_selection.get()) ;
+                                guint origin = boost::get<S_ROW>(m_selection.get()) ;
 
-                                if( get_row_is_visible( origin ))
+                                if( ViewMetrics.ViewPort( origin ))
                                 {
-                                    d = std::min<int>( origin+step, m_model->size()-1 ) ;
+                                    d = std::min<int>( origin+step, ModelCount(m_model->size())) ;
 
                                     select_row( d ) ;
 
-                                    double adj_value = vadj_value() ; 
-
-                                    if( event->keyval == GDK_KEY_Page_Down )
-                                    {
-                                        guint new_val = adj_value + (step*m_height__row) ;
-
-                                        if( new_val > (vadj_upper()-m_height__current_viewport))
-                                        {
-                                            scroll_to_row( d ) ;
-                                        }
-                                        else
-                                        {
-                                            vadj_value_set( adj_value + (step*m_height__row)) ;
-                                        }
-                                    }
-                                    else
-                                    {
-                                        guint offset = adj_value - ((guint(adj_value)/m_height__row) * m_height__row) ;
-                                        guint excess = (((m_height__current_viewport/m_height__row)+1)*m_height__row) - m_height__current_viewport ;
-
-                                        if( offset == 0 )
-                                        {
-                                            if((d-get_upper_row()+1)*m_height__row > m_height__current_viewport )
-                                            {
-						vadj_value_set( adj_value + excess ) ;
-                                            }
-                                        }
-                                        else
-                                        {
-                                            guint endpos = ((77-offset) + ((d-get_upper_row())*m_height__row)) ;
-
-                                            if( endpos > m_height__current_viewport )
-                                            {
-						vadj_value_set( (adj_value + (m_height__row-offset) + excess)) ;
-                                            }
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    goto mark_first_row_down ;
-                                }
+				    if( d >= ViewMetrics.ViewPort ) 
+				    {
+					guint pn = (ViewMetrics.ViewPort.upper()+1+(d-ViewMetrics.ViewPort.lower())) * ViewMetrics.RowHeight - ViewMetrics.Excess ; 
+					vadj_value_set( std::min<int>( vadj_upper(), pn )) ; 
+				    }
+                               }
+                               else
+                               {
+				    goto mark_first_row_down ;
+                               }
                             }
 
                             return true;
 
                         default:
 
-                            if( !Gtk::DrawingArea::on_key_press_event( event ))
-                            {
-                                if( !m_search_active && event->keyval != GDK_KEY_Tab )
-                                {
-                                    int x, y ;
+			    if( !m_search_active && event->keyval != GDK_KEY_Tab )
+			    {
+				int x, y ;
 
-				    get_window()->get_origin( x, y ) ;
-				    y += get_allocation().get_height() ;
+				get_window()->get_origin( x, y ) ;
+				y += get_allocation().get_height() ;
 
-                                    m_SearchWindow->set_size_request( get_allocation().get_width(), -1 ) ;
-                                    m_SearchWindow->move( x, y ) ;
-                                    m_SearchWindow->show() ;
+				m_SearchWindow->set_size_request( get_allocation().get_width(), -1 ) ;
+				m_SearchWindow->move( x, y ) ;
+				m_SearchWindow->show() ;
 
-                                    focus_entry( true ) ;
+				focus_entry( true ) ;
 
-                                    GdkEvent *new_event = gdk_event_copy( (GdkEvent*)(event) ) ;
-                                    //g_object_unref( ((GdkEventKey*)new_event)->window ) ;
-                                    ((GdkEventKey *) new_event)->window = m_SearchWindow->get_window()->gobj();
-				    m_SearchEntry->event(new_event) ;
-                                    //gdk_event_free(new_event) ;
+				GdkEvent *new_event = gdk_event_copy( (GdkEvent*)(event) ) ;
+				//g_object_unref( ((GdkEventKey*)new_event)->window ) ;
+				((GdkEventKey *) new_event)->window = m_SearchWindow->get_window()->gobj();
+				m_SearchEntry->event(new_event) ;
+				//gdk_event_free(new_event) ;
 
-                                    m_search_active = true ;
+				m_search_active = true ;
 
-                                    return false ;
-                                }
-                            }
+				return false ;
+			    }
                     }
 
                     return false ;
@@ -1536,8 +1541,6 @@ namespace Albums
 		    bool in 
 		)
                 {
-		    g_message( G_STRFUNC ) ;
-
                     GdkEvent *event = gdk_event_new (GDK_FOCUS_CHANGE);
 
                     event->focus_change.type   = GDK_FOCUS_CHANGE;
@@ -1549,63 +1552,65 @@ namespace Albums
                     gdk_event_free( event ) ;
                 }
 
+		void
+		on_size_allocate( Gtk::Allocation& a )
+		{
+		    a.set_x(0) ;
+		    a.set_y(0) ;
+		    Gtk::DrawingArea::on_size_allocate( a ) ;
+		    queue_draw() ;
+		}
+
                 bool
-                on_button_press_event(GdkEventButton * event)
+                on_button_press_event( GdkEventButton* event )
                 {
                     using boost::get;
 
+		    cancel_search() ;
+		    grab_focus() ;
+
+		    if( event->button == 1 ) 
                     {
-                        cancel_search() ;
-//                        grab_focus() ;
+			if( event->type == GDK_2BUTTON_PRESS )
+			{
+			    m_SIGNAL_start_playback.emit() ;
+			}
+			else
+			{
+			    double ymod = fmod( vadj_value(), ViewMetrics.RowHeight ) ;
 
-                        if( event->button == 1 && event->type == GDK_2BUTTON_PRESS )
-	                {
-	                    m_SIGNAL_start_playback.emit() ;
-		            return false ;
-		        }
+			    guint d = (vadj_value() + event->y) / ViewMetrics.RowHeight ;
 
-                        guint row  = vadj_value() / m_height__row ; 
-                        guint off  = m_height__row - (vadj_value() - (row*m_height__row)) ;
-
-                        if( event->y > off || off == 0 )
-                        {
-                            guint row2 = row + (event->y + (off ? (m_height__row-off) : 0)) / m_height__row ;
-
-			    if( m_selection && boost::get<2>(m_selection.get()) == row2 && event->button != 3 )
+			    if( m_selection && get<S_ROW>(m_selection.get()) == d )
 			    {
 				return false ;
 			    }
 
-                            if( m_Model_I.in( row2 ))
-                            {
-                                if( row2 >= (row + m_height__current_viewport/m_height__row))
-                                {
-                                }
-                                select_row( row2 ) ;
-                            }
-
-                        }
-                        else
-                        {
-			    if( m_selection && boost::get<2>(m_selection.get()) == row && event->button != 3 )
+			    if( m_Model_I( d ))
 			    {
-				return false ;
+				select_row( d ) ;
 			    }
 
-                            if( m_Model_I.in( row ))
-                            {
-                                select_row( row ) ;
-                            }
-                        }
+			    if( ymod != 0 )
+			    {
+				if( d == ViewMetrics.ViewPort.upper() ) 
+				{
+				    vadj_value_set( std::max<int>(0, ViewMetrics.ViewPortPx.upper() - ymod + 1)) ;
+				}
+				else if( d == ViewMetrics.ViewPort.lower())
+				{
+				    vadj_value_set( std::min<int>(vadj_upper(), ViewMetrics.ViewPortPx.upper() + (ViewMetrics.RowHeight - ymod) - ViewMetrics.Excess )) ;
+				}
+			    }
+			}
                     }
-
+		    else
                     if( event->button == 3 )
                     {
                         m_pMenuPopup->popup(event->button, event->time) ;
-                        return true ;
                     }
 
-                    return false ;
+                    return true ;
                 }
 
                 bool
@@ -1650,16 +1655,19 @@ namespace Albums
                     GdkEventConfigure* event
                 )
                 {
-                    m_height__current_viewport = event->height ;
-
-                    if( m_height__row )
+                    if( ViewMetrics.RowHeight )
                     {
                         configure_vadj(
-                              m_model->m_mapping.size() * m_height__row
-                            , m_height__current_viewport
+                              m_model->m_mapping.size() * ViewMetrics.RowHeight
+                            , event->height
                             , 8
                         ) ;
                     }
+
+		    ViewMetrics.set( 
+			  event->height 
+			, vadj_value()
+		    ) ;
 
                     double n                       = m_columns.size() ;
                     double column_width_calculated = event->width / n ;
@@ -1683,80 +1691,44 @@ namespace Albums
 
                     const ThemeColor& c_text		= theme->get_color( THEME_COLOR_TEXT ) ;
                     const ThemeColor& c_text_sel	= theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
+		    const ThemeColor& c_base		= theme->get_color( THEME_COLOR_BASE ) ;
                     const ThemeColor& c_base_rules_hint = theme->get_color( THEME_COLOR_BASE_ALTERNATE ) ;
-
-		    const ThemeColor& c_base	= theme->get_color( THEME_COLOR_BASE ) ;
-		    const ThemeColor& c_outline	= theme->get_color( THEME_COLOR_ENTRY_OUTLINE ) ;
 
                     const Gtk::Allocation& a = get_allocation() ;
 
-                    guint row     = get_upper_row() ;
+                    guint d       = ViewMetrics.ViewPort.upper() ; 
                     guint ypos    = 0 ;
-                    guint xpos    = 0 ;
-                    guint limit   = Limiter<guint>( Limiter<guint>::ABS_ABS, 0, m_model->size(), m_height__current_viewport / m_height__row + 2 ) ;
-
-                    int offset = vadj_value() - (row*m_height__row) ;
+                    guint max_d   = Limiter<guint>( Limiter<guint>::ABS_ABS, 0, m_model->size(), ViewMetrics.ViewPort.size() + 2 ) ;
+                    int offset = ViewMetrics.ViewPortPx.upper() - (d*ViewMetrics.RowHeight) ;
 
                     if( offset )
                     {
                         ypos -= offset ;
                     }
 
-		    cairo->save() ;
-                    RoundedRectangle(
-                          cairo
-                        , 1
-                        , 1
-                        , a.get_width() - 2 
-                        , a.get_height() - 2 
-                        , rounding
-                    ) ;
-		    Gdk::Cairo::set_source_rgba(cairo, c_outline);
-		    cairo->set_line_width( 0.75 ) ;
-                    cairo->stroke() ;
-		    cairo->restore() ;
-
-                    RoundedRectangle(
-                          cairo
-                        , 2
-                        , 2
-                        , a.get_width() - 4 
-                        , a.get_height() - 4 
-                        , rounding
-                    ) ;
-                    cairo->clip() ;
-
                     Gdk::Cairo::set_source_rgba(cairo, c_base);
 		    cairo->paint() ;
 
-#if 0
-		    if( !(m_model->size() * m_height__row < m_height__current_viewport))
-		    {
-		    	cairo->push_group() ;
-		    }
-#endif
-
 		    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 
-		    guint n = 0 ;
-		    RowRowMapping_t::const_iterator iter = m_model->iter( row ) ;
+		    RowRowMapping_t::const_iterator iter = m_model->iter( d ) ;
+		    MPX::CairoCorners::CORNERS c = MPX::CairoCorners::CORNERS(0) ;
 
-		    while( n < limit && m_Model_I.in(row+n) )
+		    for( guint n = 0 ; n < max_d && m_Model_I(d+n) ; ++n )
 		    {
-			MPX::CairoCorners::CORNERS c = MPX::CairoCorners::CORNERS(0) ;
+			guint di = d+n ;
+			guint xpos = 0 ;
 
-			xpos = 0 ;
+			bool selected = m_selection && boost::get<S_ROW>(m_selection.get()) == d+n ;
 
-			bool is_selected = m_selection && boost::get<2>(m_selection.get()) == row+n ;
-
-                        if( is_selected )
+                        if( selected )
                         {
                             GdkRectangle r ;
 
                             r.x         = 0 ; 
                             r.y         = ypos ; 
                             r.width     = a.get_width() ;
-                            r.height    = m_height__row ;
+                            r.height    = ViewMetrics.RowHeight ;
 
                             theme->draw_selection_rectangle(
                                   cairo
@@ -1766,14 +1738,15 @@ namespace Albums
 				, c
                             ) ;
                         }
-			else if((row+n) % 2)
+			else
+			if( di % 2 )
 			{
 			    GdkRectangle r ;
 
 			    r.x         = 0 ;
 			    r.y         = ypos ;
 			    r.width     = a.get_width() ;
-			    r.height    = m_height__row ;
+			    r.height    = ViewMetrics.RowHeight ;
 
 			    RoundedRectangle(cairo, r.x, r.y, r.width, r.height, rounding, c) ;
 			    Gdk::Cairo::set_source_rgba(cairo, c_base_rules_hint);
@@ -1784,96 +1757,20 @@ namespace Albums
 			      cairo
 			    , **iter
 			    , *this
-			    , row+n
+			    , di 
 			    , xpos
-			    , ypos + 4
-			    , m_height__row
-			    , is_selected ? c_text_sel : c_text
-			    , m_model->size()-1
-			    , m_model->m_realmodel->size()-1
-			    , is_selected
+			    , ypos
+			    , ViewMetrics.RowHeight 
+			    , selected ? c_text_sel : c_text
+			    , ModelCount(m_model->size())
+			    , ModelCount(m_model->m_realmodel->size())
+			    , selected
 			    , m_model->m_constraints_albums
 			) ;
 
-			ypos += m_height__row;
+			ypos += ViewMetrics.RowHeight ;
 			++ iter ;
-			++ n ;
-		}
-
-#if 0
-		if( m_model->size() * m_height__row < m_height__current_viewport )
-		    return true ;
-
-		    int pos = property_vadjustment().get_value()->get_value() ;
-		    int pgs = property_vadjustment().get_value()->get_page_size() ;
-		    int upp = property_vadjustment().get_value()->get_upper() ;
-
-		    int dif_l = (upp-(pos+pgs)) ;
-
-		    double frac_l = 0, frac_u = 0 ;
-
-		    if( dif_l == 0 )
-		    {
-			frac_l = 1 ;
 		    }
-		    else
-		    if( dif_l <= 24 )
-		    {
-			frac_l = 1. - (dif_l / 24.) ;
-		    }
-		    else
-		    if( dif_l > 24 )
-		    {
-			frac_l = 0 ;
-		    }
-
-
-		    if( pos == 0 )
-		    {
-			frac_u = 0 ;
-		    }
-		    else
-		    if( pos <= 24 )
-		    {
-			frac_u = pos / 24. ;
-		    }
-		    else
-		    if( pos > 24 )
-		    {
-			frac_u = 1. ;
-		    }
-
-
-		    if( frac_u < 0 )
-		    {
-			frac_u = 0 ;
-		    }
-
-		    if( frac_l > 1 )
-		    {
-			frac_l = 1 ;
-		    }
-
-		    Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create( w/2., 0, w/2., h ) ;
-
-		    if( frac_u > 0. )
-		    {
-		    	gradient->add_color_stop_rgba( 0., 0., 0., 0., 0. ) ;
-		    }
-
-		    gradient->add_color_stop_rgba( 0+(0.02*frac_u), 0., 0., 0., 1. ) ;
-		    gradient->add_color_stop_rgba( 0.98+(0.02*frac_l), 0., 0., 0., 1. ) ;
-
-		    if( (0.98+(0.02*frac_l)) < 1 )
-		    {
-		    	gradient->add_color_stop_rgba( 1., 0., 0., 0., 0. ) ;
-		    }
-
-		    cairo->pop_group_to_source() ;
-		    cairo->set_operator( Cairo::OPERATOR_ATOP ) ;
-		    cairo->rectangle( 0, 0, w, h ) ;
-		    cairo->mask( gradient ) ;
-#endif
 
                     return true;
                 }
@@ -1910,8 +1807,8 @@ namespace Albums
                 )
 		{
 		    configure_vadj(
-			  m_model->size() * m_height__row
-			, m_height__current_viewport
+			  m_model->size() * ViewMetrics.RowHeight
+			, ViewMetrics.ViewPortPx.size() 
 			, 8
 		    ) ;
 
@@ -1921,25 +1818,8 @@ namespace Albums
 			, m_model->m_mapping.size()
 		    ) ;
 
-			/*
-                    boost::optional<guint> row ;
-
-                    if( m_selection )
-                    {
-                        row = boost::get<2>(m_selection.get()) ;
-                    }
-
-                    if( row )
-                    {
-                        scroll_to_row( row.get() ) ;
-                        select_row( row.get(), true ) ;
-                    }
-                    else
-			*/
-                    {
-                        scroll_to_row( position ) ;
-                        select_row( position, true ) ;
-                    }
+		    scroll_to_row( position ) ;
+		    select_row( position, true ) ;
 
                     queue_draw() ;
                 }
@@ -1950,15 +1830,17 @@ namespace Albums
 		    if( !property_vadjustment().get_value() )
 			return ;
 
-		    property_vadjustment().get_value()->signal_value_changed().connect(
+		    conn_vadj.disconnect() ; 
+
+		    conn_vadj = property_vadjustment().get_value()->signal_value_changed().connect(
 			sigc::mem_fun(
 			    *this,
 			    &Class::on_vadj_value_changed
 		    ));
 
 		    configure_vadj(
-			  m_model->m_mapping.size() * m_height__row
-			, m_height__current_viewport
+			  m_model->m_mapping.size() * ViewMetrics.RowHeight
+			, ViewMetrics.ViewPortPx.size()
 			, 8
 		    ) ;
 		}
@@ -2000,61 +1882,54 @@ namespace Albums
                     {
                         const guint& real_id = id.get() ;
 
-			guint row = 0 ;
+			guint d = 0 ;
 
                         for( RowRowMapping_t::iterator i = m_model->m_mapping.begin(); i != m_model->m_mapping.end(); ++i )
                         {
                             if( real_id == (**i)->album_id )
                             {
-                                select_row( row ) ;
-
-				if( !get_row_is_visible( row))
-				    scroll_to_row( row ) ;
-
+                                select_row( d ) ;
                                 return ;
                             }
 
-			    ++row ;
+			    ++d ;
                         }
                     }
                 }
 
                 void
                 scroll_to_row(
-                      guint row
+                      guint d
                 )
                 {
-                    if( m_height__current_viewport && m_height__row && property_vadjustment().get_value() )
-                    {
-                        if( m_model->m_mapping.size() < guint(m_height__current_viewport/m_height__row) )
+                        if( m_model->m_mapping.size() < ViewMetrics.ViewPort.size() ) 
                         {
-                            property_vadjustment().get_value()->set_value( 0 ) ;
+			    vadj_value_set(0) ;
                         }
                         else
                         {
-                            Limiter<guint> d (
+                            Limiter<guint> d2 (
                                   Limiter<guint>::ABS_ABS
                                 , 0
-                                , (m_model->size() * m_height__row) - m_height__current_viewport
-                                , (row*m_height__row)
+                                , (m_model->size() * ViewMetrics.RowHeight) - ViewMetrics.ViewPort.size()
+                                , d * ViewMetrics.RowHeight 
                             ) ;
 
-                            property_vadjustment().get_value()->set_value( d ) ;
+			    vadj_value_set(d2) ;
                         }
-                    }
                 }
 
                 void
                 select_row(
-                      guint   row
-                    , bool          quiet = false
+                      guint   d
+                    , bool    quiet = false
                 )
                 {
-                    if( m_Model_I.in( row ))
+                    if( m_Model_I( d ))
                     {
-                        const guint& id = (*m_model->m_mapping[row])->album_id ;
+                        const guint& id = (*m_model->m_mapping[d])->album_id ;
 
-                        m_selection = boost::make_tuple( m_model->m_mapping[row], id, row ) ;
+                        m_selection = boost::make_tuple( m_model->m_mapping[d], id, d ) ;
 
                         if( !quiet )
                         {
@@ -2086,11 +1961,11 @@ namespace Albums
                 boost::optional<guint>
                 get_selected_id()
                 {
-					boost::optional<guint> id ;
+		    boost::optional<guint> id ;
 
                     if( m_selection )
                     {
-						id = boost::get<1>(m_selection.get()) ;
+			id = boost::get<S_ID>(m_selection.get()) ;
                     }
 
                     return id ;
@@ -2101,7 +1976,7 @@ namespace Albums
                 {
                     if( m_selection )
                     {
-                        const guint& sel_id = boost::get<1>(m_selection.get()) ;
+                        const guint& sel_id = boost::get<S_ID>(m_selection.get()) ;
 
                         if( sel_id != -1 )
                         {
@@ -2164,7 +2039,7 @@ namespace Albums
 
                     if( m_selection )
                     {
-                        std::advance( i, get<2>(m_selection.get()) ) ;
+                        std::advance( i, get<S_ROW>(m_selection.get()) ) ;
                         ++i ;
                     }
 
@@ -2201,7 +2076,7 @@ namespace Albums
 
                     if( m_selection )
                     {
-                        std::advance( i, get<2>(m_selection.get()) ) ;
+                        std::advance( i, get<S_ROW>(m_selection.get()) ) ;
                         --i ;
                     }
 
@@ -2275,7 +2150,7 @@ namespace Albums
                 {
                     if( m_selection )
                     {
-                        Album_sp album = *(boost::get<0>(m_selection.get())) ;
+                        Album_sp album = *(boost::get<S_ITERATOR>(m_selection.get())) ;
                         _signal_0.emit( album->mbid ) ;
                     }
                 }
@@ -2285,7 +2160,7 @@ namespace Albums
                 {
                     if( m_selection )
                     {
-                        Album_sp album = *(boost::get<0>(m_selection.get())) ;
+                        Album_sp album = *(boost::get<S_ITERATOR>(m_selection.get())) ;
                         _signal_1.emit( album->mbid_artist ) ;
                     }
                 }
@@ -2295,7 +2170,7 @@ namespace Albums
                 {
                     if( m_selection )
                     {
-                        Album_sp album = *(boost::get<0>(m_selection.get())) ;
+                        Album_sp album = *(boost::get<S_ITERATOR>(m_selection.get())) ;
 			album->caching = true ;
 			m_caching.insert( album->album_id ) ;
                         _signal_2.emit( album->album_id ) ;
@@ -2356,10 +2231,7 @@ namespace Albums
                 get_page_size(
                 )
                 {
-                    if( m_height__current_viewport && m_height__row )
-                        return m_height__current_viewport / m_height__row ; 
-                    else
-                        return 0 ;
+		    return ViewMetrics.ViewPort.size() ;
                 }
 
                 void
@@ -2407,6 +2279,8 @@ namespace Albums
 			, m_search_active( false )
                 {
 		    property_vadjustment().signal_changed().connect( sigc::mem_fun( *this, &Class::on_vadj_prop_changed )) ;
+
+		    ModelCount = Minus<int>( 1 ) ;
 
                     boost::shared_ptr<IYoukiThemeEngine> theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;
                     const ThemeColor& c = theme->get_color( THEME_COLOR_BASE ) ;

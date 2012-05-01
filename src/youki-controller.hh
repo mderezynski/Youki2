@@ -537,9 +537,6 @@ namespace MPX
             void
             initiate_quit() ;
 
-            bool
-            quit_timeout() ;
-
 	protected:
 
 	    void

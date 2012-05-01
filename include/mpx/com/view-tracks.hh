@@ -32,7 +32,7 @@
 #include "mpx/aux/glibaddons.hh"
 
 #include "mpx/widgets/cairo-extensions.hh"
-#include "mpx/widgets/cairo-blur.h"
+#include "mpx/widgets/cairo-blur.hh"
 
 #include "mpx/i-youki-theme-engine.hh"
 
@@ -263,9 +263,9 @@ namespace Tracks
                 Signal1         m_SIGNAL__changed;
 
                 Model_sp_t      m_realmodel;
-                guint     m_upper_bound ;
+                guint		m_upper_bound ;
 
-		AlbumTrackMapping_t	m_album_track_mapping ;
+		AlbumTrackMapping_t m_album_track_mapping ;
 
                 DataModel()
                 : m_upper_bound( 0 )
@@ -1466,7 +1466,7 @@ namespace Tracks
 
                     cairo->move_to(
                           xpos + 6
-                        , ypos + 5
+                        , ypos + 4
                     ) ;
 
                     cairo->set_operator(Cairo::OPERATOR_OVER);
@@ -1600,7 +1600,7 @@ namespace Tracks
 				, layout->gobj()
 			    ) ;
 
-			    cairo_image_surface_blur( srf->cobj(), 1 ) ;
+			    Util::cairo_image_surface_blur( srf->cobj(), 1 ) ;
 
 			    cairo->set_source( srf, xpos, ypos ) ;
 			    cairo->rectangle( xpos, ypos, m_width, rowheight ) ;
@@ -1647,6 +1647,9 @@ namespace Tracks
                 int                                 m_height__headers ;
                 int                                 m_height__current_viewport ;
 
+                Interval<guint>			    m_Model_I ;
+		Interval<guint>			    m_Current_Viewport_I ;
+
                 Columns                             m_columns ;
 
                 boost::optional<boost::tuple<Model_t::const_iterator, guint> >  m_selection ;
@@ -1680,7 +1683,6 @@ namespace Tracks
                 SignalVAdjChanged                   m_SIGNAL_vadj_changed ;
                 SignalFindAccepted                  m_SIGNAL_find_accepted ;
                 SignalFindPropagate                 m_SIGNAL_find_propagate ;
-                Interval<guint>			    m_Model_I ;
 
                 void
                 initialize_metrics ()
@@ -1701,6 +1703,12 @@ namespace Tracks
                 {
                     if( m_model->size() )
                     {
+			m_Current_Viewport_I = Interval<guint> (
+			      Interval<guint>::IN_EX
+			    , get_upper_row()
+			    , get_upper_row() + get_page_size()
+			) ;
+
                         m_model->set_current_row( get_upper_row() ) ;
                         queue_draw() ;
 
@@ -1713,14 +1721,10 @@ namespace Tracks
                 virtual bool
                 on_focus_in_event(GdkEventFocus* G_GNUC_UNUSED)
                 {
-                    if( !m_selection && m_model->size() )
+                    if( !m_Current_Viewport_I(get_upper_row()))
                     {
 		        select_row( get_upper_row() ) ;
                     }
-		    else
-		    {
-                    	queue_draw() ;
-		    }
 
                     return true ;
                 }
@@ -1984,8 +1988,10 @@ namespace Tracks
 		void
 		on_size_allocate( Gtk::Allocation& a )
 		{
-		    g_message("x: %d, y: %d, w: %d, h: %d", a.get_x(), a.get_y(), a.get_width(), a.get_height()) ;
+		    a.set_x(0) ;
+		    a.set_y(0) ;
 		    Gtk::DrawingArea::on_size_allocate( a ) ;
+		    queue_draw() ;
 		}
 
                 bool
@@ -2135,6 +2141,12 @@ namespace Tracks
 
                     m_height__current_viewport = event->height - m_height__headers ;
 
+		    m_Current_Viewport_I = Interval<guint> (
+			  Interval<guint>::IN_EX
+			, get_upper_row()
+			, get_upper_row() + get_page_size()
+		    ) ;
+
                     configure_vadj(
                           m_model->size()
                         , get_page_size()
@@ -2187,37 +2199,12 @@ namespace Tracks
                     const ThemeColor& c_rules_hint  = theme->get_color( THEME_COLOR_BASE_ALTERNATE ) ;
 		    const ThemeColor& c_treelines   = theme->get_color( THEME_COLOR_TREELINES ) ;
 		    const ThemeColor& c_base	    = theme->get_color( THEME_COLOR_BASE ) ;
-		    const ThemeColor& c_outline	    = theme->get_color( THEME_COLOR_ENTRY_OUTLINE ) ;
 
 		    std::valarray<double> dashes ( 2 ) ;
 		    dashes[0] = 1. ; 
 	            dashes[1] = 2. ;
 
                     const Gtk::Allocation& a = get_allocation();
-
-		    cairo->save() ;
-		    RoundedRectangle(
-			   cairo
-			 , 1
-			 , 1
-			 , a.get_width() - 2 
-			 , a.get_height() - 2 
-			 , rounding
-                    ) ;
-		    Gdk::Cairo::set_source_rgba(cairo, c_outline) ;
-	            cairo->set_line_width( 0.75 ) ;
-		    cairo->stroke() ;
-		    cairo->restore() ;
-
-		    RoundedRectangle(
-			   cairo
-			 , 2
-			 , 2
-			 , a.get_width() - 4 
-			 , a.get_height() - 4 
-			 , rounding
-		    ) ;
-		    cairo->clip() ;
 
 		    Gdk::Cairo::set_source_rgba(cairo, c_base);
 		    cairo->paint() ;
@@ -2260,7 +2247,7 @@ namespace Tracks
 		    cairo->save() ;
 		    cairo->set_antialias( Cairo::ANTIALIAS_NONE ) ;
 		    cairo->set_line_width( 1. ) ;
-		    cairo->set_source_rgba( c_outline.get_red(), c_outline.get_green(), c_outline.get_blue(), 0.6 ) ;
+		    cairo->set_source_rgba( c_treelines.get_red(), c_treelines.get_green(), c_treelines.get_blue(), 0.6 ) ;
 		    cairo->move_to( 0, m_height__headers ) ;
 		    cairo->line_to( a.get_width(), m_height__headers ) ;
 		    cairo->stroke() ;
@@ -2268,19 +2255,15 @@ namespace Tracks
 
 		    /// Variables mostly for viewport vertical and horizontal iteration 
                     guint upper_row   = get_upper_row() ;
+
                     guint row_limit   = Limiter<guint>(
 				            Limiter<guint>::ABS_ABS
 					  , 0
 					  , m_model->size()
 					  , get_page_size() + 1
 					) ;
-                    guint xpos        = 0 ;
 
-		    Interval<guint> current_viewport (
-			  Interval<guint>::IN_IN
-			, get_upper_row()
-			, get_upper_row() + get_page_size() - 1
-		    ) ;
+                    guint xpos        = 0 ;
 
 		    for( Columns::iterator i = m_columns.begin(); i != m_columns.end(); ++i )
 		    {
@@ -2337,7 +2320,7 @@ namespace Tracks
 		    }
 
 		    //// Selection Rectangle, if any
-		    if( d_sel && current_viewport.in(d_sel.get()))
+		    if( d_sel && m_Current_Viewport_I(d_sel.get()))
 		    {
 			GdkRectangle rect ;
 
@@ -2458,8 +2441,6 @@ namespace Tracks
 			    cairo->stroke() ;
 			    cairo->restore() ;
 
-                            if( i == ix ) continue ;
-
                             cairo->save() ;
                             cairo->set_antialias( Cairo::ANTIALIAS_NONE ) ;
                             cairo->set_line_width(
@@ -2474,9 +2455,9 @@ namespace Tracks
                                 , m_height__headers - 1
                             ) ;
                             cairo->set_source_rgba(
-                                  c_outline.get_red()
-                                , c_outline.get_green()
-                                , c_outline.get_blue()
+                                  c_treelines.get_red()
+                                , c_treelines.get_green()
+                                , c_treelines.get_blue()
                                 , 0.4
                             ) ;
 
@@ -2788,18 +2769,18 @@ namespace Tracks
 
                 void
                 select_row(
-                      guint row
+                      guint d
                 )
                 {
-                    Interval<guint> i (
+                    Interval<guint> I (
                           Interval<guint>::IN_EX
                         , 0
                         , m_model->size()
                     ) ;
 
-                    if( i.in( row ))
+                    if( I( d ))
                     {
-                        m_selection = boost::make_tuple((*m_model->m_mapping)[row], row) ;
+                        m_selection = boost::make_tuple((*m_model->m_mapping)[d], d) ;
                         queue_draw() ;
                     }
                 }
@@ -3142,7 +3123,10 @@ namespace Tracks
                                 , &Class::on_search_entry_activated
                     )) ;
 
+		    push_composite_child() ;
                     m_SearchWindow = new Gtk::Window( Gtk::WINDOW_POPUP ) ;
+		    pop_composite_child() ;
+
                     m_SearchWindow->set_decorated( false ) ;
 
                     m_SearchWindow->signal_focus_out_event().connect(
