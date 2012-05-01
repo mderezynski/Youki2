@@ -865,8 +865,6 @@ namespace Artist
 
                             if( !m_search_active )
                             {
-                                gtk_widget_realize( GTK_WIDGET( m_SearchWindow->gobj() ) ); //m_SearchWindow->realize ();
-
                                 int x, y ;
 
 				get_window()->get_origin( x, y ) ;
@@ -900,6 +898,8 @@ namespace Artist
 		    bool in 
 		)
                 {
+		    gtk_widget_realize(GTK_WIDGET(m_SearchEntry->gobj())) ;
+
                     GdkEvent *event = gdk_event_new (GDK_FOCUS_CHANGE);
 
                     event->focus_change.type   = GDK_FOCUS_CHANGE;
@@ -1520,15 +1520,12 @@ namespace Artist
                 void
                 cancel_search()
                 {
-                    if( m_search_active )
-		    {
-			focus_entry( false ) ;
-			m_SearchWindow->hide() ;
-			m_search_changed_conn.block () ;
-			m_SearchEntry->set_text("") ;
-			m_search_changed_conn.unblock () ;
-			m_search_active = false ;
-		    }
+		    focus_entry( false ) ;
+		    m_SearchWindow->hide() ;
+		    m_search_changed_conn.block () ;
+		    m_SearchEntry->set_text("") ;
+		    m_search_changed_conn.unblock () ;
+		    m_search_active = false ;
                 }
 
             protected:

@@ -188,17 +188,14 @@ namespace MPX
         cairo->fill_preserve () ;
 
 	cairo->set_source_rgba(
-	      c_gradient.get_red()
-	    , c_gradient.get_green()
-	    , c_gradient.get_blue()
+	      c2.get_red()
+	    , c2.get_green()
+	    , c2.get_blue()
 	    , 1. 
 	) ;
-
-        cairo->set_line_width( 0.75 ) ;
+        cairo->set_line_width( 0.75 ) ; 
         cairo->stroke_preserve() ;
         cairo->clip() ;
-
-	cairo->set_line_width( 1. ) ;
 
 	/// VOLUME
 	r.x         = 1 ; 

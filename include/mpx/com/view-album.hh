@@ -1033,6 +1033,18 @@ namespace Albums
 			}
                     }
 
+		    Gdk::RGBA c1, c2 ;
+		    double h,s,b ;
+
+		    Util::color_to_hsb( color, h, s, b ) ;
+		    s *= 0.45 ;
+		    c1 = Util::color_from_hsb( h, s, b ) ;
+
+		    Util::color_to_hsb( color, h, s, b ) ;
+		    s *= 0.95 ;
+		    c2 = Util::color_from_hsb( h, s, b ) ;
+		    c2.set_alpha( 1. ) ;
+
                     enum { L1, L2, L3, N_LS } ;
 
                     const int text_size_px[N_LS] = { 15, 15, 12 } ;
@@ -1079,12 +1091,10 @@ namespace Albums
 			layout[L3]->set_width(( m_width - 80 ) * PANGO_SCALE ) ;
 
 			layout[L1]->set_width(( m_width - 80 ) * PANGO_SCALE ) ;
-
 			xpos += 7 + 64 ;
-
-			//// ARTIST
 			guint yoff  = 1 ;
 
+			//// ARTIST
 			layout[L1]->set_text( album->album_artist ) ;
 			layout[L1]->get_pixel_size( width, height ) ;
 
@@ -1093,8 +1103,8 @@ namespace Albums
 			    , r.y + yoff
 			) ;
 
-			cairo->set_source_rgba(color.get_red(), color.get_green(), color.get_blue(), 0.6) ;
-			pango_cairo_show_layout( cairo->cobj(), layout[L1]->gobj() ) ;
+			Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(c1,.8)) ;
+			pango_cairo_show_layout(cairo->cobj(), layout[L1]->gobj()) ;
 
 			//// ALBUM
 			yoff = 17 ;
@@ -1107,24 +1117,16 @@ namespace Albums
 			    , r.y + yoff
 			) ;
 
-			cairo->set_source_rgba(color.get_red(), color.get_green(), color.get_blue(), 0.8) ;
-			pango_cairo_show_layout( cairo->cobj(), layout[L2]->gobj() ) ;
-
-			if( selected )
-			{
-			    color.set_rgba (0xe0 / 255.0, 0xe0 / 255.0, 0xe0 / 255.0);
-			}
-			else
-			{
-			    color.set_rgba (0x90 / 255.0, 0x90 / 255.0, 0x90 / 255.0);
-			}
-
-			font_desc[L3].set_style( Pango::STYLE_NORMAL ) ;
-			layout[L3]->set_font_description( font_desc[L3] ) ;
+			Gdk::Cairo::set_source_rgba(cairo, color) ;
+			pango_cairo_show_layout(cairo->cobj(), layout[L2]->gobj()) ;
 
 			//// YEAR + LABEL
+
 			if( m_show_year_label )
 			{
+			    font_desc[L3].set_style( Pango::STYLE_NORMAL ) ;
+			    layout[L3]->set_font_description( font_desc[L3] ) ;
+
 			    guint sx = xpos + 8 ;
 
 			    if( !album->year.empty() )
@@ -1136,8 +1138,9 @@ namespace Albums
 				      sx
 				    , r.y + row_height - height - 27
 				) ;
-				cairo->set_source_rgba(color.get_red(), color.get_green(), color.get_blue(), 0.9);
-				pango_cairo_show_layout( cairo->cobj(), layout[L3]->gobj() ) ;
+
+				Gdk::Cairo::set_source_rgba(cairo, c2) ;
+				pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj()) ;
 
 				sx += width + 2 ;
 			    }
@@ -1146,17 +1149,16 @@ namespace Albums
 			    {
 				layout[L3]->set_text( album->label ) ;
 				layout[L3]->get_pixel_size( width, height ) ;
+				layout[L3]->set_width(( m_width - 108 - 30) * PANGO_SCALE ) ;
+				layout[L3]->set_ellipsize( Pango::ELLIPSIZE_END ) ;
 
 				cairo->move_to(
 				      sx
 				    , r.y + row_height - height - 27
 				) ;
-				cairo->set_source_rgba(color.get_red(), color.get_green(), color.get_blue(), 0.9);
 
-				layout[L3]->set_width(( m_width - 108 - 30) * PANGO_SCALE ) ;
-				layout[L3]->set_ellipsize( Pango::ELLIPSIZE_END ) ;
-
-				pango_cairo_show_layout( cairo->cobj(), layout[L3]->gobj() ) ;
+				Gdk::Cairo::set_source_rgba(cairo, c2) ;
+				pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj()) ;
 			    }
 			}
 
@@ -1192,12 +1194,14 @@ namespace Albums
 			    guint sec = tm % 60 ;
 
 			    layout[L3]->get_pixel_size( width, height ) ;
+
 			    cairo->move_to(
 				  xpos + 8 
-				, r.y + row_height - height - 11 
+				, r.y + row_height - height - 12 
 			    ) ;
-			    cairo->set_source_rgba(color.get_red(), color.get_green(), color.get_blue(), 0.9);
-			    pango_cairo_show_layout( cairo->cobj(), layout[L3]->gobj() ) ;
+
+			    Gdk::Cairo::set_source_rgba(cairo, c2) ;
+			    pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj()) ;
 			}
 		    }
 		    else //// ALBUM COUNT ONLY 
@@ -1226,12 +1230,8 @@ namespace Albums
 			    , r.y + (row_height - height) / 2
 			) ;
 
-			if( selected )
-				cairo->set_source_rgba(1.0, 1.0, 1.0, 1.0);
-			else
-				cairo->set_source_rgba(color.get_red(), color.get_green(), color.get_blue(), 1.0);
-
-			pango_cairo_show_layout( cairo->cobj(), layout[L1]->gobj() ) ;
+			Gdk::Cairo::set_source_rgba(cairo, c2) ;
+			pango_cairo_show_layout(cairo->cobj(), layout[L1]->gobj()) ;
                     }
                 }
         };
@@ -1818,10 +1818,16 @@ namespace Albums
 			, m_model->m_mapping.size()
 		    ) ;
 
-		    scroll_to_row( position ) ;
-		    select_row( position, true ) ;
-
-                    queue_draw() ;
+		    if( m_model->m_mapping.size() < ViewMetrics.ViewPort.size() )
+		    {
+			scroll_to_row(0) ;
+			queue_draw() ;
+		    }
+		    else
+		    {
+			scroll_to_row( position ) ;
+			select_row( position, true ) ;
+		    }
                 }
 
 		void
@@ -2204,15 +2210,12 @@ namespace Albums
                 void
                 cancel_search()
                 {
-                    if( m_search_active )
-		    {
-			focus_entry( false ) ;
-			m_SearchWindow->hide() ;
-			m_search_changed_conn.block () ;
-			m_SearchEntry->set_text("") ;
-			m_search_changed_conn.unblock () ;
-			m_search_active = false ;
-		    }
+		    focus_entry( false ) ;
+		    m_SearchWindow->hide() ;
+		    m_search_changed_conn.block () ;
+		    m_SearchEntry->set_text("") ;
+		    m_search_changed_conn.unblock () ;
+		    m_search_active = false ;
                 }
 
             protected:
