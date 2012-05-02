@@ -1173,6 +1173,10 @@ namespace Albums
 			    {
 				tm = ((*album_constraints)[album->album_id]).Time ;
 
+				guint hrs = tm / 3600 ;
+				guint min = (tm-hrs*3600) / 60 ; 
+				guint sec = tm % 60 ;
+
 				guint totaltracks = ((*album_constraints)[album->album_id]).Count ;
 
 				if( totaltracks != album->track_count )
@@ -1184,14 +1188,14 @@ namespace Albums
 			    {
 				tm = album->total_time ;
 
+				guint hrs = tm / 3600 ;
+				guint min = (tm-hrs*3600) / 60 ; 
+				guint sec = tm % 60 ;
+
 				guint totaltracks = album->track_count ;
 
 				layout[L3]->set_markup((boost::format("<b>%u</b> %s") % totaltracks % ((totaltracks>1) ? "Tracks" : "Track")).str()) ;
 			    }
-
-			    guint hrs = tm / 3600 ;
-			    guint min = (tm-hrs*3600) / 60 ; 
-			    guint sec = tm % 60 ;
 
 			    layout[L3]->get_pixel_size( width, height ) ;
 
@@ -1541,6 +1545,8 @@ namespace Albums
 		    bool in 
 		)
                 {
+		    gtk_widget_realize(GTK_WIDGET(m_SearchEntry->gobj())) ;
+
                     GdkEvent *event = gdk_event_new (GDK_FOCUS_CHANGE);
 
                     event->focus_change.type   = GDK_FOCUS_CHANGE;

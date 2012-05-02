@@ -89,18 +89,14 @@ namespace MPX
 	cgdk.set_rgba( 0.55, 0.55, 0.55 ) ;
 	
 	Util::color_to_hsb( cgdk, h, s, b ) ;
-	// b *= 0.85 ;
-	// s *= 0.50 ;
 	cgdk = Util::color_from_hsb( h, s, b ) ;
 
 	Util::color_to_hsb( cgdk, h, s, b ) ;
 	b *= 0.95 ;
-	// s *= 0.50 ;
 	c1 = Util::color_from_hsb( h, s, b ) ;
 
 	Util::color_to_hsb( cgdk, h, s, b ) ;
 	b *= 0.45 ;
-	//s *= 0.75 ;
 	c2 = Util::color_from_hsb( h, s, b ) ;
 
 	Gdk::RGBA c_gradient = get_color_at_pos( c1, c2, percent ) ;
@@ -115,7 +111,7 @@ namespace MPX
             , 1 
             , 1 
             , w 
-            , 16
+            , 17
             , 2.
         ) ;
 
@@ -123,7 +119,7 @@ namespace MPX
               a.get_width() / 2 
             , 1 
             , a.get_width() / 2 
-            , 16
+            , 17
         ) ;
 
         position_bar_back_gradient->add_color_stop_rgba(
@@ -131,15 +127,7 @@ namespace MPX
             , cgdk.get_red()
             , cgdk.get_green()
             , cgdk.get_blue()
-            , 0.3 
-        ) ;
-
-        position_bar_back_gradient->add_color_stop_rgba(
-              .2
-            , cgdk.get_red()
-            , cgdk.get_green()
-            , cgdk.get_blue()
-            , 0.250 
+            , 0.3
         ) ;
 
         position_bar_back_gradient->add_color_stop_rgba(
@@ -147,7 +135,7 @@ namespace MPX
             , cgdk.get_red()
             , cgdk.get_green()
             , cgdk.get_blue()
-            , 0.185
+            , 0.22
         ) ;
 
         position_bar_back_gradient->add_color_stop_rgba(
@@ -155,43 +143,32 @@ namespace MPX
             , cgdk.get_red()
             , cgdk.get_green()
             , cgdk.get_blue()
-            , 0.185
+            , 0.22
         ) ;
         
-        position_bar_back_gradient->add_color_stop_rgba(
-              .8
-            , cgdk.get_red()
-            , cgdk.get_green()
-            , cgdk.get_blue()
-            , 0.250
-        ) ;
-
         position_bar_back_gradient->add_color_stop_rgba(
               1. 
             , cgdk.get_red()
             , cgdk.get_green()
             , cgdk.get_blue()
-            , 0.3 
+            , 0.3
         ) ;
 
         cairo->set_source( position_bar_back_gradient ) ;
-
         RoundedRectangle(
               cairo
             , 1 
             , 1 
             , w
-            , 16
+            , 17
             , 2.
         ) ;
-
         cairo->fill_preserve () ;
-
 	cairo->set_source_rgba(
 	      c2.get_red()
 	    , c2.get_green()
 	    , c2.get_blue()
-	    , 1. 
+	    , 0.3 
 	) ;
         cairo->set_line_width( 0.75 ) ; 
         cairo->stroke_preserve() ;
@@ -201,28 +178,24 @@ namespace MPX
 	r.x         = 1 ; 
 	r.y         = 1 ; 
 	r.width     = fmax( 0, (a.get_width()-2) * double(percent)) ;
-	r.height    = 16 ; 
+	r.height    = 17 ; 
 
 	cairo->save() ;
-
 	cairo->set_source_rgba(
 	      c_gradient.get_red()
 	    , c_gradient.get_green()
 	    , c_gradient.get_blue()
 	    , 1. 
 	) ;
-
 	cairo->set_operator(
-	      Cairo::OPERATOR_OVER
+	      Cairo::OPERATOR_ATOP
 	) ;
-
 	cairo->rectangle(
 	      r.x 
 	    , r.y
 	    , r.width 
 	    , r.height
 	) ;
-
 	cairo->fill (); 
 	cairo->restore () ;
 
@@ -242,11 +215,11 @@ namespace MPX
 		, m_image_mute->get_width()
 		, m_image_mute->get_height()
 	    ) ;
-	    cairo->fill() ;
+	    cairo->paint_with_alpha(0.75) ;
 	}
 	else
 	{
-	    const int text_size_px = 13 ;
+	    const int text_size_px = 14 ;
 	    const int text_size_pt = static_cast<int> ((text_size_px * 72) / Util::screen_get_y_resolution (Gdk::Screen::get_default ())) ;
 	    Pango::FontDescription font_desc = get_style_context()->get_font() ; 
 	    font_desc.set_size(text_size_pt * PANGO_SCALE) ;
@@ -271,7 +244,7 @@ namespace MPX
 		r1.y      = (a.get_height() - r1.height) / 2 ; 
 		r1.x      = 3 ; 
 
-		cairo->rectangle( 1, 1, w * percent, 16 ) ; 
+		cairo->rectangle( 1, 1, w * percent, 17 ) ; 
 		cairo->clip() ;
 
 		cairo->set_source_rgba(
@@ -290,7 +263,7 @@ namespace MPX
 
 		cairo->reset_clip() ;
 
-		cairo->rectangle( 1+w*percent, 1, 1+(2*(ri.get_width()/PANGO_SCALE)), 16 ) ; 
+		cairo->rectangle( 1+w*percent, 1, 1+(2*(ri.get_width()/PANGO_SCALE)), 17 ) ; 
 		cairo->clip() ;
 
 		cairo->set_source_rgba(

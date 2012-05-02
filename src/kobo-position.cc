@@ -130,7 +130,7 @@ namespace MPX
               a.get_width() / 2 
             , 1 
             , a.get_width() / 2 
-            , 16
+            , 17
         ) ;
 
         position_bar_back_gradient->add_color_stop_rgba(
@@ -138,19 +138,11 @@ namespace MPX
             , cgdk.get_red()
             , cgdk.get_green()
             , cgdk.get_blue()
-            , 0.35 
+            , 0.35
         ) ;
 
         position_bar_back_gradient->add_color_stop_rgba(
-              .2
-            , cgdk.get_red()
-            , cgdk.get_green()
-            , cgdk.get_blue()
-            , 0.28 
-        ) ;
-
-        position_bar_back_gradient->add_color_stop_rgba(
-              .3
+              .4
             , cgdk.get_red()
             , cgdk.get_green()
             , cgdk.get_blue()
@@ -158,21 +150,13 @@ namespace MPX
         ) ;
 
         position_bar_back_gradient->add_color_stop_rgba(
-              .7
+              .6
             , cgdk.get_red()
             , cgdk.get_green()
             , cgdk.get_blue()
             , 0.22
         ) ;
         
-        position_bar_back_gradient->add_color_stop_rgba(
-              .8
-            , cgdk.get_red()
-            , cgdk.get_green()
-            , cgdk.get_blue()
-            , 0.28
-        ) ;
-
         position_bar_back_gradient->add_color_stop_rgba(
               1. 
             , cgdk.get_red()
@@ -187,13 +171,13 @@ namespace MPX
             , 1 
             , 1 
             , w
-            , 16
+            , 17
             , 2.
         ) ;
-        cairo->fill_preserve () ;
+        cairo->fill_preserve() ;
 
         cairo->save() ;
-        cairo->set_source_rgba( c.get_red() , c.get_green(), c.get_blue(), 1. ) ;
+        cairo->set_source_rgba( c.get_red() , c.get_green(), c.get_blue(), 0.5 ) ; 
         cairo->set_line_width( 0.75 ) ;
         cairo->stroke() ;
         cairo->restore() ;
@@ -203,7 +187,7 @@ namespace MPX
             , 1 
             , 1 
             , w 
-            , 16
+            , 17
             , 2.
         ) ;
 	cairo->clip() ;
@@ -224,7 +208,7 @@ namespace MPX
             r.x         = 1 ; 
             r.y         = 1 ; 
             r.width     = w * percent ; 
-            r.height    = 16 ; 
+            r.height    = 17 ; 
 
             cairo->save () ;
 
@@ -275,7 +259,7 @@ namespace MPX
 	Pango::FontDescription font_desc = get_style_context()->get_font() ;
 	Glib::RefPtr<Pango::Layout> layout = Glib::wrap( pango_cairo_create_layout(cairo->cobj()) ) ;
 
-	const int text_size_px = 13 ;
+	const int text_size_px = 14 ;
 	const int text_size_pt = static_cast<int>((text_size_px * 72) / Util::screen_get_y_resolution(Gdk::Screen::get_default())) ;
 
 	font_desc.set_size( text_size_pt * PANGO_SCALE ) ;
@@ -326,13 +310,13 @@ namespace MPX
 		r1.y      = (a.get_height() - r1.height) / 2 ; 
 		r1.x      = 3 ; 
 
-		cairo->rectangle( 1, 1, w * percent, 16 ) ; 
+		cairo->rectangle( 1, 1, w * percent, 17 ) ; 
 		cairo->clip() ;
 
 		if( alpha ) 
 		{
 		    cairo->set_source( s, r1.x, r1.y ) ;
-		    cairo->rectangle( r1.x, r1.y, ri.get_width()+1, 16 ) ;
+		    cairo->rectangle( r1.x, r1.y, ri.get_width()+1, 17 ) ;
 		    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 		    cairo->fill() ;
 		}
@@ -350,7 +334,7 @@ namespace MPX
 		pango_cairo_show_layout( cairo->cobj(), layout->gobj() ) ;
 
 		cairo->reset_clip() ;
-		cairo->rectangle( 1+w*percent, 1, 1+(2*(ri.get_width()/PANGO_SCALE)), 16 ) ; 
+		cairo->rectangle( 1+w*percent, 1, 1+(2*(ri.get_width()/PANGO_SCALE)), 17 ) ; 
 		cairo->clip() ;
 
 		cairo->move_to(
@@ -378,7 +362,7 @@ namespace MPX
 		if( alpha )
 		{
 		    cairo->set_source( s, r1.x, r1.y ) ;
-		    cairo->rectangle( r1.x, r1.y, ri.get_width()+1, 16 ) ;
+		    cairo->rectangle( r1.x, r1.y, ri.get_width()+1, 17 ) ;
 		    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 		    cairo->fill() ;
 		}
@@ -430,7 +414,7 @@ namespace MPX
             r.x      = 1 ;
             r.y      = 1 ;
             r.width  = a.get_width() - 2 ;
-            r.height = 16 ; 
+            r.height = 17 ; 
 
             m_theme->draw_focus(
                   cairo

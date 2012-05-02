@@ -461,7 +461,7 @@ namespace MPX
         m_main_window->set_icon_list( pixvector ) ; 
 
         m_main_position = Gtk::manage( new KoboPosition ) ;
-	m_main_position->set_size_request( -1, 18 ) ;
+	m_main_position->set_size_request( -1, 19 ) ;
         m_main_position->signal_seek_event().connect(
             sigc::mem_fun(
                   *this
@@ -483,7 +483,7 @@ namespace MPX
         m_VBox_Bottom->pack_start( *Controls_Align, false, false, 0 ) ;
 
         m_main_volume = Gtk::manage( new KoboVolume ) ;
-	m_main_volume->set_size_request( 204, 18 ) ;
+	m_main_volume->set_size_request( 204, 19 ) ;
         m_main_volume->set_volume(
             m_play->property_volume().get_value()
         ) ;
