@@ -26,11 +26,17 @@
 #include "mpx/algorithm/minus.hh"
 #include "mpx/algorithm/range.hh"
 
-#include "mpx/aux/glibaddons.hh"
-#include "mpx/widgets/cairo-extensions.hh"
-#include "mpx/com/indexed-list.hh"
-#include "mpx/mpx-main.hh"
 #include "mpx/i-youki-theme-engine.hh"
+
+#include "mpx/widgets/cairo-extensions.hh"
+#include "mpx/widgets/cairo-blur.hh"
+
+#include "mpx/aux/glibaddons.hh"
+
+#include "mpx/com/indexed-list.hh"
+#include "mpx/com/viewmetrics.hh"
+
+#include "mpx/mpx-main.hh"
 
 namespace
 {
@@ -81,58 +87,6 @@ namespace
 
         return RT_OTHER;
     }
-}
-
-namespace MPX
-{
-	class ViewMetrics_type
-	{
-	    public:
-
-		guint		RowHeight ;
-		guint		Height ;	
-		guint		Excess ;
-		Range<guint>	ViewPortPx ;
-		Range<guint>	ViewPort ;
-
-	    public:
-
-		ViewMetrics_type()
-		    : RowHeight(0)
-		    , Height(0)
-		    , Excess(0)
-		    , ViewPortPx(0,0)
-		    , ViewPort(0,0)
-		{}
-
-		virtual ~ViewMetrics_type()
-		{}
-
-		void
-		set_base__row_height(
-		      guint v_
-		)	
-		{
-		    RowHeight = v_ ;
-		}
-
-		void
-		set(
-		      guint height
-		    , guint top
-		)
-		{
-		    Height = height ;
-
-		    ViewPortPx = Range<guint>( top, top+height ) ;
-
-		    if( RowHeight )
-		    {
-			ViewPort = Range<guint>( ViewPortPx.upper()/RowHeight, ViewPortPx.upper()/RowHeight + Height/RowHeight ) ;
-			Excess = ViewPortPx.size() - (ViewPortPx.size()/RowHeight)*RowHeight ;
-		    }	
-		}
-	} ;
 }
 
 namespace MPX
@@ -206,7 +160,6 @@ namespace Albums
 	    return a->album_id != b->album_id ;
 	}
 
-        typedef sigc::signal<void, guint, bool>	    Signal_2 ;
 	typedef sigc::signal<void>		    Signal_0 ;
 	typedef sigc::signal<void, guint>	    Signal_1 ;
 
@@ -251,7 +204,7 @@ namespace Albums
 		IdIterMap_t            m_iter_map ;
 		guint		       m_upper_bound ;
 
-		Signal_2               m_SIGNAL__changed ;
+		Signal_1	       m_SIGNAL__changed ;
 		Signal_0	       m_SIGNAL__redraw ;
 		Signal_1	       m_SIGNAL__cover_updated ;
 
@@ -286,7 +239,7 @@ namespace Albums
 		    m_upper_bound = 0 ;
 		}
 
-		virtual Signal_2&
+		virtual Signal_1&
 		signal_changed ()
 		{
 			return m_SIGNAL__changed ;
@@ -677,7 +630,7 @@ namespace Albums
 		    if( !vector_compare( m_mapping, new_mapping ))
 		    {
 			std::swap( new_mapping, m_mapping ) ;
-			m_SIGNAL__changed.emit( m_upper_bound, true ) ;
+			m_SIGNAL__changed.emit( m_upper_bound ) ;
 		    }
                 }
 
@@ -724,7 +677,7 @@ namespace Albums
 		    if( !vector_compare( m_mapping, new_mapping ))
 		    {
 			std::swap( new_mapping, m_mapping ) ;
-			m_SIGNAL__changed.emit( m_upper_bound, true ) ;
+			m_SIGNAL__changed.emit( m_upper_bound ) ;
 		    }
                 }
         };
@@ -985,6 +938,92 @@ namespace Albums
 		    return s ;
 		}
 
+		void
+		render_text_shadow(	
+		      Glib::RefPtr<Pango::Layout>	   layout
+		    , guint w
+		    , guint h
+		    , guint x
+		    , guint y
+		    , const Cairo::RefPtr<Cairo::Context>& cairo
+		)
+		{
+		    int width, height ;
+		    layout->get_pixel_size( width, height ) ;
+
+		    Cairo::RefPtr<Cairo::ImageSurface> s = Cairo::ImageSurface::create( Cairo::FORMAT_ARGB32, w+30, h+30 ) ;
+		    Cairo::RefPtr<Cairo::Context> c2 = Cairo::Context::create( s ) ;
+
+		    c2->set_operator( Cairo::OPERATOR_CLEAR ) ;
+		    c2->paint() ;
+
+		    c2->set_operator( Cairo::OPERATOR_OVER ) ;
+		    c2->set_source_rgba(
+			      0. 
+			    , 0. 
+			    , 0.
+			    , 0.60
+		    ) ;
+		    c2->move_to(
+			      2
+			    , 2
+		    ) ;
+		    pango_cairo_show_layout(
+			  c2->cobj()
+			, layout->gobj()
+		    ) ;
+
+		    Util::cairo_image_surface_blur( s->cobj(), 1 ) ;
+
+		    cairo->move_to(
+			  x 
+			, y 
+		    ) ;
+		    cairo->set_source( s, x, y ) ;
+		    cairo->rectangle( x, y, width+4, height+4) ;
+		    cairo->fill() ;
+		}
+
+		void
+		render_rect_shadow(	
+		      guint x
+		    , guint y
+		    , guint w
+		    , guint h
+		    , double r
+		    , const Cairo::RefPtr<Cairo::Context>& cairo
+		)
+		{
+		    Cairo::RefPtr<Cairo::ImageSurface> s = Cairo::ImageSurface::create( Cairo::FORMAT_ARGB32, w+30,h+30 ) ; 
+		    Cairo::RefPtr<Cairo::Context> c2 = Cairo::Context::create( s ) ;
+
+		    c2->set_operator( Cairo::OPERATOR_CLEAR ) ;
+		    c2->paint() ;
+
+		    c2->set_operator( Cairo::OPERATOR_OVER ) ;
+		    c2->set_source_rgba(
+			      0 
+			    , 0 
+			    , 0 
+			    , 0.6
+		    ) ;
+		    c2->move_to(
+			      2
+			    , 2
+		    ) ;
+		    RoundedRectangle( c2, x, y, w, h, r ) ;
+		    c2->fill() ;
+		    Util::cairo_image_surface_blur( s->cobj(), 1 ) ;
+
+		    cairo->move_to(
+			  x 
+			, y 
+		    ) ;
+		    cairo->set_source( s, x, y ) ;
+		    cairo->rectangle( x, y, w+4, h+4) ;
+		    cairo->fill() ;
+		}
+
                 void
                 render(
                       const Cairo::RefPtr<Cairo::Context>&  cairo
@@ -1019,6 +1058,11 @@ namespace Albums
 			{
 			    if( !album->surface_cache ) 
 				    album->surface_cache = render_icon( album, widget, m_rt_viewmode ) ;
+
+			    if( album->coverart && selected )
+			    {
+				render_rect_shadow( r.x+2, r.y+2, 68, 68, 4., cairo ) ;
+			    }
 
 			    cairo->set_source( album->surface_cache, r.x, r.y ) ;
 			    cairo->rectangle( r.x, r.y , 68, 68 ) ;
@@ -1098,6 +1142,11 @@ namespace Albums
 			layout[L1]->set_text( album->album_artist ) ;
 			layout[L1]->get_pixel_size( width, height ) ;
 
+			if( selected )
+			{
+			    render_text_shadow( layout[L1], m_width-80, height, xpos+8, r.y+yoff, cairo ) ;
+			}
+
 			cairo->move_to(
 			      xpos + 8
 			    , r.y + yoff
@@ -1111,6 +1160,11 @@ namespace Albums
 
 			layout[L2]->set_text( album->album )  ;
 			layout[L2]->get_pixel_size( width, height ) ;
+
+			if( selected )
+			{
+			    render_text_shadow( layout[L2], m_width-80, height, xpos+8, r.y+yoff, cairo ) ;
+			}
 
 			cairo->move_to(
 			      xpos + 8
@@ -1134,6 +1188,11 @@ namespace Albums
 				layout[L3]->set_text( album->year.substr(0,4) ) ;
 				layout[L3]->get_pixel_size( width, height ) ;
 
+				if( selected )
+				{
+				    render_text_shadow( layout[L3], 50, height, sx, r.y+row_height-height-27, cairo) ; 
+				}
+
 				cairo->move_to(
 				      sx
 				    , r.y + row_height - height - 27
@@ -1151,6 +1210,11 @@ namespace Albums
 				layout[L3]->get_pixel_size( width, height ) ;
 				layout[L3]->set_width(( m_width - 108 - 30) * PANGO_SCALE ) ;
 				layout[L3]->set_ellipsize( Pango::ELLIPSIZE_END ) ;
+
+				if( selected )
+				{
+				    render_text_shadow( layout[L3], m_width-108-30, height, sx, r.y+row_height-height-27, cairo) ; 
+				}
 
 				cairo->move_to(
 				      sx
@@ -1198,6 +1262,11 @@ namespace Albums
 			    }
 
 			    layout[L3]->get_pixel_size( width, height ) ;
+
+			    if( selected )
+			    {
+				render_text_shadow( layout[L3], m_width-108, height, xpos+8, r.y+row_height-height-12, cairo) ; 
+			    }
 
 			    cairo->move_to(
 				  xpos + 8 
@@ -1289,7 +1358,11 @@ namespace Albums
                 Glib::RefPtr<Gtk::ActionGroup>	    m_refActionGroup ;
                 Gtk::Menu*			    m_pMenuPopup ;
 
-		sigc::connection		    conn_vadj ;
+		sigc::connection 		    conn_vadj ;
+
+		boost::shared_ptr<IYoukiThemeEngine> m_theme ; 
+
+	    public:
 
                 typedef sigc::signal<void, const std::string&> SignalMBID ;
                 typedef sigc::signal<void, guint>	       SignalID ;
@@ -1297,6 +1370,8 @@ namespace Albums
                 SignalMBID _signal_0 ;
                 SignalMBID _signal_1 ;
                 SignalID   _signal_2 ;
+
+	    private:
 
                 void
                 initialize_metrics ()
@@ -1619,28 +1694,6 @@ namespace Albums
                     return true ;
                 }
 
-                bool
-                on_button_release_event (GdkEventButton * event)
-                {
-                    return true ;
-                }
-
-                bool
-                on_leave_notify_event(
-                    GdkEventCrossing* G_GNUC_UNUSED
-                )
-                {
-                    return true ;
-                }
-
-                bool
-                on_motion_notify_event(
-                    GdkEventMotion* event
-                )
-                {
-                    return true ;
-                }
-
                 void
                 configure_vadj(
                       guint   upper
@@ -1693,12 +1746,10 @@ namespace Albums
 		    const Cairo::RefPtr<Cairo::Context>& cairo 
 		)	
                 {
-                    boost::shared_ptr<IYoukiThemeEngine> theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;
-
-                    const ThemeColor& c_text		= theme->get_color( THEME_COLOR_TEXT ) ;
-                    const ThemeColor& c_text_sel	= theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
-		    const ThemeColor& c_base		= theme->get_color( THEME_COLOR_BASE ) ;
-                    const ThemeColor& c_base_rules_hint = theme->get_color( THEME_COLOR_BASE_ALTERNATE ) ;
+                    const ThemeColor& c_text		= m_theme->get_color( THEME_COLOR_TEXT ) ;
+                    const ThemeColor& c_text_sel	= m_theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
+		    const ThemeColor& c_base		= m_theme->get_color( THEME_COLOR_BASE ) ;
+                    const ThemeColor& c_base_rules_hint = m_theme->get_color( THEME_COLOR_BASE_ALTERNATE ) ;
 
                     const Gtk::Allocation& a = get_allocation() ;
 
@@ -1736,7 +1787,7 @@ namespace Albums
                             r.width     = a.get_width() ;
                             r.height    = ViewMetrics.RowHeight ;
 
-                            theme->draw_selection_rectangle(
+                            m_theme->draw_selection_rectangle(
                                   cairo
                                 , r
                                 , has_focus()
@@ -1808,8 +1859,7 @@ namespace Albums
 
                 void
                 on_model_changed(
-                      guint   position
-                    , bool          size_changed
+                      guint d
                 )
 		{
 		    configure_vadj(
@@ -1827,12 +1877,11 @@ namespace Albums
 		    if( m_model->m_mapping.size() < ViewMetrics.ViewPort.size() )
 		    {
 			scroll_to_row(0) ;
-			queue_draw() ;
 		    }
 		    else
 		    {
-			scroll_to_row( position ) ;
-			select_row( position, true ) ;
+			scroll_to_row( d ) ;
+			select_row( d, true ) ;
 		    }
                 }
 
@@ -2022,7 +2071,7 @@ namespace Albums
                             &Class::handle_cover_updated
                     ));
 
-                    on_model_changed( 0, true ) ;
+                    on_model_changed( 0 ) ;
                 }
 
                 void
@@ -2291,12 +2340,9 @@ namespace Albums
 
 		    ModelCount = Minus<int>( 1 ) ;
 
-                    boost::shared_ptr<IYoukiThemeEngine> theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;
-                    const ThemeColor& c = theme->get_color( THEME_COLOR_BASE ) ;
-
-                    Gdk::RGBA cgdk ;
-                    cgdk.set_rgba( c.get_red(), c.get_green(), c.get_blue() );
-                    override_background_color( cgdk, Gtk::STATE_FLAG_NORMAL ) ;
+                    m_theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;
+                    const ThemeColor& c = m_theme->get_color(THEME_COLOR_BASE) ;
+                    override_background_color(c, Gtk::STATE_FLAG_NORMAL) ;
 
                     set_can_focus(true);
                     add_events(Gdk::EventMask(GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_EXPOSURE_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_LEAVE_NOTIFY_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_MOTION_MASK | GDK_SCROLL_MASK ));

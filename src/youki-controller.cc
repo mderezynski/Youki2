@@ -1683,7 +1683,7 @@ namespace MPX
 
         if( field == FIELD_AUDIO_BITRATE )
         {
-		m_main_info->set_bitrate( m.m_audio_bitrate.get() / 1000 ) ;
+		m_main_info->set_bitrate( m.m_audio_bitrate.get() / 999.9 ) ;
         }
         else
         if( field == FIELD_AUDIO_CODEC )

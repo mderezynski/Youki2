@@ -417,7 +417,7 @@ namespace Tracks
                     : DataModel( model->m_realmodel )
                     , m_max_size_constraints_artist( 0 )
                     , m_max_size_constraints_albums( 0 )
-                    , m_cache_enabled( true )
+                    , m_cache_enabled(true)
 
                 {
                     regen_mapping() ;
@@ -1670,9 +1670,11 @@ namespace Tracks
 
 		bool				    m_highlight_matches ;
 
-                Glib::RefPtr<Gtk::UIManager> m_refUIManager ;
-                Glib::RefPtr<Gtk::ActionGroup> m_refActionGroup ;
-                Gtk::Menu* m_pMenuPopup ;
+		int				    vadj_value_old ;
+
+                Glib::RefPtr<Gtk::UIManager>	    m_refUIManager ;
+                Glib::RefPtr<Gtk::ActionGroup>	    m_refActionGroup ;
+                Gtk::Menu*			    m_pMenuPopup ;
 
                 typedef sigc::signal<void, const std::string&> SignalMBID ;
 
@@ -1710,8 +1712,7 @@ namespace Tracks
 			) ;
 
                         m_model->set_current_row( get_upper_row() ) ;
-                        queue_draw() ;
-
+			queue_draw() ;	
                         m_SIGNAL_vadj_changed.emit() ;
                     }
                 }
@@ -1948,7 +1949,7 @@ namespace Tracks
                                 m_SearchWindow->move( x, y ) ;
                                 m_SearchWindow->show() ;
 
-                                focus_entry( true ) ;
+                                focus_entry(true) ;
 
                                 GdkEvent *copy_event = gdk_event_copy( (GdkEvent*)(event) ) ;
 
@@ -3003,7 +3004,7 @@ namespace Tracks
                 {
                     if( m_search_active )
 		    {
-			focus_entry( false ) ;
+			focus_entry(false) ;
 			m_SearchWindow->hide() ;
 			m_search_changed_conn.block () ;
 			m_SearchEntry->set_text("") ;
@@ -3065,9 +3066,10 @@ namespace Tracks
 			, property_vsp_(*this, "vscroll-policy", Gtk::SCROLL_NATURAL )
 			, property_hsp_(*this, "hscroll-policy", Gtk::SCROLL_NATURAL )
 
-                        , m_columns__fixed_total_width( 0 )
-                        , m_search_active( false )
-                        , m_highlight_matches( false )
+                        , m_columns__fixed_total_width(0)
+                        , m_search_active(false)
+                        , m_highlight_matches(false)
+			, vadj_value_old(0)
 
                 {
 		    property_vadjustment().signal_changed().connect( sigc::mem_fun( *this, &Class::on_vadj_prop_changed )) ;
@@ -3090,11 +3092,10 @@ namespace Tracks
                             , &Class::query_tooltip
                     )) ;
 
-                    set_has_tooltip( true ) ;
+                    set_has_tooltip(true) ;
                     */
 
                     m_SearchEntry = Gtk::manage( new Gtk::Entry ) ;
-                    gtk_widget_realize( GTK_WIDGET(m_SearchEntry->gobj()) ) ;
                     m_SearchEntry->show() ;
 
                     m_SearchHBox = Gtk::manage( new Gtk::HBox ) ;
@@ -3127,7 +3128,7 @@ namespace Tracks
                     m_SearchWindow = new Gtk::Window( Gtk::WINDOW_POPUP ) ;
 		    pop_composite_child() ;
 
-                    m_SearchWindow->set_decorated( false ) ;
+                    m_SearchWindow->set_decorated(false) ;
 
                     m_SearchWindow->signal_focus_out_event().connect(
                             sigc::mem_fun(

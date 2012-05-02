@@ -912,6 +912,15 @@ namespace Artist
                     //gdk_event_free( event ) ;
                 }
 
+		void
+		on_size_allocate( Gtk::Allocation& a )
+		{
+		    a.set_x(0) ;
+		    a.set_y(0) ;
+		    Gtk::DrawingArea::on_size_allocate( a ) ;
+		    queue_draw() ;
+		}
+
                 bool
                 on_button_press_event( GdkEventButton* event )
                 {
