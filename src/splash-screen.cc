@@ -61,12 +61,8 @@ namespace MPX
         Glib::RefPtr<Gdk::Screen> screen = Gdk::Screen::get_default();
 	gtk_widget_set_visual(GTK_WIDGET(gobj()), GDK_VISUAL(screen->get_rgba_visual()->gobj())) ;
 
-        // FIXME: Port this to use Cairo
-        // if( m_has_alpha )
-        // {
-        //     set_colormap (screen->get_rgba_colormap());
-        // }
-        // else
+	m_has_alpha = true ;
+
         // {
         //     Glib::RefPtr<Gdk::Pixmap> mask_pixmap_window1, mask_pixmap_window2;
         //     Glib::RefPtr<Gdk::Bitmap> mask_bitmap_window1, mask_bitmap_window2;
@@ -113,13 +109,13 @@ namespace MPX
 	const Cairo::RefPtr<Cairo::Context>& cairo
     )
     {
-        cairo->set_operator( Cairo::OPERATOR_SOURCE ) ;
-
         if( m_has_alpha )
         {
-            cairo->set_source_rgba( .0, .0, .0, .0 ) ;
+            cairo->set_operator( Cairo::OPERATOR_CLEAR ) ;
             cairo->paint ();
         }
+
+        cairo->set_operator( Cairo::OPERATOR_SOURCE ) ;
 
         Gdk::Cairo::set_source_pixbuf(
               cairo
@@ -131,25 +127,6 @@ namespace MPX
 
 /*
         cairo->set_operator( Cairo::OPERATOR_OVER ) ;
-        cairo->set_source_rgba(
-              1.
-            , 1.
-            , 1.
-            , 1.
-        ) ; 
-        cairo->rectangle(
-              m_bar_x - 2
-            , m_bar_y - 2
-            , m_bar_w + 4
-            , m_bar_h + 4
-        ) ;
-        cairo->set_line_width(
-              0.5
-        ) ;
-        cairo->stroke () ;
-*/
-
-        cairo->set_operator( Cairo::OPERATOR_OVER ) ;
         cairo->set_source_rgba( 1., 1., 1., .55 ) ; 
         cairo->rectangle(
               m_bar_x - 2
@@ -158,12 +135,13 @@ namespace MPX
             , m_bar_h+4
         ) ;
         cairo->fill ();
+*/
 
         int lw, lh;
 
         Pango::FontDescription font_desc = get_style_context()->get_font ();
 
-        int text_size_px = 8 ;
+        int text_size_px = 10 ;
         int text_size_pt = static_cast<int> ((text_size_px * 72) / Util::screen_get_y_resolution (Gdk::Screen::get_default ())) ;
 
         font_desc.set_size(
@@ -187,8 +165,8 @@ namespace MPX
 
         cairo->set_operator( Cairo::OPERATOR_OVER );
         cairo->move_to(
-                556 - lw 
-              , m_bar_y - 4
+                m_logo->get_width() - 120 - lw 
+              , m_logo->get_height() - 8 - lh 
         ) ; 
         cairo->set_source_rgba( 1., 1., 1., 1.);
         pango_cairo_show_layout(
