@@ -1432,11 +1432,13 @@ namespace Artist
                         {
                             scroll_to_row( std::max<int>(0, d-get_page_size()/2)) ;
                             select_row( d ) ;
-                            break ;
+                            return ;
                         }
 
 			++d ;
                     }
+
+		    error_bell() ;
                 }
 
                 void
@@ -1469,11 +1471,13 @@ namespace Artist
                         {
                             scroll_to_row( std::max<int>(0, d-get_page_size()/2)) ;
                             select_row( d ) ;
-                            break ;
+                            return ;
                         }
 
 			--d ;
                     }
+
+		    error_bell() ;
                 }
 
                 void
@@ -1501,11 +1505,14 @@ namespace Artist
                         {
                             scroll_to_row( std::max<int>(0, d-get_page_size()/2)) ;
                             select_row( d ) ;
-                            break ;
+			    m_SearchEntry->unset_color() ;
+                            return ;
                         }
 
 			++d ;
                     }
+
+		    m_SearchEntry->override_color(Util::make_rgba(1.,0.,0.,1.)) ;
                 }
 
                 void
@@ -1594,6 +1601,7 @@ namespace Artist
 
                     m_SearchWindow = new Gtk::Window( Gtk::WINDOW_POPUP ) ;
                     m_SearchWindow->set_decorated( false ) ;
+                    m_SearchWindow->set_border_width( 4 ) ;
 
                     m_SearchWindow->signal_focus_out_event().connect(
                             sigc::mem_fun(

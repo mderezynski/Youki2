@@ -2834,7 +2834,7 @@ namespace Tracks
 			{
 			    scroll_to_row( std::max<int>( 0, d-get_page_size()/2)) ;
 			    select_row( d ) ;
-			    break ;
+			    return ;
 			}
 
                         Glib::ustring match = Glib::ustring(get<0>(**i)).casefold() ;
@@ -2843,11 +2843,13 @@ namespace Tracks
                         {
                             scroll_to_row( std::max<int>( 0, d-get_page_size()/2)) ;
                             select_row( d ) ;
-			    break ; 
+			    return ; 
                         }
 
 			++d ;
                     }
+
+		    error_bell() ;
                 }
 
                 void
@@ -2881,7 +2883,7 @@ namespace Tracks
 			{
 			    scroll_to_row( std::max<int>( 0, d-get_page_size()/2)) ;
 			    select_row( d ) ;
-			    break ;
+			    return ;
 			}
 
                         Glib::ustring match = Glib::ustring(get<0>(**i)).casefold() ;
@@ -2890,11 +2892,13 @@ namespace Tracks
                         {
                             scroll_to_row( std::max<int>( 0, d-get_page_size()/2)) ;
                             select_row( d ) ;
-                            break ;
+                            return ;
                         }
 
 			--d ;
                     }
+
+		    error_bell() ;
                 }
 
                 void
@@ -2922,7 +2926,8 @@ namespace Tracks
 			{
 			    scroll_to_row( std::max<int>( 0, d-get_page_size()/2)) ;
 			    select_row( d ) ;
-			    break ;
+			    m_SearchEntry->unset_color() ;
+			    return ;
 			}
 
                         Glib::ustring match = Glib::ustring(get<0>(**i)).casefold() ;
@@ -2931,11 +2936,14 @@ namespace Tracks
                         {
                             scroll_to_row( std::max<int>( 0, d-get_page_size()/2)) ;
                             select_row( d ) ;
+			    m_SearchEntry->unset_color() ;
 			    break ; 
                         }
 
 			++d ;
                     }
+
+		    m_SearchEntry->override_color(Util::make_rgba(1.,0.,0.,1.)) ;
                 }
 
                 void
@@ -3124,11 +3132,9 @@ namespace Tracks
                                 , &Class::on_search_entry_activated
                     )) ;
 
-		    push_composite_child() ;
                     m_SearchWindow = new Gtk::Window( Gtk::WINDOW_POPUP ) ;
-		    pop_composite_child() ;
-
                     m_SearchWindow->set_decorated(false) ;
+                    m_SearchWindow->set_border_width(4) ;
 
                     m_SearchWindow->signal_focus_out_event().connect(
                             sigc::mem_fun(

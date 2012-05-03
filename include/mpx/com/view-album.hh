@@ -1005,13 +1005,9 @@ namespace Albums
 			      0 
 			    , 0 
 			    , 0 
-			    , 0.6
+			    , 0.3
 		    ) ;
-		    c2->move_to(
-			      2
-			    , 2
-		    ) ;
-		    RoundedRectangle( c2, x, y, w, h, r ) ;
+		    RoundedRectangle( c2, 1, 1, w, h, r ) ;
 		    c2->fill() ;
 		    Util::cairo_image_surface_blur( s->cobj(), 1 ) ;
 
@@ -1061,7 +1057,7 @@ namespace Albums
 
 			    if( album->coverart && selected )
 			    {
-				render_rect_shadow( r.x+2, r.y+2, 68, 68, 4., cairo ) ;
+				render_rect_shadow( r.x, r.y, 68, 68, 4., cairo ) ;
 			    }
 
 			    cairo->set_source( album->surface_cache, r.x, r.y ) ;
@@ -2119,6 +2115,8 @@ namespace Albums
 
 			++d ;
                     }
+
+		    error_bell() ;
                 }
 
                 void
@@ -2156,6 +2154,8 @@ namespace Albums
 
 			--d ;
                     }
+
+		    error_bell() ;
                 }
 
                 void
@@ -2183,11 +2183,14 @@ namespace Albums
                         {
                             scroll_to_row( std::max<int>(0,d-get_page_size()/2)) ;
                             select_row( d ) ;
+			    m_SearchEntry->unset_color() ;
                             return ;
                         }
 
 			++d ;
                     }
+
+		    m_SearchEntry->override_color(Util::make_rgba(1.,0.,0.,1.)) ;
                 }
 
                 void
@@ -2364,6 +2367,7 @@ namespace Albums
 
                     m_SearchWindow = new Gtk::Window( Gtk::WINDOW_POPUP ) ;
                     m_SearchWindow->set_decorated( false ) ;
+                    m_SearchWindow->set_border_width( 4 ) ;
 
                     m_SearchWindow->signal_focus_out_event().connect(
                             sigc::mem_fun(
