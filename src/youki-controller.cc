@@ -2020,6 +2020,8 @@ namespace MPX
     {
 	TapArea area = TapArea(i) ;
 
+	g_message("Area: %d", i ) ;
+
 	if( area == TAP_CENTER )
 	{
 	    if( m_play->property_status().get_value() == PLAYSTATUS_STOPPED )
@@ -2339,7 +2341,7 @@ void
 	{
 	    guint d = 0 ;
 
-	    OptUInt idx = m_ListViewTracks->get_selected_index() ; 
+	    OptUInt idx = private_->FilterModelTracks->get_active_track() ; 
 
 	    if( idx ) 
 	    {
