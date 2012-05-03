@@ -2956,7 +2956,7 @@ namespace Tracks
                             scroll_to_row( std::max<int>( 0, d-get_page_size()/2)) ;
                             select_row( d ) ;
 			    m_SearchEntry->unset_color() ;
-			    break ; 
+			    return ; 
                         }
 
 			++d ;
