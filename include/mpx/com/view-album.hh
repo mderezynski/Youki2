@@ -1007,16 +1007,15 @@ namespace Albums
 			    , 0 
 			    , 0.3
 		    ) ;
-		    RoundedRectangle( c2, 1, 1, w, h, r ) ;
+		    RoundedRectangle( c2, 4, 4, w, h, 4. ) ;
 		    c2->fill() ;
 		    Util::cairo_image_surface_blur( s->cobj(), 1 ) ;
-
 		    cairo->move_to(
 			  x 
 			, y 
 		    ) ;
 		    cairo->set_source( s, x, y ) ;
-		    cairo->rectangle( x, y, w+4, h+4) ;
+		    cairo->rectangle( x, y, w+6, h+6) ;
 		    cairo->fill() ;
 		}
 
@@ -1057,7 +1056,7 @@ namespace Albums
 
 			    if( album->coverart && selected )
 			    {
-				render_rect_shadow( r.x, r.y, 68, 68, 4., cairo ) ;
+				render_rect_shadow( r.x, r.y, 64, 64, 4., cairo ) ;
 			    }
 
 			    cairo->set_source( album->surface_cache, r.x, r.y ) ;
@@ -1294,6 +1293,11 @@ namespace Albums
 
 			layout[L1]->get_pixel_size( width, height ) ;
 
+			if( selected )
+			{
+			    render_text_shadow( layout[L1], m_width, height, xpos+(m_width-width)/2, r.y+(row_height-height)/2, cairo ) ;
+			}
+
 			cairo->move_to(
 			      xpos + (m_width - width) / 2
 			    , r.y + (row_height - height) / 2
@@ -1327,7 +1331,7 @@ namespace Albums
 		{
 		      S_ITERATOR
 		    , S_ID
-		    , S_ROW
+		    , S_INDEX
 		} ;
 
                 Column_sp_t_vector_t                m_columns ;
@@ -1336,7 +1340,7 @@ namespace Albums
                 Signal_void                         m_SIGNAL_find_accepted ;
                 Signal_void                         m_SIGNAL_start_playback ;
 
-                Interval<guint>			    m_Model_I ;
+                Interval<guint>			    m_ModelExtents ;
 		Minus<int>			    ModelCount ;
 
 		ViewMetrics_type		    ViewMetrics ;
@@ -1493,22 +1497,22 @@ namespace Albums
                             if( !m_selection )
                             {
                                 mark_first_row_up:
-                                select_row( ViewMetrics.ViewPort.upper() ) ;
+                                select_index( ViewMetrics.ViewPort.upper() ) ;
                             }
                             else
                             {
-                                guint origin = boost::get<S_ROW>(m_selection.get()) ;
+                                guint origin = boost::get<S_INDEX>(m_selection.get()) ;
 
 				if( ViewMetrics.ViewPort( origin ))
 				{
 				    d = std::max<int>( origin+step, 0 ) ;
-				    select_row( d ) ;
+				    select_index( d ) ;
 
 				    double ymod = fmod( vadj_value(), ViewMetrics.RowHeight ) ;
 
 				    if( event->keyval == GDK_KEY_Page_Up || d < ViewMetrics.ViewPort ) 
 				    {
-					scroll_to_row( std::max<int>( ViewMetrics.ViewPort.upper() + step, 0 )) ;
+					scroll_to_index( std::max<int>( ViewMetrics.ViewPort.upper() + step, 0 )) ;
 				    }
 				    else if( ymod && d == ViewMetrics.ViewPort.upper() ) 
 				    {
@@ -1525,16 +1529,16 @@ namespace Albums
 
                         case GDK_KEY_Home:
                         {
-                            select_row( 0 ) ;
-                            scroll_to_row( 0 ) ;
+                            select_index( 0 ) ;
+                            scroll_to_index( 0 ) ;
 
                             return true ;
                         }
 
                         case GDK_KEY_End:
                         {
-                            select_row(ModelCount(m_model->size())) ;
-                            scroll_to_row(ModelCount(m_model->size())) ; 
+                            select_index(ModelCount(m_model->size())) ;
+                            scroll_to_index(ModelCount(m_model->size())) ; 
 
                             return true ;
                         }
@@ -1555,17 +1559,17 @@ namespace Albums
                             if( !m_selection )
                             {
                                 mark_first_row_down:
-                                select_row( ViewMetrics.ViewPort.upper() ) ;
+                                select_index( ViewMetrics.ViewPort.upper() ) ;
                             }
                             else
                             {
-                                guint origin = boost::get<S_ROW>(m_selection.get()) ;
+                                guint origin = boost::get<S_INDEX>(m_selection.get()) ;
 
                                 if( ViewMetrics.ViewPort( origin ))
                                 {
                                     d = std::min<int>( origin+step, ModelCount(m_model->size())) ;
 
-                                    select_row( d ) ;
+                                    select_index( d ) ;
 
 				    if( d >= ViewMetrics.ViewPort ) 
 				    {
@@ -1646,42 +1650,36 @@ namespace Albums
 		    cancel_search() ;
 		    grab_focus() ;
 
-		    if( event->button == 1 ) 
+		    if( event->button == 1 && event->type == GDK_2BUTTON_PRESS ) 
                     {
-			if( event->type == GDK_2BUTTON_PRESS )
-			{
 			    m_SIGNAL_start_playback.emit() ;
-			}
-			else
+			    return true ;
+		    }
+
+		    double ymod = fmod( vadj_value(), ViewMetrics.RowHeight ) ;
+
+		    guint d = (vadj_value() + event->y) / ViewMetrics.RowHeight ;
+
+		    if( !m_selection || (m_selection && get<S_INDEX>(m_selection.get()) != d))
+		    {
+			if( m_ModelExtents( d ))
 			{
-			    double ymod = fmod( vadj_value(), ViewMetrics.RowHeight ) ;
+			    select_index( d ) ;
+			}
 
-			    guint d = (vadj_value() + event->y) / ViewMetrics.RowHeight ;
-
-			    if( m_selection && get<S_ROW>(m_selection.get()) == d )
+			if( ymod != 0 )
+			{
+			    if( d == ViewMetrics.ViewPort.upper() ) 
 			    {
-				return false ;
+				vadj_value_set( std::max<int>(0, ViewMetrics.ViewPortPx.upper() - ymod + 1)) ;
 			    }
-
-			    if( m_Model_I( d ))
+			    else if( d == ViewMetrics.ViewPort.lower())
 			    {
-				select_row( d ) ;
-			    }
-
-			    if( ymod != 0 )
-			    {
-				if( d == ViewMetrics.ViewPort.upper() ) 
-				{
-				    vadj_value_set( std::max<int>(0, ViewMetrics.ViewPortPx.upper() - ymod + 1)) ;
-				}
-				else if( d == ViewMetrics.ViewPort.lower())
-				{
-				    vadj_value_set( std::min<int>(vadj_upper(), ViewMetrics.ViewPortPx.upper() + (ViewMetrics.RowHeight - ymod) - ViewMetrics.Excess )) ;
-				}
+				vadj_value_set( std::min<int>(vadj_upper(), ViewMetrics.ViewPortPx.upper() + (ViewMetrics.RowHeight - ymod) - ViewMetrics.Excess )) ;
 			    }
 			}
-                    }
-		    else
+		    }
+
                     if( event->button == 3 )
                     {
                         m_pMenuPopup->popup(event->button, event->time) ;
@@ -1767,12 +1765,12 @@ namespace Albums
 		    RowRowMapping_t::const_iterator iter = m_model->iter( d ) ;
 		    MPX::CairoCorners::CORNERS c = MPX::CairoCorners::CORNERS(0) ;
 
-		    for( guint n = 0 ; n < max_d && m_Model_I(d+n) ; ++n )
+		    for( guint n = 0 ; n < max_d && m_ModelExtents(d+n) ; ++n )
 		    {
 			guint di = d+n ;
 			guint xpos = 0 ;
 
-			bool selected = m_selection && boost::get<S_ROW>(m_selection.get()) == d+n ;
+			bool selected = m_selection && boost::get<S_INDEX>(m_selection.get()) == d+n ;
 
                         if( selected )
                         {
@@ -1864,7 +1862,7 @@ namespace Albums
 			, 8
 		    ) ;
 
-		    m_Model_I = Interval<guint>(
+		    m_ModelExtents = Interval<guint>(
 			  Interval<guint>::IN_EX
 			, 0
 			, m_model->m_mapping.size()
@@ -1872,12 +1870,12 @@ namespace Albums
 
 		    if( m_model->m_mapping.size() < ViewMetrics.ViewPort.size() )
 		    {
-			scroll_to_row(0) ;
+			scroll_to_index(0) ;
 		    }
 		    else
 		    {
-			scroll_to_row( d ) ;
-			select_row( d, true ) ;
+			scroll_to_index( d ) ;
+			select_index( d, true ) ;
 		    }
                 }
 
@@ -1945,7 +1943,7 @@ namespace Albums
                         {
                             if( real_id == (**i)->album_id )
                             {
-                                select_row( d ) ;
+                                select_index( d ) ;
                                 return ;
                             }
 
@@ -1955,7 +1953,7 @@ namespace Albums
                 }
 
                 void
-                scroll_to_row(
+                scroll_to_index(
                       guint d
                 )
                 {
@@ -1977,12 +1975,12 @@ namespace Albums
                 }
 
                 void
-                select_row(
+                select_index(
                       guint   d
                     , bool    quiet = false
                 )
                 {
-                    if( m_Model_I( d ))
+                    if( m_ModelExtents( d ))
                     {
                         const guint& id = (*m_model->m_mapping[d])->album_id ;
 
@@ -2026,6 +2024,19 @@ namespace Albums
                     }
 
                     return id ;
+                }
+
+                boost::optional<guint>
+                get_selected_index()
+                {
+		    boost::optional<guint> idx ;
+
+                    if( m_selection )
+                    {
+                        idx = boost::get<S_INDEX>(m_selection.get()) ;
+                    }
+
+                    return idx ; 
                 }
 
                 boost::optional<guint>
@@ -2096,7 +2107,7 @@ namespace Albums
 
                     if( m_selection )
                     {
-                        std::advance( i, get<S_ROW>(m_selection.get()) ) ;
+                        std::advance( i, get<S_INDEX>(m_selection.get()) ) ;
                         ++i ;
                     }
 
@@ -2108,8 +2119,8 @@ namespace Albums
 
                         if( match.length() && match.substr( 0, text.length()) == text.substr( 0, text.length()))
                         {
-                            scroll_to_row( std::max<int>(0, d-get_page_size()/2)) ;
-                            select_row( d ) ;
+                            scroll_to_index( std::max<int>(0, d-get_page_size()/2)) ;
+                            select_index( d ) ;
                             return ;
                         }
 
@@ -2135,7 +2146,7 @@ namespace Albums
 
                     if( m_selection )
                     {
-                        std::advance( i, get<S_ROW>(m_selection.get()) ) ;
+                        std::advance( i, get<S_INDEX>(m_selection.get()) ) ;
                         --i ;
                     }
 
@@ -2147,8 +2158,8 @@ namespace Albums
 
                         if( match.length() && match.substr( 0, text.length()) == text.substr( 0, text.length()))
                         {
-                            scroll_to_row( std::max<int>(0, d-get_page_size()/2)) ;
-                            select_row( d ) ;
+                            scroll_to_index( std::max<int>(0, d-get_page_size()/2)) ;
+                            select_index( d ) ;
                             return ;
                         }
 
@@ -2181,8 +2192,8 @@ namespace Albums
 
                         if( match.length() && match.substr( 0, text.length()) == text.substr( 0, text.length()))
                         {
-                            scroll_to_row( std::max<int>(0,d-get_page_size()/2)) ;
-                            select_row( d ) ;
+                            scroll_to_index( std::max<int>(0,d-get_page_size()/2)) ;
+                            select_index( d ) ;
 			    m_SearchEntry->unset_color() ;
                             return ;
                         }

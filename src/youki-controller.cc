@@ -142,7 +142,7 @@ namespace
 	d.run() ;
     }
   
-    typedef boost::optional<unsigned int> OptUInt ;
+    typedef boost::optional<guint> OptUInt ;
 }
 
 namespace MPX
@@ -880,11 +880,17 @@ namespace MPX
 	    if( item.AlbumArtistId )
 	    {
 		m_ListViewArtist->select_id( item.AlbumArtistId.get() ) ;
+		boost::optional<guint> idx = m_ListViewArtist->get_selected_index() ;
+		if( idx )
+		    m_ListViewArtist->scroll_to_index(idx.get()) ;
 	    }
 
 	    if( item.AlbumId )
 	    {
 		m_ListViewAlbums->select_id( item.AlbumId.get() ) ;
+		boost::optional<guint> idx = m_ListViewAlbums->get_selected_index() ;
+		if( idx )
+		    m_ListViewAlbums->scroll_to_index(idx.get()) ;
 	    }
 	}
     }
@@ -995,8 +1001,8 @@ namespace MPX
 	
 		if( !m_Entry->get_text().empty() )
 		{
+		    history_save() ;
 		    m_ListViewTracks->grab_focus() ;
-		    //history_save() ;
 		    return false ;
 		}
 	}
@@ -1749,7 +1755,7 @@ namespace MPX
 	private_->FilterModelAlbums->set_constraints_artist( private_->FilterModelTracks->m_constraints_artist ) ;
         private_->FilterModelAlbums->regen_mapping() ;
 
-	m_ListViewAlbums->select_row( 0, true ) ;
+	m_ListViewAlbums->select_index( 0, true ) ;
 	
 	history_save() ;
     }
@@ -1945,11 +1951,11 @@ namespace MPX
         m_conn2.block() ;
         m_conn4.block() ;
 
-        m_ListViewArtist->scroll_to_row( 0 ) ;
-        m_ListViewArtist->select_row( 0 ) ;
+        m_ListViewArtist->scroll_to_index(0) ;
+        m_ListViewArtist->select_index(0) ;
 
-        m_ListViewAlbums->scroll_to_row( 0 ) ;
-        m_ListViewAlbums->select_row( 0 ) ;
+        m_ListViewAlbums->scroll_to_index(0) ;
+        m_ListViewAlbums->select_index(0) ;
 
         m_conn1.unblock() ;
         m_conn2.unblock() ;
@@ -2012,7 +2018,18 @@ namespace MPX
     void
     YoukiController::on_info_area_clicked ()
     {
-        API_pause_toggle() ;
+	if( m_play->property_status().get_value() == PLAYSTATUS_STOPPED )
+	{
+	    if( private_->FilterModelTracks->size() )
+	    {
+		OptUInt idx = m_ListViewTracks->get_selected_index() ; 
+		play_track( boost::get<4>(private_->FilterModelTracks->row( idx ? idx.get() : 0 )) ) ;
+	    }
+	}
+	else
+	{
+	    API_pause_toggle() ;
+	}
     }
 
     void

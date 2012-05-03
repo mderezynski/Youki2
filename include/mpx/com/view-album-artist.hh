@@ -93,13 +93,12 @@ namespace Artist
         {
                 Model_sp_t                      m_realmodel ;
                 IdIterMap_t                     m_iter_map ;
-                guint                     m_top_row ;
+                guint				m_upper_bound ;
                 boost::optional<guint>          m_selected ;
-                boost::optional<guint>    m_selected_row ;
                 Signal_1                        m_changed ;
 
                 DataModel()
-                    : m_top_row( 0 )
+                    : m_upper_bound( 0 )
                 {
                     m_realmodel = Model_sp_t( new Model_t ) ;
                 }
@@ -107,7 +106,7 @@ namespace Artist
                 DataModel(
                     Model_sp_t model
                 )
-                : m_top_row( 0 )
+                : m_upper_bound( 0 )
                 {
                     m_realmodel = model;
                 }
@@ -117,7 +116,7 @@ namespace Artist
                 {
                     m_realmodel->clear () ;
                     m_iter_map.clear() ;
-                    m_top_row = 0 ;
+                    m_upper_bound = 0 ;
                 }
 
                 virtual Signal_1&
@@ -149,22 +148,15 @@ namespace Artist
                     guint row
                 )
                 {
-                    m_top_row = row ;
+                    m_upper_bound = row ;
                 }
 
                 virtual void
                 set_selected(
-                    const boost::optional<guint>& row = boost::optional<guint>()
+                    const boost::optional<guint>& d = boost::optional<guint>()
                 )
                 {
-                    m_selected = row ;
-                }
-
-                virtual boost::optional<guint>
-                get_selected_row(
-                )
-                {
-                    return m_selected_row ;
+                    m_selected = d ;
                 }
 
                 virtual void
@@ -252,8 +244,8 @@ namespace Artist
                 {
                     DataModel::clear() ;
                     m_mapping.clear() ;
-		    m_top_row = 0 ;
-                    m_changed.emit( m_top_row ) ;
+		    m_upper_bound = 0 ;
+                    m_changed.emit( m_upper_bound ) ;
                 }
 
                 virtual guint
@@ -338,9 +330,7 @@ namespace Artist
 		    }
 
                     m_selected.reset() ;
-                    m_selected_row.reset() ;
-
-                    m_top_row = 0 ;
+                    m_upper_bound = 0 ;
 
                     IdVector_t * constraints_artist = m_constraints_artist.get() ;
 
@@ -352,11 +342,6 @@ namespace Artist
                     {
                         guint id_row = get<1>( *i ) ;
 
-			if( id_sel && id_sel.get() == id_row )
-			{
-			    m_selected_row = n ;
-			}
-
                         if( !constraints_artist || (*m_constraints_artist)[id_row] )
                         {
                             new_mapping.push_back( i ) ;
@@ -365,16 +350,9 @@ namespace Artist
 			++n ;
                     }
 
-		    guint d = 0 ;
-
-		    if( m_selected_row )
-		    {
-			d = m_selected_row.get() ;
-		    }
-
                     std::swap( m_mapping, new_mapping ) ;
                     update_count() ;
-                    m_changed.emit( d ) ;
+                    m_changed.emit(0) ;
                 }
 
                 void
@@ -474,9 +452,9 @@ namespace Artist
                 void
                 render(
                       const Cairo::RefPtr<Cairo::Context>   cairo
-                    , const Row_t&			    datarow
+                    , const Row_t&			    r
                     , Gtk::Widget&			    widget
-                    , int				    row
+                    , int				    d
                     , int				    xpos
                     , int				    ypos
                     , int				    rowheight
@@ -486,65 +464,58 @@ namespace Artist
                 {
                     using boost::get;
 
-                    cairo->save() ;
+                    Glib::RefPtr<Pango::Layout> l = widget.create_pango_layout(get<0>(r)) ;
 
-                    std::string s = get<0>(datarow) ;
-
-                    Glib::RefPtr<Pango::Layout> layout = widget.create_pango_layout("") ;
-
-                    layout->set_ellipsize(
+                    l->set_ellipsize(
                           Pango::ELLIPSIZE_END
                     ) ;
-
-                    layout->set_width(
-                          (m_width - 20) * PANGO_SCALE
+                    l->set_width(
+                          (m_width - 8) * PANGO_SCALE
                     ) ;
 
-                    layout->set_alignment( m_alignment ) ;
+                    l->set_alignment( m_alignment ) ;
 
-                    if( row == 0 )
+                    if( d == 0 )
                     {
 			Pango::Attribute attr = Pango::Attribute::create_attr_weight( Pango::WEIGHT_BOLD ) ;
 			Pango::AttrList list ;
 			list.insert( attr ) ;
-			layout->set_attributes( list ) ;
+			l->set_attributes( list ) ;
                     }
 
-                    layout->set_text( s ) ;
-
+                    cairo->save() ;
 		    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 
 		    if( selected )
 		    {
-			    Cairo::RefPtr<Cairo::ImageSurface> srf = Cairo::ImageSurface::create( Cairo::FORMAT_ARGB32, m_width, rowheight ) ;
-			    Cairo::RefPtr<Cairo::Context> c = Cairo::Context::create( srf ) ;
+			Cairo::RefPtr<Cairo::ImageSurface> s = Cairo::ImageSurface::create( Cairo::FORMAT_ARGB32, m_width, rowheight ) ;
+			Cairo::RefPtr<Cairo::Context> c = Cairo::Context::create( s ) ;
 
-			    c->set_operator( Cairo::OPERATOR_CLEAR) ;
-			    c->paint() ;
+			c->set_operator( Cairo::OPERATOR_CLEAR) ;
+			c->paint() ;
 
-			    c->set_operator( Cairo::OPERATOR_OVER ) ;
+			c->set_operator( Cairo::OPERATOR_OVER ) ;
+			c->set_source_rgba(
+			      0.
+			    , 0.
+			    , 0.
+			    , 0.40
+			) ;
+			c->move_to(
+			      8
+			    , 4
+			) ;
+			pango_cairo_show_layout(
+			      c->cobj()
+			    , l->gobj()
+			) ;
 
-			    c->set_source_rgba(
-				  0.
-				, 0.
-				, 0.
-				, 0.40
-			    ) ;
-			    c->move_to(
-				  8
-				, 4
-			    ) ;
-			    pango_cairo_show_layout(
-				  c->cobj()
-				, layout->gobj()
-			    ) ;
+			Util::cairo_image_surface_blur( s->cobj(), 1 ) ;
 
-			    Util::cairo_image_surface_blur( srf->cobj(), 1 ) ;
-
-			    cairo->set_source( srf, xpos, ypos ) ;
-			    cairo->rectangle( xpos, ypos, m_width, rowheight ) ;
-			    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
-			    cairo->fill() ;
+			cairo->set_source( s, xpos, ypos ) ;
+			cairo->rectangle( xpos, ypos, m_width, rowheight ) ;
+			cairo->set_operator( Cairo::OPERATOR_OVER ) ;
+			cairo->fill() ;
 		    }
 
 	            Gdk::Cairo::set_source_rgba(cairo, color);
@@ -556,10 +527,9 @@ namespace Artist
 
                     pango_cairo_show_layout(
                           cairo->cobj()
-                        , layout->gobj()
+                        , l->gobj()
                     ) ;
 
-                    cairo->reset_clip();
                     cairo->restore();
                 }
         };
@@ -742,7 +712,7 @@ namespace Artist
                             if( !m_selection )
                             {
                                 mark_first_row_up:
-                                select_row( get_upper_row() ) ;
+                                select_index( get_upper_row() ) ;
                             }
                             else
                             {
@@ -753,7 +723,7 @@ namespace Artist
                                     if( m_Viewport_I( origin ))
                                     {
                                         d = std::max<int>( origin+step, 0 ) ;
-                                        select_row( d ) ;
+                                        select_index( d ) ;
 
                                         double adj_value = vadj_value() ; 
 
@@ -765,7 +735,7 @@ namespace Artist
                                             }
                                             else
                                             {
-                                                scroll_to_row( d ) ;
+                                                scroll_to_index( d ) ;
                                             }
                                         }
                                     }
@@ -776,7 +746,7 @@ namespace Artist
                                 }
                                 else
                                 {
-                                    scroll_to_row( 0 ) ;
+                                    scroll_to_index( 0 ) ;
                                 }
                             }
 
@@ -785,16 +755,16 @@ namespace Artist
 
                         case GDK_KEY_Home:
                         {
-                            scroll_to_row(0) ;
-                            select_row(0) ;
+                            scroll_to_index(0) ;
+                            select_index(0) ;
 
                             return true ;
                         }
 
                         case GDK_KEY_End:
                         {
-                            scroll_to_row( m_model->size()-get_page_size()) ;
-                            select_row( ModelCount(m_model->size())) ; 
+                            scroll_to_index( m_model->size()-get_page_size()) ;
+                            select_index( ModelCount(m_model->size())) ; 
                             return true ;
                         }
 
@@ -814,7 +784,7 @@ namespace Artist
                             if( !m_selection )
                             {
                                 mark_first_row_down:
-                                select_row( get_upper_row() ) ;
+                                select_index( get_upper_row() ) ;
                             }
                             else
                             {
@@ -824,7 +794,7 @@ namespace Artist
                                 {
                                     d = std::min<int>( origin+step, ModelCount(m_model->size())) ;
 
-                                    select_row( d ) ;
+                                    select_index( d ) ;
 
                                     if( event->keyval == GDK_KEY_Page_Down )
                                     {
@@ -832,7 +802,7 @@ namespace Artist
 
                                         if( new_val > ( vadj_upper() - m_height__current_viewport ))
                                         {
-                                            scroll_to_row( d ) ;
+                                            scroll_to_index( d ) ;
                                         }
                                         else
                                         {
@@ -948,7 +918,7 @@ namespace Artist
 
 			    if( m_Model_I( d ))
 			    {
-				select_row( d ) ;
+				select_index( d ) ;
 			    }
 
 			    if( ymod != 0 )
@@ -1206,8 +1176,8 @@ namespace Artist
 		    , m_model->m_mapping.size()
 		) ;
 
-                scroll_to_row( position ) ;
-                select_row( position ) ;
+                scroll_to_index( position ) ;
+                select_index( position ) ;
             }
 
             public:
@@ -1228,7 +1198,7 @@ namespace Artist
                             if( real_id == get<1>(**i))
                             {
                                 guint row = std::distance( m_model->m_mapping.begin(), i ) ;
-                                select_row( row ) ;
+                                select_index( row ) ;
                                 break ;
                             }
                         }
@@ -1236,7 +1206,23 @@ namespace Artist
                 }
 
                 void
-                scroll_to_row(
+                select_index(
+                      guint   row
+                )
+                {
+                    if( row < m_model->size() )
+                    {
+                        const guint& id = get<1>(*m_model->m_mapping[row]) ;
+
+                        m_model->set_selected( id ) ;
+                        m_selection = boost::make_tuple( m_model->m_mapping[row], id, row ) ;
+                        m_SIGNAL_selection_changed.emit() ;
+                        queue_draw();
+                    }
+                }
+
+                void
+                scroll_to_index(
                       guint row
                 )
                 {
@@ -1273,20 +1259,17 @@ namespace Artist
                     return id ;
                 }
 
-                void
-                select_row(
-                      guint   row
-                )
+                boost::optional<guint>
+                get_selected_index()
                 {
-                    if( row < m_model->size() )
-                    {
-                        const guint& id = get<1>(*m_model->m_mapping[row]) ;
+                    boost::optional<guint> idx ;
 
-                        m_model->set_selected( id ) ;
-                        m_selection = boost::make_tuple( m_model->m_mapping[row], id, row ) ;
-                        m_SIGNAL_selection_changed.emit() ;
-                        queue_draw();
+                    if( m_selection )
+                    {
+                        idx = get<2>(m_selection.get()) ;
                     }
+
+                    return idx ;
                 }
 
                 Signal_0&
@@ -1328,7 +1311,6 @@ namespace Artist
                 )
                 {
                     m_model->set_selected() ;
-                    m_model->m_selected_row.reset() ;
                 }
 
                 void
@@ -1430,8 +1412,8 @@ namespace Artist
 
                         if( match.length() && match.substr( 0, text.length()) == text.substr( 0, text.length()) )
                         {
-                            scroll_to_row( std::max<int>(0, d-get_page_size()/2)) ;
-                            select_row( d ) ;
+                            scroll_to_index( std::max<int>(0, d-get_page_size()/2)) ;
+                            select_index( d ) ;
                             return ;
                         }
 
@@ -1469,8 +1451,8 @@ namespace Artist
 
                         if( match.length() && match.substr( 0, text.length()) == text.substr( 0, text.length()) )
                         {
-                            scroll_to_row( std::max<int>(0, d-get_page_size()/2)) ;
-                            select_row( d ) ;
+                            scroll_to_index( std::max<int>(0, d-get_page_size()/2)) ;
+                            select_index( d ) ;
                             return ;
                         }
 
@@ -1503,8 +1485,8 @@ namespace Artist
 
                         if( match.length() && match.substr( 0, text.length()) == text.substr( 0, text.length()) )
                         {
-                            scroll_to_row( std::max<int>(0, d-get_page_size()/2)) ;
-                            select_row( d ) ;
+                            scroll_to_index( std::max<int>(0, d-get_page_size()/2)) ;
+                            select_index( d ) ;
 			    m_SearchEntry->unset_color() ;
                             return ;
                         }

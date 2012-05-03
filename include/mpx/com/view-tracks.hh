@@ -1647,12 +1647,18 @@ namespace Tracks
                 int                                 m_height__headers ;
                 int                                 m_height__current_viewport ;
 
-                Interval<guint>			    m_Model_I ;
+                Interval<guint>			    m_ModelExtents ;
 		Interval<guint>			    m_Current_Viewport_I ;
 
                 Columns                             m_columns ;
 
                 boost::optional<boost::tuple<Model_t::const_iterator, guint> >  m_selection ;
+    
+		enum SelValue
+		{
+		      S_ITER
+		    , S_INDEX
+		} ;
 
                 boost::optional<guint>		    m_row__button_press ;
 
@@ -1840,7 +1846,7 @@ namespace Tracks
 
                             if( event->state & GDK_SHIFT_MASK )
                             {
-                                if( m_Model_I.in( origin - step ))
+                                if( m_ModelExtents( origin - step ))
                                 {
                                     m_model->swap( origin, origin-step ) ;
                                     m_selection = boost::make_tuple((*m_model->m_mapping)[origin-step], origin-step) ;
@@ -1902,7 +1908,7 @@ namespace Tracks
 
                             if( event->state & GDK_SHIFT_MASK )
                             {
-                                if( m_Model_I.in( origin + step ))
+                                if( m_ModelExtents.in( origin + step ))
                                 {
                                     m_model->swap( origin, origin+step ) ;
                                     m_selection = boost::make_tuple((*m_model->m_mapping)[origin+step], origin+step) ;
@@ -2107,7 +2113,7 @@ namespace Tracks
 
                     if( m_row__button_press && row != m_row__button_press.get() ) 
                     {
-			if( m_Model_I.in( row )) 
+			if( m_ModelExtents.in( row )) 
 			{
 			    m_model->swap( row, m_row__button_press.get() ) ;
 			    select_row( row ) ;	
@@ -2341,7 +2347,7 @@ namespace Tracks
 		    }
 
 		    //// ROW DATA
-		    for( guint n = 0 ; n < row_limit && m_Model_I.in( n + upper_row ) ; ++n ) 
+		    for( guint n = 0 ; n < row_limit && m_ModelExtents.in( n + upper_row ) ; ++n ) 
 		    {
 			xpos = 0 ;
 
@@ -2503,7 +2509,7 @@ namespace Tracks
                 {
                     if( size_changed ) 
                     {
-                        m_Model_I = Interval<guint> (
+                        m_ModelExtents = Interval<guint> (
 			      Interval<guint>::IN_EX
 			    , 0
 			    , m_model->size()
@@ -2716,6 +2722,19 @@ namespace Tracks
                         m_columns__fixed_total_width -= m_columns[column]->get_width() ; 
                         queue_resize () ;
                     }
+                }
+
+                boost::optional<guint>
+                get_selected_index()
+                {
+		    boost::optional<guint> idx ;
+
+                    if( m_selection )
+                    {
+                        idx = boost::get<S_INDEX>(m_selection.get()) ;
+                    }
+
+                    return idx ; 
                 }
 
                 void
