@@ -3182,9 +3182,9 @@ namespace Tracks
                     m_refActionGroup = Gtk::ActionGroup::create() ;
                     m_refActionGroup->add( Gtk::Action::create("ContextMenu", "Context Menu")) ;
 
-                    m_refActionGroup->add( Gtk::Action::create("ContextShowAlbum", "Show only this Album"),
+                    m_refActionGroup->add( Gtk::Action::create("ContextShowAlbum", "Show this Album"),
                         sigc::mem_fun(*this, &Class::on_show_only_this_album)) ;
-                    m_refActionGroup->add( Gtk::Action::create("ContextShowArtist", "Show only this Artist"),
+                    m_refActionGroup->add( Gtk::Action::create("ContextShowArtist", "Show this Artist"),
                         sigc::mem_fun(*this, &Class::on_show_only_this_artist)) ;
                     m_refActionGroup->add( Gtk::Action::create("ContextRandomShuffle", "Shuffle Tracklist"),
                         sigc::mem_fun(*this, &Class::on_shuffle_tracklist)) ;

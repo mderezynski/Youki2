@@ -64,7 +64,30 @@ namespace MPX
     {
 	if( event->button == 1 )
 	{
-		m_signal.emit() ;
+		guint w = get_allocation().get_width() ;
+		guint l = 0 ; 
+		guint c = w/3 ; 
+		guint r = 2*w/3 ;
+
+		TapArea area ;
+
+		int x = event->x ;
+
+		if( x >= l && x < c ) 
+		{
+		    area = TAP_LEFT ;
+		}
+		else
+		if( x >= c && x < r )
+		{
+		    area = TAP_CENTER ;
+		}
+		else
+		{
+		    area = TAP_RIGHT ;
+		}
+
+		m_SIGNAL__area_tapped.emit( area ) ;
 	} 
 
         return true ;

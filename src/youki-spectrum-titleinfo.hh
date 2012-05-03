@@ -16,20 +16,27 @@
 
 namespace MPX
 {
+    enum TapArea
+    {
+	  TAP_LEFT
+	, TAP_CENTER
+	, TAP_RIGHT
+    };
+
     class YoukiSpectrumTitleinfo
     : public Gtk::DrawingArea 
     {
         private:
 
-            sigc::signal<void> 			  m_signal ;
+            sigc::signal<void, int>		  m_SIGNAL__area_tapped ;
             boost::shared_ptr<IYoukiThemeEngine>  m_theme ;
 
         public:
 
-            sigc::signal<void>&
-            signal_clicked ()
+            sigc::signal<void, int>&
+            signal_tapped()
             {
-              return m_signal ;
+              return m_SIGNAL__area_tapped ;
             }
 
             YoukiSpectrumTitleinfo () ;
@@ -88,10 +95,10 @@ namespace MPX
       public:
 
 	  void 
-	  set_bitrate( boost::optional<unsigned int> b) { m_audio_bitrate = b; }
+	  set_bitrate( boost::optional<unsigned int> b) { m_audio_bitrate = b; queue_draw() ; }
 
 	  void
-	  set_codec( boost::optional<std::string> c) { m_audio_codec = c; }
+	  set_codec( boost::optional<std::string> c) { m_audio_codec = c; queue_draw() ; }
    };
 }
 

@@ -363,6 +363,7 @@ namespace MPX
 
             void
             on_info_area_clicked(
+		int area
             ) ;
 
             void

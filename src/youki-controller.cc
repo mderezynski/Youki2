@@ -366,7 +366,7 @@ namespace MPX
 	m_VBox->set_border_width( 0 ) ;
 
         m_HBox_Main = Gtk::manage( new PercentualDistributionHBox ) ;
-        m_HBox_Main->set_spacing( 6 ) ; 
+        m_HBox_Main->set_spacing( 4 ) ; 
 
         m_HBox_Entry = Gtk::manage( new Gtk::HBox ) ;
         m_HBox_Entry->set_spacing( 4 ) ;
@@ -469,7 +469,7 @@ namespace MPX
         )) ;
 
         m_main_info = new YoukiSpectrumTitleinfo ;
-        m_main_info->signal_clicked().connect(
+        m_main_info->signal_tapped().connect(
             sigc::mem_fun(
                   *this
                 , &YoukiController::on_info_area_clicked
@@ -2016,19 +2016,34 @@ namespace MPX
     }
 
     void
-    YoukiController::on_info_area_clicked ()
+    YoukiController::on_info_area_clicked( int i )
     {
-	if( m_play->property_status().get_value() == PLAYSTATUS_STOPPED )
+	TapArea area = TapArea(i) ;
+
+	if( area == TAP_CENTER )
 	{
-	    if( private_->FilterModelTracks->size() )
+	    if( m_play->property_status().get_value() == PLAYSTATUS_STOPPED )
 	    {
-		OptUInt idx = m_ListViewTracks->get_selected_index() ; 
-		play_track( boost::get<4>(private_->FilterModelTracks->row( idx ? idx.get() : 0 )) ) ;
+		if( private_->FilterModelTracks->size() )
+		{
+		    OptUInt idx = m_ListViewTracks->get_selected_index() ; 
+		    play_track( boost::get<4>(private_->FilterModelTracks->row( idx ? idx.get() : 0 )) ) ;
+		}
+	    }
+	    else
+	    {
+		API_pause_toggle() ;
 	    }
 	}
 	else
+	if( area == TAP_LEFT )
 	{
-	    API_pause_toggle() ;
+	    API_prev() ;
+	}
+	else
+	if( area == TAP_RIGHT )
+	{
+	    API_next() ;
 	}
     }
 
@@ -2319,6 +2334,20 @@ void
     YoukiController::API_prev(
     )
     {
+	//FIXME: This doesn't work at all with flow plugins, of course we also don't have any yet
+	if( private_->FilterModelTracks->size() )
+	{
+	    guint d = 0 ;
+
+	    OptUInt idx = m_ListViewTracks->get_selected_index() ; 
+
+	    if( idx ) 
+	    {
+		d = std::max<int>( 0, idx.get() - 1 ) ;
+	    }
+
+	    play_track( boost::get<4>(private_->FilterModelTracks->row( d ))) ;
+	}
     }
 
     void
