@@ -338,11 +338,25 @@ namespace MPX
                     , &YoukiController::on_entry_clear_clicked
         )) ;
 
+        m_Entry->signal_key_press_event().connect(
+            sigc::mem_fun(
+                  *this
+                , &YoukiController::on_entry_key_press_event
+        )) ;
+
+        m_Entry->signal_activate().connect(
+            sigc::mem_fun(
+                  *this
+                , &YoukiController::on_entry_activated
+        )) ;
+
+/*
 	m_Entry->signal_focus_out_event().connect(
 	      sigc::mem_fun(
 	            *this
                   , &YoukiController::handle_search_entry_focus_out
         )) ;
+*/
 
 	m_conn4 = m_Entry->signal_changed().connect(
 	    sigc::mem_fun(
@@ -389,14 +403,14 @@ namespace MPX
         HBox_Navi->pack_start( *m_BTN_HISTORY_PREV, false, false, 0 ) ;
         HBox_Navi->pack_start( *m_BTN_HISTORY_FFWD, false, false, 0 ) ;
 
-        m_HBox_Entry->pack_start( *m_Label_Error, true, true, 0 ) ;
+        m_HBox_Entry->pack_start( *m_Label_Search, true, true, 0 ) ;
         m_HBox_Entry->pack_start( *HBox_Navi, false, false, 0 ) ;
         m_HBox_Entry->pack_start( *m_Entry, false, false, 0 ) ;
 
         Gtk::Alignment* Entry_Align = Gtk::manage( new Gtk::Alignment ) ;
         Entry_Align->add( *m_HBox_Entry ) ;
 	Entry_Align->set_padding( 2, 2, 2, 4 ) ;
-	Entry_Align->property_xalign() = 1.0 ;
+	Entry_Align->property_xalign() = 0.0 ;
 	Entry_Align->property_xscale() = 0.0 ;
 
         Gtk::Alignment* Controls_Align = Gtk::manage( new Gtk::Alignment ) ;
@@ -458,11 +472,11 @@ namespace MPX
 
 	Glib::RefPtr<Gtk::ToggleAction> action_MOP = Gtk::ToggleAction::create( "MenuPlaybackControlActionMinimizeOnPause", "Minimize Youki on Pause" ) ;
 	m_UI_Actions_Main->add( action_MOP ) ; 
-	mcs_bind->bind_toggle_action( action_MOP, "mpx", "minimize-on-pause" ) ;
+	//mcs_bind->bind_toggle_action( action_MOP, "mpx", "minimize-on-pause" ) ;
 
 	Glib::RefPtr<Gtk::ToggleAction> action_FPT = Gtk::ToggleAction::create( "MenuViewActionFollowPlayingTrack", "Follow Playing Track in View" ) ;
 	m_UI_Actions_Main->add( action_FPT ) ; 
-	mcs_bind->bind_toggle_action( action_MOP, "mpx", "follow-current-track" ) ;
+	//mcs_bind->bind_toggle_action( action_MOP, "mpx", "follow-current-track" ) ;
 
 	m_UI_Manager->insert_action_group( m_UI_Actions_Main ) ;
 	m_UI_Manager->add_ui_from_string( main_menubar_ui ) ;
@@ -791,18 +805,6 @@ namespace MPX
                 , &YoukiController::on_list_view_ab_start_playback
         )) ;
 
-        m_Entry->signal_key_press_event().connect(
-            sigc::mem_fun(
-                  *this
-                , &YoukiController::on_entry_key_press_event
-        ), false ) ;
-
-        m_Entry->signal_activate().connect(
-            sigc::mem_fun(
-                  *this
-                , &YoukiController::on_entry_activated
-        )) ;
-
         m_HBox_Main->add_percentage( 0.15 ) ;
         m_HBox_Main->add_percentage( 0.25 ) ;
         m_HBox_Main->add_percentage( 0.60 ) ;
@@ -964,26 +966,16 @@ namespace MPX
     bool
     YoukiController::handle_search_entry_focus_out( GdkEventFocus* G_GNUC_UNUSED )
     {
-        m_switchfocus = false ;
-	m_conn_keytimer.disconnect() ;
-	
 	return false ;
     }
 
     bool
     YoukiController::handle_keytimer()
     {
-	if( m_switchfocus && m_keytimer.elapsed() >= 2 ) 
+	if( m_switchfocus && m_keytimer.elapsed() >= 0.080 )
 	{
-		m_switchfocus = false ;
-		m_keytimer.stop() ;
-		m_keytimer.reset() ;
-	
-		if( !m_Entry->get_text().empty() )
-		{
-		    history_save() ;
-		    return false ;
-		}
+	    m_switchfocus = false ;
+	    Glib::signal_idle().connect_once( sigc::mem_fun( *this, &YoukiController::on_entry_changed )) ;
 	}
 
 	return true ;
@@ -1648,7 +1640,7 @@ namespace MPX
 
         private_->FilterModelTracks->set_active_id( id_track ) ;
 
-        if( mcs->key_get<bool>("mpx","follow-current-track"))
+        if( Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("MenuViewActionFollowPlayingTrack"))->get_active())
         {
             m_ListViewTracks->scroll_to_id( id_track ) ;
         }
@@ -1750,7 +1742,7 @@ namespace MPX
 	}
 
         if( m_track_current && 
-		mcs->key_get<bool>("mpx","follow-current-track"))
+	    Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("MenuViewActionFollowPlayingTrack"))->get_active())
         {
             const MPX::Track& track = *(m_track_current.get()) ;
             unsigned int id_track = boost::get<unsigned int>(track[ATTRIBUTE_MPX_TRACK_ID].get()) ;
@@ -1860,7 +1852,7 @@ namespace MPX
     {
         switch( event->keyval )
         {
-	        case GDK_KEY_Down:
+	    case GDK_KEY_Down:
             {
                 m_ListViewTracks->grab_focus() ;
                 return true ;
@@ -1920,12 +1912,8 @@ namespace MPX
             default: break ;
         }
 
-	m_keytimer.reset() ;
-	m_keytimer.start() ;
-        m_switchfocus = true ;
-	
-	m_conn_keytimer.disconnect() ;
-	m_conn_keytimer = Glib::signal_timeout().connect( sigc::mem_fun( *this, &YoukiController::handle_keytimer), 100 ) ;
+        //m_switchfocus = true ;
+	//m_keytimer.reset() ;
 
         return false ;
     }
@@ -1952,7 +1940,7 @@ namespace MPX
         m_Entry->set_text( "" ) ;
 
         if( m_track_current && 
-		mcs->key_get<bool>("mpx","follow-current-track"))
+	    Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("MenuViewActionFollowPlayingTrack"))->get_active())
         {
             const MPX::Track& track = *(m_track_current.get()) ;
             unsigned int id_track = boost::get<unsigned int>(track[ATTRIBUTE_MPX_TRACK_ID].get()) ;
