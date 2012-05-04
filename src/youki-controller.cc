@@ -56,6 +56,7 @@ namespace
     "	    <menuitem action='MenuViewActionAlbumRTViewModeBottom'/>"
     "	    <menuitem action='MenuViewActionMinimizeOnPause'/>"
     "	    <menuitem action='MenuViewActionUnderlineMatches'/>"
+    "	    <menuitem action='MenuViewActionFollowPlayingTrack'/>"
     "	</menu>"
     "	<menu action='MenuPlaybackControl'>"
     "	    <menuitem action='MenuPlaybackControlActionStartAlbumAtFavorite'/>"
@@ -161,7 +162,6 @@ namespace MPX
     , Service::Base("mpx-service-controller")
     , private_( new Private )
     , m_main_window( 0 )
-    , m_follow_track( false )
     , m_history_ignore_save( false )
     {
 	IndicateServer* is = indicate_server_ref_default() ;
@@ -258,12 +258,14 @@ namespace MPX
         )) ;
 */
 
+	//// Connect Library
         m_library->signal_album_updated().connect(
             sigc::mem_fun(
                   *this
                 , &YoukiController::on_local_library_album_updated
         )) ;
 
+	//// Connect Covers
         m_covers->signal_got_cover().connect(
             sigc::mem_fun(
                   *this
@@ -276,6 +278,7 @@ namespace MPX
                 , &YoukiController::on_covers_no_cover
         )) ;
 
+	//// Connect Play
         m_play->signal_eos().connect(
             sigc::mem_fun(
                   *this
@@ -318,30 +321,16 @@ namespace MPX
                 , &YoukiController::on_play_metadata
         )) ;
 
-/*
-        m_NotebookPlugins = Gtk::manage( new Gtk::Notebook ) ;
-        m_NotebookPlugins->property_show_border() = false ;
-        m_NotebookPlugins->property_tab_border() = 0 ;
-        m_NotebookPlugins->property_tab_pos() = Gtk::POS_BOTTOM ;
-*/
-
+	//// Setup main search Entry
         m_Entry = Gtk::manage( new Gtk::Entry ) ;
-	m_Entry->set_size_request( 350, -1 ) ;
+	m_Entry->set_size_request( 450, -1 ) ;
 
         m_Entry->set_icon_from_stock(
 	      Gtk::Stock::CLEAR
             , Gtk::ENTRY_ICON_SECONDARY
         ) ; 
 
-/*
-        m_Entry->set_icon_from_stock(
-	      Gtk::Stock::FIND
-            , Gtk::ENTRY_ICON_PRIMARY
-        ) ; 
-*/
-
-	m_Entry->set_icon_activatable( false, Gtk::ENTRY_ICON_PRIMARY ) ;
-	m_Entry->set_icon_tooltip_text(_("Search your music by typing here")) ;
+	m_Entry->set_placeholder_text(_("Search your music by typing here")) ;
 
         m_Entry->signal_icon_press().connect(
                 sigc::mem_fun(
@@ -434,22 +423,6 @@ namespace MPX
         m_HBox_Bottom = Gtk::manage( new Gtk::HBox ) ;
         m_HBox_Bottom->set_spacing( 4 ) ;
 
-        m_ListViewTracks    = Gtk::manage( new View::Tracks::Class ) ;
-        m_ListViewArtist    = Gtk::manage( new View::Artist::Class ) ;
-        m_ListViewAlbums    = Gtk::manage( new View::Albums::Class ) ;
-
-        m_ScrolledWinArtist = Gtk::manage( new Gtk::ScrolledWindow ) ;
-        m_ScrolledWinAlbums = Gtk::manage( new Gtk::ScrolledWindow ) ;
-        m_ScrolledWinTracks = Gtk::manage( new Gtk::ScrolledWindow ) ;
-
-        m_ScrolledWinArtist->set_shadow_type( Gtk::SHADOW_IN ) ;
-        m_ScrolledWinAlbums->set_shadow_type( Gtk::SHADOW_IN ) ;
-        m_ScrolledWinTracks->set_shadow_type( Gtk::SHADOW_IN ) ;
-
-        m_ScrolledWinArtist->set_kinetic_scrolling() ;
-        m_ScrolledWinAlbums->set_kinetic_scrolling() ;
-        m_ScrolledWinTracks->set_kinetic_scrolling() ;
-
 	std::vector<Glib::RefPtr<Gdk::Pixbuf> > pixvector ;
 	pixvector.push_back( Gdk::Pixbuf::create_from_file( Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "youki16x16.png" ))) ;
 	pixvector.push_back( Gdk::Pixbuf::create_from_file( Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "youki32x32.png" ))) ;
@@ -459,6 +432,64 @@ namespace MPX
 
         m_main_window = new MainWindow ;
         m_main_window->set_icon_list( pixvector ) ; 
+
+	//// Menus 
+	m_UI_Manager = Gtk::UIManager::create() ;
+	m_UI_Actions_Main = Gtk::ActionGroup::create("ActionsMain") ;
+
+	m_UI_Actions_Main->add( Gtk::Action::create("MenuFile","_File")) ; 
+	m_UI_Actions_Main->add( Gtk::Action::create("MenuView","_View")) ; 
+	m_UI_Actions_Main->add( Gtk::Action::create("MenuPlaybackControl","_Playback")) ; 
+	m_UI_Actions_Main->add( Gtk::Action::create("MenuAlbumOptions","_Album Options")) ; 
+
+	m_UI_Actions_Main->add( Gtk::Action::create( "MenuFileActionQuit", Gtk::Stock::QUIT, "Quit Youki" ), Gtk::AccelKey('q',Gdk::CONTROL_MASK),sigc::mem_fun( *this, &YoukiController::initiate_quit)) ; 
+
+	m_UI_Actions_Main->add( Gtk::Action::create_with_icon_name( "MenuFileActionPreferences", "mpx-stock-preferences", "Preferences", "Allows you to set Audio, Library, and other Preferences"), sigc::bind( sigc::mem_fun( *this, &YoukiController::on_show_subsystem_window), 0)) ; 
+	m_UI_Actions_Main->add( Gtk::Action::create_with_icon_name( "MenuFileActionLibrary", "mpx-stock-musiclibrary", "Library", "Allows you to configure which Paths Youki controls"), sigc::bind( sigc::mem_fun( *this, &YoukiController::on_show_subsystem_window), 1)) ; 
+	m_UI_Actions_Main->add( Gtk::Action::create_with_icon_name( "MenuFileActionPlugins", MPX_STOCK_PLUGIN, "Plugins", "Allows you to configure Plugins and turn them on or off"), sigc::bind( sigc::mem_fun( *this, &YoukiController::on_show_subsystem_window), 2)) ; 
+	m_UI_Actions_Main->add( Gtk::Action::create( "MenuFileActionAbout", Gtk::Stock::ABOUT, "About" ), sigc::bind(sigc::ptr_fun(&show_about_window), m_main_window)) ; 
+	m_UI_Actions_Main->add( Gtk::Action::create( "FocusEntry", "FocusEntry" ), Gtk::AccelKey("<F6>"), sigc::mem_fun( *m_Entry, &Gtk::Widget::grab_focus)) ; 
+
+	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuViewActionUnderlineMatches", "Underline Search Matches" ), sigc::mem_fun( *this, &YoukiController::handle_action_underline_matches)) ; 
+	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuPlaybackControlActionStartAlbumAtFavorite", "Start Albums at Favorite Track")) ; 
+	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuPlaybackControlActionContinueCurrentAlbum", "Always Continue Playing Current Album" )) ; 
+	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuViewActionAlbumRTViewModeBottom", "Show Release Type" ), sigc::mem_fun( *this, &YoukiController::on_rt_viewmode_change  )) ; 
+	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuViewActionAlbumsShowYearLabel", "Show Year and Release Label" ), sigc::mem_fun( *this, &YoukiController::handle_action_underline_matches ) ); 
+
+	Glib::RefPtr<Gtk::ToggleAction> action_MOP = Gtk::ToggleAction::create( "MenuViewActionMinimizeOnPause", "Minimize Youki on Pause" ) ;
+	m_UI_Actions_Main->add( action_MOP ) ; 
+	mcs_bind->bind_toggle_action( action_MOP, "mpx", "minimize-on-pause" ) ;
+
+	Glib::RefPtr<Gtk::ToggleAction> action_FPT = Gtk::ToggleAction::create( "MenuViewActionFollowPlayingTrack", "Follow Playing Track in View" ) ;
+	m_UI_Actions_Main->add( action_FPT ) ; 
+	mcs_bind->bind_toggle_action( action_MOP, "mpx", "follow-current-track" ) ;
+
+	m_UI_Manager->insert_action_group( m_UI_Actions_Main ) ;
+	m_UI_Manager->add_ui_from_string( main_menubar_ui ) ;
+
+	Gtk::Widget * menubar = m_UI_Manager->get_widget( "/MenuBarMain" ) ;
+	dynamic_cast<Gtk::Container*>(menubar)->set_border_width( 0 ) ;
+
+
+        m_ListViewTracks    = Gtk::manage( new View::Tracks::Class ) ;
+        m_ListViewArtist    = Gtk::manage( new View::Artist::Class ) ;
+        m_ListViewAlbums    = Gtk::manage( new View::Albums::Class ) ;
+
+        m_ScrolledWinArtist = Gtk::manage( new Gtk::ScrolledWindow ) ;
+        m_ScrolledWinAlbums = Gtk::manage( new Gtk::ScrolledWindow ) ;
+        m_ScrolledWinTracks = Gtk::manage( new Gtk::ScrolledWindow ) ;
+
+	gtk_widget_realize(GTK_WIDGET(m_ScrolledWinTracks->gobj())) ;
+
+	m_ScrolledWinTracks->get_vadjustment()->signal_changed().connect(sigc::mem_fun(*this,&YoukiController::on_list_view_tr_vadj_changed)) ;
+
+        m_ScrolledWinArtist->set_shadow_type( Gtk::SHADOW_IN ) ;
+        m_ScrolledWinAlbums->set_shadow_type( Gtk::SHADOW_IN ) ;
+        m_ScrolledWinTracks->set_shadow_type( Gtk::SHADOW_IN ) ;
+
+        m_ScrolledWinArtist->set_kinetic_scrolling() ;
+        m_ScrolledWinAlbums->set_kinetic_scrolling() ;
+        m_ScrolledWinTracks->set_kinetic_scrolling() ;
 
         m_main_position = Gtk::manage( new KoboPosition ) ;
 	m_main_position->set_size_request( -1, 19 ) ;
@@ -506,12 +537,12 @@ namespace MPX
 	using boost::get ;
 
         {
-                //// Tracks 
+                ////// Tracks 
 
                 View::Tracks::DataModel_sp_t m ( new View::Tracks::DataModel ) ;
                 private_->FilterModelTracks = View::Tracks::DataModelFilter_sp_t (new View::Tracks::DataModelFilter( m )) ;
 
-		//// MOVE IT OUT
+		////// FIXME: move this code into a separate view controller or something like that... 
 		{
 			SQL::RowV v ;
 
@@ -539,7 +570,7 @@ namespace MPX
 				}
 			}
 		}
-		//// MOVE IT OUT
+		////// MOVE IT OUT
 
                 m_ListViewTracks->set_model( private_->FilterModelTracks ) ; 
 
@@ -590,14 +621,14 @@ namespace MPX
         }
 
         {
-		//// Album Artists
+		////// Album Artists
 
                 View::Artist::DataModel_sp_t m (new View::Artist::DataModel) ;
                 private_->FilterModelArtist = View::Artist::DataModelFilter_sp_t (new View::Artist::DataModelFilter( m )) ;
 
-		//// MOVE IT OUT
+		////// FIXME: MOVE IT OUT
 		{
-			//// FIXME: This. Not here.
+			////// FIXME: This. Not here.
 			private_->FilterModelArtist->append_artist("",-1);
 
 			SQL::RowV v ;
@@ -620,26 +651,20 @@ namespace MPX
                 c1->set_column(0) ;
                 m_ListViewArtist->append_column(c1) ;
 
-#if 0
-                RoundedFrame * frame = Gtk::manage( new RoundedFrame ) ;
-                frame->add( *m_ListViewArtist ) ;
-		frame->set_border_width( 0 ) ;
-#endif
-
 		m_ScrolledWinArtist->set_border_width( 0 ) ;
                 m_ScrolledWinArtist->add( *m_ListViewArtist ) ;
                 m_ScrolledWinArtist->show_all() ;
         }
 
         {
-		// Albums
+		//// Albums
 
                 View::Albums::DataModel_sp_t m ( new View::Albums::DataModel ) ;
                 private_->FilterModelAlbums = View::Albums::DataModelFilter_sp_t (new View::Albums::DataModelFilter( m )) ;
 
-		//// MOVE IT OUT
+		////// FIXME: MOVE IT OUT
 		{
-			// our "All Albums" entry: FIXME: Don't do this but manage it inside the model
+			//// our "All Albums" entry: FIXME: Don't do this but manage it inside the model
 			MPX::View::Albums::Album_sp dummy_album ( new MPX::View::Albums::Album ) ;
 			dummy_album->album_id = -1 ;
 
@@ -679,12 +704,6 @@ namespace MPX
                 View::Albums::Column_sp_t c1 ( new View::Albums::Column ) ;
                 c1->set_column(0) ;
                 m_ListViewAlbums->append_column( c1 ) ;
-
-#if 0
-                RoundedFrame * frame = Gtk::manage( new RoundedFrame ) ;
-                frame->add( *m_ListViewAlbums ) ;
-		frame->set_border_width( 0 ) ;
-#endif
 
 		m_ScrolledWinAlbums->set_border_width( 0 ) ;
                 m_ScrolledWinAlbums->add( *m_ListViewAlbums ) ;
@@ -792,7 +811,7 @@ namespace MPX
         m_HBox_Main->pack_start( *m_ScrolledWinAlbums, true, true, 0 ) ;
         m_HBox_Main->pack_start( *m_ScrolledWinTracks, true, true, 0 ) ;
 
-        std::vector<Gtk::Widget*> widget_v( 4 ) ; // NEEDS TO BE CHANGED IF WIDGETS ARE RE-ADDED
+        std::vector<Gtk::Widget*> widget_v( 4 ) ; //// NEEDS TO BE CHANGED IF WIDGETS ARE RE-ADDED
         widget_v[0] = m_Entry ;
         widget_v[1] = m_ScrolledWinArtist ;
         widget_v[2] = m_ScrolledWinAlbums ;
@@ -801,49 +820,10 @@ namespace MPX
         m_main_window->set_focus_chain( widget_v ) ;
         m_main_window->set_widget_top( *m_VBox ) ;
 
-	// Menu UI
-
-	Glib::RefPtr<Gtk::AccelGroup> ag = m_main_window->get_accel_group() ; 
-
-	
-
-	m_UI_Manager = Gtk::UIManager::create() ;
-	m_UI_Actions_Main = Gtk::ActionGroup::create("ActionsMain") ;
-
-	m_UI_Actions_Main->add( Gtk::Action::create("MenuFile","_File")) ; 
-	m_UI_Actions_Main->add( Gtk::Action::create("MenuView","_View")) ; 
-	m_UI_Actions_Main->add( Gtk::Action::create("MenuPlaybackControl","_Playback")) ; 
-	m_UI_Actions_Main->add( Gtk::Action::create("MenuAlbumOptions","_Album Options")) ; 
-
-	m_UI_Actions_Main->add( Gtk::Action::create( "MenuFileActionQuit", Gtk::Stock::QUIT, "Quit Youki" ), sigc::mem_fun( *this, &YoukiController::initiate_quit)) ; 
-
-	m_UI_Actions_Main->add( Gtk::Action::create_with_icon_name( "MenuFileActionPreferences", "mpx-stock-preferences", "Preferences", "Allows you to set Audio, Library, and other Preferences"), sigc::bind( sigc::mem_fun( *this, &YoukiController::on_show_subsystem_window), 0)) ; 
-	m_UI_Actions_Main->add( Gtk::Action::create_with_icon_name( "MenuFileActionLibrary", "mpx-stock-musiclibrary", "Library", "Allows you to configure which Paths Youki controls"), sigc::bind( sigc::mem_fun( *this, &YoukiController::on_show_subsystem_window), 1)) ; 
-	m_UI_Actions_Main->add( Gtk::Action::create_with_icon_name( "MenuFileActionPlugins", MPX_STOCK_PLUGIN, "Plugins", "Allows you to configure Plugins and turn them on or off"), sigc::bind( sigc::mem_fun( *this, &YoukiController::on_show_subsystem_window), 2)) ; 
-	m_UI_Actions_Main->add( Gtk::Action::create( "MenuFileActionAbout", Gtk::Stock::ABOUT, "About" ), sigc::bind(sigc::ptr_fun(&show_about_window), m_main_window)) ; 
-	m_UI_Actions_Main->add( Gtk::Action::create( "FocusEntry", "FocusEntry" ), Gtk::AccelKey("<F6>"), sigc::mem_fun( *m_Entry, &Gtk::Widget::grab_focus)) ; 
-
-	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuViewActionUnderlineMatches", "Underline Search Matches" ), sigc::mem_fun( *this, &YoukiController::handle_action_underline_matches)) ; 
-	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuPlaybackControlActionStartAlbumAtFavorite", "Start Albums at Favorite Track")) ; 
-	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuPlaybackControlActionContinueCurrentAlbum", "Always Continue Playing Current Album" )) ; 
-	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuViewActionAlbumRTViewModeBottom", "Show Release Type" ), sigc::mem_fun( *this, &YoukiController::on_rt_viewmode_change  )) ; 
-	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuViewActionAlbumsShowYearLabel", "Show Year and Release Label" ), sigc::mem_fun( *this, &YoukiController::handle_action_underline_matches ) ); 
-
-	Glib::RefPtr<Gtk::ToggleAction> action_MOP = Gtk::ToggleAction::create( "MenuViewActionMinimizeOnPause", "Minimize Youki on Pause" ) ;
-	m_UI_Actions_Main->add( action_MOP ) ; 
-	mcs_bind->bind_toggle_action( action_MOP, "mpx", "minimize-on-pause" ) ;
-
-	m_UI_Manager->insert_action_group( m_UI_Actions_Main ) ;
-	m_UI_Manager->add_ui_from_string( main_menubar_ui ) ;
-
-	Gtk::Widget * menubar = m_UI_Manager->get_widget( "/MenuBarMain" ) ;
-	dynamic_cast<Gtk::Container*>(menubar)->set_border_width( 0 ) ;
-
-	// Pack it!!
 	m_VBox->pack_start( *menubar, false, false, 0 ) ;
         m_VBox->pack_start( *Main_Align, true, true, 0 ) ;
 
-	// StatusIcon
+	//// Status icon
         m_status_icon = Gtk::StatusIcon::create( Gdk::Pixbuf::create_from_file( Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "youki32x32.png" ))) ;
         m_status_icon->signal_button_press_event().connect(
             sigc::hide<-1>(sigc::mem_fun(
@@ -1002,7 +982,6 @@ namespace MPX
 		if( !m_Entry->get_text().empty() )
 		{
 		    history_save() ;
-		    m_ListViewTracks->grab_focus() ;
 		    return false ;
 		}
 	}
@@ -1012,6 +991,8 @@ namespace MPX
 
     YoukiController::~YoukiController ()
     {
+	Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("MenuPlaybackControlActionStartAlbumAtFavorite"))->set_active(false) ;
+
         m_play->request_status( PLAYSTATUS_STOPPED ) ; 
 
         delete m_main_window ;
@@ -1257,14 +1238,14 @@ namespace MPX
     {
         switch( type )
         {
-            case 0: // track
+            case 0: //// track
             {
                 private_->FilterModelTracks->erase_track( id ) ; 
                 private_->FilterModelTracks->regen_mapping() ; 
             }
             break ;
 
-            case 1: // album
+            case 1: //// album
             {
                 private_->FilterModelAlbums->erase_album( id ) ; 
                 private_->FilterModelAlbums->regen_mapping() ;
@@ -1282,12 +1263,12 @@ namespace MPX
             }
             break ;
 
-            case 2: // artist
+            case 2: //// artist
             {
             }
             break ;
 
-            case 3: // album artist
+            case 3: //// album artist
             {
                 private_->FilterModelArtist->erase_artist( id ) ; 
                 private_->FilterModelArtist->regen_mapping() ; 
@@ -1355,8 +1336,7 @@ namespace MPX
 			, cover
 		    ))
 		    {
-			m_main_info->set_info( info, cover ) ;
-			goto skip1 ;
+			m_main_info->set_cover( cover ) ;
 		    }
 	    }
 	}
@@ -1376,12 +1356,12 @@ namespace MPX
     {
         switch( type )
         {
-            case 0: // track
+            case 0: //// track
             {
             }
             break ;
 
-            case 1: // album
+            case 1: //// album
             {
                 try{
                     private_->FilterModelAlbums->update_album( get_album_from_id( id )) ; 
@@ -1391,12 +1371,12 @@ namespace MPX
             }
             break ;
 
-            case 2: // artist
+            case 2: //// artist
             {
             }
             break ;
 
-            case 3: // album artist
+            case 3: //// album artist
             {
             }
             break;
@@ -1505,9 +1485,9 @@ namespace MPX
 	m_track_previous = m_track_current ;
 	m_track_current.reset() ;
 
-	if( !m_play_queue.empty() ) // tracks in the play queue?
+	if( !m_play_queue.empty() ) //// tracks in the play queue?
 	{
-	    // ... so get next track from the play queue!
+	    //// ... so get next track from the play queue!
 
 	    Track_sp p = m_library->getTrackById( m_play_queue.front() ) ;
 	    m_play_queue.pop_front() ;
@@ -1558,10 +1538,10 @@ namespace MPX
 		private_->FilterModelTracks->scan_for_currently_playing() ;
 		OptUInt pos = private_->FilterModelTracks->get_active_track() ;
 
-		// The currently playing track is in the current filter projection...
+		//// The currently playing track is in the current filter projection...
 		if( pos )
 		{
-		    /// ...so advance to the next FIXME: Flow plugins: HERE
+		    ///// ...so advance to the next FIXME: Flow plugins: HERE
 		    unsigned int pos_next = pos.get() + 1 ;
 
 		    if( pos_next < private_->FilterModelTracks->size() )
@@ -1572,7 +1552,7 @@ namespace MPX
 		}
 		else
 		{
-		    /// Not in the current projection? OK, so start with the top tracki, if the projection's size is > 0
+		    ///// Not in the current projection? OK, so start with the top tracki, if the projection's size is > 0
 		    if( private_->FilterModelTracks->size() )
 		    {
 			play_track( boost::get<4>(private_->FilterModelTracks->row( 0 )) ) ;
@@ -1662,11 +1642,13 @@ namespace MPX
 
         const MPX::Track& track = *(t.get()) ;
 
+        emit_track_new() ;
+
         unsigned int id_track = boost::get<unsigned int>(track[ATTRIBUTE_MPX_TRACK_ID].get()) ;
 
         private_->FilterModelTracks->set_active_id( id_track ) ;
 
-        if( m_follow_track )
+        if( mcs->key_get<bool>("mpx","follow-current-track"))
         {
             m_ListViewTracks->scroll_to_id( id_track ) ;
         }
@@ -1675,6 +1657,7 @@ namespace MPX
         info.push_back( boost::get<std::string>(track[ATTRIBUTE_ARTIST].get()) ) ;
         info.push_back( boost::get<std::string>(track[ATTRIBUTE_ALBUM].get()) ) ;
         info.push_back( boost::get<std::string>(track[ATTRIBUTE_TITLE].get()) ) ;
+	m_main_info->set_info( info ) ;
 
         if( track.has( ATTRIBUTE_MB_ALBUM_ID ) )
         {
@@ -1685,18 +1668,16 @@ namespace MPX
                     , cover
                 ))
                 {
-                    m_main_info->set_info( info, cover ) ;
+                    m_main_info->set_cover( cover ) ;
 		    goto skip1 ;
                 }
         }
 
-	m_main_info->set_info( info, Glib::RefPtr<Gdk::Pixbuf>(0) ) ;
+	m_main_info->set_cover( Glib::RefPtr<Gdk::Pixbuf>(0) ) ;
 	
 	skip1:
 
 	m_main_window->set_title((boost::format("Youki :: %s - %s") % info[0] % info[2]).str()) ;
-
-        emit_track_new () ;
     }
 
     void
@@ -1849,7 +1830,7 @@ namespace MPX
     YoukiController::on_list_view_tr_vadj_changed(
     ) 
     {
-        m_follow_track = false ;
+	Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("MenuPlaybackControlActionStartAlbumAtFavorite"))->set_active(false) ;
     }
 
     void
@@ -1932,11 +1913,9 @@ namespace MPX
 	m_keytimer.reset() ;
 	m_keytimer.start() ;
         m_switchfocus = true ;
-
-	if( !m_conn_keytimer.connected() )
-	{
-		m_conn_keytimer = Glib::signal_timeout().connect( sigc::mem_fun( *this, &YoukiController::handle_keytimer), 100 ) ;
-	}
+	
+	m_conn_keytimer.disconnect() ;
+	m_conn_keytimer = Glib::signal_timeout().connect( sigc::mem_fun( *this, &YoukiController::handle_keytimer), 100 ) ;
 
         return false ;
     }
@@ -1957,7 +1936,7 @@ namespace MPX
         private_->FilterModelArtist->clear_constraints_artist() ;
 
         private_->FilterModelTracks->clear_synthetic_constraints_quiet() ;
-//        private_->FilterModelTracks->clear_single_artist_constraint_quiet() ;
+////        private_->FilterModelTracks->clear_single_artist_constraint_quiet() ;
 
 
         m_Entry->set_text( "" ) ;
@@ -2000,15 +1979,24 @@ namespace MPX
         m_ListViewArtist->clear_selection() ;
 
         private_->FilterModelTracks->clear_synthetic_constraints_quiet() ;
-//        private_->FilterModelTracks->clear_single_album_constraint_quiet() ;
+////        private_->FilterModelTracks->clear_single_album_constraint_quiet() ;
         private_->FilterModelTracks->set_filter( m_Entry->get_text() ) ;
 
         private_->FilterModelArtist->set_constraints_artist( private_->FilterModelTracks->m_constraints_artist ) ;
-//        private_->FilterModelArtist->regen_mapping() ;
+////        private_->FilterModelArtist->regen_mapping() ;
 
         private_->FilterModelAlbums->set_constraints_albums( private_->FilterModelTracks->m_constraints_albums ) ;
         private_->FilterModelAlbums->set_constraints_artist( private_->FilterModelTracks->m_constraints_artist ) ;
         private_->FilterModelAlbums->regen_mapping() ;
+
+	if( private_->FilterModelTracks->m_mapping->empty() )
+	{
+	    m_Entry->override_color(Util::make_rgba(1.,0.,0.,1.)) ;
+	}
+	else
+	{
+	    m_Entry->unset_color() ;
+	}
     }
 
     void
@@ -2094,12 +2082,12 @@ namespace MPX
 			    play_track( boost::get<4>(private_->FilterModelTracks->row(model_track_pos.get()))) ;
 			    return ;
 			}
-			// ...unwind
+			//// ...unwind
 		}
-		// unwind...
+		//// unwind...
 	    }
 
-	    // ...aaaand... fallback
+	    //// ...aaaand... fallback
 	   
 	    play_track( boost::get<4>(private_->FilterModelTracks->row(0))) ;
         }
@@ -2208,7 +2196,7 @@ namespace MPX
         ) ;
     }
 
-    //// DBUS
+    ////// DBUS
 
 void
     YoukiController::assign_metadata_to_DBus_property()
@@ -2312,7 +2300,7 @@ void
         if( m_track_current )
             return *(m_track_current.get()) ;
         else
-            throw std::runtime_error("No current track!") ; // FIXME: Well
+            throw std::runtime_error("No current track!") ; //// FIXME: Well
     }
 
     MPX::Track&

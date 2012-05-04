@@ -31,28 +31,37 @@ namespace MPX
 
     void
     YoukiSpectrumTitleinfo::set_info(
-          const std::vector<std::string>&   i
-        , Glib::RefPtr<Gdk::Pixbuf>         cover
+          const std::vector<std::string>& i
     )
     {
         m_info = i ;
+	queue_draw() ;
+    }
 
+    void
+    YoukiSpectrumTitleinfo::set_cover(
+          Glib::RefPtr<Gdk::Pixbuf> cover
+    )
+    {
 	if( cover )
         {
-		m_cover = cover->scale_simple( 105, 105, Gdk::INTERP_BILINEAR ) ;
+		m_cover = cover->scale_simple( 105, 105, Gdk::INTERP_HYPER ) ;
 	}
 	else
 	{
 		m_cover = cover ; 
 	}
+
+	queue_draw() ;
     }
 
     ///////////////////////////////////
 
     YoukiSpectrumTitleinfo::YoukiSpectrumTitleinfo(
     )
+    : m_cursor_inside( false )
     {
-        add_events( Gdk::BUTTON_PRESS_MASK ) ;
+        add_events( Gdk::EventMask(Gdk::BUTTON_PRESS_MASK | Gdk::ENTER_NOTIFY_MASK | Gdk::LEAVE_NOTIFY_MASK )) ;
         set_size_request( -1, 111 ) ;
         m_theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;
     }
@@ -324,7 +333,7 @@ namespace MPX
         layout->get_pixel_size( width, height ) ;
 
         cairo->move_to(
-              112 
+              m_cover ? 112 : 12
             , 8
         ) ;
 
@@ -335,7 +344,7 @@ namespace MPX
         layout->get_pixel_size( width, height ) ;
 
         cairo->move_to(
-              112 
+              m_cover ? 112 : 12
             , 8 + height
         ) ;
         cairo->set_source_rgba(c_text.get_red(), c_text.get_green(), c_text.get_blue(), 0.60);
@@ -352,7 +361,7 @@ namespace MPX
         layout->get_pixel_size( width, height ) ;
 
         cairo->move_to(
-              112 
+              m_cover ? 112 : 12
             , 112 - height - 8 
         ) ;
 

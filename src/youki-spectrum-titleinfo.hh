@@ -30,6 +30,7 @@ namespace MPX
 
             sigc::signal<void, int>		  m_SIGNAL__area_tapped ;
             boost::shared_ptr<IYoukiThemeEngine>  m_theme ;
+	    bool				  m_cursor_inside ;
 
         public:
 
@@ -47,6 +48,24 @@ namespace MPX
             ) ;
 
         protected:
+
+	    bool
+	    on_enter_notify_event(
+		  GdkEventCrossing*
+	    ) 
+	    {
+		m_cursor_inside = true ;
+		queue_draw() ;
+	    }
+
+	    bool
+	    on_leave_notify_event(
+		  GdkEventCrossing*
+	    )
+	    {
+		m_cursor_inside = false ;
+		queue_draw() ;
+	    }
 
             bool
             on_button_press_event(
@@ -78,11 +97,15 @@ namespace MPX
           void
           set_info(
               const std::vector<std::string>&
-            , Glib::RefPtr<Gdk::Pixbuf>
           ) ;
 
           void
-          clear () ;
+          set_cover(
+              Glib::RefPtr<Gdk::Pixbuf>
+          ) ;
+
+          void
+          clear() ;
     
       private:
 

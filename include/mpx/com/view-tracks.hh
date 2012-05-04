@@ -1637,6 +1637,7 @@ namespace Tracks
             public:
 
                 DataModelFilter_sp_t                m_model ;
+		std::deque<std::pair<guint,guint> > m_motion_queue ;
 
             private:
 
@@ -1730,7 +1731,7 @@ namespace Tracks
                 {
                     if( !m_Current_Viewport_I(get_upper_row()))
                     {
-		        select_row( get_upper_row() ) ;
+		        select_index( get_upper_row() ) ;
                     }
 
                     return true ;
@@ -1794,6 +1795,7 @@ namespace Tracks
 
                     switch( event->keyval )
                     {
+/*
                         case GDK_KEY_Delete:
                         {
                             if( m_selection )
@@ -1803,7 +1805,9 @@ namespace Tracks
                                 m_model->erase( p ) ;
                             }
                             return true ;
+
                         }
+*/
 
                         case GDK_KEY_Return:
                         case GDK_KEY_KP_Enter:
@@ -1857,7 +1861,7 @@ namespace Tracks
 
                             if( !m_selection || !get_row_is_visible( origin ))
                             {
-                                select_row( get_upper_row() ) ;
+                                select_index( get_upper_row() ) ;
                             }
                             else
                             {
@@ -1866,12 +1870,12 @@ namespace Tracks
                                 if( row < get_upper_row() ) 
                                 {
 				    if( step == 1 )
-					scroll_to_row( get_upper_row() - 1 ) ;
+					scroll_to_index( get_upper_row() - 1 ) ;
 				    else
-					scroll_to_row( row ) ;
+					scroll_to_index( row ) ;
                                 }
     
-                                select_row( row ) ;
+                                select_index( row ) ;
                             }
 
                             return true;
@@ -1879,16 +1883,16 @@ namespace Tracks
 
                         case GDK_KEY_Home:
                         {
-                            select_row( 0 ) ;
-                            scroll_to_row( 0 ) ;
+                            select_index( 0 ) ;
+                            scroll_to_index( 0 ) ;
 
                             return true ;
                         }
 
                         case GDK_KEY_End:
                         {
-                            select_row( m_model->size() - 1 ) ;
-                            scroll_to_row( m_model->size() - get_page_size() ) ;
+                            select_index( m_model->size() - 1 ) ;
+                            scroll_to_index( m_model->size() - get_page_size() ) ;
 
                             return true ;
                         }
@@ -1919,7 +1923,7 @@ namespace Tracks
 
                             if( !m_selection || !get_row_is_visible( origin ))
                             {
-                                select_row( get_upper_row() ) ;
+                                select_index( get_upper_row() ) ;
                             }
                             else
                             {
@@ -1928,12 +1932,12 @@ namespace Tracks
                                 if( row >= get_lower_row())
                                 {
 				    if( step == 1 )
-                                        scroll_to_row( get_upper_row() + 1 ) ;
+                                        scroll_to_index( get_upper_row() + 1 ) ;
 				    else
-					scroll_to_row( row ) ;
+					scroll_to_index( row ) ;
                                 }
 
-                                select_row( row ) ;
+                                select_index( row ) ;
                             }
 
                             return true;
@@ -1958,13 +1962,9 @@ namespace Tracks
                                 focus_entry(true) ;
 
                                 GdkEvent *copy_event = gdk_event_copy( (GdkEvent*)(event) ) ;
-
                                 //g_object_unref( ((GdkEventKey*)copy_event)->window ) ;
-
                                 ((GdkEventKey *) copy_event)->window = m_SearchWindow->get_window()->gobj() ;
-
                                 m_SearchEntry->event( copy_event ) ;
-
                                 //gdk_event_free( copy_event ) ;
 
                                 m_search_active = true ;
@@ -2017,7 +2017,12 @@ namespace Tracks
 			, get_upper_row() + (event->y-m_height__headers) / m_height__row
 		    ) ;
 
-                    if((event->type == GDK_BUTTON_PRESS) && event->button == 1)
+		    cancel_search() ;
+		    grab_focus() ;
+		    select_index( d ) ;
+		    m_row__button_press = d ;
+
+                    if(event->type == GDK_BUTTON_PRESS && event->button == 1)
                     {
                         if( event->y < m_height__headers ) 
                         {
@@ -2038,26 +2043,19 @@ namespace Tracks
 
                             return true ;
                         }
-			else
-                        {
-			    cancel_search() ;
-	                    grab_focus() ;
-			    select_row( d ) ;
-                            m_row__button_press = d ;
-                        }
                     }
 		    else
-                    if((event->type == GDK_2BUTTON_PRESS) && event->button == 1 )
+                    if(event->type == GDK_2BUTTON_PRESS && event->button == 1)
                     {
-                        if( event->y > m_height__row )
+                        if( event->y > m_height__headers )
 			{
-			    Interval<guint> i (
+			    Interval<guint> I (
 				  Interval<guint>::IN_EX
 				, 0
 				, m_model->size()
 			    ) ;
 
-			    if( i.in( d )) 
+			    if( I( d )) 
 			    {
 				MPX::Track_sp track = get<4>(m_model->row(d)) ;
 				m_SIGNAL_track_activated.emit( track, true ) ;
@@ -2065,9 +2063,9 @@ namespace Tracks
 			}
                     }
 		    else 
-                    if( event->button == 3 )
+                    if(event->type == GDK_BUTTON_PRESS && event->button == 3)
                     {
-                        m_row__button_press.reset() ; 
+			m_row__button_press.reset() ;
                         m_pMenuPopup->popup(event->button, event->time) ;                            
                     }
 
@@ -2077,16 +2075,9 @@ namespace Tracks
                 bool
                 on_button_release_event (GdkEventButton * event)
                 {
+		    process_motion_queue() ;
                     m_row__button_press.reset() ; 
-                    return false ;
-                }
-
-                bool
-                on_leave_notify_event(
-                    GdkEventCrossing* G_GNUC_UNUSED
-                )
-                {
-		    return false ;
+                    return true ;
                 }
 
                 bool
@@ -2094,6 +2085,12 @@ namespace Tracks
                     GdkEventMotion* event
                 )
                 {
+/*
+		    if( !m_motion_queue.empty() )
+		    {
+			process_motion_queue() ;
+		    }
+
                     int x_orig, y_orig;
 
                     GdkModifierType state;
@@ -2113,16 +2110,35 @@ namespace Tracks
 
                     if( m_row__button_press && row != m_row__button_press.get() ) 
                     {
-			if( m_ModelExtents.in( row )) 
+			if( m_ModelExtents( row )) 
 			{
-			    m_model->swap( row, m_row__button_press.get() ) ;
-			    select_row( row ) ;	
+			    m_motion_queue.push_back(std::make_pair( row, m_row__button_press.get())) ;
 			    m_row__button_press = row ;
 			}
                     }
 
                     return true ;
+*/
+
+		    return false ;
                 }
+
+		void
+		process_motion_queue()
+		{
+		    guint last ;
+
+		    while( !m_motion_queue.empty())
+		    {
+			std::pair<guint,guint> p = m_motion_queue.front() ;
+			m_motion_queue.pop_front() ;
+
+			m_model->swap( p.first, p.second ) ;
+			last = p.first ;
+		    }
+
+		    select_index( last ) ; 
+		}
 
                 void
                 configure_vadj(
@@ -2522,7 +2538,7 @@ namespace Tracks
                         ) ;
                     }
 
-                    scroll_to_row( position ) ;
+                    scroll_to_index( position ) ;
 
 		    if( m_selection )	
 		    {
@@ -2764,7 +2780,7 @@ namespace Tracks
                 }
 
                 void
-                scroll_to_row(
+                scroll_to_index(
                       guint row
                 )
                 {
@@ -2788,7 +2804,7 @@ namespace Tracks
                 }
 
                 void
-                select_row(
+                select_index(
                       guint d
                 )
                 {
@@ -2851,8 +2867,8 @@ namespace Tracks
                     {
 			if( numeric && nr == get<5>(**i )) 
 			{
-			    scroll_to_row( std::max<int>( 0, d-get_page_size()/2)) ;
-			    select_row( d ) ;
+			    scroll_to_index( std::max<int>( 0, d-get_page_size()/2)) ;
+			    select_index( d ) ;
 			    return ;
 			}
 
@@ -2860,8 +2876,8 @@ namespace Tracks
 
                         if( match.length() && match.substr( 0, text.length()) == text.substr( 0, text.length()) )
                         {
-                            scroll_to_row( std::max<int>( 0, d-get_page_size()/2)) ;
-                            select_row( d ) ;
+                            scroll_to_index( std::max<int>( 0, d-get_page_size()/2)) ;
+                            select_index( d ) ;
 			    return ; 
                         }
 
@@ -2900,8 +2916,8 @@ namespace Tracks
                     {
 			if( numeric && nr == get<5>(**i )) 
 			{
-			    scroll_to_row( std::max<int>( 0, d-get_page_size()/2)) ;
-			    select_row( d ) ;
+			    scroll_to_index( std::max<int>( 0, d-get_page_size()/2)) ;
+			    select_index( d ) ;
 			    return ;
 			}
 
@@ -2909,8 +2925,8 @@ namespace Tracks
 
                         if( match.length() && match.substr( 0, text.length()) == text.substr( 0, text.length()) )
                         {
-                            scroll_to_row( std::max<int>( 0, d-get_page_size()/2)) ;
-                            select_row( d ) ;
+                            scroll_to_index( std::max<int>( 0, d-get_page_size()/2)) ;
+                            select_index( d ) ;
                             return ;
                         }
 
@@ -2926,6 +2942,14 @@ namespace Tracks
                     using boost::get ;
 
                     Glib::ustring text = m_SearchEntry->get_text().casefold() ;
+
+		    if( text.empty() )
+		    {
+			scroll_to_index(0) ;
+			select_index(0) ;
+			m_SearchEntry->unset_color() ;
+			return ;
+		    }
 
 		    bool numeric = false ;
 		    guint nr ;
@@ -2943,8 +2967,8 @@ namespace Tracks
                     {
 			if( numeric && nr == get<5>(**i )) 
 			{
-			    scroll_to_row( std::max<int>( 0, d-get_page_size()/2)) ;
-			    select_row( d ) ;
+			    scroll_to_index( std::max<int>( 0, d-get_page_size()/2)) ;
+			    select_index( d ) ;
 			    m_SearchEntry->unset_color() ;
 			    return ;
 			}
@@ -2953,8 +2977,8 @@ namespace Tracks
 
                         if( match.length() && match.substr( 0, text.length()) == text.substr( 0, text.length()) )
                         {
-                            scroll_to_row( std::max<int>( 0, d-get_page_size()/2)) ;
-                            select_row( d ) ;
+                            scroll_to_index( std::max<int>( 0, d-get_page_size()/2)) ;
+                            select_index( d ) ;
 			    m_SearchEntry->unset_color() ;
 			    return ; 
                         }
@@ -3132,6 +3156,7 @@ namespace Tracks
                               *this
                             , &Class::on_search_button_clicked
                     )) ;
+		    m_SearchButton->set_tooltip_text(_("Click this button to apply this as a search.")) ;
 
                     Gtk::Image * img = Gtk::manage( new Gtk::Image ) ;
                     img->set( Gtk::Stock::FIND, Gtk::ICON_SIZE_MENU ) ;

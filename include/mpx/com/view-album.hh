@@ -801,7 +801,7 @@ namespace Albums
 		    {
 		    	std::string release_type = rt_string[rt] ;
 
-			const int text_size_px = 9 ;
+			const int text_size_px = 10 ;
 			const int text_size_pt = static_cast<int> ((text_size_px * 72) / Util::screen_get_y_resolution (Gdk::Screen::get_default ())) ;
 
 			int width, height;
@@ -858,20 +858,23 @@ namespace Albums
 				    case RT_VIEW_BOTTOM:
 				    {
 					/// RECTANGULAR; AT BOTTOM
-					cairo->rectangle(
-					      2	  + 0
-					    , 2   + 50
-					    , 64
-					    , 14
-					) ;
-					cairo->clip() ;
+					if( album->coverart )
+					{
+					    cairo->rectangle(
+						  2+0
+						, 2+50
+						, 64
+						, 14
+					    ) ;
+					    cairo->clip() ;
+					}
 
 					RoundedRectangle(
 					      cairo
 					    , 2	  + 0
-					    , 2   + 46
+					    , 2   + (album->coverart?46:50)
 					    , 64
-					    , 18
+					    , 18  - (album->coverart?0:4)
 					    , 4.
 					) ;
 					cairo->set_operator( Cairo::OPERATOR_OVER ) ;
@@ -904,7 +907,7 @@ namespace Albums
 					cairo->rotate_degrees( degrees ) ;
 					cairo->rectangle(
 					      2  - w*1.5
-					    , 2  + h + 2
+					    , 2  + h + 3
 					    , 64 + w*1.5
 					    , height - 1
 					) ;
@@ -1005,9 +1008,9 @@ namespace Albums
 			      0 
 			    , 0 
 			    , 0 
-			    , 0.3
+			    , 0.1
 		    ) ;
-		    RoundedRectangle( c2, 4, 4, w, h, 4. ) ;
+		    RoundedRectangle( c2, 4, 5, w, h, 4. ) ;
 		    c2->fill() ;
 		    Util::cairo_image_surface_blur( s->cobj(), 1 ) ;
 		    cairo->move_to(
@@ -1260,12 +1263,12 @@ namespace Albums
 
 			    if( selected )
 			    {
-				render_text_shadow( layout[L3], m_width-108, height, xpos+8, r.y+row_height-height-12, cairo) ; 
+				render_text_shadow( layout[L3], m_width-108, height, xpos+8, r.y+row_height-height-(m_show_year_label?12:27), cairo) ; 
 			    }
 
 			    cairo->move_to(
 				  xpos + 8 
-				, r.y + row_height - height - 12 
+				, r.y + row_height - height - (m_show_year_label?12:27)
 			    ) ;
 
 			    Gdk::Cairo::set_source_rgba(cairo, c2) ;
