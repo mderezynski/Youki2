@@ -56,6 +56,7 @@ namespace MPX
 	    {
 		m_cursor_inside = true ;
 		queue_draw() ;
+		return true ;
 	    }
 
 	    bool
@@ -65,6 +66,7 @@ namespace MPX
 	    {
 		m_cursor_inside = false ;
 		queue_draw() ;
+		return true ;
 	    }
 
             bool

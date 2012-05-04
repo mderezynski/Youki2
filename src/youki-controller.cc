@@ -54,13 +54,13 @@ namespace
     "	<menu action='MenuView'>"
     "	    <menuitem action='MenuViewActionAlbumsShowYearLabel'/>"
     "	    <menuitem action='MenuViewActionAlbumRTViewModeBottom'/>"
-    "	    <menuitem action='MenuViewActionMinimizeOnPause'/>"
     "	    <menuitem action='MenuViewActionUnderlineMatches'/>"
     "	    <menuitem action='MenuViewActionFollowPlayingTrack'/>"
     "	</menu>"
     "	<menu action='MenuPlaybackControl'>"
     "	    <menuitem action='MenuPlaybackControlActionStartAlbumAtFavorite'/>"
     "	    <menuitem action='MenuPlaybackControlActionContinueCurrentAlbum'/>"
+    "	    <menuitem action='MenuPlaybackControlActionMinimizeOnPause'/>"
     "	</menu>"
     "</menubar>"
     ""
@@ -355,7 +355,7 @@ namespace MPX
 	m_VBox->set_border_width( 0 ) ;
 
         m_HBox_Main = Gtk::manage( new PercentualDistributionHBox ) ;
-        m_HBox_Main->set_spacing( 4 ) ; 
+        m_HBox_Main->set_spacing( 6 ) ; 
 
         m_HBox_Entry = Gtk::manage( new Gtk::HBox ) ;
         m_HBox_Entry->set_spacing( 4 ) ;
@@ -410,7 +410,7 @@ namespace MPX
 
 	Gtk::VBox* VBox2 = Gtk::manage( new Gtk::VBox ) ;
 	VBox2->set_border_width( 0 ) ;
-	VBox2->set_spacing( 2 ) ;
+	VBox2->set_spacing( 4 ) ;
 
 	Gtk::Alignment * Main_Align = Gtk::manage( new Gtk::Alignment ) ;
 	Main_Align->add( *VBox2 ) ;
@@ -454,9 +454,9 @@ namespace MPX
 	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuPlaybackControlActionStartAlbumAtFavorite", "Start Albums at Favorite Track")) ; 
 	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuPlaybackControlActionContinueCurrentAlbum", "Always Continue Playing Current Album" )) ; 
 	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuViewActionAlbumRTViewModeBottom", "Show Release Type" ), sigc::mem_fun( *this, &YoukiController::on_rt_viewmode_change  )) ; 
-	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuViewActionAlbumsShowYearLabel", "Show Year and Release Label" ), sigc::mem_fun( *this, &YoukiController::handle_action_underline_matches ) ); 
+	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuViewActionAlbumsShowYearLabel", "Show Release Label" ), sigc::mem_fun( *this, &YoukiController::handle_action_underline_matches ) ); 
 
-	Glib::RefPtr<Gtk::ToggleAction> action_MOP = Gtk::ToggleAction::create( "MenuViewActionMinimizeOnPause", "Minimize Youki on Pause" ) ;
+	Glib::RefPtr<Gtk::ToggleAction> action_MOP = Gtk::ToggleAction::create( "MenuPlaybackControlActionMinimizeOnPause", "Minimize Youki on Pause" ) ;
 	m_UI_Actions_Main->add( action_MOP ) ; 
 	mcs_bind->bind_toggle_action( action_MOP, "mpx", "minimize-on-pause" ) ;
 
@@ -958,7 +958,7 @@ namespace MPX
 	m_ListViewTracks->set_highlight( active ) ;
 
 	active = Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("MenuViewActionAlbumsShowYearLabel"))->get_active() ;
-	m_ListViewAlbums->set_show_year_label( active ) ;
+	m_ListViewAlbums->set_show_release_label( active ) ;
     }
 
     bool
@@ -1749,7 +1749,17 @@ namespace MPX
 		private_->FilterModelTracks->add_synthetic_constraint_quiet( c ) ;
 	}
 
-	private_->FilterModelTracks->regen_mapping() ;
+        if( m_track_current && 
+		mcs->key_get<bool>("mpx","follow-current-track"))
+        {
+            const MPX::Track& track = *(m_track_current.get()) ;
+            unsigned int id_track = boost::get<unsigned int>(track[ATTRIBUTE_MPX_TRACK_ID].get()) ;
+	    private_->FilterModelTracks->regen_mapping( id_track ) ;
+        }
+	else
+	{
+	    private_->FilterModelTracks->regen_mapping() ;
+	}	
 
 	private_->FilterModelAlbums->set_constraints_albums( private_->FilterModelTracks->m_constraints_albums ) ;
 	private_->FilterModelAlbums->set_constraints_artist( private_->FilterModelTracks->m_constraints_artist ) ;
@@ -1941,7 +1951,18 @@ namespace MPX
 
         m_Entry->set_text( "" ) ;
 
-        private_->FilterModelTracks->regen_mapping() ;
+        if( m_track_current && 
+		mcs->key_get<bool>("mpx","follow-current-track"))
+        {
+            const MPX::Track& track = *(m_track_current.get()) ;
+            unsigned int id_track = boost::get<unsigned int>(track[ATTRIBUTE_MPX_TRACK_ID].get()) ;
+	    private_->FilterModelTracks->regen_mapping( id_track ) ;
+        }
+	else
+	{
+	    private_->FilterModelTracks->regen_mapping() ;
+	}	
+
         private_->FilterModelArtist->regen_mapping() ;
         private_->FilterModelAlbums->regen_mapping() ;
 
@@ -1958,14 +1979,6 @@ namespace MPX
         m_conn1.unblock() ;
         m_conn2.unblock() ;
         m_conn4.unblock() ;
-
-        if( m_track_current )
-        {
-            const MPX::Track& track = *(m_track_current.get()) ;
-
-            unsigned int id_track = boost::get<unsigned int>(track[ATTRIBUTE_MPX_TRACK_ID].get()) ;
-            m_ListViewTracks->scroll_to_id( id_track ) ;
-        }
 
 	m_Entry->grab_focus() ;
 	history_save() ;

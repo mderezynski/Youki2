@@ -288,15 +288,15 @@ namespace MPX
 		    , 0.40
 	    ) ;
 	    c2->move_to(
-		      2
-		    , 2
+		      .5
+		    , .5
 	    ) ;
 	    pango_cairo_show_layout(
 		  c2->cobj()
 		, layout->gobj()
 	    ) ;
 
-	    Util::cairo_image_surface_blur( s->cobj(), 1 ) ;
+	    Util::cairo_image_surface_blur( s, 1.5 ) ;
 
 	    double alpha = get_alpha_at_time() ;
 

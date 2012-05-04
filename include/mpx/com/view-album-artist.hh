@@ -510,7 +510,7 @@ namespace Artist
 			    , l->gobj()
 			) ;
 
-			Util::cairo_image_surface_blur( s->cobj(), 1 ) ;
+			Util::cairo_image_surface_blur( s, 1 ) ;
 
 			cairo->set_source( s, xpos, ypos ) ;
 			cairo->rectangle( xpos, ypos, m_width, rowheight ) ;

@@ -876,6 +876,7 @@ namespace Tracks
 
                 virtual void
                 regen_mapping(
+		    boost::optional<guint> scroll_id = boost::optional<guint>()
                 )
                 {
                     using boost::get;
@@ -887,6 +888,11 @@ namespace Tracks
 
 		    boost::optional<guint> id ;
 
+		    if( scroll_id )
+		    {
+			id = scroll_id ;
+		    }
+		    else
 		    if( m_mapping && m_upper_bound < m_mapping->size() )
 		    {
 			id = get<3>(row(m_upper_bound)) ;
@@ -1577,8 +1583,8 @@ namespace Tracks
 
 		      if( selected )
   		      {
-			    Cairo::RefPtr<Cairo::ImageSurface> srf = Cairo::ImageSurface::create( Cairo::FORMAT_ARGB32, m_width, rowheight ) ;
-			    Cairo::RefPtr<Cairo::Context> c = Cairo::Context::create( srf ) ;
+			    Cairo::RefPtr<Cairo::ImageSurface> s = Cairo::ImageSurface::create( Cairo::FORMAT_ARGB32, m_width, rowheight ) ;
+			    Cairo::RefPtr<Cairo::Context> c = Cairo::Context::create( s ) ;
 
 			    c->set_operator( Cairo::OPERATOR_CLEAR) ;
 			    c->paint() ;
@@ -1592,17 +1598,17 @@ namespace Tracks
 				, 0.40
 			    ) ;
 			    c->move_to(
-				  8
-				, 5
+				  7
+				, 4
 			    ) ;
 			    pango_cairo_show_layout(
 				  c->cobj()
 				, layout->gobj()
 			    ) ;
 
-			    Util::cairo_image_surface_blur( srf->cobj(), 1 ) ;
+			    Util::cairo_image_surface_blur( s, 1 ) ;
 
-			    cairo->set_source( srf, xpos, ypos ) ;
+			    cairo->set_source( s, xpos, ypos ) ;
 			    cairo->rectangle( xpos, ypos, m_width, rowheight ) ;
 			    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 			    cairo->fill() ;
