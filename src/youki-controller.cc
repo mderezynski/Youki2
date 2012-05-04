@@ -1341,6 +1341,25 @@ namespace MPX
         }
 
         private_->FilterModelAlbums->update_album_cover( id, cover_is ) ;
+
+	if( m_track_current )
+	{
+	    MPX::Track& track = *(m_track_current.get()) ;
+
+	    if( track.has( ATTRIBUTE_MB_ALBUM_ID ) )
+	    {
+		    Glib::RefPtr<Gdk::Pixbuf> cover ;
+
+		    if(  m_covers->fetch(
+			  boost::get<std::string>(track[ATTRIBUTE_MB_ALBUM_ID].get())
+			, cover
+		    ))
+		    {
+			m_main_info->set_info( info, cover ) ;
+			goto skip1 ;
+		    }
+	    }
+	}
     }
 
     void
