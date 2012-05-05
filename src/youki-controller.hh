@@ -448,6 +448,9 @@ namespace MPX
 	    void
 	    preload__tracks() ;
 
+	    void
+	    update_entry_placeholder_text() ;
+
             void
             on_library_scan_start() ;
 

@@ -1182,12 +1182,12 @@ namespace Albums
 
 			    if( selected )
 			    {
-				render_text_shadow( layout[L3], 50, height, sx, r.y+row_height-height-10, cairo) ; 
+				render_text_shadow( layout[L3], 50, height, sx, r.y+row_height-height-9, cairo) ; 
 			    }
 
 			    cairo->move_to(
 				  sx
-				, r.y + row_height - height - 10
+				, r.y + row_height - height - 9
 			    ) ;
 
 			    Gdk::Cairo::set_source_rgba(cairo, c2) ;
@@ -1196,8 +1196,7 @@ namespace Albums
 			    sx += width + 3 ;
 			}
 
-			if( m_show_release_label &&
-			     !album->label.empty() )
+			if( !album->label.empty() )
 			{
 			    font_desc[L3].set_weight( Pango::WEIGHT_NORMAL ) ;
 			    layout[L3]->set_font_description( font_desc[L3] ) ;
@@ -1210,12 +1209,12 @@ namespace Albums
 
 			    if( selected )
 			    {
-				render_text_shadow( layout[L3], m_width-108, height, sx, r.y+row_height-height-10, cairo) ; 
+				render_text_shadow( layout[L3], m_width-108, height, sx, r.y+row_height-height-9, cairo) ; 
 			    }
 
 			    cairo->move_to(
 				  sx
-				, r.y + row_height - height - 10
+				, r.y + row_height - height - 9 
 			    ) ;
 
 			    Gdk::Cairo::set_source_rgba(cairo, c2) ;
@@ -1223,6 +1222,7 @@ namespace Albums
 			}
 
 			/* DISC TIME AND TRACK COUNT */
+			if( m_show_release_label )
 			{
 			    font_desc[L3].set_weight( Pango::WEIGHT_NORMAL ) ;
 			    layout[L3]->set_font_description( font_desc[L3] ) ;
@@ -1232,7 +1232,7 @@ namespace Albums
 
 			    guint tm = 0 ;
 
-			    std::string out, tmp ;
+			    std::string out, tmp, timestr ;
 
 			    if( album_constraints )
 			    {
@@ -1252,12 +1252,6 @@ namespace Albums
 				tmp = ((boost::format("<b>%u</b> %s") % totaltracks % ((totaltracks>1) ? "Tracks" : "Track")).str()) ;
 			    }
 
-			    guint hrs = tm / 3600 ;
-			    guint min = (tm-hrs*3600) / 60 ; 
-			    guint sec = tm % 60 ;
-
-			    out = ((boost::format("Playtime <b>%02u:%02u:%02u</b>, ") % hrs % min % sec).str()) ;
-
 			    if( album->discs_count > 1 && !album_constraints )
 			    { 
 				out += ((boost::format("<b>%u</b> Discs, ") % album->discs_count).str()) ;
@@ -1265,19 +1259,41 @@ namespace Albums
 
 			    out += tmp ;
 
+			    /* Playtime */
+			    guint hrs = tm / 3600 ;
+			    guint min = (tm-hrs*3600) / 60 ; 
+			    guint sec = tm % 60 ;
+			    timestr = ((boost::format("<b>%02u:%02u:%02u</b>") % hrs % min % sec).str()) ;
+			    layout[L3]->set_markup( timestr ) ;
+			    layout[L3]->get_pixel_size( width, height ) ;
+			    if( selected )
+			    {
+				render_text_shadow( layout[L3], m_width-108, height, xpos+8+5, r.y+row_height-height-25, cairo) ; 
+			    }
+			    cairo->move_to(
+				  xpos+8+5 
+				, r.y+row_height-height-25 
+			    ) ;
+			    Gdk::Cairo::set_source_rgba(cairo, c2) ;
+			    pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj()) ;
+
+			    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(c2.get_red(),c2.get_green(),c2.get_blue(),0.10)) ;
+			    RoundedRectangle( cairo, xpos+8, r.y+row_height-height-25, 51, 12, 2.) ; 
+			    cairo->fill() ;
+
+			    xpos += width + 14 ;				
+
+			    /* Discs, Tracks */
 			    layout[L3]->set_markup( out ) ;
 			    layout[L3]->get_pixel_size( width, height ) ;
-
 			    if( selected )
 			    {
 				render_text_shadow( layout[L3], m_width-108, height, xpos+8, r.y+row_height-height-25, cairo) ; 
 			    }
-
 			    cairo->move_to(
 				  xpos+8 
 				, r.y+row_height-height-25 
 			    ) ;
-
 			    Gdk::Cairo::set_source_rgba(cairo, c2) ;
 			    pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj()) ;
 			}

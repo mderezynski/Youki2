@@ -11,6 +11,7 @@
 
 #include <boost/format.hpp>
 #include <boost/ref.hpp>
+#include <boost/random.hpp>
 
 #include "mpx/mpx-main.hh"
 #include "mpx/mpx-covers.hh"
@@ -54,7 +55,7 @@ namespace
     "	    <menuitem action='MenuFileActionQuit'/>"
     "	</menu>"
     "	<menu action='MenuView'>"
-    "	    <menuitem action='MenuViewActionAlbumsShowYearLabel'/>"
+    "	    <menuitem action='MenuViewActionAlbumsShowTimeDiscsTracks'/>"
     "	    <menuitem action='MenuViewActionAlbumRTViewModeBottom'/>"
     "	    <menuitem action='MenuViewActionUnderlineMatches'/>"
     "	    <menuitem action='MenuViewActionFollowPlayingTrack'/>"
@@ -326,14 +327,16 @@ namespace MPX
 
 	/* Setup main search Entry */
         m_Entry = Gtk::manage( new Gtk::Entry ) ;
-	m_Entry->set_size_request( 450, -1 ) ;
+	m_Entry->set_size_request( 650, -1 ) ;
 
         m_Entry->set_icon_from_stock(
 	      Gtk::Stock::CLEAR
             , Gtk::ENTRY_ICON_SECONDARY
         ) ; 
 
-	m_Entry->set_placeholder_text(_("Search your Music... type here")) ;
+	update_entry_placeholder_text() ;
+
+	Glib::signal_timeout().connect( sigc::bind_return<bool>( sigc::mem_fun( *this, &YoukiController::update_entry_placeholder_text ), true ), 10 * 60000) ;
 
         m_Entry->signal_icon_press().connect(
                 sigc::mem_fun(
@@ -425,7 +428,7 @@ namespace MPX
 	Controls_Align->set_padding( 0, 0, 0, 2 ) ;
 
         m_VBox_Bottom = Gtk::manage( new Gtk::VBox ) ;
-        m_VBox_Bottom->set_spacing( 3 ) ;
+        m_VBox_Bottom->set_spacing( 1 ) ;
 
 	Gtk::VBox* VBox2 = Gtk::manage( new Gtk::VBox ) ;
 	VBox2->set_border_width( 0 ) ;
@@ -482,7 +485,7 @@ namespace MPX
 	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuPlaybackControlActionStartAlbumAtFavorite", "Start Albums at Favorite Track")) ; 
 	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuPlaybackControlActionContinueCurrentAlbum", "Always Continue Playing Current Album" )) ; 
 	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuViewActionAlbumRTViewModeBottom", "Show Release Type" ), sigc::mem_fun( *this, &YoukiController::on_rt_viewmode_change  )) ; 
-	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuViewActionAlbumsShowYearLabel", "Show Release Label" ), sigc::mem_fun( *this, &YoukiController::handle_action_underline_matches ) ); 
+	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuViewActionAlbumsShowTimeDiscsTracks", "Show Playtime, Discs, Track Count" ), sigc::mem_fun( *this, &YoukiController::handle_action_underline_matches ) ); 
 
 	Glib::RefPtr<Gtk::ToggleAction> action_MOP = Gtk::ToggleAction::create( "MenuPlaybackControlActionMinimizeOnPause", "Minimize Youki on Pause" ) ;
 	m_UI_Actions_Main->add( action_MOP ) ; 
@@ -752,7 +755,7 @@ namespace MPX
                 , &YoukiController::on_status_icon_clicked
         ))) ;
 
-	Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("MenuViewActionAlbumsShowYearLabel"))->set_active( true ) ;
+	Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("MenuViewActionAlbumsShowTimeDiscsTracks"))->set_active( true ) ;
 	Glib::RefPtr<Gtk::RadioAction>::cast_static( m_UI_Actions_Main->get_action("MenuViewActionAlbumRTViewModeBottom"))->set_active( true ) ;
 
         on_style_changed() ;
@@ -760,6 +763,35 @@ namespace MPX
 
 	m_HISTORY_POSITION = m_HISTORY.end() ;
 	//history_save() ;
+    }
+
+    void
+    YoukiController::update_entry_placeholder_text()
+    {
+	SQL::RowV v ;
+
+	boost::mt19937 rng ;
+	boost::uniform_int<> rtmap (0,2) ;
+
+	int val = rtmap(rng) ;
+
+	switch(val)
+	{
+	    case 0:
+		m_library->getSQL(v, "SELECT artist AS s FROM artist ORDER BY random() LIMIT 1") ;
+		break;
+
+	    case 1:
+		m_library->getSQL(v, "SELECT album AS s FROM album ORDER BY random() LIMIT 1") ;
+		break;
+
+	    case 2:
+		m_library->getSQL(v, "SELECT title AS s FROM track WHERE pcount IS NOT NULL ORDER BY random() LIMIT 1") ;
+		break;
+	}
+
+	const std::string& s = boost::get<std::string>(v[0]["s"]) ;
+	m_Entry->set_placeholder_text((boost::format("%s '%s'") % _("Search Your Music... type here, for example:") % s).str()) ;
     }
 
     void
@@ -973,7 +1005,7 @@ namespace MPX
 	bool active = Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("MenuViewActionUnderlineMatches"))->get_active() ;
 	m_ListViewTracks->set_highlight( active ) ;
 
-	active = Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("MenuViewActionAlbumsShowYearLabel"))->get_active() ;
+	active = Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("MenuViewActionAlbumsShowTimeDiscsTracks"))->get_active() ;
 	m_ListViewAlbums->set_show_release_label( active ) ;
     }
 
