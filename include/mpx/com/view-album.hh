@@ -1206,12 +1206,12 @@ namespace Albums
 			    {
 				layout[L3]->set_text( album->label ) ;
 				layout[L3]->get_pixel_size( width, height ) ;
-				layout[L3]->set_width(( m_width - 108 - 30) * PANGO_SCALE ) ;
-				layout[L3]->set_ellipsize( Pango::ELLIPSIZE_END ) ;
+				layout[L3]->set_width(( m_width - 108) * PANGO_SCALE ) ;
+				layout[L3]->set_ellipsize( Pango::ELLIPSIZE_NONE ) ;
 
 				if( selected )
 				{
-				    render_text_shadow( layout[L3], m_width-108-30, height, sx, r.y+row_height-height-27, cairo) ; 
+				    render_text_shadow( layout[L3], m_width-108, height, sx, r.y+row_height-height-27, cairo) ; 
 				}
 
 				cairo->move_to(
@@ -1393,7 +1393,7 @@ namespace Albums
 			int y2 = vadj_value() ;
 
 			ViewMetrics.set( 
-			      get_allocation().get_height() 
+			      get_allocated_height() 
 			    , vadj_value()
 			) ;
 
@@ -1595,9 +1595,9 @@ namespace Albums
 				int x, y ;
 
 				get_window()->get_origin( x, y ) ;
-				y += get_allocation().get_height() ;
+				y += get_allocated_height() ;
 
-				m_SearchWindow->set_size_request( get_allocation().get_width(), -1 ) ;
+				m_SearchWindow->set_size_request( get_allocated_width(), -1 ) ;
 				m_SearchWindow->move( x, y ) ;
 				m_SearchWindow->show() ;
 
@@ -1757,8 +1757,9 @@ namespace Albums
                     const Gtk::Allocation& a = get_allocation() ;
 
                     guint d       = ViewMetrics.ViewPort.upper() ; 
-                    guint ypos    = 0 ;
                     guint max_d   = Limiter<guint>( Limiter<guint>::ABS_ABS, 0, m_model->size(), ViewMetrics.ViewPort.size() + 2 ) ;
+
+                    int ypos   = 0 ;
                     int offset = ViewMetrics.ViewPortPx.upper() - (d*ViewMetrics.RowHeight) ;
 
                     
@@ -1807,7 +1808,7 @@ namespace Albums
 
                             r.x         = 0 ; 
                             r.y         = ypos ; 
-                            r.width     = a.get_width() ;
+                            r.width     = get_allocated_width() ;
                             r.height    = ViewMetrics.RowHeight ;
 
                             m_theme->draw_selection_rectangle(
@@ -1825,7 +1826,7 @@ namespace Albums
 
 			    r.x         = 0 ;
 			    r.y         = ypos ;
-			    r.width     = a.get_width() ;
+			    r.width     = get_allocated_width() ;
 			    r.height    = ViewMetrics.RowHeight ;
 
 			    RoundedRectangle(cairo, r.x, r.y, r.width, r.height, rounding, c) ;
@@ -1872,7 +1873,7 @@ namespace Albums
 		    ) ; 
 		    cairo->line_to(
 			  78
-			, std::min<int>( vadj_upper()-vadj_value()+ViewMetrics.RowHeight, a.get_height()) - rend_offset
+			, std::min<int>( vadj_upper()-vadj_value()+ViewMetrics.RowHeight, get_allocated_height()) - rend_offset
 		    ) ;
 		    cairo->set_dash(
 			  dashes

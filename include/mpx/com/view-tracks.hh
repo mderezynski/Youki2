@@ -1598,8 +1598,8 @@ namespace Tracks
 				, 0.40
 			    ) ;
 			    c->move_to(
-				  7
-				, 4
+				  8
+				, 5
 			    ) ;
 			    pango_cairo_show_layout(
 				  c->cobj()
@@ -2242,27 +2242,25 @@ namespace Tracks
 		    // RENDER HEADER BACKGROUND
 		    cairo->save() ;
 		    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
-		    RoundedRectangle(
-			  cairo
-			, 0
+		    cairo->rectangle(
+			  0
 			, 0
 			, get_allocated_width()
 			, m_height__headers
-			, MPX::CairoCorners::CORNERS(3)
 		    ) ;
 		
 		    double h,s,b ;
 
 		    Gdk::RGBA c1 ;
-		    c1.set_rgba( c_rules_hint.get_red(), c_rules_hint.get_green(), c_rules_hint.get_blue()) ;
+		    c1.set_rgba( c_base.get_red(), c_base.get_green(), c_base.get_blue()) ;
 		    Util::color_to_hsb( c1, h, s, b ) ;
-		    b *= 1.05 ;
+		    b *= 0.95 ; 
 		    c1 = Util::color_from_hsb( h, s, b ) ;
 
 		    Gdk::RGBA c2 ;
-		    c2.set_rgba( c_rules_hint.get_red(), c_rules_hint.get_green(), c_rules_hint.get_blue()) ;
+		    c2.set_rgba( c_base.get_red(), c_base.get_green(), c_base.get_blue()) ;
 		    Util::color_to_hsb( c2, h, s, b ) ;
-		    b *= 0.92 ;
+		    b *= 0.88 ;
 		    c2 = Util::color_from_hsb( h, s, b ) ;
 
 		    Cairo::RefPtr<Cairo::LinearGradient> gr = Cairo::LinearGradient::create( get_allocated_width()/2., 1, get_allocated_width() / 2., m_height__headers - 2 ) ;
@@ -2310,7 +2308,7 @@ namespace Tracks
 			xpos += (*i)->get_width() ; 
 		    }
 
-		    //// RULES HINT
+		    // RULES HINT
 		    {
 			GdkRectangle rect ;
 
@@ -2341,7 +2339,7 @@ namespace Tracks
 			}
 		    }
 
-		    //// SELECTION
+		    // SELECTION
 		    boost::optional<guint> d_sel ;
 
 		    if( m_selection )
@@ -2349,7 +2347,7 @@ namespace Tracks
 			d_sel = boost::get<1>(m_selection.get()) ; 
 		    }
 
-		    //// Selection Rectangle, if any
+		    // Selection Rectangle, if any
 		    if( d_sel && m_Current_Viewport_I(d_sel.get()))
 		    {
 			GdkRectangle rect ;
@@ -2369,7 +2367,7 @@ namespace Tracks
 			) ;
 		    }
 
-		    //// ROW DATA
+		    // ROW DATA
 		    for( guint n = 0 ; n < row_limit && m_ModelExtents( n + upper_row ) ; ++n ) 
 		    {
 			xpos = 0 ;
@@ -2423,7 +2421,7 @@ namespace Tracks
 			}
 		    }
 
-		    //// TREELINES
+		    // TREELINES
 		    {
 			Columns::iterator i2 = m_columns.end() ;
 			std::advance( i2, -1 ) ;	

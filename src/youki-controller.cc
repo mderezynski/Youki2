@@ -420,7 +420,7 @@ namespace MPX
 	Controls_Align->set_padding( 0, 0, 0, 2 ) ;
 
         m_VBox_Bottom = Gtk::manage( new Gtk::VBox ) ;
-        m_VBox_Bottom->set_spacing( 1 ) ;
+        m_VBox_Bottom->set_spacing( 3 ) ;
 
 	Gtk::VBox* VBox2 = Gtk::manage( new Gtk::VBox ) ;
 	VBox2->set_border_width( 0 ) ;

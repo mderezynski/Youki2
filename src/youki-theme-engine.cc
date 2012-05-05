@@ -168,17 +168,9 @@ namespace MPX
             , { "text", THEME_COLOR_TEXT }
             , { "text-selected", THEME_COLOR_TEXT_SELECTED }
             , { "select", THEME_COLOR_SELECT }
-            , { "drawer", THEME_COLOR_DRAWER }
-            , { "titlebar-1", THEME_COLOR_TITLEBAR_1 }
-            , { "titlebar-2", THEME_COLOR_TITLEBAR_2 }
-            , { "titlebar-3", THEME_COLOR_TITLEBAR_3 }
-            , { "titlebar-top", THEME_COLOR_TITLEBAR_TOP } 
-            , { "window-border", THEME_COLOR_WINDOW_BORDER }
-            , { "entry-outline", THEME_COLOR_ENTRY_OUTLINE }
             , { "treelines", THEME_COLOR_TREELINES }
             , { "info-area", THEME_COLOR_INFO_AREA }
             , { "volume", THEME_COLOR_VOLUME }
-            , { "resize-grip", THEME_COLOR_RESIZE_GRIP }
         } ;
 
         typedef std::map<std::string, ThemeColorID> NameToIDMap ;
@@ -280,27 +272,23 @@ namespace MPX
 	tv.get_style_context()->lookup_color("text_color", ctext ) ;
 	tv.get_style_context()->lookup_color("selected_fg_color", ctext_sel ) ;
 
-        colors[THEME_COLOR_SELECT]     = Util::make_rgba( csel, 1. ) ;
+	Util::color_to_hsb(csel, h, s, b ) ;
+	s *= 0.10 ;
+	b = 0.98 ; 
+	Gdk::RGBA csel_mod = Util::color_from_hsb( h, s, b ) ;
+	csel_mod.set_alpha(1.) ;
+	colors[THEME_COLOR_BASE_ALTERNATE] = csel_mod ; 
+	
+
         colors[THEME_COLOR_BACKGROUND] = Util::make_rgba( cbg, 1. ) ;
         colors[THEME_COLOR_BASE]       = Util::make_rgba( cbase, 1. ) ; 
-
-/*
-        Util::color_to_hsb( cbase, h, s, b ) ;
-        b *= 0.95 ;
-        colors[THEME_COLOR_BASE_ALTERNATE] = Util::color_from_hsb ( h, s, b ) ;
-*/
-
-	colors[THEME_COLOR_BASE_ALTERNATE] = Util::make_rgba( 0.95, 0.95, 0.95, 1. ) ;
-
+	//colors[THEME_COLOR_BASE_ALTERNATE] = Util::make_rgba( 0.98, 0.98, 0.98, 1. ) ;
         colors[THEME_COLOR_TEXT]          = Util::make_rgba( ctext, 1. ) ; 
         colors[THEME_COLOR_TEXT_SELECTED] = Util::make_rgba( ctext_sel, 1. ) ; 
-        colors[THEME_COLOR_DRAWER]        = Util::make_rgba( 0.65, 0.65, 0.65, .4 ) ;
-        colors[THEME_COLOR_WINDOW_BORDER] = Util::make_rgba( 0.25, 0.25, 0.25, 1. ) ;
-        colors[THEME_COLOR_ENTRY_OUTLINE] = Util::make_rgba( 0.2, 0.2, 0.2, 1. ) ;
+        colors[THEME_COLOR_SELECT]     = Util::make_rgba( csel, 1. ) ;
         colors[THEME_COLOR_TREELINES]   = Util::make_rgba( .5, .5, .5, 1. ) ;
         colors[THEME_COLOR_INFO_AREA]   = tv.get_style_context()->get_background_color( Gtk::STATE_FLAG_NORMAL ) ;
         colors[THEME_COLOR_VOLUME]      = Util::make_rgba( .7, .7, .7, 1. ) ;
-        colors[THEME_COLOR_RESIZE_GRIP] = Util::make_rgba( 1., 1., 1., .10 ) ;
 
         Theme theme (
               "Youki-Default"
