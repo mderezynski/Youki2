@@ -1,5 +1,7 @@
 #include "config.h"
 
+#include <tr1/random>
+
 #include <libindicate/indicator-messages.h>
 #include <libindicate/indicator.h>
 #include <libindicate/interests.h>
@@ -335,8 +337,7 @@ namespace MPX
         ) ; 
 
 	update_entry_placeholder_text() ;
-
-	Glib::signal_timeout().connect( sigc::bind_return<bool>( sigc::mem_fun( *this, &YoukiController::update_entry_placeholder_text ), true ), 10 * 60000) ;
+	//Glib::signal_timeout().connect( sigc::bind_return<bool>( sigc::mem_fun( *this, &YoukiController::update_entry_placeholder_text ), true ), 10 * 60000) ;
 
         m_Entry->signal_icon_press().connect(
                 sigc::mem_fun(
@@ -356,13 +357,11 @@ namespace MPX
                 , &YoukiController::on_entry_activated
         )) ;
 
-/*
 	m_Entry->signal_focus_out_event().connect(
 	      sigc::mem_fun(
 	            *this
                   , &YoukiController::handle_search_entry_focus_out
         )) ;
- */
 
 	m_conn4 = m_Entry->signal_changed().connect(
 	    sigc::mem_fun(
@@ -770,12 +769,13 @@ namespace MPX
     {
 	SQL::RowV v ;
 
-	boost::mt19937 rng ;
-	boost::uniform_int<> rtmap (0,2) ;
+	std::tr1::mt19937 eng;
+	eng.seed(time(NULL)) ;
+	std::tr1::uniform_int<unsigned int> uni(0,2) ;
 
-	int val = rtmap(rng) ;
+	guint r = uni(eng) ; 
 
-	switch(val)
+	switch(r)
 	{
 	    case 0:
 		m_library->getSQL(v, "SELECT artist AS s FROM artist ORDER BY random() LIMIT 1") ;
@@ -791,7 +791,7 @@ namespace MPX
 	}
 
 	const std::string& s = boost::get<std::string>(v[0]["s"]) ;
-	m_Entry->set_placeholder_text((boost::format("%s '%s'") % _("Search Your Music... type here, for example:") % s).str()) ;
+	m_Entry->set_placeholder_text((boost::format("%s \"%s\"") % _("Search Your Music... for example:") % s).str()) ;
     }
 
     void
@@ -1019,6 +1019,7 @@ namespace MPX
     bool
     YoukiController::handle_search_entry_focus_out( GdkEventFocus* G_GNUC_UNUSED )
     {
+	update_entry_placeholder_text() ;
 	return false ;
     }
 
