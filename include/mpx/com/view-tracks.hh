@@ -1918,7 +1918,7 @@ namespace Tracks
 
                             if( event->state & GDK_SHIFT_MASK )
                             {
-                                if( m_ModelExtents.in( origin + step ))
+                                if( m_ModelExtents( origin + step ))
                                 {
                                     m_model->swap( origin, origin+step ) ;
                                     m_selection = boost::make_tuple((*m_model->m_mapping)[origin+step], origin+step) ;
@@ -2246,7 +2246,7 @@ namespace Tracks
 			  cairo
 			, 0
 			, 0
-			, a.get_width()
+			, get_allocated_width()
 			, m_height__headers
 			, MPX::CairoCorners::CORNERS(3)
 		    ) ;
@@ -2265,7 +2265,7 @@ namespace Tracks
 		    b *= 0.92 ;
 		    c2 = Util::color_from_hsb( h, s, b ) ;
 
-		    Cairo::RefPtr<Cairo::LinearGradient> gr = Cairo::LinearGradient::create( a.get_width()/2., 1, a.get_width() / 2., m_height__headers - 2 ) ;
+		    Cairo::RefPtr<Cairo::LinearGradient> gr = Cairo::LinearGradient::create( get_allocated_width()/2., 1, get_allocated_width() / 2., m_height__headers - 2 ) ;
 		    gr->add_color_stop_rgba( 0., c1.get_red(), c1.get_green(), c1.get_blue(), 1. ) ;
 		    gr->add_color_stop_rgba( .35, c1.get_red(), c1.get_green(), c1.get_blue(), 1. ) ;
 		    gr->add_color_stop_rgba( 1., c2.get_red(), c2.get_green(), c2.get_blue(), 1. ) ;
@@ -2279,7 +2279,7 @@ namespace Tracks
 		    cairo->set_line_width( 1. ) ;
 		    cairo->set_source_rgba( c_treelines.get_red(), c_treelines.get_green(), c_treelines.get_blue(), 0.6 ) ;
 		    cairo->move_to( 0, m_height__headers ) ;
-		    cairo->line_to( a.get_width(), m_height__headers ) ;
+		    cairo->line_to( get_allocated_width(), m_height__headers ) ;
 		    cairo->stroke() ;
 		    cairo->restore() ;
 
@@ -2315,7 +2315,7 @@ namespace Tracks
 			GdkRectangle rect ;
 
 			rect.x       = 0 ;
-			rect.width   = a.get_width() ; 
+			rect.width   = get_allocated_width() ; 
 			rect.height  = m_height__row ; 
 
 			Gdk::Cairo::set_source_rgba(cairo, c_rules_hint);
@@ -2355,7 +2355,7 @@ namespace Tracks
 			GdkRectangle rect ;
 
 			rect.x         = 0 ; 
-			rect.width     = a.get_width() ;
+			rect.width     = get_allocated_width() ;
 			rect.height    = m_height__row ; 
 
 			rect.y = m_height__headers + ((d_sel.get() - upper_row)*m_height__row) ;
@@ -2370,7 +2370,7 @@ namespace Tracks
 		    }
 
 		    //// ROW DATA
-		    for( guint n = 0 ; n < row_limit && m_ModelExtents.in( n + upper_row ) ; ++n ) 
+		    for( guint n = 0 ; n < row_limit && m_ModelExtents( n + upper_row ) ; ++n ) 
 		    {
 			xpos = 0 ;
 
@@ -2456,7 +2456,7 @@ namespace Tracks
 			    ) ; 
 			    cairo->line_to(
 				  xpos
-				, a.get_height()
+				, get_allocated_height()
 			    ) ;
 			    cairo->set_dash(
 				  dashes
@@ -2634,13 +2634,13 @@ namespace Tracks
                 {
                     guint up = get_upper_row() ;
 
-                    Interval<guint> i (
+                    Interval<guint> I (
                           Interval<guint>::IN_IN
                         , up 
                         , up + get_page_size()
                     ) ;
             
-                    return i.in( row ) ;
+                    return I( row ) ;
                 }
 
                 void

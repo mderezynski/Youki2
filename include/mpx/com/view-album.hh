@@ -1049,7 +1049,7 @@ namespace Albums
 
                     if( row > 0 )
                     {
-               		r.x = 7 ;
+               		r.x = 4 ;
 
 			if( !album->caching )
 			{
@@ -2425,7 +2425,7 @@ namespace Albums
                     const ThemeColor& c = m_theme->get_color(THEME_COLOR_BASE) ;
                     override_background_color(c, Gtk::STATE_FLAG_NORMAL) ;
 
-                    add_events(Gdk::EventMask(GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_SCROLL_MASK | GDK_SMOOTH_SCROLL_MASK ));
+                    add_events(Gdk::EventMask(GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_SCROLL_MASK ));
 
                     m_SearchEntry = Gtk::manage( new Gtk::Entry ) ;
                     m_SearchEntry->show() ;

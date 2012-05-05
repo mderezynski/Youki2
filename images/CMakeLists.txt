@@ -1,14 +1,10 @@
 INSTALL(
   FILES album-cover-loading.gif
-	disc-multiple.png
         disc.png
         emblem-compilation.png
         emblem-soundtrack.png
         jewelcase_bot.png
         jewelcase_top.png
-        mainwindow-button-maximize.png
-        mainwindow-button-minimize.png
-        mainwindow-button-quit.png
 	mute-small-14x14px.png
 	new.png
         splash.png
