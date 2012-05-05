@@ -1393,7 +1393,7 @@ namespace Albums
 			int y2 = vadj_value() ;
 
 			ViewMetrics.set( 
-			      get_allocated_height() 
+			      get_allocation().get_height() 
 			    , vadj_value()
 			) ;
 
@@ -1595,9 +1595,9 @@ namespace Albums
 				int x, y ;
 
 				get_window()->get_origin( x, y ) ;
-				y += get_allocated_height() ;
+				y += get_allocation().get_height() ;
 
-				m_SearchWindow->set_size_request( get_allocated_width(), -1 ) ;
+				m_SearchWindow->set_size_request( get_allocation().get_width(), -1 ) ;
 				m_SearchWindow->move( x, y ) ;
 				m_SearchWindow->show() ;
 
@@ -1712,6 +1712,8 @@ namespace Albums
                     GdkEventConfigure* event
                 )
                 {
+		    Gtk::DrawingArea::on_configure_event(event) ;
+
                     if( ViewMetrics.RowHeight )
                     {
                         configure_vadj(
@@ -1766,6 +1768,7 @@ namespace Albums
 		    if( offset )
                     {
                         ypos -= offset ;
+			max_d += 1 ;
                     }
 
 		    /* Let's see if we can save some rendering */	
@@ -1779,14 +1782,16 @@ namespace Albums
 			guint d_clip = clip_y1 / ViewMetrics.RowHeight ;
 			ypos += d_clip * ViewMetrics.RowHeight ;
 			d += d_clip ;
-			max_d -= d_clip ;
+			max_d -= (d_clip-1) ;
 		    }
+/*
 		    else
 		    if( clip_y1 == 0 && clip_y2 < ViewMetrics.ViewPortPx.lower() )
 		    {
 			guint d_clip = clip_y2 / ViewMetrics.RowHeight ;
 			max_d = d_clip+1 ;
 		    }
+*/
 
 		    /* Now let's render the actual data */
 
@@ -1808,7 +1813,7 @@ namespace Albums
 
                             r.x         = 0 ; 
                             r.y         = ypos ; 
-                            r.width     = get_allocated_width() ;
+                            r.width     = get_allocation().get_width() ;
                             r.height    = ViewMetrics.RowHeight ;
 
                             m_theme->draw_selection_rectangle(
@@ -1826,7 +1831,7 @@ namespace Albums
 
 			    r.x         = 0 ;
 			    r.y         = ypos ;
-			    r.width     = get_allocated_width() ;
+			    r.width     = get_allocation().get_width() ;
 			    r.height    = ViewMetrics.RowHeight ;
 
 			    RoundedRectangle(cairo, r.x, r.y, r.width, r.height, rounding, c) ;
@@ -1853,11 +1858,9 @@ namespace Albums
 			++ iter ;
 		    }
 
-		    guint d_upper = ViewMetrics.ViewPort.upper() ;
-
 		    guint rend_offset = 0 ;
 
-		    if( d_upper == 0 )
+		    if( d == 0 )
 		    {
 			rend_offset = ViewMetrics.RowHeight - ViewMetrics.ViewPortPx.upper() ;	
 		    }
@@ -1873,7 +1876,7 @@ namespace Albums
 		    ) ; 
 		    cairo->line_to(
 			  78
-			, std::min<int>( vadj_upper()-vadj_value()+ViewMetrics.RowHeight, get_allocated_height()) - rend_offset
+			, std::min<int>( vadj_upper()-vadj_value()+ViewMetrics.RowHeight, get_allocation().get_height()) - rend_offset
 		    ) ;
 		    cairo->set_dash(
 			  dashes
