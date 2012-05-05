@@ -1703,6 +1703,7 @@ namespace Albums
                         property_vadjustment().get_value()->set_upper( upper ) ;
                         property_vadjustment().get_value()->set_page_size( page_size ) ;
                         property_vadjustment().get_value()->set_step_increment( step_increment ) ;
+                        property_vadjustment().get_value()->set_page_increment( step_increment*4 ) ;
                     }
                 }
 
@@ -1716,7 +1717,7 @@ namespace Albums
                         configure_vadj(
                               m_model->m_mapping.size() * ViewMetrics.RowHeight
                             , event->height
-                            , 8
+                            , ViewMetrics.RowHeight
                         ) ;
                     }
 
@@ -1922,7 +1923,7 @@ namespace Albums
 		    configure_vadj(
 			  m_model->size() * ViewMetrics.RowHeight
 			, ViewMetrics.ViewPortPx.size() 
-			, 8
+			, ViewMetrics.RowHeight 
 		    ) ;
 
 		    m_ModelExtents = Interval<guint>(
@@ -1959,7 +1960,7 @@ namespace Albums
 		    configure_vadj(
 			  m_model->m_mapping.size() * ViewMetrics.RowHeight
 			, ViewMetrics.ViewPortPx.size()
-			, 8
+			, ViewMetrics.RowHeight
 		    ) ;
 		}
 
@@ -2415,14 +2416,16 @@ namespace Albums
                 {
 		    property_vadjustment().signal_changed().connect( sigc::mem_fun( *this, &Class::on_vadj_prop_changed )) ;
 
+		    set_double_buffered(true) ;
+                    set_can_focus(true);
+
 		    ModelCount = Minus<int>( 1 ) ;
 
                     m_theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;
                     const ThemeColor& c = m_theme->get_color(THEME_COLOR_BASE) ;
                     override_background_color(c, Gtk::STATE_FLAG_NORMAL) ;
 
-                    set_can_focus(true);
-                    add_events(Gdk::EventMask(GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_EXPOSURE_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_LEAVE_NOTIFY_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_MOTION_MASK | GDK_SCROLL_MASK ));
+                    add_events(Gdk::EventMask(GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_SCROLL_MASK | GDK_SMOOTH_SCROLL_MASK ));
 
                     m_SearchEntry = Gtk::manage( new Gtk::Entry ) ;
                     m_SearchEntry->show() ;

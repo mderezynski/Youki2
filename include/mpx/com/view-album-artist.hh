@@ -605,7 +605,7 @@ namespace Artist
 		    configure_vadj(
 			  (m_model->size() * m_height__row)
 			, m_height__current_viewport
-			, 3
+			, m_height__row * 8
 		    ) ;
 		}
 
@@ -967,6 +967,7 @@ namespace Artist
                         property_vadjustment().get_value()->set_upper( upper ) ;
                         property_vadjustment().get_value()->set_page_size( page_size ) ;
                         property_vadjustment().get_value()->set_step_increment( step_increment ) ;
+                        property_vadjustment().get_value()->set_page_increment( step_increment ) ;
                     }
                 }
 
@@ -988,7 +989,7 @@ namespace Artist
                         configure_vadj(
                               (m_model->size() * m_height__row)
                             , m_height__current_viewport
-                            , 3
+                            , m_height__row * 8
                         ) ;
                     }
 
@@ -1167,7 +1168,7 @@ namespace Artist
                 configure_vadj(
 		     (m_model->size() * m_height__row)
                    , m_height__current_viewport
-                   , 3
+                   , m_height__row * 8
                 ) ;
 
 		m_Model_I = Interval<guint>(

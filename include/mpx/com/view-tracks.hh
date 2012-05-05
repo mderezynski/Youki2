@@ -2158,6 +2158,7 @@ namespace Tracks
                         property_vadjustment().get_value()->set_upper( upper ) ; 
                         property_vadjustment().get_value()->set_page_size( page_size ) ; 
                         property_vadjustment().get_value()->set_step_increment( step_increment ) ; 
+                        property_vadjustment().get_value()->set_page_increment( step_increment*4 ) ;
                     }
                 }
 
@@ -2179,7 +2180,7 @@ namespace Tracks
                     configure_vadj(
                           m_model->size()
                         , get_page_size()
-                        , 1
+                        , 8 
                     ) ;
 
                     int width = event->width - 16 ;
@@ -2540,7 +2541,7 @@ namespace Tracks
                         configure_vadj(
                               m_model->size()
                             , get_page_size()
-                            , 1
+                            , 8
                         ) ;
                     }
 
@@ -3095,7 +3096,7 @@ namespace Tracks
                     configure_vadj(
                           m_model->size()
                         , get_page_size()
-                        , 1
+                        , 8
                     ) ;
 		}
 
