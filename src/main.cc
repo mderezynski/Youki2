@@ -177,6 +177,7 @@ namespace MPX
         mcs->key_register ("mpx", "theme", std::string("default"));
         mcs->key_register ("mpx", "volume", 50);
         mcs->key_register ("mpx", "minimize-on-pause", bool(false)) ; 
+        mcs->key_register ("mpx", "play-on-single-tap", bool(false)) ; 
 
         mcs->domain_register ("audio");
         mcs->key_register ("audio", "sink", std::string (DEFAULT_SINK));

@@ -273,8 +273,8 @@ namespace MPX
 	tv.get_style_context()->lookup_color("selected_fg_color", ctext_sel ) ;
 
 	Util::color_to_hsb(csel, h, s, b ) ;
-	s *= 0.10 ;
-	b = 0.98 ; 
+	s *= 0.15 ;
+	b = 0.95 ; 
 	Gdk::RGBA csel_mod = Util::color_from_hsb( h, s, b ) ;
 	csel_mod.set_alpha(1.) ;
 	colors[THEME_COLOR_BASE_ALTERNATE] = csel_mod ; 

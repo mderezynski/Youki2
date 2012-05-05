@@ -104,7 +104,8 @@ namespace MPX
         Gdk::RGBA cgdk ;
         Gdk::RGBA c_text_dark, c1, c2, c3 ; 
 
-        cgdk.set_rgba( c.get_red(), c.get_green(), c.get_blue(), 1.0);
+        //cgdk.set_rgba( c.get_red(), c.get_green(), c.get_blue(), 1.0);
+        cgdk.set_rgba( 0.45, 0.45, 0.45, 1.0);
 
 	double h, s, b ;
 	
@@ -138,7 +139,7 @@ namespace MPX
             , cgdk.get_red()
             , cgdk.get_green()
             , cgdk.get_blue()
-            , 0.35
+            , 0.3
         ) ;
 
         position_bar_back_gradient->add_color_stop_rgba(
@@ -162,8 +163,9 @@ namespace MPX
             , cgdk.get_red()
             , cgdk.get_green()
             , cgdk.get_blue()
-            , 0.35 
+            , 0.3
         ) ;
+
 
         cairo->set_source( position_bar_back_gradient ) ;
         RoundedRectangle(
@@ -177,7 +179,7 @@ namespace MPX
         cairo->fill_preserve() ;
 
         cairo->save() ;
-        cairo->set_source_rgba( c.get_red() , c.get_green(), c.get_blue(), 0.5 ) ; 
+        cairo->set_source_rgba( c2.get_red() , c2.get_green(), c2.get_blue(), 0.3 ) ; 
         cairo->set_line_width( 0.75 ) ;
         cairo->stroke() ;
         cairo->restore() ;
@@ -288,15 +290,15 @@ namespace MPX
 		    , 0.40
 	    ) ;
 	    c2->move_to(
-		      .5
-		    , .5
+		      1.
+		    , 1. 
 	    ) ;
 	    pango_cairo_show_layout(
 		  c2->cobj()
 		, layout->gobj()
 	    ) ;
 
-	    Util::cairo_image_surface_blur( s, 1.5 ) ;
+	    Util::cairo_image_surface_blur( s, 1. ) ;
 
 	    double alpha = get_alpha_at_time() ;
 

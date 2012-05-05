@@ -398,6 +398,7 @@ namespace Tracks
 
                 RowRowMapping_sp            m_mapping ;
                 RowRowMapping_sp            m_mapping_unfiltered ;
+                RowRowMapping_sp            m_mapping_identity ;
                 FragmentCache_t             m_fragment_cache ;
                 std::string                 m_current_filter, m_current_filter_noaque ;
                 StrV                        m_frags ;
@@ -410,7 +411,6 @@ namespace Tracks
                 IdVector_sp                 m_constraints_artist ;
                 TCVector_sp                 m_constraints_albums ;
                 bool                        m_cache_enabled ;
-//                Gtk::Widget*                m_widget ;
 
                 DataModelFilter( DataModel_sp_t& model )
 
@@ -572,7 +572,7 @@ namespace Tracks
                 virtual guint 
                 size()
                 {
-                    return m_mapping->size();
+                    return m_mapping ? m_mapping->size() : 0 ;
                 }
 
                 virtual const Row_t&
@@ -875,6 +875,19 @@ namespace Tracks
                 }
 
                 virtual void
+                create_identity_mapping(
+                )
+                {
+                    m_mapping_identity = RowRowMapping_sp( new RowRowMapping_t ) ;
+                    m_mapping_identity->reserve( m_realmodel->size() ) ;
+
+                    for( Model_t::iterator i = m_realmodel->begin(); i != m_realmodel->end(); ++i )
+                    {
+			m_mapping_identity->push_back( i ) ;
+                    }
+                }
+
+                virtual void
                 regen_mapping(
 		    boost::optional<guint> scroll_id = boost::optional<guint>()
                 )
@@ -923,14 +936,17 @@ namespace Tracks
                         m_constraints_albums.reset() ;
                         m_constraints_artist.reset() ;
 
-                        new_mapping->reserve( m_realmodel->size() ) ;
-                        new_mapping_unfiltered->reserve( m_realmodel->size() ) ;
+			m_mapping = m_mapping_identity ;
+			m_mapping_unfiltered = m_mapping_identity ;
 
-                        for( Model_t::iterator i = m_realmodel->begin(); i != m_realmodel->end(); ++i )
-                        {
-                            new_mapping->push_back( i ) ;
-                            new_mapping_unfiltered->push_back( i ) ;
-                        }
+			if( id )
+			{
+			    scan_for_upper_bound( id ) ;
+			}
+
+			m_SIGNAL__changed.emit( m_upper_bound, true ) ; 
+
+			return ;
                     }
                     else
                     if( m_frags.empty() && !(m_constraints_ext.empty() && m_constraints_aqe.empty()) )
@@ -1118,6 +1134,7 @@ namespace Tracks
 
                 void
                 regen_mapping_iterative(
+		    boost::optional<guint> scroll_id = boost::optional<guint>()
                 )
                 {
                     using boost::get;
@@ -1129,6 +1146,10 @@ namespace Tracks
 
 		    boost::optional<guint> id ;
 
+		    if( scroll_id )
+		    {
+			id = scroll_id ;
+		    }
 		    if( m_mapping && m_upper_bound < m_mapping->size() )
 		    {
 			id = get<3>(row(m_upper_bound)) ;
@@ -1682,6 +1703,7 @@ namespace Tracks
                 bool                                m_search_active ;
 
 		bool				    m_highlight_matches ;
+		bool				    m_play_on_single_tap ;
 
 		int				    vadj_value_old ;
 
@@ -1735,10 +1757,15 @@ namespace Tracks
                 virtual bool
                 on_focus_in_event(GdkEventFocus* G_GNUC_UNUSED)
                 {
-                    if( !m_Current_Viewport_I(get_upper_row()))
-                    {
-		        select_index( get_upper_row() ) ;
-                    }
+		    if( m_selection )
+		    {
+			guint idx = boost::get<S_INDEX>(m_selection.get()) ;
+
+			if( m_Current_Viewport_I( idx ))
+			    return true ;
+		    }
+
+		    select_index( get_upper_row() ) ;
 
                     return true ;
                 }
@@ -2049,12 +2076,19 @@ namespace Tracks
 
                             return true ;
                         }
+			else
+			if( m_play_on_single_tap )
+			{	
+			    goto play_single_tap ;
+			}
                     }
 		    else
                     if(event->type == GDK_2BUTTON_PRESS && event->button == 1)
                     {
                         if( event->y > m_height__headers )
 			{
+			    play_single_tap:
+
 			    Interval<guint> I (
 				  Interval<guint>::IN_EX
 				, 0
@@ -2234,7 +2268,7 @@ namespace Tracks
 		    dashes[0] = 1. ; 
 	            dashes[1] = 2. ;
 
-                    const Gtk::Allocation& a = get_allocation();
+
 
 		    Gdk::Cairo::set_source_rgba(cairo, c_base);
 		    cairo->paint() ;
@@ -2648,6 +2682,12 @@ namespace Tracks
                     queue_draw ();
                 }
 
+		void
+		set_play_on_single_tap(bool tap)
+		{
+		    m_play_on_single_tap = tap ;
+		}
+
                 void
                 set_model(DataModelFilter_sp_t model)
                 {
@@ -3046,12 +3086,22 @@ namespace Tracks
                     }
                 }
 
+		void
+		on_add_track_to_queue()
+		{	
+		    if( m_selection )
+		    {
+			MPX::Track_sp track = get<4>(*(get<0>(m_selection.get()))) ;
+			m_SIGNAL_track_activated.emit( track, false ) ;
+			clear_selection() ;
+		    }
+		}
+
                 void
                 on_shuffle_tracklist() 
                 {
-			m_model->shuffle() ;
+		    m_model->shuffle() ;
                 }
-
 
             public:
 
@@ -3125,6 +3175,7 @@ namespace Tracks
                         , m_columns__fixed_total_width(0)
                         , m_search_active(false)
                         , m_highlight_matches(false)
+			, m_play_on_single_tap(false)
 			, vadj_value_old(0)
 
                 {
@@ -3218,13 +3269,17 @@ namespace Tracks
                         sigc::mem_fun(*this, &Class::on_show_only_this_artist)) ;
                     m_refActionGroup->add( Gtk::Action::create("ContextRandomShuffle", "Shuffle Tracklist"),
                         sigc::mem_fun(*this, &Class::on_shuffle_tracklist)) ;
-    
+                    m_refActionGroup->add( Gtk::Action::create("ContextAddToQueue", "Add to Queue"),
+                        sigc::mem_fun(*this, &Class::on_add_track_to_queue)) ;
+ 
                     m_refUIManager = Gtk::UIManager::create() ;
                     m_refUIManager->insert_action_group(m_refActionGroup) ;
 
                     std::string ui_info =
                     "<ui>"
                     "   <popup name='PopupMenu'>"
+                    "       <menuitem action='ContextAddToQueue'/>"
+                    "       <separator/>"
                     "       <menuitem action='ContextShowAlbum'/>"
                     "       <menuitem action='ContextShowArtist'/>"
                     "       <separator/>"

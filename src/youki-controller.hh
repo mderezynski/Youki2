@@ -287,6 +287,9 @@ namespace MPX
 	    void
 	    handle_action_underline_matches() ;
 
+	    void
+	    handle_play_track_on_single_tap() ;
+
         protected:
 
 	    void
@@ -436,6 +439,15 @@ namespace MPX
 
         protected:
 
+	    void
+	    preload__artists() ;
+
+	    void
+	    preload__albums() ;
+    
+	    void
+	    preload__tracks() ;
+
             void
             on_library_scan_start() ;
 
@@ -532,6 +544,12 @@ namespace MPX
 	
 	    void
 	    register_played_track() ;
+
+	    void
+	    tracklist_regen_mapping() ;
+
+	    void
+	    tracklist_regen_mapping_iterative() ;
 
         protected:
     

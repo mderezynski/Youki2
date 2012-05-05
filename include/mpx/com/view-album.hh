@@ -95,7 +95,7 @@ namespace View
 {
 namespace Albums
 {
-        const double rounding = 1. ;
+        const double rounding = 2. ;
 
 	enum RTViewMode
 	{
@@ -120,6 +120,7 @@ namespace Albums
             std::string                             label ;
             guint                                   track_count ;
             guint				    track_count_release_total ;
+	    guint				    discs_count ;
             guint				    insert_date ;
             gdouble                                 album_playscore ;
             int					    total_time ;
@@ -212,7 +213,7 @@ namespace Albums
 		typedef std::vector<Model_t::iterator>	ModelIterVec_t ;
 		typedef IndexedList<ModelIterVec_t>	ArtistAlbumMapping_t ;
 		ArtistAlbumMapping_t			m_artist_album_mapping ;
-*/
+ */
 
 		DataModel()
 		: m_upper_bound( 0 )
@@ -224,11 +225,6 @@ namespace Albums
 		: m_upper_bound( 0 )
 		{
 		    m_realmodel = model;
-		}
-
-		virtual void
-		set_max_artist_id( guint id )
-		{
 		}
 
 		virtual void
@@ -266,7 +262,7 @@ namespace Albums
 		virtual guint
 		size ()
 		{
-		    return m_realmodel->size() ;
+		    return m_realmodel ? m_realmodel->size() : 0 ;
 		}
 
 		virtual Album_sp
@@ -296,7 +292,7 @@ namespace Albums
 			  ModelIterVec_t& v = m_artist_album_mapping[artist_id] ;
 			  v.push_back( i ) ;
 		      }
-		    */
+ */
 		}
 
 		virtual void
@@ -323,7 +319,7 @@ namespace Albums
 				ModelIterVec_t& v = m_artist_album_mapping[artist_id] ;
 				v.push_back( i ) ;
 			    }
-			    */
+ */
 		}
 
 		void
@@ -413,7 +409,7 @@ namespace Albums
 
 /*
 	        boost::optional<guint> m_constraint_single_artist ;
-*/
+ */
 
             public:
 
@@ -473,7 +469,7 @@ namespace Albums
 		    m_constraints_albums.reset() ;
 /*
 		    m_constraint_single_artist.reset() ;
-*/
+ */
 		}
 
 		virtual void
@@ -481,7 +477,7 @@ namespace Albums
 		{
 /*
 		    m_constraint_single_artist = id ;
-*/
+ */
 		}
 
                 virtual void
@@ -599,7 +595,7 @@ namespace Albums
 				}
 			}
 			else
-*/
+ */
 			{
 			    for( ; i != m_realmodel->end() ; ++i )
 			    {
@@ -769,7 +765,7 @@ namespace Albums
 			, 2
 			, 64
 			, 64
-			, 4.
+			, rounding 
 		    ) ;
 		    cairo->fill() ;
 
@@ -788,7 +784,7 @@ namespace Albums
 			    , 2
 			    , 64
 			    , 64
-			    , 4.
+			    , rounding 
 			) ;
 			cairo->set_line_width( (!album->type.empty()) ? 1.25 : 0.75 ) ;
 			cairo->stroke() ;
@@ -797,7 +793,7 @@ namespace Albums
 		    // Render release type if not album or unknown
 		    ReleaseType rt = get_rt( album->type ) ;
 
-		    if( !rt_viewmode == RT_VIEW_NONE && !album->type.empty() && rt != RT_OTHER && rt != RT_ALBUM )
+		    if( !rt_viewmode == RT_VIEW_NONE && !album->type.empty() && rt != RT_OTHER /*&& rt != RT_ALBUM*/ )
 		    {
 		    	std::string release_type = rt_string[rt] ;
 
@@ -875,8 +871,9 @@ namespace Albums
 					    , 2   + (album->coverart?46:50)
 					    , 64
 					    , 18  - (album->coverart?0:4)
-					    , 4.
+					    , rounding 
 					) ;
+
 					cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 					cairo->set_source_rgba( 0., 0., 0., 0.60 ) ;
 					cairo->fill() ;
@@ -900,7 +897,7 @@ namespace Albums
 					    , 2  + 1
 					    , 64 - 2
 					    , 64 - 2
-					    , 4.
+					    , rounding 
 					) ;
 					cairo->clip() ;
 
@@ -1009,7 +1006,7 @@ namespace Albums
 			    , 0 
 			    , 0.1
 		    ) ;
-		    RoundedRectangle( c2, 4, 5, w, h, 4. ) ;
+		    RoundedRectangle( c2, 4, 5, w, h, rounding ) ;
 		    c2->fill() ;
 		    Util::cairo_image_surface_blur( s, 1 ) ;
 		    cairo->move_to(
@@ -1049,7 +1046,7 @@ namespace Albums
 
                     if( row > 0 )
                     {
-               		r.x = 4 ;
+               		r.x = 5 ;
 
 			if( !album->caching )
 			{
@@ -1088,7 +1085,7 @@ namespace Albums
 
                     enum { L1, L2, L3, N_LS } ;
 
-                    const int text_size_px[N_LS] = { 15, 15, 12 } ;
+                    const int text_size_px[N_LS] = { 15, 17, 12 } ;
                     const int text_size_pt[N_LS] = {   static_cast<int> ((text_size_px[L1] * 72)
                                                             / Util::screen_get_y_resolution (Gdk::Screen::get_default ()))
                                                      , static_cast<int> ((text_size_px[L2] * 72)
@@ -1116,7 +1113,7 @@ namespace Albums
                     if( row > 0 )
                     {
 			xpos += 74 ; 
-			guint yoff = 1 ;
+			guint yoff = 0 ;
 
 			font_desc[L2] = widget.get_style_context()->get_font() ;
 			font_desc[L2].set_size( text_size_pt[L2] * PANGO_SCALE ) ;
@@ -1136,7 +1133,7 @@ namespace Albums
 
 			layout[L1]->set_width(( m_width - 90 ) * PANGO_SCALE ) ;
 
-			//// ARTIST
+			/* ARTIST */
 			layout[L1]->set_text( album->album_artist ) ;
 			layout[L1]->get_pixel_size( width, height ) ;
 
@@ -1153,7 +1150,7 @@ namespace Albums
 			Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(c1,.8)) ;
 			pango_cairo_show_layout(cairo->cobj(), layout[L1]->gobj()) ;
 
-			//// ALBUM
+			/* ALBUM */
 			yoff = 17 ;
 
 			layout[L2]->set_text( album->album )  ;
@@ -1172,110 +1169,120 @@ namespace Albums
 			Gdk::Cairo::set_source_rgba(cairo, color) ;
 			pango_cairo_show_layout(cairo->cobj(), layout[L2]->gobj()) ;
 
-			//// YEAR + LABEL
-
-			font_desc[L3].set_style( Pango::STYLE_NORMAL ) ;
-			layout[L3]->set_font_description( font_desc[L3] ) ;
-
+			/* YEAR + LABEL */
 			guint sx = xpos + 8 ;
 
 			if( !album->year.empty() )
 			{
-			    layout[L3]->set_text( album->year.substr(0,4) ) ;
+			    font_desc[L3].set_weight( Pango::WEIGHT_BOLD ) ;
+			    layout[L3]->set_font_description( font_desc[L3] ) ;
+
+			    layout[L3]->set_text(album->year.substr(0,4)) ;
 			    layout[L3]->get_pixel_size( width, height ) ;
 
 			    if( selected )
 			    {
-				render_text_shadow( layout[L3], 50, height, sx, r.y+row_height-height-27, cairo) ; 
+				render_text_shadow( layout[L3], 50, height, sx, r.y+row_height-height-10, cairo) ; 
 			    }
 
 			    cairo->move_to(
 				  sx
-				, r.y + row_height - height - 27
+				, r.y + row_height - height - 10
 			    ) ;
 
 			    Gdk::Cairo::set_source_rgba(cairo, c2) ;
 			    pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj()) ;
 
-			    sx += width + 2 ;
+			    sx += width + 3 ;
 			}
 
-			if( m_show_release_label )
+			if( m_show_release_label &&
+			     !album->label.empty() )
 			{
-			    if( !album->label.empty() )
-			    {
-				layout[L3]->set_text( album->label ) ;
-				layout[L3]->get_pixel_size( width, height ) ;
-				layout[L3]->set_width(( m_width - 108) * PANGO_SCALE ) ;
-				layout[L3]->set_ellipsize( Pango::ELLIPSIZE_NONE ) ;
+			    font_desc[L3].set_weight( Pango::WEIGHT_NORMAL ) ;
+			    layout[L3]->set_font_description( font_desc[L3] ) ;
 
-				if( selected )
-				{
-				    render_text_shadow( layout[L3], m_width-108, height, sx, r.y+row_height-height-27, cairo) ; 
-				}
-
-				cairo->move_to(
-				      sx
-				    , r.y + row_height - height - 27
-				) ;
-
-				Gdk::Cairo::set_source_rgba(cairo, c2) ;
-				pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj()) ;
-			    }
-			}
-
-			//// DISC TIME AND TRACK COUNT
-			{
-			    layout[L3]->set_width( -1 ) ;
+			    layout[L3]->set_text( album->label ) ;
+			    layout[L3]->set_width((m_width-sx) * PANGO_SCALE ) ;
 			    layout[L3]->set_ellipsize( Pango::ELLIPSIZE_NONE ) ;
-
-			    guint tm = 0 ;
-
-			    if( album_constraints )
-			    {
-				tm = ((*album_constraints)[album->album_id]).Time ;
-
-				guint hrs = tm / 3600 ;
-				guint min = (tm-hrs*3600) / 60 ; 
-				guint sec = tm % 60 ;
-
-				guint totaltracks = ((*album_constraints)[album->album_id]).Count ;
-
-				if( totaltracks != album->track_count )
-				    layout[L3]->set_markup((boost::format("<b>%u</b> / <b>%u</b> %s") % totaltracks % album->track_count % ((album->track_count>1) ? "Tracks" : "Track")).str()) ;
-				else
-				    layout[L3]->set_markup((boost::format("<b>%u</b> %s") % totaltracks % ((totaltracks>1) ? "Tracks" : "Track")).str()) ;
-			    }
-			    else
-			    {
-				tm = album->total_time ;
-
-				guint hrs = tm / 3600 ;
-				guint min = (tm-hrs*3600) / 60 ; 
-				guint sec = tm % 60 ;
-
-				guint totaltracks = album->track_count ;
-
-				layout[L3]->set_markup((boost::format("<b>%u</b> %s") % totaltracks % ((totaltracks>1) ? "Tracks" : "Track")).str()) ;
-			    }
 
 			    layout[L3]->get_pixel_size( width, height ) ;
 
 			    if( selected )
 			    {
-				render_text_shadow( layout[L3], m_width-108, height, xpos+8, r.y+row_height-height-(m_show_release_label?12:27), cairo) ; 
+				render_text_shadow( layout[L3], m_width-108, height, sx, r.y+row_height-height-10, cairo) ; 
 			    }
 
 			    cairo->move_to(
-				  xpos + 8 
-				, r.y + row_height - height - 12 
+				  sx
+				, r.y + row_height - height - 10
+			    ) ;
+
+			    Gdk::Cairo::set_source_rgba(cairo, c2) ;
+			    pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj()) ;
+			}
+
+			/* DISC TIME AND TRACK COUNT */
+			{
+			    font_desc[L3].set_weight( Pango::WEIGHT_NORMAL ) ;
+			    layout[L3]->set_font_description( font_desc[L3] ) ;
+
+			    layout[L3]->set_width((m_width-108)*PANGO_SCALE) ; 
+			    layout[L3]->set_ellipsize( Pango::ELLIPSIZE_NONE ) ;
+
+			    guint tm = 0 ;
+
+			    std::string out, tmp ;
+
+			    if( album_constraints )
+			    {
+				tm = ((*album_constraints)[album->album_id]).Time ;
+				guint totaltracks = ((*album_constraints)[album->album_id]).Count ;
+
+				if( totaltracks != album->track_count )
+				    tmp = ((boost::format("<b>%u</b> / <b>%u</b> %s") % totaltracks % album->track_count % ((album->track_count>1) ? "Tracks" : "Track")).str()) ;
+				else
+				    tmp = ((boost::format("<b>%u</b> %s") % totaltracks % ((totaltracks>1) ? "Tracks" : "Track")).str()) ;
+			    }
+			    else
+			    {
+				tm = album->total_time ;
+				guint totaltracks = album->track_count ;
+
+				tmp = ((boost::format("<b>%u</b> %s") % totaltracks % ((totaltracks>1) ? "Tracks" : "Track")).str()) ;
+			    }
+
+			    guint hrs = tm / 3600 ;
+			    guint min = (tm-hrs*3600) / 60 ; 
+			    guint sec = tm % 60 ;
+
+			    out = ((boost::format("Playtime <b>%02u:%02u:%02u</b>, ") % hrs % min % sec).str()) ;
+
+			    if( album->discs_count > 1 && !album_constraints )
+			    { 
+				out += ((boost::format("<b>%u</b> Discs, ") % album->discs_count).str()) ;
+			    }
+
+			    out += tmp ;
+
+			    layout[L3]->set_markup( out ) ;
+			    layout[L3]->get_pixel_size( width, height ) ;
+
+			    if( selected )
+			    {
+				render_text_shadow( layout[L3], m_width-108, height, xpos+8, r.y+row_height-height-25, cairo) ; 
+			    }
+
+			    cairo->move_to(
+				  xpos+8 
+				, r.y+row_height-height-25 
 			    ) ;
 
 			    Gdk::Cairo::set_source_rgba(cairo, c2) ;
 			    pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj()) ;
 			}
 		    }
-		    else //// ALBUM COUNT ONLY 
+		    else /* ALBUM COUNT ONLY */
 		    {
 			font_desc[L1] = widget.get_style_context()->get_font() ;
 			font_desc[L1].set_size( text_size_pt[L1] * PANGO_SCALE * 1.5 ) ;
@@ -1573,12 +1580,15 @@ namespace Albums
                                     d = std::min<int>( origin+step, ModelCount(m_model->size())) ;
 
                                     select_index( d ) ;
+				    scroll_to_index( std::min<int>( std::max<int>(0, d+ViewMetrics.ViewPort.size()-(ViewMetrics.ViewPort.size()/2)), ModelCount(m_model->size()))) ;
 
+/*
 				    if( d >= ViewMetrics.ViewPort ) 
 				    {
 					guint pn = (ViewMetrics.ViewPort.upper()+1+(d-ViewMetrics.ViewPort.lower())) * ViewMetrics.RowHeight - ViewMetrics.Excess ; 
 					vadj_value_set( std::min<int>( vadj_upper(), pn )) ; 
 				    }
+*/
                                }
                                else
                                {
@@ -1748,7 +1758,7 @@ namespace Albums
                 {
                     const ThemeColor& c_text		= m_theme->get_color( THEME_COLOR_TEXT ) ;
                     const ThemeColor& c_text_sel	= m_theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
-		    const ThemeColor& c_base		= m_theme->get_color( THEME_COLOR_BASE ) ;
+
                     const ThemeColor& c_base_rules_hint = m_theme->get_color( THEME_COLOR_BASE_ALTERNATE ) ;
 		    const ThemeColor& c_treelines	= m_theme->get_color( THEME_COLOR_TREELINES ) ;
 
@@ -1756,7 +1766,7 @@ namespace Albums
 		    dashes[0] = 1. ; 
 	            dashes[1] = 2. ;
 
-                    const Gtk::Allocation& a = get_allocation() ;
+
 
                     guint d       = ViewMetrics.ViewPort.upper() ; 
                     guint max_d   = Limiter<guint>( Limiter<guint>::ABS_ABS, 0, m_model->size(), ViewMetrics.ViewPort.size() + 2 ) ;
@@ -1791,7 +1801,7 @@ namespace Albums
 			guint d_clip = clip_y2 / ViewMetrics.RowHeight ;
 			max_d = d_clip+1 ;
 		    }
-*/
+ */
 
 		    /* Now let's render the actual data */
 
@@ -1820,12 +1830,12 @@ namespace Albums
                                   cairo
                                 , r
                                 , has_focus()
-				, rounding
+				, 0
 				, c
                             ) ;
                         }
 			else
-			if( di % 2 ) /* Rules hint */
+			if( di % 2 ) /* Rules Hint */
 			{
 			    GdkRectangle r ;
 
@@ -1834,7 +1844,7 @@ namespace Albums
 			    r.width     = get_allocation().get_width() ;
 			    r.height    = ViewMetrics.RowHeight ;
 
-			    RoundedRectangle(cairo, r.x, r.y, r.width, r.height, rounding, c) ;
+			    RoundedRectangle(cairo, r.x, r.y, r.width, r.height, 0, c) ;
 			    Gdk::Cairo::set_source_rgba(cairo, c_base_rules_hint);
 			    cairo->fill() ;
 			}
