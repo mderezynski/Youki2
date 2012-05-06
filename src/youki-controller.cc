@@ -59,14 +59,18 @@ namespace
     "	<menu action='MenuView'>"
     "	    <menuitem action='MenuViewActionAlbumsShowTimeDiscsTracks'/>"
     "	    <menuitem action='MenuViewActionAlbumRTViewModeBottom'/>"
-    "	    <menuitem action='MenuViewActionUnderlineMatches'/>"
+    "	    <separator/>"
     "	    <menuitem action='MenuViewActionFollowPlayingTrack'/>"
+    "	    <separator/>"
+    "	    <menuitem action='MenuViewActionUnderlineMatches'/>"
     "	</menu>"
     "	<menu action='MenuPlaybackControl'>"
-    "	    <menuitem action='MenuPlaybackControlActionStartAlbumAtFavorite'/>"
     "	    <menuitem action='MenuPlaybackControlActionContinueCurrentAlbum'/>"
+    "	    <separator/>"
     "	    <menuitem action='MenuPlaybackControlActionMinimizeOnPause'/>"
     "	    <menuitem action='MenuPlaybackControlActionPlayTrackOnSingleTap'/>"
+    "	    <separator/>"
+    "	    <menuitem action='MenuPlaybackControlActionStartAlbumAtFavorite'/>"
     "	</menu>"
     "</menubar>"
     ""
@@ -337,7 +341,7 @@ namespace MPX
         ) ; 
 
 	update_entry_placeholder_text() ;
-	//Glib::signal_timeout().connect( sigc::bind_return<bool>( sigc::mem_fun( *this, &YoukiController::update_entry_placeholder_text ), true ), 10 * 60000) ;
+	Glib::signal_timeout().connect( sigc::bind_return<bool>( sigc::mem_fun( *this, &YoukiController::update_entry_placeholder_text ), true ), 2 * 60 * 1000) ;
 
         m_Entry->signal_icon_press().connect(
                 sigc::mem_fun(
@@ -467,7 +471,7 @@ namespace MPX
 	m_UI_Manager = Gtk::UIManager::create() ;
 	m_UI_Actions_Main = Gtk::ActionGroup::create("ActionsMain") ;
 
-	m_UI_Actions_Main->add( Gtk::Action::create("MenuFile","_File")) ; 
+	m_UI_Actions_Main->add( Gtk::Action::create("MenuFile","_Youki")) ; 
 	m_UI_Actions_Main->add( Gtk::Action::create("MenuView","_View")) ; 
 	m_UI_Actions_Main->add( Gtk::Action::create("MenuPlaybackControl","_Playback")) ; 
 	m_UI_Actions_Main->add( Gtk::Action::create("MenuAlbumOptions","_Album Options")) ; 
@@ -2008,37 +2012,32 @@ namespace MPX
         private_->FilterModelAlbums->clear_constraints_artist() ;
         private_->FilterModelAlbums->clear_constraints_album() ;
         private_->FilterModelAlbums->clear_all_constraints_quiet() ;
-
         private_->FilterModelArtist->clear_constraints_artist() ;
-
         private_->FilterModelTracks->clear_synthetic_constraints_quiet() ;
-/*        private_->FilterModelTracks->clear_single_artist_constraint_quiet() ; */
-
 
         m_Entry->set_text( "" ) ;
+
+        m_conn1.block() ;
+        m_conn2.block() ;
+        m_conn4.block() ;
 
         if( m_track_current && 
 	    Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("MenuViewActionFollowPlayingTrack"))->get_active())
         {
             const MPX::Track& track = *(m_track_current.get()) ;
             guint id_track = boost::get<guint>(track[ATTRIBUTE_MPX_TRACK_ID].get()) ;
-	    private_->FilterModelTracks->regen_mapping( id_track ) ;
+	    m_ListViewTracks->scroll_to_id( id_track ) ;
         }
 	else
 	{
-	    private_->FilterModelTracks->regen_mapping() ;
-	}	
+	    m_ListViewTracks->scroll_to_index(0) ;
+	}
 
         private_->FilterModelArtist->regen_mapping() ;
-        private_->FilterModelAlbums->regen_mapping() ;
-
-        m_conn1.block() ;
-        m_conn2.block() ;
-        m_conn4.block() ;
-
         m_ListViewArtist->scroll_to_index(0) ;
         m_ListViewArtist->select_index(0) ;
 
+        private_->FilterModelAlbums->regen_mapping() ;
         m_ListViewAlbums->scroll_to_index(0) ;
         m_ListViewAlbums->select_index(0) ;
 
@@ -2046,7 +2045,7 @@ namespace MPX
         m_conn2.unblock() ;
         m_conn4.unblock() ;
 
-	m_Entry->grab_focus() ;
+	m_ListViewArtist->grab_focus() ;
 	//history_save() ;
     }
 

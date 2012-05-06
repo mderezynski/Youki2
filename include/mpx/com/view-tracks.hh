@@ -2488,7 +2488,7 @@ namespace Tracks
 			    ) ; 
 			    cairo->line_to(
 				  xpos
-				, get_allocated_height()
+				, get_allocated_height() + m_height__headers
 			    ) ;
 			    cairo->set_dash(
 				  dashes
@@ -2527,6 +2527,8 @@ namespace Tracks
                             cairo->restore();
 		        }
 		    }
+
+		    get_window()->process_all_updates() ;
 
                     return true;
                 }

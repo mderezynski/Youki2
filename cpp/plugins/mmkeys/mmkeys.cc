@@ -580,18 +580,21 @@ namespace MPX
 
         if( keycodes[0] == key->keycode )
         {
+	    g_message("%s: Play/Pause", G_STRLOC) ;
             ctrl->API_pause_toggle() ;
             return GDK_FILTER_REMOVE ;
         }
         else
         if( keycodes[1] == key->keycode )
         {
+	    g_message("%s: Prev", G_STRLOC) ;
             ctrl->API_prev() ;
             return GDK_FILTER_REMOVE ;
         }
         else    
         if( keycodes[2] == key->keycode )
         {
+	    g_message("%s: Next", G_STRLOC) ;
             ctrl->API_next() ;
             return GDK_FILTER_REMOVE ;
         }
@@ -842,16 +845,19 @@ namespace MPX
 
         if( strcmp( key, "Play" ) == 0 )
         {
+	    g_message("%s: Play/Pause", G_STRLOC) ;
             ctrl->API_pause_toggle() ;
         }
         else
         if( strcmp( key, "Previous" ) == 0 )
         {
+	    g_message("%s: Prev", G_STRLOC) ;
             ctrl->API_prev() ;
         }
         else
         if( strcmp( key, "Next" ) == 0 )
         {
+	    g_message("%s: Next", G_STRLOC) ;
             ctrl->API_next() ;
         }
         else

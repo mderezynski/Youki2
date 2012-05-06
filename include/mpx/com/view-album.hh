@@ -95,7 +95,7 @@ namespace View
 {
 namespace Albums
 {
-        const double rounding = 2. ;
+        const double rounding = 1. ;
 
 	enum RTViewMode
 	{
@@ -684,14 +684,15 @@ namespace Albums
         {
 	    public:
 
-                guint m_width ;
-                guint m_column ;
+                guint	    m_width ;
+                guint	    m_column ;
 		RTViewMode  m_rt_viewmode ;
 		bool	    m_show_release_label ;
 
                 Cairo::RefPtr<Cairo::ImageSurface>  m_image_disc ;
                 Cairo::RefPtr<Cairo::ImageSurface>  m_image_new ;
 		Glib::RefPtr<Gdk::PixbufAnimation>  m_image_album_loading ;
+
 		Glib::RefPtr<Gdk::PixbufAnimationIter> m_image_album_loading_iter ;
 
                 Column(
@@ -701,9 +702,17 @@ namespace Albums
 		    , m_rt_viewmode( RT_VIEW_BOTTOM )
 		    , m_show_release_label( true )
                 {
-                    m_image_disc = Util::cairo_image_surface_from_pixbuf( Gdk::Pixbuf::create_from_file( Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "disc.png" ))->scale_simple(64, 64, Gdk::INTERP_BILINEAR)) ;
-                    m_image_new = Util::cairo_image_surface_from_pixbuf( Gdk::Pixbuf::create_from_file( Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "new.png" ))) ;
-                    m_image_album_loading = Gdk::PixbufAnimation::create_from_file( Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "album-cover-loading.gif" )) ;
+                    m_image_disc = Util::cairo_image_surface_from_pixbuf(
+					    Gdk::Pixbuf::create_from_file(
+						    Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "disc.png" )
+		    )->scale_simple(64, 64, Gdk::INTERP_BILINEAR)) ;
+
+                    m_image_new  = Util::cairo_image_surface_from_pixbuf(
+					    Gdk::Pixbuf::create_from_file(
+						    Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "new.png" ))) ;
+
+                    m_image_album_loading = Gdk::PixbufAnimation::create_from_file(
+						    Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "album-cover-loading.gif" )) ;
 
 		    m_image_album_loading_iter = m_image_album_loading->get_iter( NULL ) ;
                 }
@@ -1048,6 +1057,20 @@ namespace Albums
                     {
                		r.x = 5 ;
 
+			time_t now = time(NULL) ;
+
+			Range<time_t> PastDay (now-(24*60*60), now) ;
+
+			if( PastDay( album->insert_date ))
+			{
+			    int x = m_width - m_image_new->get_width() - 4 ;
+			    int y = r.y + row_height - 22 ;
+
+			    cairo->set_source( m_image_new, x, y ) ; 
+			    cairo->rectangle( x, y, m_image_new->get_width(), m_image_new->get_height() ) ; 
+			    cairo->fill() ;
+			}
+
 			if( !album->caching )
 			{
 			    if( !album->surface_cache ) 
@@ -1085,7 +1108,7 @@ namespace Albums
 
                     enum { L1, L2, L3, N_LS } ;
 
-                    const int text_size_px[N_LS] = { 15, 17, 12 } ;
+                    const int text_size_px[N_LS] = { 15, 15, 12 } ;
                     const int text_size_pt[N_LS] = {   static_cast<int> ((text_size_px[L1] * 72)
                                                             / Util::screen_get_y_resolution (Gdk::Screen::get_default ()))
                                                      , static_cast<int> ((text_size_px[L2] * 72)
@@ -1151,7 +1174,7 @@ namespace Albums
 			pango_cairo_show_layout(cairo->cobj(), layout[L1]->gobj()) ;
 
 			/* ALBUM */
-			yoff = 17 ;
+			yoff = 15 ;
 
 			layout[L2]->set_text( album->album )  ;
 			layout[L2]->get_pixel_size( width, height ) ;
@@ -1162,7 +1185,7 @@ namespace Albums
 			}
 
 			cairo->move_to(
-			      xpos + 8
+			      xpos+8 
 			    , r.y + yoff
 			) ;
 
@@ -1172,36 +1195,24 @@ namespace Albums
 			/* YEAR + LABEL */
 			guint sx = xpos + 8 ;
 
-			if( !album->year.empty() )
+			std::string year_label ;
+
+			if( !album->year.empty())
 			{
-			    font_desc[L3].set_weight( Pango::WEIGHT_BOLD ) ;
-			    layout[L3]->set_font_description( font_desc[L3] ) ;
-
-			    layout[L3]->set_text(album->year.substr(0,4)) ;
-			    layout[L3]->get_pixel_size( width, height ) ;
-
-			    if( selected )
-			    {
-				render_text_shadow( layout[L3], 50, height, sx, r.y+row_height-height-9, cairo) ; 
-			    }
-
-			    cairo->move_to(
-				  sx
-				, r.y + row_height - height - 9
-			    ) ;
-
-			    Gdk::Cairo::set_source_rgba(cairo, c2) ;
-			    pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj()) ;
-
-			    sx += width + 3 ;
+			    year_label += (boost::format("<b>%s </b>") % album->year.substr(0,4)).str() ;
 			}
 
-			if( !album->label.empty() )
+			if( m_show_release_label && !album->label.empty())
+			{
+			    year_label += Glib::Markup::escape_text(album->label) ;
+			}
+
+			if( !year_label.empty() ) 
 			{
 			    font_desc[L3].set_weight( Pango::WEIGHT_NORMAL ) ;
 			    layout[L3]->set_font_description( font_desc[L3] ) ;
 
-			    layout[L3]->set_text( album->label ) ;
+			    layout[L3]->set_markup( year_label ) ;
 			    layout[L3]->set_width((m_width-sx) * PANGO_SCALE ) ;
 			    layout[L3]->set_ellipsize( Pango::ELLIPSIZE_NONE ) ;
 
@@ -1209,92 +1220,87 @@ namespace Albums
 
 			    if( selected )
 			    {
-				render_text_shadow( layout[L3], m_width-108, height, sx, r.y+row_height-height-9, cairo) ; 
+				render_text_shadow( layout[L3], m_width-108, height, sx, r.y+row_height-height-10, cairo) ; 
 			    }
 
 			    cairo->move_to(
 				  sx
-				, r.y + row_height - height - 9 
+				, r.y + row_height - height - 10
 			    ) ;
 
-			    Gdk::Cairo::set_source_rgba(cairo, c2) ;
+			    Gdk::Cairo::set_source_rgba(cairo, /*c2*/Util::make_rgba(c1, 1.)) ;
 			    pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj()) ;
 			}
 
-			/* DISC TIME AND TRACK COUNT */
+			/* Total Time, no. of Discs, no. of Tracks, release Year */ 
 			if( m_show_release_label )
 			{
 			    font_desc[L3].set_weight( Pango::WEIGHT_NORMAL ) ;
 			    layout[L3]->set_font_description( font_desc[L3] ) ;
 
 			    layout[L3]->set_width((m_width-108)*PANGO_SCALE) ; 
-			    layout[L3]->set_ellipsize( Pango::ELLIPSIZE_NONE ) ;
+			    layout[L3]->set_ellipsize( Pango::ELLIPSIZE_END ) ;
 
 			    guint tm = 0 ;
 
-			    std::string out, tmp, timestr ;
+			    std::string out, tmp ;
 
 			    if( album_constraints )
 			    {
 				tm = ((*album_constraints)[album->album_id]).Time ;
+
+				guint min = tm / 60 ;
+				guint sec = tm % 60 ;
+
+				guint min_total = album->total_time / 60 ;
+				guint sec_total = album->total_time % 60 ;
+
 				guint totaltracks = ((*album_constraints)[album->album_id]).Count ;
 
-				if( totaltracks != album->track_count )
-				    tmp = ((boost::format("<b>%u</b> / <b>%u</b> %s") % totaltracks % album->track_count % ((album->track_count>1) ? "Tracks" : "Track")).str()) ;
+				if( tm != album->total_time )
+				    out = ((boost::format("Time<b> %02u:%02u </b>of<b> %02u:%02u </b>::") % min % sec % min_total % sec_total).str()) ;
 				else
-				    tmp = ((boost::format("<b>%u</b> %s") % totaltracks % ((totaltracks>1) ? "Tracks" : "Track")).str()) ;
+				    out = ((boost::format("Time<b> %02u:%02u </b>::") % min % sec).str()) ;
+
+				if( totaltracks != album->track_count )
+				    tmp = ((boost::format("<b> %u </b>%s %s<b> %u </b>") % totaltracks % ((totaltracks>1) ? "Tracks" : "Track") % _("of") % album->track_count).str()) ;
+				else
+				    tmp = ((boost::format("<b> %u </b>%s") % totaltracks % ((totaltracks>1) ? "Tracks" : "Track")).str()) ;
 			    }
 			    else
 			    {
 				tm = album->total_time ;
+
+				guint min = tm / 60 ;
+				guint sec = tm % 60 ;
+
 				guint totaltracks = album->track_count ;
 
-				tmp = ((boost::format("<b>%u</b> %s") % totaltracks % ((totaltracks>1) ? "Tracks" : "Track")).str()) ;
+				out = ((boost::format("Time<b> %02u:%02u </b>::") % min % sec).str()) ;
+				tmp = ((boost::format("<b> %u </b>%s") % totaltracks % ((totaltracks>1) ? "Tracks" : "Track")).str()) ;
 			    }
 
 			    if( album->discs_count > 1 && !album_constraints )
 			    { 
-				out += ((boost::format("<b>%u</b> Discs, ") % album->discs_count).str()) ;
+				out += ((boost::format("<b> %u </b>Discs ::") % album->discs_count).str()) ;
 			    }
 
 			    out += tmp ;
 
-			    /* Playtime */
-			    guint hrs = tm / 3600 ;
-			    guint min = (tm-hrs*3600) / 60 ; 
-			    guint sec = tm % 60 ;
-			    timestr = ((boost::format("<b>%02u:%02u:%02u</b>") % hrs % min % sec).str()) ;
-			    layout[L3]->set_markup( timestr ) ;
-			    layout[L3]->get_pixel_size( width, height ) ;
-			    if( selected )
-			    {
-				render_text_shadow( layout[L3], m_width-108, height, xpos+8+5, r.y+row_height-height-25, cairo) ; 
-			    }
-			    cairo->move_to(
-				  xpos+8+5 
-				, r.y+row_height-height-25 
-			    ) ;
-			    Gdk::Cairo::set_source_rgba(cairo, c2) ;
-			    pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj()) ;
-
-			    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(c2.get_red(),c2.get_green(),c2.get_blue(),0.10)) ;
-			    RoundedRectangle( cairo, xpos+8, r.y+row_height-height-25, 51, 12, 2.) ; 
-			    cairo->fill() ;
-
-			    xpos += width + 14 ;				
-
-			    /* Discs, Tracks */
 			    layout[L3]->set_markup( out ) ;
 			    layout[L3]->get_pixel_size( width, height ) ;
+
 			    if( selected )
 			    {
 				render_text_shadow( layout[L3], m_width-108, height, xpos+8, r.y+row_height-height-25, cairo) ; 
 			    }
+
 			    cairo->move_to(
 				  xpos+8 
 				, r.y+row_height-height-25 
 			    ) ;
-			    Gdk::Cairo::set_source_rgba(cairo, c2) ;
+
+			    Gdk::Cairo::set_source_rgba(cairo, /*c2*/Util::make_rgba(c1,1.)) ;
 			    pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj()) ;
 			}
 		    }
@@ -1596,15 +1602,12 @@ namespace Albums
                                     d = std::min<int>( origin+step, ModelCount(m_model->size())) ;
 
                                     select_index( d ) ;
-				    scroll_to_index( std::min<int>( std::max<int>(0, d+ViewMetrics.ViewPort.size()-(ViewMetrics.ViewPort.size()/2)), ModelCount(m_model->size()))) ;
 
-/*
 				    if( d >= ViewMetrics.ViewPort ) 
 				    {
 					guint pn = (ViewMetrics.ViewPort.upper()+1+(d-ViewMetrics.ViewPort.lower())) * ViewMetrics.RowHeight - ViewMetrics.Excess ; 
 					vadj_value_set( std::min<int>( vadj_upper(), pn )) ; 
 				    }
-*/
                                }
                                else
                                {
@@ -1785,7 +1788,7 @@ namespace Albums
 
 
                     guint d       = ViewMetrics.ViewPort.upper() ; 
-                    guint max_d   = Limiter<guint>( Limiter<guint>::ABS_ABS, 0, m_model->size(), ViewMetrics.ViewPort.size() + 2 ) ;
+                    guint max_d   = std::min<guint>( m_model->size(), ViewMetrics.ViewPort.size() + 1 ) ;
 
                     int ypos   = 0 ;
                     int offset = ViewMetrics.ViewPortPx.upper() - (d*ViewMetrics.RowHeight) ;
@@ -1902,7 +1905,7 @@ namespace Albums
 		    ) ; 
 		    cairo->line_to(
 			  78
-			, std::min<int>( vadj_upper()-vadj_value()+ViewMetrics.RowHeight, get_allocation().get_height()) - rend_offset
+			, ViewMetrics.ViewPortPx.size() 
 		    ) ;
 		    cairo->set_dash(
 			  dashes
@@ -1916,6 +1919,8 @@ namespace Albums
 		    ) ;
 		    cairo->stroke() ;
 		    cairo->restore() ;
+
+		    get_window()->process_all_updates() ;
 
                     return true;
                 }

@@ -165,7 +165,7 @@ namespace MPX
 
         cairo->set_operator( Cairo::OPERATOR_OVER );
         cairo->move_to(
-                10 
+		305 - lw - 4
               , m_logo->get_height() - 8 - lh 
         ) ; 
         cairo->set_source_rgba( 1., 1., 1., 1.);
