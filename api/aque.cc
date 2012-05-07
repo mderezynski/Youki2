@@ -1,9 +1,12 @@
 #include <vector>
 #include <glibmm.h>
+#include <gtkmm.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/join.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/format.hpp>
+#include <boost/thread.hpp>
+#include <boost/ref.hpp>
 #include "mpx/mpx-types.hh"
 #include "mpx/util-string.hh"
 #include "mpx/algorithm/aque.hh"
@@ -99,82 +102,15 @@ namespace
             c.MatchType = type ;
             c.InverseMatch = inverse_match ;
 
-/*
-            if( attribute == "lastfm-artist-toptracks" )
-            {
-                c.TargetAttr = ATTRIBUTE_MB_TRACK_ID ;
-		c.Locality = CONSTRAINT_LOCALITY_NETWORK ;
-
-		c.GetValue = sigc::ptr_fun( &_lastfm_artist_toptracks ) ;
-                c.TargetValue = c.GetValue() ; 
-
-                constraints.push_back(c) ;
-            }
-            else
-*/
             if( attribute == "lastfm-artist-similar" )
             {
                 c.TargetAttr = ATTRIBUTE_MB_ALBUM_ARTIST_ID ;
-		c.Locality = CONSTRAINT_LOCALITY_NETWORK ;
+		c.Processing = CONSTRAINT_PROCESSING_ASYNC ;
 		c.SourceValue = value ;
 		c.GetValue = sigc::ptr_fun( &_lastfm_artist_similar ) ;	
 
                 constraints.push_back(c) ;
             }
-/*
-            else
-            if( attribute == "lastfm-tag-topartists" )
-            {
-                c.TargetAttr = ATTRIBUTE_MB_ALBUM_ARTIST_ID ;
-		c.Locality = CONSTRAINT_LOCALITY_NETWORK ;
-
-                StrS s ;
-
-                try{
-                    URI u ( (boost::format( "http://ws.audioscrobbler.com/2.0/?method=tag.gettopartists&tag=%s&api_key=37cd50ae88b85b764b72bb4fe4041fe4" ) % Glib::Markup::escape_text(value)).str(), true ) ;
-                    MPX::XmlInstance<lfm_tagtopartists::lfm> * Xml = new MPX::XmlInstance<lfm_tagtopartists::lfm>( Glib::ustring( u ) );
-
-                    for( lfm_tagtopartists::topartists::artist_sequence::const_iterator i = Xml->xml().topartists().artist().begin(); i != Xml->xml().topartists().artist().end(); ++i )
-                    {
-                        s.insert( (*i).mbid() ) ;
-                    }
-
-                    delete Xml ;
-                }
-                catch( ... ) {
-                        g_message("Exception!");
-                }
-
-                c.TargetValue = s ;
-                constraints.push_back(c) ;
-            }
-            else
-            if( attribute == "lastfm-tag-topalbums" )
-            {
-                c.TargetAttr = ATTRIBUTE_MB_ALBUM_ID ;
-		c.Locality = CONSTRAINT_LOCALITY_NETWORK ;
-
-                StrS s ;
-
-                try{
-                    URI u ( (boost::format( "http://ws.audioscrobbler.com/2.0/?method=tag.gettopalbums&tag=%s&api_key=37cd50ae88b85b764b72bb4fe4041fe4" ) % value).str(), true ) ;
-                    MPX::XmlInstance<lfm_tagtopalbums::lfm> * Xml = new MPX::XmlInstance<lfm_tagtopalbums::lfm>( Glib::ustring( u ) );
-
-                    for( lfm_tagtopalbums::topalbums::album_sequence::const_iterator i = Xml->xml().topalbums().album().begin(); i != Xml->xml().topalbums().album().end(); ++i )
-                    {
-                        s.insert( (*i).mbid() ) ;
-                    }
-
-                    delete Xml ;
-                }
-                catch( ... ) {
-                        g_message("Exception!");
-                }
-
-                c.TargetValue = s ;
-                constraints.push_back(c) ;
-            }
-*/
             else
             if( attribute == "musicip-puid" )
             {
@@ -329,6 +265,23 @@ namespace AQE
         ;
     }
 
+    struct Worker
+    {
+	Constraint_t& c ;
+	boost::mutex mut ;
+	bool data_ready ;
+
+	Worker( Constraint_t& c_ ) : c(c_), data_ready(false) {}
+
+	void operator()()
+	{
+	    c.TargetValue = c.GetValue( c.SourceValue ) ;
+	    mut.lock() ;
+	    data_ready=true ;
+	    mut.unlock() ;
+	}
+    } ;
+
     void
     process_constraints(
 	  Constraints_t&	    constraints
@@ -338,26 +291,47 @@ namespace AQE
 	{
 	    Constraint_t& c = *i ;
 
-	    if( c.Locality == CONSTRAINT_LOCALITY_NETWORK )
+	    if( c.Processing == CONSTRAINT_PROCESSING_ASYNC )
 	    {
 		if( !c.GetValue )
 		{
-		    g_message("%s: Have constraint with LOCALITY_NETWORK but GetValue slot is empty!", G_STRLOC) ;
+		    g_message("%s: Have constraint with PROCESSING_ASYNC but GetValue slot is empty!", G_STRLOC) ;
 		    continue ;
 		}
 
-		c.TargetValue = c.GetValue( c.SourceValue ) ;
+		Worker W ( c ) ;
+
+		boost::thread workerThread(boost::ref(W)) ;	
+
+		while(true)
+		{
+		    W.mut.lock() ;
+		    if( !W.data_ready )
+		    {
+			while(gtk_events_pending()) gtk_main_iteration() ;
+			g_usleep(100) ;
+		    }
+		    else
+		    { 
+			W.mut.unlock() ;
+			workerThread.join() ;
+			break ;
+		    }
+		    W.mut.unlock() ;
+		}
 	    } 
 	}	
     }
 
-    void
+    bool
     parse_advanced_query(
           Constraints_t&            constraints
         , const std::string&        text
         , StrV&                     non_attr_strings
     )
     {
+	bool async = false ;
+
         enum KeyValEnum
         {
               KEY
@@ -458,7 +432,7 @@ namespace AQE
 
                 if( i == text_utf8.end() )
                 {
-                    return ;
+                    return async ;
                 }
                 else
                 {
@@ -542,6 +516,11 @@ namespace AQE
                         , inverse
                     ) ;
 
+		    if( constraints[constraints.size()-1].Processing == CONSTRAINT_PROCESSING_ASYNC )
+		    {
+			async = true ;
+		    }
+
                     kv[KEY].clear() ;
                     kv[VAL].clear() ;
 
@@ -557,6 +536,8 @@ namespace AQE
                 }
             }
         }
+
+	return async ;
     }
 
     template <typename T>

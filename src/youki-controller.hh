@@ -141,6 +141,9 @@ namespace MPX
 
         public: // PLUGIN API
 
+	    void
+	    show_hide_spinner(bool) ;
+
             void
             queue_next_track(
                 guint
@@ -248,6 +251,8 @@ namespace MPX
             Gtk::VBox                       * m_VBox ;
 
             Gtk::Notebook                   * m_NotebookPlugins ;
+
+	    Gtk::Image			    * m_AQUE_Spinner ;
 
             Covers                          * m_covers ;
             MPX::Play                       * m_play ;

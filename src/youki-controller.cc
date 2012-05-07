@@ -413,10 +413,16 @@ namespace MPX
         HBox_Navi->pack_start( *m_BTN_HISTORY_PREV, false, false, 0 ) ;
         HBox_Navi->pack_start( *m_BTN_HISTORY_FFWD, false, false, 0 ) ;
  */
+	m_AQUE_Spinner = Gtk::manage( new Gtk::Image ) ;
+	Glib::RefPtr<Gdk::PixbufAnimation> anim = Gdk::PixbufAnimation::create_from_file(
+						    Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "album-cover-loading.gif" )) ;
+	m_AQUE_Spinner->set( anim ) ;
+	Glib::signal_timeout().connect( sigc::bind_return(sigc::mem_fun( *m_AQUE_Spinner, &Gtk::Widget::queue_draw), true), 100 ) ;
 
         m_HBox_Entry->pack_start( *m_Label_Search, true, true, 0 ) ;
         m_HBox_Entry->pack_start( *HBox_Navi, false, false, 0 ) ;
         m_HBox_Entry->pack_start( *m_Entry, false, false, 0 ) ;
+        m_HBox_Entry->pack_start( *m_AQUE_Spinner, false, false, 0 ) ;
 
         Gtk::Alignment* Entry_Align = Gtk::manage( new Gtk::Alignment ) ;
         Entry_Align->add( *m_HBox_Entry ) ;
@@ -570,6 +576,18 @@ namespace MPX
 
 	    View::Tracks::DataModel_sp_t m ( new View::Tracks::DataModel ) ;
 	    private_->FilterModelTracks = View::Tracks::DataModelFilter_sp_t (new View::Tracks::DataModelFilter( m )) ;
+
+	    private_->FilterModelTracks->signal_process_begin().connect( sigc::bind( sigc::mem_fun( *this, &YoukiController::show_hide_spinner), true )) ;
+	    private_->FilterModelTracks->signal_process_begin().connect( sigc::bind( sigc::mem_fun( *m_Entry, &Gtk::Widget::set_sensitive), false )) ;
+	    private_->FilterModelTracks->signal_process_begin().connect( sigc::bind( sigc::mem_fun( *m_ListViewArtist, &Gtk::Widget::set_sensitive), false )) ;
+	    private_->FilterModelTracks->signal_process_begin().connect( sigc::bind( sigc::mem_fun( *m_ListViewAlbums, &Gtk::Widget::set_sensitive), false )) ;
+	    private_->FilterModelTracks->signal_process_begin().connect( sigc::bind( sigc::mem_fun( *m_ListViewTracks, &Gtk::Widget::set_sensitive), false )) ;
+
+	    private_->FilterModelTracks->signal_process_end().connect( sigc::bind( sigc::mem_fun( *this, &YoukiController::show_hide_spinner), false )) ;
+	    private_->FilterModelTracks->signal_process_end().connect( sigc::bind( sigc::mem_fun( *m_Entry, &Gtk::Widget::set_sensitive), true )) ;
+	    private_->FilterModelTracks->signal_process_end().connect( sigc::bind( sigc::mem_fun( *m_ListViewArtist, &Gtk::Widget::set_sensitive), true )) ;
+	    private_->FilterModelTracks->signal_process_end().connect( sigc::bind( sigc::mem_fun( *m_ListViewAlbums, &Gtk::Widget::set_sensitive), true )) ;
+	    private_->FilterModelTracks->signal_process_end().connect( sigc::bind( sigc::mem_fun( *m_ListViewTracks, &Gtk::Widget::set_sensitive), true )) ;
 
 	    preload__tracks() ;
 
@@ -763,9 +781,25 @@ namespace MPX
 
         on_style_changed() ;
         m_VBox->show_all() ;
+	m_AQUE_Spinner->hide() ; 
 
 	m_HISTORY_POSITION = m_HISTORY.end() ;
 	//history_save() ;
+    }
+
+    void
+    YoukiController::show_hide_spinner( 
+	  bool show
+    )
+    {
+	if( show )
+	{
+	    m_AQUE_Spinner->show() ;
+	}	
+	else
+	{
+	    m_AQUE_Spinner->hide() ;
+	}
     }
 
     void

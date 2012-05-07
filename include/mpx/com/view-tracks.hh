@@ -115,7 +115,9 @@ namespace Tracks
 
         typedef std::vector<Row_t>			Model_t ;
         typedef boost::shared_ptr<Model_t>		Model_sp_t ;
-        typedef sigc::signal<void, guint, bool>	Signal1 ;
+
+	typedef sigc::signal<void>			Signal0 ;
+        typedef sigc::signal<void, guint, bool>		Signal2 ;
 
         struct Model_t_iterator_equal
         : std::binary_function<Model_t::iterator, Model_t::iterator, bool>
@@ -260,7 +262,7 @@ namespace Tracks
 		typedef std::vector<Model_t::size_type>		ModelIdxVec_t ;
 		typedef std::vector<ModelIdxVec_t>		AlbumTrackMapping_t ;
 
-                Signal1         m_SIGNAL__changed;
+                Signal2         m_SIGNAL__changed;
 
                 Model_sp_t      m_realmodel;
                 guint		m_upper_bound ;
@@ -286,7 +288,7 @@ namespace Tracks
                     m_upper_bound = 0 ;
                 } 
 
-                virtual Signal1&
+                virtual Signal2&
                 signal_changed()
                 {
                     return m_SIGNAL__changed ;
@@ -411,6 +413,21 @@ namespace Tracks
                 IdVector_sp                 m_constraints_artist ;
                 TCVector_sp                 m_constraints_albums ;
                 bool                        m_cache_enabled ;
+
+		Signal0			    m_SIGNAL__process_begin ;
+		Signal0			    m_SIGNAL__process_end ;
+
+                Signal0&
+                signal_process_begin()
+                {
+                    return m_SIGNAL__process_begin ;
+                }
+
+                Signal0&
+                signal_process_end()
+                {
+                    return m_SIGNAL__process_end ;
+                }
 
                 DataModelFilter( DataModel_sp_t& model )
 
@@ -682,8 +699,21 @@ namespace Tracks
                     m_constraints_aqe.clear() ;
                     m_frags.clear() ;
 
-                    AQE::parse_advanced_query( m_constraints_aqe, text, m_frags ) ;
+                    bool async = AQE::parse_advanced_query( m_constraints_aqe, text, m_frags ) ;
+
+		    if( async )    
+		    {
+			m_SIGNAL__process_begin.emit() ;
+			while( gtk_events_pending()) gtk_main_iteration() ;
+		    }
+
 		    AQE::process_constraints( m_constraints_aqe ) ;
+
+		    if( async )    
+		    {
+			m_SIGNAL__process_end.emit() ;
+			while( gtk_events_pending()) gtk_main_iteration() ;
+		    }
 
                     bool aqe_diff = m_constraints_aqe != aqe ;
 

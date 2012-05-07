@@ -26,10 +26,10 @@ namespace AQE
         , MT_FUZZY_EQUAL
     };
 
-    enum ConstraintLocality_t
+    enum ConstraintProcessing_t
     {
-	  CONSTRAINT_LOCALITY_LOCAL
-	, CONSTRAINT_LOCALITY_NETWORK
+	  CONSTRAINT_PROCESSING_SYNC
+	, CONSTRAINT_PROCESSING_ASYNC
     } ;
 
     struct Constraint_t
@@ -38,7 +38,7 @@ namespace AQE
         MPX::OVariant           TargetValue ;
         MatchType_t             MatchType ;
         bool                    InverseMatch ;
-	ConstraintLocality_t	Locality ;
+	ConstraintProcessing_t	Processing ;
 	std::string		SourceValue ;
 
 	typedef sigc::slot<MPX::OVariant, const std::string&> SlotValueGet_t ;
@@ -47,7 +47,7 @@ namespace AQE
 
         Constraint_t ()
         : InverseMatch( false )
-	, Locality( CONSTRAINT_LOCALITY_LOCAL )
+	, Processing( CONSTRAINT_PROCESSING_SYNC )
         {
         }
     };
@@ -62,7 +62,7 @@ namespace AQE
 	  Constraints_t&
     ) ;
 
-    void
+    bool /* if 'true', it means there is at least one ASYNC constraint present */
     parse_advanced_query(
           Constraints_t&        /*OUT: constraints*/
         , const std::string&    /*IN:  text*/
