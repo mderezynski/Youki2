@@ -807,6 +807,7 @@ namespace MPX
     YoukiController::update_entry_placeholder_text()
     {
 	SQL::RowV v ;
+	guint tries = 0 ;
 
 	std::tr1::mt19937 eng;
 	eng.seed(time(NULL)) ;
@@ -835,6 +836,8 @@ namespace MPX
         using boost::algorithm::is_any_of;
         using boost::algorithm::find_first;
 
+	const std::string& s = boost::get<std::string>(v[0]["s"]) ;
+
         StrV m;
         split( m, s, is_any_of(" "));
 
@@ -851,7 +854,6 @@ namespace MPX
 	}
 	else
 	{
-	    const std::string& s = boost::get<std::string>(v[0]["s"]) ;
 	    m_Entry->set_placeholder_text((boost::format("%s \"%s\"") % _("Search Your Music... for example:") % s).str()) ;
 	}
     }
