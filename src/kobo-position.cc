@@ -25,7 +25,7 @@ namespace
         return r ;
     }
 
-    const double rounding = 3. ;
+    const double rounding = 2. ;
 }
 
 namespace MPX
@@ -176,7 +176,7 @@ namespace MPX
             , w
             , 17
             , rounding 
-	    , MPX::CairoCorners::CORNERS(4)
+	    , MPX::CairoCorners::CORNERS(5)
         ) ;
         cairo->fill_preserve() ;
 	cairo->clip() ;
@@ -290,11 +290,11 @@ namespace MPX
 		, layout->gobj()
 	    ) ;
 
-	    Util::cairo_image_surface_blur( s, 2. ) ;
+	    Util::cairo_image_surface_blur( s, 1. ) ;
 
 	    double alpha = get_alpha_at_time() ;
 
-	    // Render text, split in 2 parts if necessary
+	    // Render Position; clip and split for bar overlay 
 	    if( r.width-6 < (ri.get_width() / PANGO_SCALE)) 
 	    {
 		GdkRectangle r1 ;
@@ -323,7 +323,7 @@ namespace MPX
 		      ct.get_red()
 		    , ct.get_green()
 		    , ct.get_blue()
-		    , 0.95 * alpha 
+		    , 1. * alpha 
 		) ;
 		pango_cairo_show_layout( cairo->cobj(), layout->gobj() ) ;
 
@@ -339,7 +339,7 @@ namespace MPX
 		      c_text_dark.get_red()
 		    , c_text_dark.get_green()
 		    , c_text_dark.get_blue()
-		    , 0.95 * get_alpha_at_time()
+		    , 1. * get_alpha_at_time()
 		) ;
 		pango_cairo_show_layout( cairo->cobj(), layout->gobj() ) ;
 		cairo->reset_clip() ;
@@ -355,8 +355,8 @@ namespace MPX
 
 		if( alpha )
 		{
-		    cairo->set_source( s, r1.x, r1.y ) ;
-		    cairo->rectangle( r1.x, r1.y, ri.get_width()+1, 17 ) ;
+		    cairo->set_source( s, r1.x+1, r1.y+1 ) ;
+		    cairo->rectangle( r1.x+1, r1.y+1, ri.get_width()+1, 15 ) ;
 		    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 		    cairo->fill() ;
 		}
@@ -369,13 +369,13 @@ namespace MPX
 		      ct.get_red()
 		    , ct.get_green()
 		    , ct.get_blue()
-		    , 0.95 * alpha
+		    , 1. * alpha
 		) ;
 		pango_cairo_show_layout( cairo->cobj(), layout->gobj() ) ;
 	    }
 	}
 
-	if( m_duration ) // duration
+	if( m_duration )
 	{
 	    layout->set_markup(
 		(boost::format("<b>%02d</b>:<b>%02d</b>") % ( m_duration / 60 ) % ( m_duration % 60 )).str()

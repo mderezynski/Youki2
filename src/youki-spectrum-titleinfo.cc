@@ -14,7 +14,7 @@
 
 namespace
 {
-    const double rounding = 3. ; 
+    const double rounding = 6. ; 
 }
 
 namespace MPX
@@ -158,7 +158,7 @@ namespace MPX
 		    , 4 
 		    , width + 7
 		    , height + 4 
-		    , 2. 
+		    , rounding
 		    , MPX::CairoCorners::CORNERS(6)
 		) ;
 
@@ -181,20 +181,6 @@ namespace MPX
 	
 		cairo->restore() ;
 	}
-
-/*
-        GdkRectangle r ;
-        r.x = 1 ;
-        r.y = 3 ;
-        r.width = a.get_width() - 2 - 2 ;
-        r.height = a.get_height() - 2 - 4 ;
-
-	RoundedRectangle( cairo, r.x, r.y, r.width, r.height, rounding, MPX::CairoCorners::CORNERS(3) ) ;
-        cairo->set_operator( Cairo::OPERATOR_ATOP ) ;
-	cairo->set_source_rgba( 0.25, 0.25, 0.25, 1. ) ; 
-	cairo->set_line_width( 0.25 ) ; 
-	cairo->stroke() ;
-*/
 
 	return true ;
     }
@@ -404,7 +390,7 @@ namespace MPX
 	    , r.y 
 	    , r.width 
 	    , r.height 
-	    , 3. 
+	    , rounding 
 	    , MPX::CairoCorners::CORNERS(1)
 	) ;
 

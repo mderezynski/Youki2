@@ -61,7 +61,7 @@ namespace MPX
 
                 m_ConfigFileParser = new XercesDOMParser;
                 m_ConfigFileParser->setValidationScheme( XercesDOMParser::Val_Never );
-                m_ConfigFileParser->setDoNamespaces( true );
+                m_ConfigFileParser->setDoNamespaces( false );
                 m_ConfigFileParser->setDoSchema( false );
                 m_ConfigFileParser->setLoadExternalDTD( false );
 
@@ -72,7 +72,7 @@ namespace MPX
                   DOMDocument* xmlDoc = m_ConfigFileParser->getDocument();
                   if( !xmlDoc ) throw(std::runtime_error("No Document!"));
 
-                  // Get the top-level element: NAme is "root". No attributes for "root"
+                  // Get the top-level element: Name is "root". No attributes for "root"
 
                   DOMElement* elementRoot = xmlDoc->getDocumentElement();
                   if( !elementRoot ) throw(std::runtime_error("No Root element found!"));

@@ -4,6 +4,7 @@
 #include <cmath>
 #include "kobo-volume.hh"
 #include "mpx/widgets/cairo-extensions.hh"
+#include "mpx/widgets/cairo-blur.hh"
 #include "mpx/util-graphics.hh"
 
 #include "mpx/i-youki-theme-engine.hh"
@@ -11,8 +12,26 @@
 
 namespace
 {
+    template <typename T>
+    struct PangoScaleAdaptor
+    {
+	T operator()( const T& v )
+	{
+	    return v / PANGO_SCALE ;
+	}
+    } ;
+
+    template <typename T>
+    struct Center
+    {
+	T operator()( const T& a, const T& b )
+	{
+	    return (a-b) / 2 ;
+	}
+    } ;
+
     const int pad = 1 ;
-    const double rounding = 3. ;
+    const double rounding = 2. ;
 
     Gdk::RGBA
     get_color_at_pos(
@@ -114,7 +133,7 @@ namespace MPX
             , w 
             , 17
             , rounding 
-	    , MPX::CairoCorners::CORNERS(8)
+	    , MPX::CairoCorners::CORNERS(10)
         ) ;
 
         Cairo::RefPtr<Cairo::LinearGradient> position_bar_back_gradient = Cairo::LinearGradient::create(
@@ -164,30 +183,10 @@ namespace MPX
             , w
             , 17
             , rounding 
-	    , MPX::CairoCorners::CORNERS(8)
+	    , MPX::CairoCorners::CORNERS(10)
         ) ;
         cairo->fill_preserve () ;
         cairo->clip() ;
-
-/*
-        RoundedRectangle(
-              cairo
-            , -4 
-            , 1 
-            , w+4
-            , 17
-            , rounding 
-	    , MPX::CairoCorners::CORNERS(8)
-        ) ;
-	cairo->set_source_rgba(
-	      c2.get_red()
-	    , c2.get_green()
-	    , c2.get_blue()
-	    , 0.3 
-	) ;
-        cairo->set_line_width( 0.5 ) ; 
-        cairo->stroke() ;
-*/
 
 	// VOLUME
 	r.x         = 1 ; 
@@ -234,33 +233,64 @@ namespace MPX
 	}
 	else
 	{
+	    Pango::Rectangle rl, ri ;
 	    const int text_size_px = 14 ;
 	    const int text_size_pt = static_cast<int> ((text_size_px * 72) / Util::screen_get_y_resolution (Gdk::Screen::get_default ())) ;
+
+	    PangoScaleAdaptor<double> PSA ;
+	    Center<double> C ;
+
+	    Glib::RefPtr<Pango::Layout> layout = Glib::wrap(pango_cairo_create_layout(cairo->cobj())) ;
 	    Pango::FontDescription font_desc = get_style_context()->get_font() ; 
+
 	    font_desc.set_size(text_size_pt * PANGO_SCALE) ;
 	    font_desc.set_weight(Pango::WEIGHT_BOLD) ;
-	    Glib::RefPtr<Pango::Layout> layout = Glib::wrap (pango_cairo_create_layout (cairo->cobj ())) ;
+
 	    layout->set_font_description(font_desc) ;
-
-	    layout->set_text(
-		(boost::format("%d") % m_volume).str()
-	    ) ;
-
-	    Pango::Rectangle rl, ri ;
-
+	    layout->set_text((boost::format("%d") % m_volume).str()) ;
 	    layout->get_extents( rl, ri ) ;
 
-	    if( r.width < ((ri.get_width() / PANGO_SCALE)+6)) 
+            // Render Text Shadow
+            Cairo::RefPtr<Cairo::ImageSurface> s = Cairo::ImageSurface::create( Cairo::FORMAT_A8, PSA(ri.get_width()), PSA(ri.get_height())) ;
+            Cairo::RefPtr<Cairo::Context> c2 = Cairo::Context::create( s ) ;
+
+            c2->set_operator( Cairo::OPERATOR_CLEAR ) ;
+            c2->paint() ;
+
+            c2->set_operator( Cairo::OPERATOR_OVER ) ;
+            c2->set_source_rgba(
+                      0.
+                    , 0.
+                    , 0.
+                    , 0.65
+            ) ;
+            c2->move_to(
+                      0
+                    , 0
+            ) ;
+            pango_cairo_show_layout(
+                  c2->cobj()
+                , layout->gobj()
+            ) ;
+
+            Util::cairo_image_surface_blur( s, 1. ) ;
+
+	    if( r.width < (PSA(ri.get_width())+6)) 
 	    {
 		GdkRectangle r1 ;
 
-		r1.width  = ri.get_width() / PANGO_SCALE ;
-		r1.height = ri.get_height() / PANGO_SCALE ;
-		r1.y      = (a.get_height() - r1.height) / 2 ; 
+		r1.width  = PSA(ri.get_width()) ;
+		r1.height = PSA(ri.get_height()) ;
+		r1.y      = C(a.get_height(), r1.height) ; 
 		r1.x      = 3 ; 
 
 		cairo->rectangle( 1, 1, w * percent, 17 ) ; 
 		cairo->clip() ;
+
+		cairo->set_source( s, r1.x+1, r1.y+1 ) ;
+		cairo->rectangle( r1.x+1, r1.y+1, r1.width, 16 ) ;
+		cairo->set_operator( Cairo::OPERATOR_OVER ) ;
+		cairo->fill() ;
 
 		cairo->set_source_rgba(
 		      ct.get_red()
@@ -268,17 +298,15 @@ namespace MPX
 		    , ct.get_blue()
 		    , 0.95
 		) ;
-
 		cairo->move_to(
 		      r1.x                  
 		    , r1.y 
 		) ;
-
 		pango_cairo_show_layout( cairo->cobj(), layout->gobj() ) ;
 
 		cairo->reset_clip() ;
 
-		cairo->rectangle( 1+w*percent, 1, 1+(2*(ri.get_width()/PANGO_SCALE)), 17 ) ; 
+		cairo->rectangle( 1+w*percent, 1, 1+(2*(r1.width)), 17 ) ; 
 		cairo->clip() ;
 
 		cairo->set_source_rgba(
@@ -287,13 +315,11 @@ namespace MPX
 		    , c1.get_blue()
 		    , 0.95
 		) ;
-
 		cairo->move_to(
 		      r1.x                  
 		    , r1.y 
 		) ;
-
-		pango_cairo_show_layout( cairo->cobj(), layout->gobj() ) ;
+		pango_cairo_show_layout(cairo->cobj(), layout->gobj()) ;
 
 		cairo->reset_clip() ;
 	    }
@@ -301,10 +327,15 @@ namespace MPX
 	    {
 		GdkRectangle r1 ;
 
-		r1.width  = ri.get_width() / PANGO_SCALE ;
-		r1.height = ri.get_height() / PANGO_SCALE ;
-		r1.y      = (a.get_height() - r1.height) / 2 ; 
+		r1.width  = PSA(ri.get_width()) ; 
+		r1.height = PSA(ri.get_height()) ; 
+		r1.y      = C(a.get_height(), r1.height) ; 
 		r1.x      = r.width - r1.width - 2 ;
+
+		cairo->set_source( s, r1.x+1, r1.y+1 ) ;
+		cairo->rectangle( r1.x+1, r1.y+1, r1.width, 16 ) ;
+		cairo->set_operator( Cairo::OPERATOR_OVER ) ;
+		cairo->fill() ;
 
 		cairo->move_to(
 		      r1.x                  
@@ -317,7 +348,7 @@ namespace MPX
 		    , ct.get_blue()
 		    , 0.95
 		) ;
-		pango_cairo_show_layout( cairo->cobj(), layout->gobj() ) ;
+		pango_cairo_show_layout(cairo->cobj(),layout->gobj()) ;
 	    }
 	}
 
@@ -355,14 +386,6 @@ namespace MPX
 	    if( new_volume != m_volume )
 	    {
 		m_volume = new_volume ; 
-
-/*
-		m_posv.push_back( m_volume ) ;
-		m_timer.stop() ;
-		m_timer.reset() ;
-		m_timer.start() ;
-*/
-
 		m_SIGNAL_set_volume.emit( m_volume ) ;
 		queue_draw () ;
 	    }
@@ -419,7 +442,7 @@ namespace MPX
 
             if( event->is_hint )
             {
-                gdk_window_get_pointer( event->window, &x_orig, &y_orig, &state ) ;
+                gdk_window_get_device_position( event->window, event->device, &x_orig, &y_orig, &state ) ;
             }
             else
             {

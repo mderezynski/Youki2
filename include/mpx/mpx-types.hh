@@ -122,9 +122,9 @@ namespace MPX
       , N_ATTRIBUTES_INT
     };
 
-    typedef std::set<std::string>                               StrS ;
-    typedef boost::variant<unsigned int, gdouble, std::string, StrS>  Variant ;
-    typedef boost::optional<Variant>                            OVariant ;
+    typedef std::set<std::string>				StrS ;
+    typedef boost::variant<guint, gdouble, std::string, StrS>	Variant ;
+    typedef boost::optional<Variant>				OVariant ;
 
     struct TracksConstraint
     {

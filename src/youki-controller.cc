@@ -353,7 +353,7 @@ namespace MPX
             sigc::mem_fun(
                   *this
                 , &YoukiController::on_entry_key_press_event
-        )) ;
+        ), true ) ;
 
         m_Entry->signal_activate().connect(
             sigc::mem_fun(
@@ -426,7 +426,7 @@ namespace MPX
 
         Gtk::Alignment* Controls_Align = Gtk::manage( new Gtk::Alignment ) ;
         m_HBox_Controls = Gtk::manage( new Gtk::HBox ) ;
-        m_HBox_Controls->set_spacing( 2 ) ;
+        m_HBox_Controls->set_spacing( 0 ) ;
 	Controls_Align->add( *m_HBox_Controls ) ;
 	Controls_Align->set_padding( 0, 0, 0, 2 ) ;
 
@@ -1961,6 +1961,12 @@ namespace MPX
                 }
 
                 break ;
+            }
+
+            case GDK_KEY_Escape:
+            {
+		on_entry_clear_clicked() ;
+		return true ;
             }
 
             case GDK_KEY_w:

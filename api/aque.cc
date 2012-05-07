@@ -18,6 +18,68 @@
 
 namespace
 {
+    MPX::OVariant
+    _lastfm_artist_toptracks(
+	  const std::string& value
+    )
+    {
+	MPX::OVariant v ;
+	MPX::StrS s ;
+
+	try{
+	    MPX::URI u ((boost::format( "http://ws.audioscrobbler.com/2.0/?method=artist.gettoptracks&artist=%s&api_key=37cd50ae88b85b764b72bb4fe4041fe4" ) % Glib::Markup::escape_text(value)).str(), true ) ;
+
+	    MPX::XmlInstance<lfm_artisttoptracks::lfm> *Xml = new MPX::XmlInstance<lfm_artisttoptracks::lfm>(Glib::ustring(u)) ;
+
+	    for( lfm_artisttoptracks::toptracks::track_sequence::const_iterator
+
+		    i  = Xml->xml().toptracks().track().begin() ; 
+		    i != Xml->xml().toptracks().track().end() ;
+
+		    ++i
+	    )
+	    {
+		s.insert((*i).mbid()) ;
+	    }
+
+	    delete Xml ;
+	}
+	catch(...) {
+	}
+
+	v = s ;
+	return v ;
+    }
+
+    MPX::OVariant
+    _lastfm_artist_similar(
+	  const std::string& value
+    )
+    {
+	MPX::OVariant v ;
+	MPX::StrS s ;
+
+	try{
+	    MPX::URI u ((boost::format( "http://ws.audioscrobbler.com/2.0/?method=artist.getsimilar&artist=%s&api_key=37cd50ae88b85b764b72bb4fe4041fe4" ) % Glib::Markup::escape_text(value)).str(), true ) ;
+	    MPX::XmlInstance<lfm_similarartists::lfm> * Xml = new MPX::XmlInstance<lfm_similarartists::lfm>( Glib::ustring( u ) );
+
+	    for( lfm_similarartists::similarartists::artist_sequence::const_iterator i = Xml->xml().similarartists().artist().begin(); i != Xml->xml().similarartists().artist().end(); ++i )
+	    {
+		s.insert( (*i).mbid() ) ;
+	    }
+
+	    delete Xml ;
+	}
+	catch(...) {
+	}
+
+	v = s ;
+	return v ;
+    }
+}
+
+namespace
+{
     using namespace MPX ;
     using namespace MPX::AQE ;
 
@@ -33,65 +95,43 @@ namespace
         if( type != MT_UNDEFINED )
         {
             Constraint_t c ;
+
             c.MatchType = type ;
             c.InverseMatch = inverse_match ;
 
+/*
             if( attribute == "lastfm-artist-toptracks" )
             {
-                StrS s ;
                 c.TargetAttr = ATTRIBUTE_MB_TRACK_ID ;
+		c.Locality = CONSTRAINT_LOCALITY_NETWORK ;
 
-                try{
-                    URI u ( (boost::format( "http://ws.audioscrobbler.com/2.0/?method=artist.gettoptracks&artist=%s&api_key=37cd50ae88b85b764b72bb4fe4041fe4" ) % value).str(), true ) ;
+		c.GetValue = sigc::ptr_fun( &_lastfm_artist_toptracks ) ;
+                c.TargetValue = c.GetValue() ; 
 
-                    MPX::XmlInstance<lfm_artisttoptracks::lfm> * Xml = new MPX::XmlInstance<lfm_artisttoptracks::lfm>( Glib::ustring( u ) );
-
-                    for( lfm_artisttoptracks::toptracks::track_sequence::const_iterator i = Xml->xml().toptracks().track().begin(); i != Xml->xml().toptracks().track().end(); ++i )
-                    {
-                        s.insert( (*i).mbid() ) ;
-                    }
-
-                    delete Xml ;
-                }
-                catch( ... ) {
-                        g_message("Exception!");
-                }
-
-                c.TargetValue = s ;
                 constraints.push_back(c) ;
             }
             else
+*/
             if( attribute == "lastfm-artist-similar" )
             {
-                StrS s ;
                 c.TargetAttr = ATTRIBUTE_MB_ALBUM_ARTIST_ID ;
+		c.Locality = CONSTRAINT_LOCALITY_NETWORK ;
+		c.SourceValue = value ;
+		c.GetValue = sigc::ptr_fun( &_lastfm_artist_similar ) ;	
 
-                try{
-                    URI u ( (boost::format( "http://ws.audioscrobbler.com/2.0/?method=artist.getsimilar&artist=%s&api_key=37cd50ae88b85b764b72bb4fe4041fe4" ) % value).str(), true ) ;
-                    MPX::XmlInstance<lfm_similarartists::lfm> * Xml = new MPX::XmlInstance<lfm_similarartists::lfm>( Glib::ustring( u ) );
-
-                    for( lfm_similarartists::similarartists::artist_sequence::const_iterator i = Xml->xml().similarartists().artist().begin(); i != Xml->xml().similarartists().artist().end(); ++i )
-                    {
-                        s.insert( (*i).mbid() ) ;
-                    }
-
-                    delete Xml ;
-                }
-                catch( ... ) {
-                        g_message("Exception!");
-                }
-
-                c.TargetValue = s ;
                 constraints.push_back(c) ;
             }
+/*
             else
             if( attribute == "lastfm-tag-topartists" )
             {
-                StrS s ;
                 c.TargetAttr = ATTRIBUTE_MB_ALBUM_ARTIST_ID ;
+		c.Locality = CONSTRAINT_LOCALITY_NETWORK ;
+
+                StrS s ;
 
                 try{
-                    URI u ( (boost::format( "http://ws.audioscrobbler.com/2.0/?method=tag.gettopartists&tag=%s&api_key=37cd50ae88b85b764b72bb4fe4041fe4" ) % value).str(), true ) ;
+                    URI u ( (boost::format( "http://ws.audioscrobbler.com/2.0/?method=tag.gettopartists&tag=%s&api_key=37cd50ae88b85b764b72bb4fe4041fe4" ) % Glib::Markup::escape_text(value)).str(), true ) ;
                     MPX::XmlInstance<lfm_tagtopartists::lfm> * Xml = new MPX::XmlInstance<lfm_tagtopartists::lfm>( Glib::ustring( u ) );
 
                     for( lfm_tagtopartists::topartists::artist_sequence::const_iterator i = Xml->xml().topartists().artist().begin(); i != Xml->xml().topartists().artist().end(); ++i )
@@ -111,8 +151,10 @@ namespace
             else
             if( attribute == "lastfm-tag-topalbums" )
             {
-                StrS s ;
                 c.TargetAttr = ATTRIBUTE_MB_ALBUM_ID ;
+		c.Locality = CONSTRAINT_LOCALITY_NETWORK ;
+
+                StrS s ;
 
                 try{
                     URI u ( (boost::format( "http://ws.audioscrobbler.com/2.0/?method=tag.gettopalbums&tag=%s&api_key=37cd50ae88b85b764b72bb4fe4041fe4" ) % value).str(), true ) ;
@@ -132,11 +174,13 @@ namespace
                 c.TargetValue = s ;
                 constraints.push_back(c) ;
             }
+*/
             else
             if( attribute == "musicip-puid" )
             {
                 c.TargetAttr = ATTRIBUTE_MUSICIP_PUID ;
                 c.TargetValue = value ;
+
                 constraints.push_back(c) ;
             }
             else
@@ -144,6 +188,7 @@ namespace
             {
                 c.TargetAttr = ATTRIBUTE_MB_ALBUM_ID ;
                 c.TargetValue = value ;
+
                 constraints.push_back(c) ;
             }
             else
@@ -151,6 +196,7 @@ namespace
             {
                 c.TargetAttr = ATTRIBUTE_MB_ALBUM_ARTIST_ID ;
                 c.TargetValue = value ;
+
                 constraints.push_back(c) ;
             }
             else
@@ -158,6 +204,7 @@ namespace
             {
                 c.TargetAttr = ATTRIBUTE_MB_ARTIST_ID ;
                 c.TargetValue = value ;
+
                 constraints.push_back(c) ;
             }
             else
@@ -165,6 +212,7 @@ namespace
             {
                 c.TargetAttr = ATTRIBUTE_MB_RELEASE_COUNTRY ;
                 c.TargetValue = value ;
+
                 constraints.push_back(c) ;
             }
             else
@@ -172,6 +220,7 @@ namespace
             {
                 c.TargetAttr = ATTRIBUTE_MB_RELEASE_TYPE ;
                 c.TargetValue = value ;
+
                 constraints.push_back(c) ;
             }
             else
@@ -181,6 +230,7 @@ namespace
                         c.TargetValue = (unsigned int)(boost::lexical_cast<int>(value)) ;
                         c.TargetAttr = ATTRIBUTE_BITRATE ;
                         c.MatchType = type ;
+
                         constraints.push_back(c) ;
                 } catch( boost::bad_lexical_cast ) {
                 }
@@ -192,6 +242,7 @@ namespace
                         c.TargetValue = (unsigned int)(boost::lexical_cast<int>(value)) ;
                         c.TargetAttr = ATTRIBUTE_DATE ;
                         c.MatchType = type ;
+
                         constraints.push_back(c) ;
                 } catch( boost::bad_lexical_cast ) {
                 }
@@ -201,6 +252,7 @@ namespace
             {
                 c.TargetValue = (unsigned int)(boost::lexical_cast<int>(value)) ;
                 c.TargetAttr = ATTRIBUTE_QUALITY ;
+
                 constraints.push_back(c) ;
             }
             else
@@ -275,6 +327,28 @@ namespace AQE
                     &&
                 (a.InverseMatch < b.InverseMatch)
         ;
+    }
+
+    void
+    process_constraints(
+	  Constraints_t&	    constraints
+    )
+    {
+	for( Constraints_t::iterator i = constraints.begin() ; i != constraints.end() ; ++i )
+	{
+	    Constraint_t& c = *i ;
+
+	    if( c.Locality == CONSTRAINT_LOCALITY_NETWORK )
+	    {
+		if( !c.GetValue )
+		{
+		    g_message("%s: Have constraint with LOCALITY_NETWORK but GetValue slot is empty!", G_STRLOC) ;
+		    continue ;
+		}
+
+		c.TargetValue = c.GetValue( c.SourceValue ) ;
+	    } 
+	}	
     }
 
     void

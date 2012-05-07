@@ -1212,14 +1212,14 @@ namespace Albums
 				guint totaltracks = ((*album_constraints)[album->album_id]).Count ;
 
 				if( tm != album->total_time )
-				    out = ((boost::format("<b>%02u:%02u </b>of<b> %02u:%02u </b>::") % min % sec % min_total % sec_total).str()) ;
+				    tmp = ((boost::format("<b> %02u:%02u </b>of<b> %02u:%02u </b>") % min % sec % min_total % sec_total).str()) ;
 				else
-				    out = ((boost::format("<b>%02u:%02u </b>::") % min % sec).str()) ;
+				    tmp = ((boost::format("<b> %02u:%02u </b>") % min % sec).str()) ;
 
 				if( totaltracks != album->track_count )
-				    tmp = ((boost::format("<b> %u </b>%s %s<b> %u </b>") % totaltracks % ((totaltracks>1) ? "Tracks" : "Track") % _("of") % album->track_count).str()) ;
+				    out = ((boost::format("<b>%u </b>%s %s<b> %u </b>::") % totaltracks % ((totaltracks>1) ? "Tracks" : "Track") % _("of") % album->track_count).str()) ;
 				else
-				    tmp = ((boost::format("<b> %u </b>%s") % totaltracks % ((totaltracks>1) ? "Tracks" : "Track")).str()) ;
+				    out = ((boost::format("<b>%u </b>%s<b> </b>::") % totaltracks % ((totaltracks>1) ? "Tracks" : "Track")).str()) ;
 			    }
 			    else
 			    {
@@ -1230,13 +1230,13 @@ namespace Albums
 
 				guint totaltracks = album->track_count ;
 
-				out = ((boost::format("<b>%02u:%02u </b>::") % min % sec).str()) ;
-				tmp = ((boost::format("<b> %u </b>%s") % totaltracks % ((totaltracks>1) ? "Tracks" : "Track")).str()) ;
+				tmp = ((boost::format("<b> %02u:%02u </b>") % min % sec).str()) ;
+				out = ((boost::format("<b>%u </b>%s<b> </b>::") % totaltracks % ((totaltracks>1) ? "Tracks" : "Track")).str()) ;
 			    }
 
 			    if( album->discs_count > 1 && !album_constraints )
 			    { 
-				out += ((boost::format("<b> %u </b>Discs ::") % album->discs_count).str()) ;
+				out += ((boost::format("<b> %u </b>Discs<b> </b>::") % album->discs_count).str()) ;
 			    }
 
 			    out += tmp ;

@@ -26,15 +26,28 @@ namespace AQE
         , MT_FUZZY_EQUAL
     };
 
+    enum ConstraintLocality_t
+    {
+	  CONSTRAINT_LOCALITY_LOCAL
+	, CONSTRAINT_LOCALITY_NETWORK
+    } ;
+
     struct Constraint_t
     {
         int                     TargetAttr ;
         MPX::OVariant           TargetValue ;
         MatchType_t             MatchType ;
         bool                    InverseMatch ;
+	ConstraintLocality_t	Locality ;
+	std::string		SourceValue ;
+
+	typedef sigc::slot<MPX::OVariant, const std::string&> SlotValueGet_t ;
+
+	SlotValueGet_t		GetValue ;
 
         Constraint_t ()
         : InverseMatch( false )
+	, Locality( CONSTRAINT_LOCALITY_LOCAL )
         {
         }
     };
@@ -43,6 +56,11 @@ namespace AQE
 
     bool operator == (const Constraint_t& a, const Constraint_t& b ) ;
     bool operator < (const Constraint_t& a, const Constraint_t& b ) ;
+
+    void
+    process_constraints(
+	  Constraints_t&
+    ) ;
 
     void
     parse_advanced_query(

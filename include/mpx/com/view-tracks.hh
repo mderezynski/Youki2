@@ -683,6 +683,7 @@ namespace Tracks
                     m_frags.clear() ;
 
                     AQE::parse_advanced_query( m_constraints_aqe, text, m_frags ) ;
+		    AQE::process_constraints( m_constraints_aqe ) ;
 
                     bool aqe_diff = m_constraints_aqe != aqe ;
 
