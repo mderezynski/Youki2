@@ -1246,12 +1246,12 @@ namespace Albums
 
 			    if( selected )
 			    {
-				Util::render_text_shadow( layout[L3], xpos+8, r.y+row_height-height-13, cairo) ; 
+				Util::render_text_shadow( layout[L3], xpos+8, r.y+row_height-height-(m_show_release_label?13:23), cairo) ; 
 			    }
 
 			    cairo->move_to(
 				  xpos+8 
-				, r.y+row_height-height-13 
+				, r.y+row_height-height-(m_show_release_label?13:23)
 			    ) ;
 
 			    Gdk::Cairo::set_source_rgba(cairo, /*c2*/Util::make_rgba(c1,1.)) ;

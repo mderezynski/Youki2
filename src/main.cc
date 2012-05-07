@@ -320,7 +320,7 @@ int main(int argc, char ** argv)
 
 	gtk->add_window( *(services->get<YoukiController>("mpx-service-controller")->get_widget())) ;
 
-        services->get<YoukiController>("mpx-service-controller")->get_widget()->show_all() ;
+        services->get<YoukiController>("mpx-service-controller")->get_widget()->show() ;
         services->get<YoukiController>("mpx-service-controller")->get_widget()->present() ;
         services->get<YoukiController>("mpx-service-controller")->get_widget()->raise() ;
 

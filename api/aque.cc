@@ -102,7 +102,7 @@ namespace
             c.MatchType = type ;
             c.InverseMatch = inverse_match ;
 
-            if( attribute == "lastfm-artist-similar" )
+            if( attribute == "artists-similar-to" )
             {
                 c.TargetAttr = ATTRIBUTE_MB_ALBUM_ARTIST_ID ;
 		c.Processing = CONSTRAINT_PROCESSING_ASYNC ;

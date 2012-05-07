@@ -780,7 +780,8 @@ namespace MPX
 	Glib::RefPtr<Gtk::RadioAction>::cast_static( m_UI_Actions_Main->get_action("MenuViewActionAlbumRTViewModeBottom"))->set_active( false ) ;
 
         on_style_changed() ;
-        m_VBox->show_all() ;
+
+        m_main_window->show_all() ;
 	m_AQUE_Spinner->hide() ; 
 
 	m_HISTORY_POSITION = m_HISTORY.end() ;
