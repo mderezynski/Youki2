@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <cairo.h>
 #include <gtk/gtk.h>
+#include <gtkmm.h>
 #include <math.h>
 #include <pixman.h>
 
@@ -107,77 +108,49 @@ cairo_image_surface_blur( Cairo::RefPtr<Cairo::ImageSurface>& s, double radius )
     cairo_surface_t* blurred = blur_image_surface( static_cast<cairo_surface_t*>(s->cobj()), radius, 4. ) ;
     s = Cairo::RefPtr<Cairo::ImageSurface>(new Cairo::ImageSurface( blurred, false )) ;
 }
+
+void
+render_text_shadow(	
+      Glib::RefPtr<Pango::Layout>	   layout
+    , guint x
+    , guint y
+    , const Cairo::RefPtr<Cairo::Context>& cairo
+    , double radius
+    , double alpha
+)
+{
+    int width, height ;
+    layout->get_pixel_size( width, height ) ;
+
+    Cairo::RefPtr<Cairo::ImageSurface> s = Cairo::ImageSurface::create( Cairo::FORMAT_A8, width, height ) ; 
+    Cairo::RefPtr<Cairo::Context> c2 = Cairo::Context::create( s ) ;
+
+    c2->set_operator( Cairo::OPERATOR_CLEAR ) ;
+    c2->paint() ;
+
+    c2->set_operator( Cairo::OPERATOR_OVER ) ;
+    c2->set_source_rgba(
+	      0. 
+	    , 0. 
+	    , 0.
+	    , alpha 
+    ) ;
+    c2->move_to(
+	       0 
+	     , 0 
+    ) ;
+    pango_cairo_show_layout(
+	  c2->cobj()
+	, layout->gobj()
+    ) ;
+
+    Util::cairo_image_surface_blur( s, radius ) ; 
+    cairo->move_to(
+	  x 
+	, y 
+    ) ;
+    cairo->set_source( s, x+1, y+1 ) ;
+    cairo->rectangle( x+1, y+1, width, height) ;
+    cairo->fill() ;
+}
 }}
-
-/*
-namespace MPX
-{
-namespace Util
-{
-void cairo_image_surface_blur( Cairo::RefPtr<Cairo::ImageSurface>& s, double radius )
-{
-    // Steve Hanov, 2009
-    // Released into the public domain.
-
-    cairo_surface_t* surface = s->cobj() ;
-    
-    // get width, height
-    int width = cairo_image_surface_get_width( surface );
-    int height = cairo_image_surface_get_height( surface );
-    unsigned char* dst = (unsigned char*)malloc(width*height*4);
-    unsigned* precalc = 
-        (unsigned*)malloc(width*height*sizeof(unsigned));
-    unsigned char* src = cairo_image_surface_get_data( surface );
-    double mul=1.f/((radius*2)*(radius*2));
-    int channel;
-    
-    // The number of times to perform the averaging. According to wikipedia,
-    // three iterations is good enough to pass for a gaussian.
-    const int MAX_ITERATIONS = 3; 
-    int iteration;
-
-    memcpy( dst, src, width*height*4 );
-
-    for ( iteration = 0; iteration < MAX_ITERATIONS; iteration++ ) {
-        for( channel = 0; channel < 4; channel++ ) {
-            int x,y;
-
-            // precomputation step.
-            unsigned char* pix = src;
-            unsigned* pre = precalc;
-
-            pix += channel;
-            for (y=0;y<height;y++) {
-                for (x=0;x<width;x++) {
-                    int tot=pix[0];
-                    if (x>0) tot+=pre[-1];
-                    if (y>0) tot+=pre[-width];
-                    if (x>0 && y>0) tot-=pre[-width-1];
-                    *pre++=tot;
-                    pix += 4;
-                }
-            }
-
-            // blur step.
-            pix = dst + (int)radius * width * 4 + (int)radius * 4 + channel;
-            for (y=radius;y<height-radius;y++) {
-                for (x=radius;x<width-radius;x++) {
-                    int l = x < radius ? 0 : x - radius;
-                    int t = y < radius ? 0 : y - radius;
-                    int r = x + radius >= width ? width - 1 : x + radius;
-                    int b = y + radius >= height ? height - 1 : y + radius;
-                    int tot = precalc[r+b*width] + precalc[l+t*width] - 
-                        precalc[l+b*width] - precalc[r+t*width];
-                    *pix=(unsigned char)(tot*mul);
-                    pix += 4;
-                }
-                pix += (int)radius * 2 * 4;
-            }
-        }
-        memcpy( src, dst, width*height*4 );
-    }
-
-    free( dst );
-    free( precalc );
-}}}
-*/

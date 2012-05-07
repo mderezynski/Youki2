@@ -948,49 +948,6 @@ namespace Albums
 		}
 
 		void
-		render_text_shadow(	
-		      Glib::RefPtr<Pango::Layout>	   layout
-		    , guint x
-		    , guint y
-		    , const Cairo::RefPtr<Cairo::Context>& cairo
-		)
-		{
-		    int width, height ;
-		    layout->get_pixel_size( width, height ) ;
-
-		    Cairo::RefPtr<Cairo::ImageSurface> s = Cairo::ImageSurface::create( Cairo::FORMAT_A8, width, height ) ; 
-		    Cairo::RefPtr<Cairo::Context> c2 = Cairo::Context::create( s ) ;
-
-		    c2->set_operator( Cairo::OPERATOR_CLEAR ) ;
-		    c2->paint() ;
-
-		    c2->set_operator( Cairo::OPERATOR_OVER ) ;
-		    c2->set_source_rgba(
-			      0. 
-			    , 0. 
-			    , 0.
-			    , 0.45
-		    ) ;
-		    c2->move_to(
-			       0 
-			     , 0 
-		    ) ;
-		    pango_cairo_show_layout(
-			  c2->cobj()
-			, layout->gobj()
-		    ) ;
-
-		    Util::cairo_image_surface_blur( s, 1. ) ; 
-		    cairo->move_to(
-			  x 
-			, y 
-		    ) ;
-		    cairo->set_source( s, x+1, y+1 ) ;
-		    cairo->rectangle( x+1, y+1, width, height) ;
-		    cairo->fill() ;
-		}
-
-		void
 		render_rect_shadow(	
 		      guint x
 		    , guint y
@@ -1160,7 +1117,7 @@ namespace Albums
 
 			if( selected )
 			{
-			    render_text_shadow( layout[L1], xpos+8, r.y+yoff, cairo ) ;
+			    Util::render_text_shadow( layout[L1], xpos+8, r.y+yoff, cairo ) ;
 			}
 
 			cairo->move_to(
@@ -1179,7 +1136,7 @@ namespace Albums
 
 			if( selected )
 			{
-			    render_text_shadow( layout[L2], xpos+8, r.y+yoff, cairo ) ;
+			    Util::render_text_shadow( layout[L2], xpos+8, r.y+yoff, cairo ) ;
 			}
 
 			cairo->move_to(
@@ -1218,7 +1175,7 @@ namespace Albums
 
 			    if( selected )
 			    {
-				render_text_shadow( layout[L3], sx, r.y+row_height-height-28, cairo) ; 
+				Util::render_text_shadow( layout[L3], sx, r.y+row_height-height-28, cairo) ; 
 			    }
 
 			    cairo->move_to(
@@ -1289,7 +1246,7 @@ namespace Albums
 
 			    if( selected )
 			    {
-				render_text_shadow( layout[L3], xpos+8, r.y+row_height-height-13, cairo) ; 
+				Util::render_text_shadow( layout[L3], xpos+8, r.y+row_height-height-13, cairo) ; 
 			    }
 
 			    cairo->move_to(
@@ -1324,7 +1281,7 @@ namespace Albums
 
 			if( selected )
 			{
-			    render_text_shadow( layout[L1], xpos+(m_width-width)/2, r.y+(row_height-height)/2, cairo ) ;
+			    Util::render_text_shadow( layout[L1], xpos+(m_width-width)/2, r.y+(row_height-height)/2, cairo ) ;
 			}
 
 			cairo->move_to(

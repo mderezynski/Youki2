@@ -181,23 +181,6 @@ namespace MPX
         cairo->fill_preserve() ;
 	cairo->clip() ;
 
-/*
-        RoundedRectangle(
-              cairo
-            , 1 
-            , 1 
-            , w + 4 
-            , 17
-            , rounding 
-	    , MPX::CairoCorners::CORNERS(4)
-        ) ;
-        cairo->save() ;
-        cairo->set_source_rgba(c2.get_red(), c2.get_green(), c2.get_blue(), 0.3) ; 
-        cairo->set_line_width( 0.5 ) ;
-        cairo->stroke() ;
-        cairo->restore() ;
-*/
-
         // BAR
         double factor  = 1. ;
         double percent = double(position) / double(m_duration) ; 
@@ -249,7 +232,8 @@ namespace MPX
                 , 1 // factor
             ) ;
 
-            cairo->set_source( position_bar_gradient ) ;
+            //cairo->set_source( position_bar_gradient ) ;
+	    cairo->set_source_rgba(c1.get_red(), c1.get_green(), c1.get_blue(), 0.8) ;
             cairo->rectangle(
                   r.x 
                 , r.y
@@ -295,7 +279,7 @@ namespace MPX
 		      0. 
 		    , 0. 
 		    , 0.
-		    , 0.40
+		    , 0.65
 	    ) ;
 	    c2->move_to(
 		      0 

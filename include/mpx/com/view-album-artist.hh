@@ -490,50 +490,18 @@ namespace Artist
 
 		    if( selected )
 		    {
-			l->get_pixel_size( width, height ) ;
-
-			Cairo::RefPtr<Cairo::ImageSurface> s = Cairo::ImageSurface::create( Cairo::FORMAT_A8, width, height ) ;
-			Cairo::RefPtr<Cairo::Context> c = Cairo::Context::create( s ) ;
-
-			c->set_operator( Cairo::OPERATOR_CLEAR) ;
-			c->paint() ;
-
-			c->set_operator( Cairo::OPERATOR_OVER ) ;
-			c->set_source_rgba(
-			      0.
-			    , 0.
-			    , 0.
-			    , 0.45 
-			) ;
-			c->move_to(
-			      0
-			    , 0
-			) ;
-			pango_cairo_show_layout(
-			      c->cobj()
-			    , l->gobj()
-			) ;
-
-			Util::cairo_image_surface_blur( s, 1. ) ;
-
-			cairo->set_source( s, xpos+7, ypos+3 ) ;
-			cairo->rectangle( xpos+7, ypos+3, width, height ) ;
-			cairo->set_operator( Cairo::OPERATOR_OVER ) ;
-			cairo->fill() ;
+			Util::render_text_shadow( l, xpos+6, ypos+2, cairo ) ;
 		    }
 
 	            Gdk::Cairo::set_source_rgba(cairo, color);
-
                     cairo->move_to(
                           xpos + 6
                         , ypos + 2
                     ) ;
-
                     pango_cairo_show_layout(
                           cairo->cobj()
                         , l->gobj()
                     ) ;
-
                     cairo->restore();
                 }
         };
