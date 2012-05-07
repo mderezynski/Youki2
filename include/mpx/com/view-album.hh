@@ -950,8 +950,6 @@ namespace Albums
 		void
 		render_text_shadow(	
 		      Glib::RefPtr<Pango::Layout>	   layout
-		    , guint w
-		    , guint h
 		    , guint x
 		    , guint y
 		    , const Cairo::RefPtr<Cairo::Context>& cairo
@@ -960,7 +958,7 @@ namespace Albums
 		    int width, height ;
 		    layout->get_pixel_size( width, height ) ;
 
-		    Cairo::RefPtr<Cairo::ImageSurface> s = Cairo::ImageSurface::create( Cairo::FORMAT_ARGB32, w+30, h+30 ) ;
+		    Cairo::RefPtr<Cairo::ImageSurface> s = Cairo::ImageSurface::create( Cairo::FORMAT_A8, width, height ) ; 
 		    Cairo::RefPtr<Cairo::Context> c2 = Cairo::Context::create( s ) ;
 
 		    c2->set_operator( Cairo::OPERATOR_CLEAR ) ;
@@ -974,8 +972,8 @@ namespace Albums
 			    , 0.45
 		    ) ;
 		    c2->move_to(
-			       1.5
-			     , 1.5
+			       0 
+			     , 0 
 		    ) ;
 		    pango_cairo_show_layout(
 			  c2->cobj()
@@ -987,8 +985,8 @@ namespace Albums
 			  x 
 			, y 
 		    ) ;
-		    cairo->set_source( s, x, y ) ;
-		    cairo->rectangle( x, y, width+4, height+4) ;
+		    cairo->set_source( s, x+1, y+1 ) ;
+		    cairo->rectangle( x+1, y+1, width, height) ;
 		    cairo->fill() ;
 		}
 
@@ -1002,7 +1000,7 @@ namespace Albums
 		    , const Cairo::RefPtr<Cairo::Context>& cairo
 		)
 		{
-		    Cairo::RefPtr<Cairo::ImageSurface> s = Cairo::ImageSurface::create( Cairo::FORMAT_ARGB32, w+30,h+30 ) ; 
+		    Cairo::RefPtr<Cairo::ImageSurface> s = Cairo::ImageSurface::create( Cairo::FORMAT_A8, w, h ) ;
 		    Cairo::RefPtr<Cairo::Context> c2 = Cairo::Context::create( s ) ;
 
 		    c2->set_operator( Cairo::OPERATOR_CLEAR ) ;
@@ -1013,17 +1011,17 @@ namespace Albums
 			      0 
 			    , 0 
 			    , 0 
-			    , 0.1
+			    , 0.45 
 		    ) ;
-		    RoundedRectangle( c2, 4, 5, w, h, rounding ) ;
+		    RoundedRectangle( c2, 0, 0, w, h, rounding ) ;
 		    c2->fill() ;
-		    Util::cairo_image_surface_blur( s, 1 ) ;
+		    Util::cairo_image_surface_blur( s, 1. ) ;
 		    cairo->move_to(
 			  x 
 			, y 
 		    ) ;
 		    cairo->set_source( s, x, y ) ;
-		    cairo->rectangle( x, y, w+6, h+6) ;
+		    cairo->rectangle( x, y, w, h ) ;
 		    cairo->fill() ;
 		}
 
@@ -1078,7 +1076,7 @@ namespace Albums
 
 			    if( album->coverart && selected )
 			    {
-				render_rect_shadow( r.x, r.y, 64, 64, 4., cairo ) ;
+				render_rect_shadow( r.x+5, r.y+5, 64, 64, 4., cairo ) ;
 			    }
 
 			    cairo->set_source( album->surface_cache, r.x, r.y ) ;
@@ -1162,7 +1160,7 @@ namespace Albums
 
 			if( selected )
 			{
-			    render_text_shadow( layout[L1], m_width-90, height, xpos+8, r.y+yoff, cairo ) ;
+			    render_text_shadow( layout[L1], xpos+8, r.y+yoff, cairo ) ;
 			}
 
 			cairo->move_to(
@@ -1181,7 +1179,7 @@ namespace Albums
 
 			if( selected )
 			{
-			    render_text_shadow( layout[L2], m_width-90, height, xpos+8, r.y+yoff, cairo ) ;
+			    render_text_shadow( layout[L2], xpos+8, r.y+yoff, cairo ) ;
 			}
 
 			cairo->move_to(
@@ -1220,7 +1218,7 @@ namespace Albums
 
 			    if( selected )
 			    {
-				render_text_shadow( layout[L3], m_width-108, height, sx, r.y+row_height-height-28, cairo) ; 
+				render_text_shadow( layout[L3], sx, r.y+row_height-height-28, cairo) ; 
 			    }
 
 			    cairo->move_to(
@@ -1291,7 +1289,7 @@ namespace Albums
 
 			    if( selected )
 			    {
-				render_text_shadow( layout[L3], m_width-108, height, xpos+8, r.y+row_height-height-13, cairo) ; 
+				render_text_shadow( layout[L3], xpos+8, r.y+row_height-height-13, cairo) ; 
 			    }
 
 			    cairo->move_to(
@@ -1326,7 +1324,7 @@ namespace Albums
 
 			if( selected )
 			{
-			    render_text_shadow( layout[L1], m_width, height, xpos+(m_width-width)/2, r.y+(row_height-height)/2, cairo ) ;
+			    render_text_shadow( layout[L1], xpos+(m_width-width)/2, r.y+(row_height-height)/2, cairo ) ;
 			}
 
 			cairo->move_to(

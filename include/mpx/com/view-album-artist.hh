@@ -475,6 +475,8 @@ namespace Artist
 
                     l->set_alignment( m_alignment ) ;
 
+		    int width, height ;
+
                     if( d == 0 )
                     {
 			Pango::Attribute attr = Pango::Attribute::create_attr_weight( Pango::WEIGHT_BOLD ) ;
@@ -488,7 +490,9 @@ namespace Artist
 
 		    if( selected )
 		    {
-			Cairo::RefPtr<Cairo::ImageSurface> s = Cairo::ImageSurface::create( Cairo::FORMAT_ARGB32, m_width, rowheight ) ;
+			l->get_pixel_size( width, height ) ;
+
+			Cairo::RefPtr<Cairo::ImageSurface> s = Cairo::ImageSurface::create( Cairo::FORMAT_A8, width, height ) ;
 			Cairo::RefPtr<Cairo::Context> c = Cairo::Context::create( s ) ;
 
 			c->set_operator( Cairo::OPERATOR_CLEAR) ;
@@ -499,21 +503,21 @@ namespace Artist
 			      0.
 			    , 0.
 			    , 0.
-			    , 0.40
+			    , 0.45 
 			) ;
 			c->move_to(
-			      8
-			    , 4
+			      0
+			    , 0
 			) ;
 			pango_cairo_show_layout(
 			      c->cobj()
 			    , l->gobj()
 			) ;
 
-			Util::cairo_image_surface_blur( s, 1 ) ;
+			Util::cairo_image_surface_blur( s, 1. ) ;
 
-			cairo->set_source( s, xpos, ypos ) ;
-			cairo->rectangle( xpos, ypos, m_width, rowheight ) ;
+			cairo->set_source( s, xpos+7, ypos+3 ) ;
+			cairo->rectangle( xpos+7, ypos+3, width, height ) ;
 			cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 			cairo->fill() ;
 		    }

@@ -279,8 +279,12 @@ namespace MPX
             ) ;
             layout->get_extents( rl, ri ) ; 
 
+	    int width, height ;
+
+	    layout->get_pixel_size( width, height ) ;
+
 	    // Render text shadow
-	    Cairo::RefPtr<Cairo::ImageSurface> s = Cairo::ImageSurface::create( Cairo::FORMAT_ARGB32, 100, 48 ) ; // FIXME: Our blur implementation doesn't like small surfaces
+	    Cairo::RefPtr<Cairo::ImageSurface> s = Cairo::ImageSurface::create( Cairo::FORMAT_A8, width, height ) ;
 	    Cairo::RefPtr<Cairo::Context> c2 = Cairo::Context::create( s ) ;
 
 	    c2->set_operator( Cairo::OPERATOR_CLEAR ) ;
@@ -294,15 +298,15 @@ namespace MPX
 		    , 0.40
 	    ) ;
 	    c2->move_to(
-		      1.
-		    , 1. 
+		      0 
+		    , 0  
 	    ) ;
 	    pango_cairo_show_layout(
 		  c2->cobj()
 		, layout->gobj()
 	    ) ;
 
-	    Util::cairo_image_surface_blur( s, 1. ) ;
+	    Util::cairo_image_surface_blur( s, 2. ) ;
 
 	    double alpha = get_alpha_at_time() ;
 
@@ -321,8 +325,8 @@ namespace MPX
 
 		if( alpha ) 
 		{
-		    cairo->set_source( s, r1.x, r1.y ) ;
-		    cairo->rectangle( r1.x, r1.y, ri.get_width()+1, 17 ) ;
+		    cairo->set_source( s, r1.x+1, r1.y+1 ) ;
+		    cairo->rectangle( r1.x+1, r1.y+1, ri.get_width(), 16 ) ;
 		    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 		    cairo->fill() ;
 		}

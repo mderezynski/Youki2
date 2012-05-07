@@ -1604,7 +1604,11 @@ namespace Tracks
 
 		      if( selected )
   		      {
-			    Cairo::RefPtr<Cairo::ImageSurface> s = Cairo::ImageSurface::create( Cairo::FORMAT_ARGB32, m_width, rowheight ) ;
+			    int width, height ;
+
+			    layout->get_pixel_size( width, height ) ;
+
+			    Cairo::RefPtr<Cairo::ImageSurface> s = Cairo::ImageSurface::create( Cairo::FORMAT_A8, width, height ) ;
 			    Cairo::RefPtr<Cairo::Context> c = Cairo::Context::create( s ) ;
 
 			    c->set_operator( Cairo::OPERATOR_CLEAR) ;
@@ -1619,18 +1623,18 @@ namespace Tracks
 				, 0.40
 			    ) ;
 			    c->move_to(
-				  8
-				, 5
+				  0
+				, 0
 			    ) ;
 			    pango_cairo_show_layout(
 				  c->cobj()
 				, layout->gobj()
 			    ) ;
 
-			    Util::cairo_image_surface_blur( s, 1 ) ;
+			    Util::cairo_image_surface_blur( s, 2. ) ;
 
-			    cairo->set_source( s, xpos, ypos ) ;
-			    cairo->rectangle( xpos, ypos, m_width, rowheight ) ;
+			    cairo->set_source( s, xpos+7, ypos+4 ) ;
+			    cairo->rectangle( xpos+7, ypos+4, width, height ) ;
 			    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 			    cairo->fill() ;
 		      }

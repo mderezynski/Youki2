@@ -10,14 +10,6 @@
 
 namespace
 {
-int        radius  = 1;
-double     offset  = 1.0;
-double     sigma   = 5.0;
-double     alpha   = 1.0; 
-double     red     = 0.0;
-double     green   = 0.0;
-double     blue    = 0.0;
-
 /* G(x,y) = 1/(2 * PI * sigma^2) * exp(-(x^2 + y^2)/(2 * sigma^2))
  */
 pixman_fixed_t *
@@ -105,7 +97,6 @@ blur_image_surface (cairo_surface_t *surface,
 }
 }
 
-/*
 namespace MPX
 {
 namespace Util
@@ -113,13 +104,12 @@ namespace Util
 void
 cairo_image_surface_blur( Cairo::RefPtr<Cairo::ImageSurface>& s, double radius )
 {
-    radius = 2 ;
-    cairo_surface_t* blurred = blur_image_surface( static_cast<cairo_surface_t*>(s->cobj()), radius, sigma ) ;
-    s = Cairo::RefPtr<Cairo::ImageSurface>(new Cairo::ImageSurface( blurred, true )) ;
+    cairo_surface_t* blurred = blur_image_surface( static_cast<cairo_surface_t*>(s->cobj()), radius, 4. ) ;
+    s = Cairo::RefPtr<Cairo::ImageSurface>(new Cairo::ImageSurface( blurred, false )) ;
 }
 }}
-*/
 
+/*
 namespace MPX
 {
 namespace Util
@@ -190,3 +180,4 @@ void cairo_image_surface_blur( Cairo::RefPtr<Cairo::ImageSurface>& s, double rad
     free( dst );
     free( precalc );
 }}}
+*/
