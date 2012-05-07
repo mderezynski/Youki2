@@ -351,7 +351,7 @@ namespace MPX
 
         cairo->move_to(
               m_cover ? 112 : 12
-            , 112 - height - 8 
+            , 112 - height - 9 
         ) ;
 
         Gdk::Cairo::set_source_rgba(cairo, c_text);

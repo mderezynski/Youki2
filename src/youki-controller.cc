@@ -812,6 +812,8 @@ namespace MPX
 	eng.seed(time(NULL)) ;
 	std::tr1::uniform_int<unsigned int> uni(0,2) ;
 
+	retry_update_placeholder:
+
 	guint r = uni(eng) ; 
 
 	switch(r)
@@ -829,8 +831,29 @@ namespace MPX
 		break;
 	}
 
-	const std::string& s = boost::get<std::string>(v[0]["s"]) ;
-	m_Entry->set_placeholder_text((boost::format("%s \"%s\"") % _("Search Your Music... for example:") % s).str()) ;
+        using boost::algorithm::split;
+        using boost::algorithm::is_any_of;
+        using boost::algorithm::find_first;
+
+        StrV m;
+        split( m, s, is_any_of(" "));
+
+	if( m.size() > 5 && tries < 20 ) // Max. 5 fragments (in the hope that it's 5 words), anything else looks awkward
+	{
+	    ++tries ;
+	    v.clear() ;
+	    goto retry_update_placeholder ;
+	}
+	else
+	if( m.size() > 5 && tries == 20 )
+	{
+	    m_Entry->set_placeholder_text(_("Search Your Music here...")) ;
+	}
+	else
+	{
+	    const std::string& s = boost::get<std::string>(v[0]["s"]) ;
+	    m_Entry->set_placeholder_text((boost::format("%s \"%s\"") % _("Search Your Music... for example:") % s).str()) ;
+	}
     }
 
     void

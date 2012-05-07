@@ -165,7 +165,6 @@ namespace
                 try{
                         c.TargetValue = (unsigned int)(boost::lexical_cast<int>(value)) ;
                         c.TargetAttr = ATTRIBUTE_BITRATE ;
-                        c.MatchType = type ;
 
                         constraints.push_back(c) ;
                 } catch( boost::bad_lexical_cast ) {
@@ -177,7 +176,6 @@ namespace
                 try{
                         c.TargetValue = (unsigned int)(boost::lexical_cast<int>(value)) ;
                         c.TargetAttr = ATTRIBUTE_DATE ;
-                        c.MatchType = type ;
 
                         constraints.push_back(c) ;
                 } catch( boost::bad_lexical_cast ) {
@@ -186,10 +184,13 @@ namespace
             else
             if( attribute == "quality" )
             {
-                c.TargetValue = (unsigned int)(boost::lexical_cast<int>(value)) ;
-                c.TargetAttr = ATTRIBUTE_QUALITY ;
+		try{
+			c.TargetValue = (unsigned int)(boost::lexical_cast<int>(value)) ;
+	                c.TargetAttr = ATTRIBUTE_QUALITY ;
 
-                constraints.push_back(c) ;
+			constraints.push_back(c) ;
+		} catch( boost::bad_lexical_cast ) {
+		}
             }
             else
             if( attribute == "genre" )
