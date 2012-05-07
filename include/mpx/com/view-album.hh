@@ -699,8 +699,8 @@ namespace Albums
                 )
                     : m_width( 0 )
                     , m_column( 0 )
-		    , m_rt_viewmode( RT_VIEW_BOTTOM )
-		    , m_show_release_label( true )
+		    , m_rt_viewmode( RT_VIEW_NONE )
+		    , m_show_release_label( false )
                 {
                     m_image_disc = Util::cairo_image_surface_from_pixbuf(
 					    Gdk::Pixbuf::create_from_file(
@@ -795,7 +795,7 @@ namespace Albums
 			    , 64
 			    , rounding 
 			) ;
-			cairo->set_line_width( (!album->type.empty()) ? 1.25 : 0.75 ) ;
+			cairo->set_line_width( 1.25 ) ; 
 			cairo->stroke() ;
 		    }
 
@@ -1136,7 +1136,7 @@ namespace Albums
                     if( row > 0 )
                     {
 			xpos += 74 ; 
-			guint yoff = 0 ;
+			int yoff = 1 ; 
 
 			font_desc[L2] = widget.get_style_context()->get_font() ;
 			font_desc[L2].set_size( text_size_pt[L2] * PANGO_SCALE ) ;
@@ -1174,7 +1174,7 @@ namespace Albums
 			pango_cairo_show_layout(cairo->cobj(), layout[L1]->gobj()) ;
 
 			/* ALBUM */
-			yoff = 15 ;
+			yoff += 15 ;
 
 			layout[L2]->set_text( album->album )  ;
 			layout[L2]->get_pixel_size( width, height ) ;
@@ -1202,12 +1202,12 @@ namespace Albums
 			    year_label += (boost::format("<b>%s </b>") % album->year.substr(0,4)).str() ;
 			}
 
-			if( m_show_release_label && !album->label.empty())
+			if( !album->label.empty())
 			{
 			    year_label += Glib::Markup::escape_text(album->label) ;
 			}
 
-			if( !year_label.empty() ) 
+			if( m_show_release_label && !year_label.empty() ) 
 			{
 			    font_desc[L3].set_weight( Pango::WEIGHT_NORMAL ) ;
 			    layout[L3]->set_font_description( font_desc[L3] ) ;
@@ -1220,20 +1220,19 @@ namespace Albums
 
 			    if( selected )
 			    {
-				render_text_shadow( layout[L3], m_width-108, height, sx, r.y+row_height-height-10, cairo) ; 
+				render_text_shadow( layout[L3], m_width-108, height, sx, r.y+row_height-height-28, cairo) ; 
 			    }
 
 			    cairo->move_to(
 				  sx
-				, r.y + row_height - height - 10
+				, r.y + row_height - height - 28
 			    ) ;
 
 			    Gdk::Cairo::set_source_rgba(cairo, /*c2*/Util::make_rgba(c1, 1.)) ;
 			    pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj()) ;
 			}
 
-			/* Total Time, no. of Discs, no. of Tracks, release Year */ 
-			if( m_show_release_label )
+			/* Total Time, no. of Discs, no. of Tracks */ 
 			{
 			    font_desc[L3].set_weight( Pango::WEIGHT_NORMAL ) ;
 			    layout[L3]->set_font_description( font_desc[L3] ) ;
@@ -1258,9 +1257,9 @@ namespace Albums
 				guint totaltracks = ((*album_constraints)[album->album_id]).Count ;
 
 				if( tm != album->total_time )
-				    out = ((boost::format("Time<b> %02u:%02u </b>of<b> %02u:%02u </b>::") % min % sec % min_total % sec_total).str()) ;
+				    out = ((boost::format("<b>%02u:%02u </b>of<b> %02u:%02u </b>::") % min % sec % min_total % sec_total).str()) ;
 				else
-				    out = ((boost::format("Time<b> %02u:%02u </b>::") % min % sec).str()) ;
+				    out = ((boost::format("<b>%02u:%02u </b>::") % min % sec).str()) ;
 
 				if( totaltracks != album->track_count )
 				    tmp = ((boost::format("<b> %u </b>%s %s<b> %u </b>") % totaltracks % ((totaltracks>1) ? "Tracks" : "Track") % _("of") % album->track_count).str()) ;
@@ -1276,7 +1275,7 @@ namespace Albums
 
 				guint totaltracks = album->track_count ;
 
-				out = ((boost::format("Time<b> %02u:%02u </b>::") % min % sec).str()) ;
+				out = ((boost::format("<b>%02u:%02u </b>::") % min % sec).str()) ;
 				tmp = ((boost::format("<b> %u </b>%s") % totaltracks % ((totaltracks>1) ? "Tracks" : "Track")).str()) ;
 			    }
 
@@ -1292,12 +1291,12 @@ namespace Albums
 
 			    if( selected )
 			    {
-				render_text_shadow( layout[L3], m_width-108, height, xpos+8, r.y+row_height-height-25, cairo) ; 
+				render_text_shadow( layout[L3], m_width-108, height, xpos+8, r.y+row_height-height-13, cairo) ; 
 			    }
 
 			    cairo->move_to(
 				  xpos+8 
-				, r.y+row_height-height-25 
+				, r.y+row_height-height-13 
 			    ) ;
 
 			    Gdk::Cairo::set_source_rgba(cairo, /*c2*/Util::make_rgba(c1,1.)) ;
@@ -1409,7 +1408,7 @@ namespace Albums
                 initialize_metrics ()
                 {
 		    ViewMetrics.set_base__row_height(
-			  77
+			  76
 		    ) ;
                 }
 
@@ -1813,14 +1812,12 @@ namespace Albums
 			d += d_clip ;
 			max_d -= (d_clip-1) ;
 		    }
-/*
 		    else
 		    if( clip_y1 == 0 && clip_y2 < ViewMetrics.ViewPortPx.lower() )
 		    {
 			guint d_clip = clip_y2 / ViewMetrics.RowHeight ;
 			max_d = d_clip+1 ;
 		    }
- */
 
 		    /* Now let's render the actual data */
 

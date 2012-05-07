@@ -14,7 +14,7 @@
 
 namespace
 {
-    const double rounding = 2 ; 
+    const double rounding = 3. ; 
 }
 
 namespace MPX
@@ -155,7 +155,7 @@ namespace MPX
 		RoundedRectangle(
 		      cairo
 		    , a.get_width() - 2 - width - 4 - 4
-		    , 3 
+		    , 4 
 		    , width + 7
 		    , height + 4 
 		    , 2. 
@@ -174,7 +174,7 @@ namespace MPX
 
 		cairo->move_to(
 		      a.get_width() - 2 - width - 5
-		    , 5 
+		    , 6
 		) ;
 
 		pango_cairo_show_layout( cairo->cobj(), layout->gobj() ) ;
@@ -182,18 +182,19 @@ namespace MPX
 		cairo->restore() ;
 	}
 
+/*
         GdkRectangle r ;
         r.x = 1 ;
         r.y = 3 ;
         r.width = a.get_width() - 2 - 2 ;
         r.height = a.get_height() - 2 - 4 ;
 
-	RoundedRectangle( cairo, r.x, r.y, r.width, r.height, rounding ) ;
-
+	RoundedRectangle( cairo, r.x, r.y, r.width, r.height, rounding, MPX::CairoCorners::CORNERS(3) ) ;
         cairo->set_operator( Cairo::OPERATOR_ATOP ) ;
 	cairo->set_source_rgba( 0.25, 0.25, 0.25, 1. ) ; 
 	cairo->set_line_width( 0.25 ) ; 
 	cairo->stroke() ;
+*/
 
 	return true ;
     }
@@ -216,9 +217,9 @@ namespace MPX
 
         GdkRectangle r ;
         r.x = 1 ;
-        r.y = 3 ;
+        r.y = 4 ;
         r.width = a.get_width() - 2 - 2 ;
-        r.height = a.get_height() - 2 - 4 ;
+        r.height = a.get_height() - 6 ; 
 
         cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 
@@ -236,6 +237,7 @@ namespace MPX
             , r.width 
             , r.height 
             , rounding 
+	    , MPX::CairoCorners::CORNERS(3)
         ) ;
         cairo->fill () ;
 
@@ -297,6 +299,7 @@ namespace MPX
             , r.width 
             , r.height 
             , rounding 
+	    , MPX::CairoCorners::CORNERS(3)
         ) ;
         cairo->fill(); 
 
@@ -334,7 +337,7 @@ namespace MPX
 
         cairo->move_to(
               m_cover ? 112 : 12
-            , 8
+            , 9
         ) ;
 
         Gdk::Cairo::set_source_rgba(cairo, c_text);
@@ -345,7 +348,7 @@ namespace MPX
 
         cairo->move_to(
               m_cover ? 112 : 12
-            , 8 + height
+            , 9 + height
         ) ;
         cairo->set_source_rgba(c_text.get_red(), c_text.get_green(), c_text.get_blue(), 0.60);
         pango_cairo_show_layout( cairo->cobj(), layout->gobj() ) ;
@@ -384,7 +387,7 @@ namespace MPX
 	GdkRectangle r ;
 
 	r.x = 1 ; 
-	r.y = 3 ;
+	r.y = 4 ;
 	r.width = 105 ; 
 	r.height = 105 ; 
 
@@ -402,13 +405,11 @@ namespace MPX
 	    , r.width 
 	    , r.height 
 	    , 3. 
-	    , MPX::CairoCorners::CORNERS(5)
+	    , MPX::CairoCorners::CORNERS(1)
 	) ;
 
 	cairo->set_operator( Cairo::OPERATOR_ATOP ) ;
-
 	cairo->fill() ;
-
         cairo->restore() ;
     }
 }

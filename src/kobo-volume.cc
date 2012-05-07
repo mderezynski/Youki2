@@ -12,6 +12,7 @@
 namespace
 {
     const int pad = 1 ;
+    const double rounding = 3. ;
 
     Gdk::RGBA
     get_color_at_pos(
@@ -112,7 +113,8 @@ namespace MPX
             , 1 
             , w 
             , 17
-            , 2.
+            , rounding 
+	    , MPX::CairoCorners::CORNERS(8)
         ) ;
 
         Cairo::RefPtr<Cairo::LinearGradient> position_bar_back_gradient = Cairo::LinearGradient::create(
@@ -161,20 +163,33 @@ namespace MPX
             , 1 
             , w
             , 17
-            , 2.
+            , rounding 
+	    , MPX::CairoCorners::CORNERS(8)
         ) ;
         cairo->fill_preserve () ;
+        cairo->clip() ;
+
+/*
+        RoundedRectangle(
+              cairo
+            , -4 
+            , 1 
+            , w+4
+            , 17
+            , rounding 
+	    , MPX::CairoCorners::CORNERS(8)
+        ) ;
 	cairo->set_source_rgba(
 	      c2.get_red()
 	    , c2.get_green()
 	    , c2.get_blue()
 	    , 0.3 
 	) ;
-        cairo->set_line_width( 0.75 ) ; 
-        cairo->stroke_preserve() ;
-        cairo->clip() ;
+        cairo->set_line_width( 0.5 ) ; 
+        cairo->stroke() ;
+*/
 
-	/// VOLUME
+	// VOLUME
 	r.x         = 1 ; 
 	r.y         = 1 ; 
 	r.width     = fmax( 0, (a.get_width()-2) * double(percent)) ;

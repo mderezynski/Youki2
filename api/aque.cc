@@ -36,7 +36,7 @@ namespace
             c.MatchType = type ;
             c.InverseMatch = inverse_match ;
 
-            if( attribute == "lfm-artist-toptracks" )
+            if( attribute == "lastfm-artist-toptracks" )
             {
                 StrS s ;
                 c.TargetAttr = ATTRIBUTE_MB_TRACK_ID ;
@@ -61,7 +61,7 @@ namespace
                 constraints.push_back(c) ;
             }
             else
-            if( attribute == "lfm-artist-similar" )
+            if( attribute == "lastfm-artist-similar" )
             {
                 StrS s ;
                 c.TargetAttr = ATTRIBUTE_MB_ALBUM_ARTIST_ID ;
@@ -85,7 +85,7 @@ namespace
                 constraints.push_back(c) ;
             }
             else
-            if( attribute == "lfm-tag-topartists" )
+            if( attribute == "lastfm-tag-topartists" )
             {
                 StrS s ;
                 c.TargetAttr = ATTRIBUTE_MB_ALBUM_ARTIST_ID ;
@@ -109,7 +109,7 @@ namespace
                 constraints.push_back(c) ;
             }
             else
-            if( attribute == "lfm-tag-topalbums" )
+            if( attribute == "lastfm-tag-topalbums" )
             {
                 StrS s ;
                 c.TargetAttr = ATTRIBUTE_MB_ALBUM_ID ;

@@ -24,6 +24,8 @@ namespace
 
         return r ;
     }
+
+    const double rounding = 3. ;
 }
 
 namespace MPX
@@ -143,7 +145,7 @@ namespace MPX
         ) ;
 
         position_bar_back_gradient->add_color_stop_rgba(
-              .4
+              .46
             , cgdk.get_red()
             , cgdk.get_green()
             , cgdk.get_blue()
@@ -151,7 +153,7 @@ namespace MPX
         ) ;
 
         position_bar_back_gradient->add_color_stop_rgba(
-              .6
+              .54
             , cgdk.get_red()
             , cgdk.get_green()
             , cgdk.get_blue()
@@ -166,7 +168,6 @@ namespace MPX
             , 0.3
         ) ;
 
-
         cairo->set_source( position_bar_back_gradient ) ;
         RoundedRectangle(
               cairo
@@ -174,25 +175,28 @@ namespace MPX
             , 1 
             , w
             , 17
-            , 2.
+            , rounding 
+	    , MPX::CairoCorners::CORNERS(4)
         ) ;
         cairo->fill_preserve() ;
+	cairo->clip() ;
 
-        cairo->save() ;
-        cairo->set_source_rgba( c2.get_red() , c2.get_green(), c2.get_blue(), 0.3 ) ; 
-        cairo->set_line_width( 0.75 ) ;
-        cairo->stroke() ;
-        cairo->restore() ;
-
+/*
         RoundedRectangle(
               cairo
             , 1 
             , 1 
-            , w 
+            , w + 4 
             , 17
-            , 2.
+            , rounding 
+	    , MPX::CairoCorners::CORNERS(4)
         ) ;
-	cairo->clip() ;
+        cairo->save() ;
+        cairo->set_source_rgba(c2.get_red(), c2.get_green(), c2.get_blue(), 0.3) ; 
+        cairo->set_line_width( 0.5 ) ;
+        cairo->stroke() ;
+        cairo->restore() ;
+*/
 
         // BAR
         double factor  = 1. ;

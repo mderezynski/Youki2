@@ -171,7 +171,7 @@ namespace MPX
     : Glib::ObjectBase( "YoukiController" )
     , Service::Base("mpx-service-controller")
     , private_( new Private )
-    , m_main_window( 0 )
+    , m_main_window(0)
     , m_history_ignore_save( false )
     {
 	IndicateServer* is = indicate_server_ref_default() ;
@@ -375,14 +375,14 @@ namespace MPX
 
         m_VBox = Gtk::manage( new Gtk::VBox ) ;
         m_VBox->set_spacing( 2 ) ;
-	m_VBox->set_border_width( 0 ) ;
+	m_VBox->set_border_width(0) ;
 
         m_HBox_Main = Gtk::manage( new PercentualDistributionHBox ) ;
         m_HBox_Main->set_spacing( 6 ) ; 
 
         m_HBox_Entry = Gtk::manage( new Gtk::HBox ) ;
         m_HBox_Entry->set_spacing( 4 ) ;
-        m_HBox_Entry->set_border_width( 0 ) ;
+        m_HBox_Entry->set_border_width(0) ;
 
 	m_Label_Search = Gtk::manage( new Gtk::Label("Find Mu_sic:", true )) ;
 	m_Label_Search->set_mnemonic_widget( *m_Entry ) ;
@@ -391,12 +391,12 @@ namespace MPX
 
 	Gtk::HBox * HBox_Navi = Gtk::manage( new Gtk::HBox ) ;
 	HBox_Navi->set_spacing( 1 ) ;
-	HBox_Navi->set_border_width( 0 ) ;
+	HBox_Navi->set_border_width(0) ;
 
 	Gtk::Image * iprev = Gtk::manage( new Gtk::Image( Gtk::Stock::GO_BACK, Gtk::ICON_SIZE_BUTTON )) ;
         m_BTN_HISTORY_PREV = Gtk::manage( new Gtk::Button ) ;
 	m_BTN_HISTORY_PREV->set_relief( Gtk::RELIEF_NONE ) ;
-	m_BTN_HISTORY_PREV->set_border_width( 0 ) ; 
+	m_BTN_HISTORY_PREV->set_border_width(0) ; 
 	m_BTN_HISTORY_PREV->add( *iprev ) ;
 	m_BTN_HISTORY_PREV->signal_clicked().connect( sigc::mem_fun( *this, &YoukiController::history_go_back)) ;
 	m_BTN_HISTORY_PREV->set_sensitive( false ) ;
@@ -404,7 +404,7 @@ namespace MPX
 	Gtk::Image * iffwd = Gtk::manage( new Gtk::Image( Gtk::Stock::GO_FORWARD, Gtk::ICON_SIZE_BUTTON )) ;
         m_BTN_HISTORY_FFWD = Gtk::manage( new Gtk::Button ) ;
 	m_BTN_HISTORY_FFWD->set_relief( Gtk::RELIEF_NONE ) ;
-	m_BTN_HISTORY_FFWD->set_border_width( 0 ) ; 
+	m_BTN_HISTORY_FFWD->set_border_width(0) ; 
 	m_BTN_HISTORY_FFWD->add( *iffwd ) ;
 	m_BTN_HISTORY_FFWD->signal_clicked().connect( sigc::mem_fun( *this, &YoukiController::history_go_ffwd)) ;
 	m_BTN_HISTORY_FFWD->set_sensitive( false ) ;
@@ -431,10 +431,10 @@ namespace MPX
 	Controls_Align->set_padding( 0, 0, 0, 2 ) ;
 
         m_VBox_Bottom = Gtk::manage( new Gtk::VBox ) ;
-        m_VBox_Bottom->set_spacing( 1 ) ;
+        m_VBox_Bottom->set_spacing(0) ;
 
 	Gtk::VBox* VBox2 = Gtk::manage( new Gtk::VBox ) ;
-	VBox2->set_border_width( 0 ) ;
+	VBox2->set_border_width(0) ;
 	VBox2->set_spacing( 4 ) ;
 
 	Gtk::Alignment * Main_Align = Gtk::manage( new Gtk::Alignment ) ;
@@ -488,7 +488,7 @@ namespace MPX
 	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuPlaybackControlActionStartAlbumAtFavorite", "Start Albums at Favorite Track")) ; 
 	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuPlaybackControlActionContinueCurrentAlbum", "Always Continue Playing Current Album" )) ; 
 	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuViewActionAlbumRTViewModeBottom", "Show Release Type" ), sigc::mem_fun( *this, &YoukiController::on_rt_viewmode_change  )) ; 
-	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuViewActionAlbumsShowTimeDiscsTracks", "Show Playtime, Discs, Track Count" ), sigc::mem_fun( *this, &YoukiController::handle_action_underline_matches ) ); 
+	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuViewActionAlbumsShowTimeDiscsTracks", "Show Release Year and Release Label" ), sigc::mem_fun( *this, &YoukiController::handle_action_underline_matches ) ); 
 
 	Glib::RefPtr<Gtk::ToggleAction> action_MOP = Gtk::ToggleAction::create( "MenuPlaybackControlActionMinimizeOnPause", "Minimize Youki on Pause" ) ;
 	m_UI_Actions_Main->add( action_MOP ) ; 
@@ -507,7 +507,7 @@ namespace MPX
 	m_UI_Manager->add_ui_from_string( main_menubar_ui ) ;
 
 	Gtk::Widget * menubar = m_UI_Manager->get_widget( "/MenuBarMain" ) ;
-	dynamic_cast<Gtk::Container*>(menubar)->set_border_width( 0 ) ;
+	dynamic_cast<Gtk::Container*>(menubar)->set_border_width(0) ;
 
 /*
 	gtk_widget_realize(GTK_WIDGET(m_ScrolledWinTracks->gobj())) ;
@@ -610,7 +610,7 @@ namespace MPX
 		, 60
 	    ) ;
 
-	    m_ScrolledWinTracks->set_border_width( 0 ) ;
+	    m_ScrolledWinTracks->set_border_width(0) ;
 	    m_ScrolledWinTracks->add( *m_ListViewTracks ) ;
 	    m_ScrolledWinTracks->show_all() ;
         }
@@ -629,7 +629,7 @@ namespace MPX
 	    c1->set_column(0) ;
 	    m_ListViewArtist->append_column(c1) ;
 
-	    m_ScrolledWinArtist->set_border_width( 0 ) ;
+	    m_ScrolledWinArtist->set_border_width(0) ;
 	    m_ScrolledWinArtist->add( *m_ListViewArtist ) ;
 	    m_ScrolledWinArtist->show_all() ;
         }
@@ -648,7 +648,7 @@ namespace MPX
 	    c1->set_column(0) ;
 	    m_ListViewAlbums->append_column( c1 ) ;
 
-	    m_ScrolledWinAlbums->set_border_width( 0 ) ;
+	    m_ScrolledWinAlbums->set_border_width(0) ;
 	    m_ScrolledWinAlbums->add( *m_ListViewAlbums ) ;
 	    m_ScrolledWinAlbums->show_all() ;
         }
@@ -758,8 +758,8 @@ namespace MPX
                 , &YoukiController::on_status_icon_clicked
         ))) ;
 
-	Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("MenuViewActionAlbumsShowTimeDiscsTracks"))->set_active( true ) ;
-	Glib::RefPtr<Gtk::RadioAction>::cast_static( m_UI_Actions_Main->get_action("MenuViewActionAlbumRTViewModeBottom"))->set_active( true ) ;
+	Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("MenuViewActionAlbumsShowTimeDiscsTracks"))->set_active( false ) ;
+	Glib::RefPtr<Gtk::RadioAction>::cast_static( m_UI_Actions_Main->get_action("MenuViewActionAlbumRTViewModeBottom"))->set_active( false ) ;
 
         on_style_changed() ;
         m_VBox->show_all() ;
@@ -1606,7 +1606,7 @@ namespace MPX
 		    /*/ Not in the current projection? OK, so start with the top tracki, if the projection's size is > 0 */
 		    if( private_->FilterModelTracks->size() )
 		    {
-			play_track( boost::get<4>(private_->FilterModelTracks->row( 0 )) ) ;
+			play_track( boost::get<4>(private_->FilterModelTracks->row(0)) ) ;
 			goto x1 ;
 		    }
 		}

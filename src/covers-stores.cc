@@ -29,6 +29,7 @@
 #include <string>
 
 #include <boost/format.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include <taglib-gio.h>
 #include <fileref.h>
@@ -71,7 +72,7 @@ namespace MPX
     {
         if( can_load_artwork( rql ) )
         {
-	    g_message("RemoteStore::fetch_image url:['%s']", url.c_str()) ;
+	    g_message("RemoteStore:: URL['%s']", url.c_str()) ;
 
             request = Soup::RequestSync::create( url ) ; 
 
@@ -190,7 +191,7 @@ namespace MPX
 
 		std::size_t ld = ld_distance<Glib::ustring>( utf8_album, utf8_album_rql ) ;
 
-		g_message("LastFMCovers: rqlqualifieralbum:['%s'] xmlalbum:['%s'], ld: %u", rql.album.c_str(), album.c_str(), ld ) ;
+		g_message("LastFMCovers: Qualifier['%s'] XML['%s'], LD: %u", rql.album.c_str(), album.c_str(), ld ) ;
 
                 if( ld > 0 )
                 {
@@ -214,8 +215,9 @@ namespace MPX
 
 		    if(!image_url.empty())
 		    {
-			g_message("LastFMCovers: image_url:['%s']", image_url.c_str()) ;
-			RemoteStore::fetch_image( image_url, rql ) ;
+			std::string::size_type i = image_url.rfind(".") ;
+			std::string url_jpg = image_url.substr(0,i) + ".jpg" ; 
+			RemoteStore::fetch_image( url_jpg, rql ) ;
 			return ;
 		    }
                 } 
@@ -223,7 +225,7 @@ namespace MPX
             }
         }
 
-	g_message("LastFMCovers: No way!") ;
+	g_message("LastFMCovers: @@ No Cover.") ;
 	request_failed() ;
     }
 
