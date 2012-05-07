@@ -806,6 +806,9 @@ namespace MPX
     void
     YoukiController::update_entry_placeholder_text()
     {
+	const guint MAX_WORDS = 6 ; // Psychology says the human mind can hold 5-7 "items"; so we take the middle here
+	const guint MAX_TRIES = 20 ;
+
 	SQL::RowV v ;
 	guint tries = 0 ;
 
@@ -841,14 +844,14 @@ namespace MPX
         StrV m;
         split( m, s, is_any_of(" "));
 
-	if( m.size() > 5 && tries < 20 ) // Max. 5 fragments (in the hope that it's 5 words), anything else looks awkward
+	if( m.size() > MAX_WORDS && tries < MAX_TRIES )
 	{
 	    ++tries ;
 	    v.clear() ;
 	    goto retry_update_placeholder ;
 	}
 	else
-	if( m.size() > 5 && tries == 20 )
+	if( m.size() > MAX_WORDS && tries == MAX_TRIES )
 	{
 	    m_Entry->set_placeholder_text(_("Search Your Music here...")) ;
 	}
