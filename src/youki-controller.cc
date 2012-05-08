@@ -885,10 +885,7 @@ namespace MPX
     YoukiController::preload__albums()
     {
 	MPX::View::Albums::Album_sp dummy_album ( new MPX::View::Albums::Album ) ;
-	dummy_album->album_id = -1 ;
 	private_->FilterModelAlbums->append_album( dummy_album ) ;
-
-	//
 
 	SQL::RowV v ;
 

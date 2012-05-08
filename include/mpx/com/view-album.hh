@@ -109,7 +109,7 @@ namespace Albums
         {
             Cairo::RefPtr<Cairo::ImageSurface>      coverart ;
             Cairo::RefPtr<Cairo::ImageSurface>      surface_cache ;
-            guint                                   album_id ;
+            boost::optional<guint>		    album_id ;
             guint                                   artist_id ;
             std::string                             album ;
             std::string                             album_artist ;
@@ -123,7 +123,8 @@ namespace Albums
 	    guint				    discs_count ;
             guint				    insert_date ;
             gdouble                                 album_playscore ;
-            int					    total_time ;
+            guint				    total_time ;
+
             bool				    caching ;
 
 	    bool operator==( const Album& other )
@@ -148,8 +149,8 @@ namespace Albums
         typedef IndexedList<Album_sp>                       Model_t ;
         typedef boost::shared_ptr<Model_t>                  Model_sp_t ;
 
-        typedef std::map<guint, Model_t::iterator>          IdIterMap_t ;
-        typedef std::vector<Model_t::iterator>              RowRowMapping_t ;
+        typedef std::map<boost::optional<guint>, Model_t::iterator> IdIterMap_t ;
+        typedef std::vector<Model_t::iterator>			    RowRowMapping_t ;
 
 	bool operator==( const Album_sp& a, const Album_sp& b )
 	{
@@ -170,10 +171,10 @@ namespace Albums
 	    bool operator() (const Album_sp& a,
 			     const Album_sp& b)
 	    {
-		if( a->album_id == -1 )
+		if( !a->album_id ) 
 		    return true ;
 
-		if( b->album_id == -1 )
+		if( !b->album_id ) 
 		    return false ;
 
 		if( a->album_artist < b->album_artist )
@@ -611,7 +612,7 @@ namespace Albums
 			    for( ; i != m_realmodel->end(); ++i )
 			    {
 				int truth =
-					    (!constraints_albums || ((*constraints_albums)[(*i)->album_id].Count > 0))
+					    (!constraints_albums || ((*constraints_albums)[(*i)->album_id.get()].Count > 0))
 					/*				    &&
 					    (!constraints_artist || ((*constraints_artist)[(*i)->artist_id] > 0)) */
 				;
@@ -659,7 +660,7 @@ namespace Albums
 		    for( ; i != m_mapping.end(); ++i )
 		    {
 			int truth =
-				    (!constraints_albums || ((*constraints_albums)[(**i)->album_id].Count > 0))
+				    (!constraints_albums || ((*constraints_albums)[(**i)->album_id.get()].Count > 0))
 					/*	  &&
 				    (!constraints_artist || ((*constraints_artist)[(**i)->artist_id] > 0)) */
 			;
@@ -1201,7 +1202,7 @@ namespace Albums
 
 			    if( album_constraints )
 			    {
-				tm = ((*album_constraints)[album->album_id]).Time ;
+				tm = ((*album_constraints)[album->album_id.get()]).Time ;
 
 				guint min = tm / 60 ;
 				guint sec = tm % 60 ;
@@ -1209,7 +1210,7 @@ namespace Albums
 				guint min_total = album->total_time / 60 ;
 				guint sec_total = album->total_time % 60 ;
 
-				guint totaltracks = ((*album_constraints)[album->album_id]).Count ;
+				guint totaltracks = ((*album_constraints)[album->album_id.get()]).Count ;
 
 				if( tm != album->total_time )
 				    tmp = ((boost::format("<b> %02u:%02u </b>of<b> %02u:%02u </b>") % min % sec % min_total % sec_total).str()) ;
@@ -1308,7 +1309,7 @@ namespace Albums
 
             private:
 
-                boost::optional<boost::tuple<Model_t::iterator, guint, guint> >  m_selection ;
+                boost::optional<boost::tuple<Model_t::iterator, boost::optional<guint>, guint> >  m_selection ;
 
 		PropAdjustment	    property_vadj_, property_hadj_ ;
 		PropScrollPolicy    property_vsp_ , property_hsp_ ;
@@ -1350,8 +1351,8 @@ namespace Albums
 
 	    public:
 
-                typedef sigc::signal<void, const std::string&> SignalMBID ;
-                typedef sigc::signal<void, guint>	       SignalID ;
+                typedef sigc::signal<void, const std::string&>	SignalMBID ;
+                typedef sigc::signal<void, guint>		SignalID ; 
 
                 SignalMBID _signal_0 ;
                 SignalMBID _signal_1 ;
@@ -1452,7 +1453,7 @@ namespace Albums
                     }
 
                     int step = 0 ;
-                    int d = 0 ;
+                    guint d = 0 ;
 
                     switch( event->keyval )
                     {
@@ -1995,13 +1996,11 @@ namespace Albums
 
                     if( id )
                     {
-                        const guint& real_id = id.get() ;
-
 			guint d = 0 ;
 
                         for( RowRowMapping_t::iterator i = m_model->m_mapping.begin(); i != m_model->m_mapping.end(); ++i )
                         {
-                            if( real_id == (**i)->album_id )
+                            if( id == (**i)->album_id )
                             {
                                 select_index( d ) ;
                                 return ;
@@ -2042,7 +2041,7 @@ namespace Albums
                 {
                     if( m_ModelExtents( d ))
                     {
-                        const guint& id = (*m_model->m_mapping[d])->album_id ;
+			boost::optional<guint> id = (*m_model->m_mapping[d])->album_id ;
 
                         m_selection = boost::make_tuple( m_model->m_mapping[d], id, d ) ;
 
@@ -2102,17 +2101,14 @@ namespace Albums
                 boost::optional<guint>
                 get_selected()
                 {
+		    boost::optional<guint> id ;
+
                     if( m_selection )
                     {
-                        const guint& sel_id = boost::get<S_ID>(m_selection.get()) ;
-
-                        if( sel_id != -1 )
-                        {
-                            return boost::optional<guint>( sel_id ) ;
-                        }
+			id = boost::get<S_ID>(m_selection.get()) ;
                     }
 
-                    return boost::optional<guint>() ;
+		    return id ;
                 }
 
                 void
@@ -2303,15 +2299,15 @@ namespace Albums
                 void
                 on_refetch_album_cover()
                 {
-                    if( m_selection )
+                    if( m_selection && boost::get<S_INDEX>(m_selection.get()) != 0 )
                     {
 			set_has_tooltip(false) ;
 			while(gtk_events_pending()) gtk_main_iteration() ;
 
                         Album_sp& album = *(boost::get<S_ITERATOR>(m_selection.get())) ;
 			album->caching = true ;
-			m_caching.insert( album->album_id ) ;
-                        _signal_2.emit( album->album_id ) ;
+			m_caching.insert( album->album_id.get()) ;
+                        _signal_2.emit( album->album_id.get()) ;
 			queue_draw() ;
 
 			m_redraw_spinner_conn.disconnect() ;
