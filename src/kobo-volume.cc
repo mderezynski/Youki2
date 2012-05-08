@@ -30,8 +30,7 @@ namespace
 	}
     } ;
 
-    const int pad = 1 ;
-    const double rounding = 2. ;
+    const double rounding = 6. ;
 
     Gdk::RGBA
     get_color_at_pos(
@@ -66,7 +65,7 @@ namespace MPX
 
         m_theme = services->get<IYoukiThemeEngine>("mpx-service-theme").get() ;
 
-        const ThemeColor& c = m_theme->get_color( THEME_COLOR_BASE ) ;
+        const ThemeColor& c = m_theme->get_color( THEME_COLOR_BACKGROUND ) ;
 
         Gdk::RGBA cgdk ;
         cgdk.set_rgba( c.get_red(), c.get_green(), c.get_blue() ) ;
@@ -93,13 +92,10 @@ namespace MPX
 	const Cairo::RefPtr<Cairo::Context>& cairo
     )
     {
-        const Gdk::Rectangle& a = get_allocation() ;
-	const guint w = a.get_width() - 2 ;
-
-        const ThemeColor& c_base /* :) */ = m_theme->get_color( THEME_COLOR_BACKGROUND ) ; 
-        const ThemeColor& ct = m_theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
-
-        double percent = m_volume / 100. ; 
+        const Gdk::Rectangle&	a	    = get_allocation() ;
+	const guint		w	    = a.get_width() - 2 ;
+        const ThemeColor&	ct	    = m_theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
+        const double		percent	    = m_volume / 100. ; 
 
 	GdkRectangle r ;
 	double h, s, b ;
@@ -121,26 +117,22 @@ namespace MPX
 
 	Gdk::RGBA c_gradient = get_color_at_pos( c1, c2, percent ) ;
 
-        cairo->set_operator(Cairo::OPERATOR_SOURCE) ;
-        Gdk::Cairo::set_source_rgba(cairo, c_base);
-        cairo->paint () ;
-
         cairo->set_operator( Cairo::OPERATOR_OVER ) ;
         RoundedRectangle(
               cairo
             , 1 
             , 1 
             , w 
-            , 17
+            , 19
             , rounding 
-	    , MPX::CairoCorners::CORNERS(10)
+	    , MPX::CairoCorners::CORNERS(8)
         ) ;
 
         Cairo::RefPtr<Cairo::LinearGradient> position_bar_back_gradient = Cairo::LinearGradient::create(
               a.get_width() / 2 
             , 1 
             , a.get_width() / 2 
-            , 17
+            , 19
         ) ;
 
         position_bar_back_gradient->add_color_stop_rgba(
@@ -181,9 +173,9 @@ namespace MPX
             , 1 
             , 1 
             , w
-            , 17
+            , 19
             , rounding 
-	    , MPX::CairoCorners::CORNERS(10)
+	    , MPX::CairoCorners::CORNERS(8)
         ) ;
         cairo->fill_preserve () ;
         cairo->clip() ;
@@ -192,7 +184,7 @@ namespace MPX
 	r.x         = 1 ; 
 	r.y         = 1 ; 
 	r.width     = fmax( 0, (a.get_width()-2) * double(percent)) ;
-	r.height    = 17 ; 
+	r.height    = 19 ; 
 
 	cairo->save() ;
 	cairo->set_source_rgba(
@@ -284,11 +276,11 @@ namespace MPX
 		r1.y      = C(a.get_height(), r1.height) ; 
 		r1.x      = 3 ; 
 
-		cairo->rectangle( 1, 1, w * percent, 17 ) ; 
+		cairo->rectangle( 1, 1, w * percent, 19 ) ; 
 		cairo->clip() ;
 
 		cairo->set_source( s, r1.x+1, r1.y+1 ) ;
-		cairo->rectangle( r1.x+1, r1.y+1, r1.width, 16 ) ;
+		cairo->rectangle( r1.x+1, r1.y+1, r1.width, 19 ) ;
 		cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 		cairo->fill() ;
 
@@ -306,7 +298,7 @@ namespace MPX
 
 		cairo->reset_clip() ;
 
-		cairo->rectangle( 1+w*percent, 1, 1+(2*(r1.width)), 17 ) ; 
+		cairo->rectangle( 1+w*percent, 1, 1+(2*(r1.width)), 19 ) ; 
 		cairo->clip() ;
 
 		cairo->set_source_rgba(
@@ -333,7 +325,7 @@ namespace MPX
 		r1.x      = r.width - r1.width - 2 ;
 
 		cairo->set_source( s, r1.x+1, r1.y+1 ) ;
-		cairo->rectangle( r1.x+1, r1.y+1, r1.width, 16 ) ;
+		cairo->rectangle( r1.x+1, r1.y+1, r1.width, 19 ) ;
 		cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 		cairo->fill() ;
 
@@ -381,7 +373,7 @@ namespace MPX
             grab_focus() ;
             m_clicked = true ;
 
-	    std::size_t new_volume = std::max<std::size_t>( 0, std::min<std::size_t>( 100, (event->x) / 2 )) ;
+	    guint new_volume = std::max<guint>( 0, std::min<guint>( 100, (event->x) / 2 )) ;
 
 	    if( new_volume != m_volume )
 	    {
@@ -452,7 +444,7 @@ namespace MPX
                 state = GdkModifierType(event->state);
             } 
 
-	    std::size_t new_volume = std::max( 0, std::min( 100, (x_orig) / 2 )) ;
+	    guint new_volume = std::max( 0, std::min( 100, (x_orig) / 2 )) ;
 
 	    if( new_volume != m_volume )
 	    {
@@ -470,7 +462,7 @@ namespace MPX
     KoboVolume::vol_down()
     {
         m_volume -= 5 ; 
-        m_volume = std::max<std::size_t>( std::min<std::size_t>( m_volume, 100), 0 ) ;
+        m_volume = std::max<guint>( std::min<guint>( m_volume, 100), 0 ) ;
         m_SIGNAL_set_volume.emit( m_volume ) ;
         queue_draw () ;
     }
@@ -479,7 +471,7 @@ namespace MPX
     KoboVolume::vol_up()
     {
         m_volume += 5 ; 
-        m_volume = std::max<std::size_t>( std::min<std::size_t>( m_volume, 100), 0 ) ;
+        m_volume = std::max<guint>( std::min<guint>( m_volume, 100), 0 ) ;
         m_SIGNAL_set_volume.emit( m_volume ) ;
         queue_draw () ;
     }

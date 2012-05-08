@@ -417,7 +417,6 @@ namespace MPX
 	Glib::RefPtr<Gdk::PixbufAnimation> anim = Gdk::PixbufAnimation::create_from_file(
 						    Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "album-cover-loading.gif" )) ;
 	m_AQUE_Spinner->set( anim ) ;
-	Glib::signal_timeout().connect( sigc::bind_return(sigc::mem_fun( *m_AQUE_Spinner, &Gtk::Widget::queue_draw), true), 100 ) ;
 
         m_HBox_Entry->pack_start( *m_Label_Search, true, true, 0 ) ;
         m_HBox_Entry->pack_start( *HBox_Navi, false, false, 0 ) ;
@@ -432,12 +431,13 @@ namespace MPX
 
         Gtk::Alignment* Controls_Align = Gtk::manage( new Gtk::Alignment ) ;
         m_HBox_Controls = Gtk::manage( new Gtk::HBox ) ;
-        m_HBox_Controls->set_spacing( 0 ) ;
+        m_HBox_Controls->set_spacing(1) ;
 	Controls_Align->add( *m_HBox_Controls ) ;
-	Controls_Align->set_padding( 0, 0, 0, 2 ) ;
+	Controls_Align->set_padding( 0, 2, 0, 2 ) ;
 
         m_VBox_Bottom = Gtk::manage( new Gtk::VBox ) ;
         m_VBox_Bottom->set_spacing(0) ;
+	m_VBox_Bottom->override_background_color(Util::make_rgba(0.7,0.7,0.7,0.8)) ;
 
 	Gtk::VBox* VBox2 = Gtk::manage( new Gtk::VBox ) ;
 	VBox2->set_border_width(0) ;
@@ -526,7 +526,7 @@ namespace MPX
         m_ScrolledWinTracks->set_kinetic_scrolling() ;
 
         m_main_position = Gtk::manage( new KoboPosition ) ;
-	m_main_position->set_size_request( -1, 19 ) ;
+	m_main_position->set_size_request( -1, 21 ) ;
         m_main_position->signal_seek_event().connect(
             sigc::mem_fun(
                   *this
@@ -548,7 +548,7 @@ namespace MPX
         m_VBox_Bottom->pack_start( *Controls_Align, false, false, 0 ) ;
 
         m_main_volume = Gtk::manage( new KoboVolume ) ;
-	m_main_volume->set_size_request( 204, 19 ) ;
+	m_main_volume->set_size_request( 204, 21 ) ;
         m_main_volume->set_volume(
             m_play->property_volume().get_value()
         ) ;
@@ -1448,6 +1448,8 @@ namespace MPX
 		    ))
 		    {
 			m_main_info->set_cover( cover ) ;
+			Gdk::RGBA mean = Util::get_mean_color_for_pixbuf( cover ) ;
+			m_main_position->set_color( mean ) ;
 		    }
 	    }
 	}
@@ -1737,6 +1739,7 @@ namespace MPX
                 m_seek_position.reset() ; 
                 m_main_info->clear() ;
 		m_main_position->unpause() ;
+		m_main_position->set_color() ;
                 m_main_position->set_position( 0, 0 ) ;
 		m_main_window->set_title("Youki") ;
 
@@ -1812,11 +1815,14 @@ namespace MPX
                 ))
                 {
                     m_main_info->set_cover( cover ) ;
+		    Gdk::RGBA mean = Util::get_mean_color_for_pixbuf( cover ) ;
+		    m_main_position->set_color( mean ) ;
 		    goto skip1 ;
                 }
         }
 
 	m_main_info->set_cover( Glib::RefPtr<Gdk::Pixbuf>(0) ) ;
+	m_main_position->set_color() ;
 	
 	skip1:
 

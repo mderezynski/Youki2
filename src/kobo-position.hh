@@ -4,10 +4,13 @@
 #include <gtkmm.h>
 #include <gst/gst.h>
 #include <cmath>
+#include <boost/optional.hpp>
 #include "mpx/i-youki-theme-engine.hh"
 
 namespace MPX
 {
+    typedef boost::optional<Gdk::RGBA> Color_opt_t ;
+
     class KoboPosition
 
         : public Gtk::DrawingArea
@@ -26,6 +29,8 @@ namespace MPX
 	    bool m_paused ;
 
             IYoukiThemeEngine * m_theme ;
+
+	    Color_opt_t	m_color ;
 
        protected:
     
@@ -60,6 +65,15 @@ namespace MPX
 	    {
 		m_paused = false ;
 		m_update_conn.disconnect() ;
+	    }
+
+	    void
+	    set_color(
+		  const Color_opt_t& v = Color_opt_t()
+	    )
+	    {
+		m_color = v ;
+		queue_draw() ;
 	    }
 
         public:

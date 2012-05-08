@@ -192,8 +192,6 @@ namespace MPX
 		) ;
 
 		cairo->set_source( gradient ) ;
-
-		//cairo->set_source_rgba( 1., 1., 1., 0.45 ) ;
 		cairo->fill() ;
 
 		cairo->set_source_rgba(
@@ -317,7 +315,8 @@ namespace MPX
             , rounding 
 	    , MPX::CairoCorners::CORNERS(3)
         ) ;
-        cairo->fill(); 
+
+	cairo->fill(); 
 
 	if( m_cover )
 	{

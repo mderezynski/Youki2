@@ -29,8 +29,6 @@
 #include <config.h>
 #endif
 
-#include <boost/optional.hpp>
-
 #include "mpx/mpx-minisoup.hh"
 #include "mpx/mpx-main.hh"
 #include "mpx/mpx-covers-stores.hh"
@@ -96,13 +94,13 @@ namespace MPX
             fetch(
                   const std::string&                      /*mbid*/
                 , Glib::RefPtr<Gdk::Pixbuf>&              /*cover*/
-                , boost::optional<guint>		  /*size*/ = boost::optional<guint>()
+                , int                                     /*size*/ = -1
             );
 
             bool
             fetch(
                   Glib::RefPtr<Gdk::Pixbuf>&              /*cover*/
-                , boost::optional<guint>		  /*size*/ = boost::optional<guint>()
+                , int                                     /*size*/ = -1
             );
 
             void
@@ -110,12 +108,12 @@ namespace MPX
 
             void
             cache_artwork(
-		  const std::string&			  /*mbid*/
-		, Glib::RefPtr<Gdk::Pixbuf>		  /*cover*/
+              const std::string& /* mbid */,
+              Glib::RefPtr<Gdk::Pixbuf> /*cover*/
             );
 
             std::string
-            get_thumb_path(std::string /*mbid*/);
+            get_thumb_path (std::string /*mbid*/);
 
         protected:
 
@@ -137,7 +135,7 @@ namespace MPX
             fetch_back1(
                   const std::string&                      /*mbid*/
                 , Glib::RefPtr<Gdk::Pixbuf>&              /*cover*/
-                , boost::optional<guint>		  /*size*/
+                , int                                     /*size*/
             );
 
             PixbufCache                 m_pixbuf_cache ;

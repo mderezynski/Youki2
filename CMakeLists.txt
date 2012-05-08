@@ -73,7 +73,7 @@ IF(ENABLE_TR1)
 ENDIF()
 
 # Boost
-FIND_PACKAGE(Boost 1.33.1 COMPONENTS filesystem regex iostreams python thread REQUIRED)
+FIND_PACKAGE(Boost 1.33.1 COMPONENTS filesystem regex iostreams python REQUIRED)
 
 # X libraries
 FIND_PACKAGE(X11 REQUIRED)

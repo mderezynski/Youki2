@@ -25,7 +25,7 @@ namespace
         return r ;
     }
 
-    const double rounding = 2. ;
+    const double rounding = 6.;
 }
 
 namespace MPX
@@ -106,8 +106,10 @@ namespace MPX
         Gdk::RGBA cgdk ;
         Gdk::RGBA c_text_dark, c1, c2, c3 ; 
 
-        //cgdk.set_rgba( c.get_red(), c.get_green(), c.get_blue(), 1.0);
-        cgdk.set_rgba( 0.45, 0.45, 0.45, 1.0);
+	if( m_color )
+	    cgdk = m_color.get() ;
+	else
+	    cgdk.set_rgba( 0.45, 0.45, 0.45, 1.0);
 
 	double h, s, b ;
 	
@@ -128,12 +130,11 @@ namespace MPX
 	b *= 0.35 ; 
 	c3 = Util::color_from_hsb( h, s, b ) ;
 
-        // BAR BACKGROUND
         Cairo::RefPtr<Cairo::LinearGradient> position_bar_back_gradient = Cairo::LinearGradient::create(
               a.get_width() / 2 
             , 1 
             , a.get_width() / 2 
-            , 17
+            , 19
         ) ;
 
         position_bar_back_gradient->add_color_stop_rgba(
@@ -169,19 +170,20 @@ namespace MPX
         ) ;
 
         cairo->set_source( position_bar_back_gradient ) ;
+
         RoundedRectangle(
               cairo
             , 1 
             , 1 
             , w
-            , 17
+            , 19
             , rounding 
-	    , MPX::CairoCorners::CORNERS(5)
+	    , MPX::CairoCorners::CORNERS(4)
         ) ;
+
         cairo->fill_preserve() ;
 	cairo->clip() ;
 
-        // BAR
         double factor  = 1. ;
         double percent = double(position) / double(m_duration) ; 
 
@@ -197,7 +199,7 @@ namespace MPX
             r.x         = 1 ; 
             r.y         = 1 ; 
             r.width     = w * percent ; 
-            r.height    = 17 ; 
+            r.height    = 19 ; 
 
             cairo->save () ;
 
@@ -304,13 +306,13 @@ namespace MPX
 		r1.y      = (a.get_height() - r1.height) / 2 ; 
 		r1.x      = 3 ; 
 
-		cairo->rectangle( 1, 1, w * percent, 17 ) ; 
+		cairo->rectangle( 1, 1, w * percent, 19 ) ; 
 		cairo->clip() ;
 
 		if( alpha ) 
 		{
 		    cairo->set_source( s, r1.x+1, r1.y+1 ) ;
-		    cairo->rectangle( r1.x+1, r1.y+1, ri.get_width(), 16 ) ;
+		    cairo->rectangle( r1.x+1, r1.y+1, ri.get_width(), 17 ) ;
 		    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 		    cairo->fill() ;
 		}
@@ -328,7 +330,7 @@ namespace MPX
 		pango_cairo_show_layout( cairo->cobj(), layout->gobj() ) ;
 
 		cairo->reset_clip() ;
-		cairo->rectangle( 1+w*percent, 1, 1+(2*(ri.get_width()/PANGO_SCALE)), 17 ) ; 
+		cairo->rectangle( 1+w*percent, 1, 1+(2*(ri.get_width()/PANGO_SCALE)), 19 ) ; 
 		cairo->clip() ;
 
 		cairo->move_to(
@@ -408,7 +410,7 @@ namespace MPX
             r.x      = 1 ;
             r.y      = 1 ;
             r.width  = a.get_width() - 2 ;
-            r.height = 17 ; 
+            r.height = 19 ; 
 
             m_theme->draw_focus(
                   cairo
@@ -448,8 +450,8 @@ namespace MPX
         
             const Gtk::Allocation& a = get_allocation() ;
 
-            Interval<std::size_t> i (
-                  Interval<std::size_t>::IN_IN
+            Interval<guint> i (
+                  Interval<guint>::IN_IN
                 , 0 
                 , a.get_width()
             ) ;
@@ -498,8 +500,8 @@ namespace MPX
 
             const Gtk::Allocation& a = get_allocation() ;
 
-            Interval<std::size_t> i (
-                  Interval<std::size_t>::IN_IN
+            Interval<guint> i (
+                  Interval<guint>::IN_IN
                 , 0 
                 , a.get_width()
             ) ;

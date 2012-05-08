@@ -499,14 +499,37 @@ namespace MPX
 
     Gdk::RGBA
     get_mean_color_for_pixbuf(
-          Glib::RefPtr<Gdk::Pixbuf>             image
+          Glib::RefPtr<Gdk::Pixbuf>             pb0
     )
     {
         Gdk::RGBA c ;
 
-        Glib::RefPtr<Gdk::Pixbuf> tiny = image->scale_simple( 1, 1 , Gdk::INTERP_NEAREST ) ;
-        guchar * pixels = gdk_pixbuf_get_pixels( GDK_PIXBUF(tiny->gobj()) ) ;
+        Glib::RefPtr<Gdk::Pixbuf> pb3 = pb0->scale_simple(  1,  1 , Gdk::INTERP_NEAREST ) ;
+        guchar * pixels = gdk_pixbuf_get_pixels(GDK_PIXBUF(pb3->gobj())) ;
         c.set_rgba( double(pixels[0])/255., double(pixels[1])/255., double(pixels[2])/255., 1.0 ) ;
+
+/*
+
+NUX AverageColor()
+
+        guchar* pixels = gdk_pixbuf_get_pixels(GDK_PIXBUF(pb0->gobj())) ;
+	float r, g, b, a;
+	r = g = b = a = 0;
+
+	for (int j = 0; j < pb0->get_height(); j++)
+	{
+	    for (int i = 0; i < pb0->get_width(); i++)
+	    {
+		r += pixels[pb0->get_rowstride()*j + i*4 + 1 ] ; 
+		g += pixels[pb0->get_rowstride()*j + i*4 + 2 ] ; 
+		b += pixels[pb0->get_rowstride()*j + i*4 + 3 ] ; 
+		a += pixels[pb0->get_rowstride()*j + i*4 + 0 ] ; 
+	    }
+	}
+
+	unsigned int num_pixels = pb0->get_width() * pb0->get_height() ;
+	c = Util::make_rgba( r/num_pixels, g/num_pixels, b/num_pixels, a/num_pixels) ;
+*/
 
         return c ;
     }

@@ -5,12 +5,12 @@
 #include <boost/algorithm/string/join.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/format.hpp>
-#include <boost/thread.hpp>
 #include <boost/ref.hpp>
 #include "mpx/mpx-types.hh"
 #include "mpx/util-string.hh"
 #include "mpx/algorithm/aque.hh"
 #include "mpx/mpx-uri.hh"
+#include <sigx/sigx.h>
 
 #include "mpx/xml/xmltoc++.hh"
 
@@ -266,20 +266,21 @@ namespace AQE
         ;
     }
 
-    struct Worker
+    struct WorkerGlib
     {
 	Constraint_t& c ;
-	boost::mutex mut ;
+	Glib::Threads::Mutex mut ;
 	bool data_ready ;
 
-	Worker( Constraint_t& c_ ) : c(c_), data_ready(false) {}
+	WorkerGlib( Constraint_t& c_ ) : c(c_), data_ready(false) {}
 
-	void operator()()
+	void process() 
 	{
 	    c.TargetValue = c.GetValue( c.SourceValue ) ;
 	    mut.lock() ;
 	    data_ready=true ;
 	    mut.unlock() ;
+	    Glib::Threads::Thread::self()->yield() ;
 	}
     } ;
 
@@ -300,26 +301,27 @@ namespace AQE
 		    continue ;
 		}
 
-		Worker W ( c ) ;
-
-		boost::thread workerThread(boost::ref(W)) ;	
+		WorkerGlib * W = new WorkerGlib( c ) ;
+		Glib::Threads::Thread * wrk = Glib::Threads::Thread::create( sigc::mem_fun( *W, &WorkerGlib::process )) ;
 
 		while(true)
 		{
-		    W.mut.lock() ;
-		    if( !W.data_ready )
+		    W->mut.lock() ;
+		    if( !W->data_ready )
 		    {
 			while(gtk_events_pending()) gtk_main_iteration() ;
 			g_usleep(100) ;
 		    }
 		    else
 		    { 
-			W.mut.unlock() ;
-			workerThread.join() ;
+			W->mut.unlock() ;
+			wrk->join() ;
 			break ;
 		    }
-		    W.mut.unlock() ;
+		    W->mut.unlock() ;
 		}
+
+		delete W ;
 	    } 
 	}	
     }

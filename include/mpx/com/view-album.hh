@@ -957,7 +957,7 @@ namespace Albums
 		    , const Cairo::RefPtr<Cairo::Context>& cairo
 		)
 		{
-		    Cairo::RefPtr<Cairo::ImageSurface> s = Cairo::ImageSurface::create( Cairo::FORMAT_A8, w, h ) ;
+		    Cairo::RefPtr<Cairo::ImageSurface> s = Cairo::ImageSurface::create( Cairo::FORMAT_A8, w+2, h+2 ) ;
 		    Cairo::RefPtr<Cairo::Context> c2 = Cairo::Context::create( s ) ;
 
 		    c2->set_operator( Cairo::OPERATOR_CLEAR ) ;
@@ -978,7 +978,7 @@ namespace Albums
 			, y 
 		    ) ;
 		    cairo->set_source( s, x, y ) ;
-		    cairo->rectangle( x, y, w, h ) ;
+		    cairo->rectangle( x, y, w+2, h+2 ) ;
 		    cairo->fill() ;
 		}
 
@@ -1033,7 +1033,7 @@ namespace Albums
 
 			    if( album->coverart && selected )
 			    {
-				render_rect_shadow( r.x+5, r.y+5, 64, 64, 4., cairo ) ;
+				render_rect_shadow( r.x+3, r.y+3, 64, 64, 4., cairo ) ;
 			    }
 
 			    cairo->set_source( album->surface_cache, r.x, r.y ) ;
@@ -1619,15 +1619,6 @@ namespace Albums
                     gdk_event_free( event ) ;
                 }
 
-		void
-		on_size_allocate( Gtk::Allocation& a )
-		{
-		    a.set_x(0) ;
-		    a.set_y(0) ;
-		    Gtk::DrawingArea::on_size_allocate( a ) ;
-		    queue_draw() ;
-		}
-
                 bool
                 on_button_press_event( GdkEventButton* event )
                 {
@@ -1689,6 +1680,15 @@ namespace Albums
                         property_vadjustment().get_value()->set_page_increment( step_increment*4 ) ;
                     }
                 }
+
+		void
+		on_size_allocate( Gtk::Allocation& a )
+		{
+		    a.set_x(0) ;
+		    a.set_y(0) ;
+		    Gtk::DrawingArea::on_size_allocate(a) ;
+		    queue_draw() ;
+		}
 
                 bool
                 on_configure_event(
@@ -1755,7 +1755,8 @@ namespace Albums
                     }
 
 		    /* Let's see if we can save some rendering */	
-    
+
+#if 0    
 		    double clip_x1, clip_y1, clip_x2, clip_y2 ;
 		
 		    cairo->get_clip_extents( clip_x1, clip_y1, clip_x2, clip_y2 ) ;
@@ -1773,6 +1774,7 @@ namespace Albums
 			guint d_clip = clip_y2 / ViewMetrics.RowHeight ;
 			max_d = d_clip+1 ;
 		    }
+#endif
 
 		    /* Now let's render the actual data */
 
@@ -2303,16 +2305,17 @@ namespace Albums
                 {
                     if( m_selection )
                     {
-                        Album_sp album = *(boost::get<S_ITERATOR>(m_selection.get())) ;
+			set_has_tooltip(false) ;
+			while(gtk_events_pending()) gtk_main_iteration() ;
+
+                        Album_sp& album = *(boost::get<S_ITERATOR>(m_selection.get())) ;
 			album->caching = true ;
 			m_caching.insert( album->album_id ) ;
                         _signal_2.emit( album->album_id ) ;
 			queue_draw() ;
 
-			if( !m_redraw_spinner_conn )
-			{
-			     m_redraw_spinner_conn = Glib::signal_timeout().connect( sigc::mem_fun( *this, &Class::handle_redraw ), 100 ) ;
-			}
+			m_redraw_spinner_conn.disconnect() ;
+			m_redraw_spinner_conn = Glib::signal_timeout().connect( sigc::mem_fun( *this, &Class::handle_redraw ), 100 ) ;
                     }
                 }
 
@@ -2321,8 +2324,15 @@ namespace Albums
 		{
 		    m_columns[0]->m_image_album_loading_iter->advance() ;
 		    queue_draw() ;
+
 		    while(gtk_events_pending()) gtk_main_iteration() ;
-		    if(m_caching.empty()) m_redraw_spinner_conn.disconnect() ;
+
+		    if(m_caching.empty())
+		    {
+			m_redraw_spinner_conn.disconnect() ;
+			set_has_tooltip(true) ;
+		    }
+
 		    return !m_caching.empty() ;
 		}
 
@@ -2364,6 +2374,9 @@ namespace Albums
                 )
                 {
                     guint d = (ViewMetrics.ViewPortPx.upper() + tooltip_y) / ViewMetrics.RowHeight ;
+
+		    if( !m_ModelExtents(d))
+			return false ;
 
 		    Album_sp album = *(m_model->m_mapping[d]) ;
 
