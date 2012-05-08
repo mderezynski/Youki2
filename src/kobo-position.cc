@@ -56,6 +56,9 @@ namespace MPX
         set_can_focus (false) ;
 
         m_theme = services->get<IYoukiThemeEngine>("mpx-service-theme").get() ;
+
+        const ThemeColor& c_bg = m_theme->get_color( THEME_COLOR_BACKGROUND ) ; 
+	override_background_color(c_bg) ;
     }
 
     KoboPosition::~KoboPosition () 
@@ -90,32 +93,35 @@ namespace MPX
     {
         const Gdk::Rectangle& a = get_allocation() ;
         const guint w = a.get_width() - 2 ;
-
         const guint position = m_clicked ? m_seek_position : m_position ;
-
-        const ThemeColor& c = m_theme->get_color( THEME_COLOR_SELECT ) ;
-        const ThemeColor& c_bg = m_theme->get_color( THEME_COLOR_BACKGROUND ) ; 
         const ThemeColor& ct = m_theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
-
-        cairo->set_operator(Cairo::OPERATOR_SOURCE) ;
-        Gdk::Cairo::set_source_rgba(cairo, c_bg);
-        cairo->paint() ;
 
         cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 
         Gdk::RGBA cgdk ;
         Gdk::RGBA c_text_dark, c1, c2, c3 ; 
 
+	double h, s, b ;
+
 	if( m_color )
+	{
 	    cgdk = m_color.get() ;
+	    Util::color_to_hsb( cgdk, h, s, b ) ;
+
+	    if( s < 0.85 )
+		s = std::min<double>( s * 1.2, 1. ) ; 
+
+	    if( b < 0.75 )
+		b = std::min<double>( b * 1.2, 1. ) ;
+
+	    cgdk = Util::color_from_hsb( h, s, b ) ;
+	}
 	else
 	    cgdk.set_rgba( 0.45, 0.45, 0.45, 1.0);
 
-	double h, s, b ;
-	
 	Util::color_to_hsb( cgdk, h, s, b ) ;
-	b *= 0.85 ; 
-	s *= 0.90 ;
+	b *= 0.75 ; 
+	s *= 0.85 ;
 	c_text_dark = Util::color_from_hsb( h, s, b ) ;
 
 	Util::color_to_hsb( cgdk, h, s, b ) ;
@@ -489,7 +495,7 @@ namespace MPX
 
             if (event->is_hint)
             {
-                gdk_window_get_pointer (event->window, &x_orig, &y_orig, &state);
+                gdk_window_get_device_position(event->window, event->device, &x_orig, &y_orig, &state);
             }
             else
             {
