@@ -1104,6 +1104,13 @@ namespace Artist
                         ++iter;
                     }
 
+		    if( !is_sensitive() )
+		    {
+			cairo->rectangle(0,0,get_allocated_width(),get_allocated_height()) ;
+			cairo->set_source_rgba(0,0,0,0.2) ;
+			cairo->fill() ;
+		    }
+
 		    get_window()->process_all_updates() ;
 
                     return true;

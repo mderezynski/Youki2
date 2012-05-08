@@ -972,7 +972,7 @@ namespace Albums
 		    ) ;
 		    RoundedRectangle( c2, 0, 0, w, h, rounding ) ;
 		    c2->fill() ;
-		    Util::cairo_image_surface_blur( s, 1. ) ;
+		    Util::cairo_image_surface_blur( s, 2.5 ) ;
 		    cairo->move_to(
 			  x 
 			, y 
@@ -1872,6 +1872,13 @@ namespace Albums
 		    cairo->stroke() ;
 		    cairo->restore() ;
 
+		    if( !is_sensitive() )
+		    {
+			cairo->rectangle(0,0,get_allocated_width(),get_allocated_height()) ;
+			cairo->set_source_rgba(0,0,0,0.2) ;
+			cairo->fill() ;
+		    }
+
 		    get_window()->process_all_updates() ;
 
                     return true;
@@ -2348,6 +2355,37 @@ namespace Albums
                     queue_resize();
                 }
 
+                bool
+                query_tooltip(
+                      int                                   tooltip_x
+                    , int                                   tooltip_y
+                    , bool                                  keypress
+                    , const Glib::RefPtr<Gtk::Tooltip>&     tooltip
+                )
+                {
+                    guint d = (ViewMetrics.ViewPortPx.upper() + tooltip_y) / ViewMetrics.RowHeight ;
+
+		    Album_sp album = *(m_model->m_mapping[d]) ;
+
+                    boost::shared_ptr<Covers> covers = services->get<Covers>("mpx-service-covers") ;
+
+                    Gtk::Image * image = Gtk::manage( new Gtk::Image ) ;
+
+                    Glib::RefPtr<Gdk::Pixbuf> cover ;
+
+                    if( covers->fetch(
+                          album->mbid
+                        , cover
+                    ))
+                    {   
+                        image->set( cover->scale_simple( 256, 256, Gdk::INTERP_BILINEAR)) ;
+                        tooltip->set_custom( *image ) ;
+                        return true ;
+                    }
+
+                    return false ;
+                }
+
             public:
 
                 inline guint
@@ -2453,6 +2491,14 @@ namespace Albums
                               *this
                             , &Class::key_press_event
                     ), true ) ;
+
+                    signal_query_tooltip().connect(
+                        sigc::mem_fun(
+                              *this
+                            , &Class::query_tooltip
+                    )) ;
+
+                    set_has_tooltip(true) ;
 
                     m_refActionGroup = Gtk::ActionGroup::create() ;
                     m_refActionGroup->add( Gtk::Action::create("ContextMenu", "Context Menu")) ;

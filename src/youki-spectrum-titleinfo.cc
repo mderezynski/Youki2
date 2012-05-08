@@ -162,7 +162,38 @@ namespace MPX
 		    , MPX::CairoCorners::CORNERS(6)
 		) ;
 
-		cairo->set_source_rgba( 1., 1., 1., 0.45 ) ;
+		Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create(
+		      a.get_width() - 10 + width/2 
+		    , 4 
+		    , a.get_width() - 10 + width/2 
+		    , height+4 
+		) ;
+
+		gradient->add_color_stop_rgba(
+		      0
+		    , 1. 
+		    , 1. 
+		    , 1. 
+		    , 0.65 
+		) ;
+		gradient->add_color_stop_rgba(
+		      .9
+		    , 1. 
+		    , 1. 
+		    , 1. 
+		    , 0.80 
+		) ;
+		gradient->add_color_stop_rgba(
+		      1. 
+		    , 1. 
+		    , 1. 
+		    , 1. 
+		    , 0.82 
+		) ;
+
+		cairo->set_source( gradient ) ;
+
+		//cairo->set_source_rgba( 1., 1., 1., 0.45 ) ;
 		cairo->fill() ;
 
 		cairo->set_source_rgba(
@@ -178,7 +209,6 @@ namespace MPX
 		) ;
 
 		pango_cairo_show_layout( cairo->cobj(), layout->gobj() ) ;
-	
 		cairo->restore() ;
 	}
 

@@ -426,7 +426,7 @@ namespace MPX
 
         Gtk::Alignment* Entry_Align = Gtk::manage( new Gtk::Alignment ) ;
         Entry_Align->add( *m_HBox_Entry ) ;
-	Entry_Align->set_padding( 2, 2, 2, 4 ) ;
+	Entry_Align->set_padding( 2, 4, 2, 4 ) ;
 	Entry_Align->property_xalign() = 0.0 ;
 	Entry_Align->property_xscale() = 0.0 ;
 
@@ -441,7 +441,7 @@ namespace MPX
 
 	Gtk::VBox* VBox2 = Gtk::manage( new Gtk::VBox ) ;
 	VBox2->set_border_width(0) ;
-	VBox2->set_spacing( 4 ) ;
+	VBox2->set_spacing(2) ;
 
 	Gtk::Alignment * Main_Align = Gtk::manage( new Gtk::Alignment ) ;
 	Main_Align->add( *VBox2 ) ;
@@ -450,9 +450,6 @@ namespace MPX
 	Gtk::Alignment * HBox_Main_Align = Gtk::manage( new Gtk::Alignment ) ;
 	HBox_Main_Align->add( *m_HBox_Main ) ;
 	HBox_Main_Align->set_padding( 0, 0, 1, 2 ) ;
-
-        m_HBox_Bottom = Gtk::manage( new Gtk::HBox ) ;
-        m_HBox_Bottom->set_spacing( 4 ) ;
 
 	std::vector<Glib::RefPtr<Gdk::Pixbuf> > pixvector ;
 	pixvector.push_back( Gdk::Pixbuf::create_from_file( Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "youki16x16.png" ))) ;
