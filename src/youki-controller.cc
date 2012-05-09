@@ -861,7 +861,7 @@ namespace MPX
     void
     YoukiController::preload__artists()
     {
-	private_->FilterModelArtist->append_artist("",-1);
+	private_->FilterModelArtist->append_artist("");
 
 	SQL::RowV v ;
 	m_library->getSQL(v, (boost::format("SELECT * FROM album_artist")).str()) ; 
@@ -2109,6 +2109,8 @@ namespace MPX
         private_->FilterModelAlbums->regen_mapping() ;
         m_ListViewAlbums->scroll_to_index(0) ;
         m_ListViewAlbums->select_index(0) ;
+
+	private_->FilterModelTracks->regen_mapping() ;
 
         m_conn1.unblock() ;
         m_conn2.unblock() ;

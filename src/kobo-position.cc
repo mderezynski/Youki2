@@ -111,11 +111,11 @@ namespace MPX
 	    if( s < 0.85 )
 		s = std::min<double>( s * 1.2, 1. ) ; 
 	    if( b < 0.75 )
-		b = std::min<double>( b * 1.2, 1. ) ;
+		b = std::min<double>( b * 1.3, 0.90) ;
 
-	    if( b < 0.3 || s < 0.2 )
+	    if( (b >= 0.85 && s < 0.2 ) || b < 0.15 )
 	    {
-		cgdk.set_rgba( 0.45, 0.45, 0.45, 1.0);
+		cgdk.set_rgba( 0.45, 0.45, 0.45, 1.0 ) ;
 	    }
 	    else
 		cgdk = Util::color_from_hsb( h, s, b ) ;

@@ -52,7 +52,7 @@ namespace Artist
             const double rounding = 1. ;
         }
 
-        typedef boost::tuple<std::string, guint>           Row_t ;
+        typedef boost::tuple<std::string, boost::optional<guint> > Row_t ;
 
         typedef IndexedList<Row_t>                         Model_t ;
         typedef boost::shared_ptr<Model_t>                 Model_sp_t ;
@@ -72,17 +72,11 @@ namespace Artist
                 , const Row_t& b
             ) const
             {
-                gint id[2] = { get<1>(a), get<1>(b) } ;
+		if( !get<1>(a))
+		    return true ;
 
-                if( id[0] == -1 )
-                {
-                    return true ;
-                }
-
-                if( id[1] == -1 )
-                {
-                    return false ;
-                }
+		if( !get<1>(b))
+		    return false ;
 
                 return boost::get<0>(a) < boost::get<0>(b) ;
             }
@@ -162,21 +156,24 @@ namespace Artist
                 virtual void
                 append_artist(
                       const std::string&        artist
-                    , guint                    artist_id
+                    , const boost::optional<guint>& artist_id = boost::optional<guint>()
                 )
                 {
                     Row_t row ( artist, artist_id ) ;
                     m_realmodel->push_back(row);
 
-                    Model_t::iterator i = m_realmodel->end();
-                    std::advance( i, -1 );
-                    m_iter_map.insert(std::make_pair(artist_id, i));
+		    if( artist_id )
+		    {
+			Model_t::iterator i = m_realmodel->end();
+			std::advance( i, -1 );
+			m_iter_map.insert(std::make_pair(artist_id.get(), i));
+		    }
                 }
 
                 virtual void
                 insert_artist(
-                      const std::string&                                                                artist_name
-                    , guint                                                                            artist_id
+                      const std::string&	artist_name
+                    , const boost::optional<guint>& artist_id = boost::optional<guint>()
                 )
                 {
                     static OrderFunc order ;
@@ -195,8 +192,9 @@ namespace Artist
                           )
                         , row
                     ) ;
-
-                    m_iter_map.insert( std::make_pair( artist_id, i ));
+	    
+		    if( artist_id )
+                        m_iter_map.insert( std::make_pair( artist_id.get(), i ));
                 }
         };
 
@@ -275,7 +273,7 @@ namespace Artist
                 virtual void
                 append_artist(
                       const std::string&        artist
-                    , guint                    artist_id
+                    , const boost::optional<guint>& artist_id = boost::optional<guint>()
                 )
                 {
                     DataModel::append_artist( artist, artist_id ) ;
@@ -284,7 +282,7 @@ namespace Artist
                 virtual void
                 insert_artist(
                       const std::string&        artist_name
-                    , guint                    artist_id
+                    , const boost::optional<guint>& artist_id = boost::optional<guint>()
                 )
                 {
                     DataModel::insert_artist(
@@ -340,9 +338,9 @@ namespace Artist
 
                     for( ; i != m_realmodel->end(); ++i )
                     {
-                        guint id_row = get<1>( *i ) ;
+                        boost::optional<guint> id_row = get<1>( *i ) ;
 
-                        if( !constraints_artist || (*m_constraints_artist)[id_row] )
+                        if( !constraints_artist || (*m_constraints_artist)[id_row.get()] )
                         {
                             new_mapping.push_back( i ) ;
                         }
@@ -475,7 +473,7 @@ namespace Artist
 
                     l->set_alignment( m_alignment ) ;
 
-		    int width, height ;
+
 
                     if( d == 0 )
                     {
@@ -529,7 +527,7 @@ namespace Artist
 		Interval<guint>			    m_Viewport_I ;
 		Minus<int>			    ModelCount ;
 
-                boost::optional<boost::tuple<Model_t::iterator, guint, guint> > m_selection ;
+                boost::optional<boost::tuple<Model_t::iterator, boost::optional<guint>, guint> > m_selection ;
 
                 Column_SP_vector_t                  m_columns ;
 
@@ -664,7 +662,7 @@ namespace Artist
                     }
 
 		    int step = 0 ;
-		    int d = 0 ;
+		    guint d = 0 ;
 
                     switch( event->keyval )
                     {
@@ -1001,9 +999,9 @@ namespace Artist
                     const ThemeColor& c_base_rules_hint = theme->get_color( THEME_COLOR_BASE_ALTERNATE ) ;
                     const ThemeColor& c_text            = theme->get_color( THEME_COLOR_TEXT ) ;
                     const ThemeColor& c_text_sel        = theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
-                    const ThemeColor& c_bg	= theme->get_color( THEME_COLOR_BACKGROUND ) ;
+
                     const ThemeColor& c_base	= theme->get_color( THEME_COLOR_BASE ) ;
-                    const ThemeColor& c_outline	= theme->get_color( THEME_COLOR_ENTRY_OUTLINE ) ;
+                    
 
                     guint row = get_upper_row() ;
 
@@ -1194,7 +1192,7 @@ namespace Artist
                 {
                     if( row < m_model->size() )
                     {
-                        const guint& id = get<1>(*m_model->m_mapping[row]) ;
+                        boost::optional<guint>& id = get<1>(*m_model->m_mapping[row]) ;
 
                         m_model->set_selected( id ) ;
                         m_selection = boost::make_tuple( m_model->m_mapping[row], id, row ) ;
@@ -1231,14 +1229,7 @@ namespace Artist
                 boost::optional<guint>
                 get_selected_id()
                 {
-                    boost::optional<guint> id ;
-
-                    if( m_selection )
-                    {
-                        id = get<1>(m_selection.get()) ;
-                    }
-
-                    return id ;
+		    return get<1>(m_selection.get()) ;
                 }
 
                 boost::optional<guint>
@@ -1277,9 +1268,9 @@ namespace Artist
                 {
                     if( m_selection )
                     {
-                            const guint& sel_id = boost::get<1>(m_selection.get()) ;
+                            boost::optional<guint>& sel_id = boost::get<1>(m_selection.get()) ;
 
-                            if( sel_id != -1 )
+                            if( sel_id ) 
                             {
                                 return boost::optional<guint>( sel_id ) ;
                             }
