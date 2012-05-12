@@ -2254,6 +2254,31 @@ namespace Tracks
                     return( cmp && cmp.get() == val ) ;
                 }
 
+		void
+		render_now_playing_arrow(
+		      const Cairo::RefPtr<Cairo::Context>&  cairo
+		    , guint x
+		    , guint y
+		    , bool  selected 
+		)	
+		{ 
+		    cairo->save() ;
+		    cairo->set_line_join( Cairo::LINE_JOIN_ROUND ) ;
+		    cairo->set_line_cap( Cairo::LINE_CAP_ROUND ) ;
+		    cairo->move_to( x+4, y+5 ) ; 
+		    cairo->line_to( x+13, y+11 ) ; 
+		    cairo->line_to( x+4, y+17 ) ;
+		    cairo->close_path() ;
+
+		    if( selected )  
+			cairo->set_source_rgba( 1.0, 1.0, 1.0, 0.9 ) ;	
+		    else
+			cairo->set_source_rgba( 0.1, 0.1, 0.1, 1.0 ) ;
+	    
+		    cairo->fill() ;	
+		    cairo->restore() ;
+		}
+
                 bool
                 on_draw(
 		    const Cairo::RefPtr<Cairo::Context>& cairo
@@ -2320,14 +2345,12 @@ namespace Tracks
 
 		    /// Variables mostly for viewport vertical and horizontal iteration 
                     guint upper_row   = get_upper_row() ;
-
                     guint row_limit   = Limiter<guint>(
 				            Limiter<guint>::ABS_ABS
 					  , 0
 					  , m_model->size()
 					  , get_page_size() + 1
 					) ;
-
                     guint xpos        = 0 ;
 
 		    for( Columns::iterator i = m_columns.begin(); i != m_columns.end(); ++i )
@@ -2414,27 +2437,10 @@ namespace Tracks
 			// RENDER "playing" ARROW
 			if( compare_id_to_optional( r, m_model->m_id_currently_playing )) 
 			{
-			    const guint x = 4, y = m_height__headers + n*m_height__row + 2 ;
+			    const guint x = 0,
+					y = m_height__headers + n*m_height__row ;
 
-			    cairo->save() ;
-			    cairo->set_line_join( Cairo::LINE_JOIN_ROUND ) ;
-			    cairo->set_line_cap( Cairo::LINE_CAP_ROUND ) ;
-			    cairo->move_to( x+4, y+3 ) ; 
-			    cairo->line_to( x+13, y+9 ) ; 
-			    cairo->line_to( x+4, y+15 ) ;
-			    cairo->close_path() ;
-
-			    if( m_selection && boost::get<1>(m_selection.get()) == n + upper_row )
-			    { 
-				cairo->set_source_rgba( 1., 1., 1., 0.9 ) ;	
-			    }
-			    else
-			    {
-				cairo->set_source_rgba( 0.2, 0.2, 0.2, 0.9 ) ;
-			    }
-		    
-			    cairo->fill() ;	
-			    cairo->restore() ;
+			    render_now_playing_arrow( cairo, x, y, compare_val_to_optional(n+upper_row,d_sel)) ;
 			}
 
 			for( Columns::const_iterator i = m_columns.begin(); i != m_columns.end(); ++i )
@@ -3105,7 +3111,6 @@ namespace Tracks
 		    {
 			MPX::Track_sp track = get<4>(*(get<0>(m_selection.get()))) ;
 			m_SIGNAL_track_activated.emit( track, false ) ;
-			clear_selection() ;
 		    }
 		}
 

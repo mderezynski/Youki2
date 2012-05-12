@@ -114,7 +114,6 @@ namespace MPX
         , double & /*brightness*/
     );
 
-
     Cairo::RefPtr<Cairo::ImageSurface>
     cairo_image_surface_from_pixbuf(
           Glib::RefPtr<Gdk::Pixbuf>
@@ -191,6 +190,16 @@ namespace MPX
     get_mean_color_for_pixbuf(
           Glib::RefPtr<Gdk::Pixbuf>
     ) ;
+
+    Gdk::RGBA
+    get_dominant_color_for_pixbuf(
+          Glib::RefPtr<Gdk::Pixbuf>
+    ) ; 
+
+    Gdk::RGBA
+    pick_color_for_pixbuf(
+          Glib::RefPtr<Gdk::Pixbuf>
+    ) ; 
 
     inline Gdk::RGBA make_rgba (double r, double g, double b, double a = 1.0)
     {

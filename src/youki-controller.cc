@@ -58,8 +58,6 @@ namespace
     "	</menu>"
     "	<menu action='MenuView'>"
     "	    <menuitem action='MenuViewActionAlbumsShowTimeDiscsTracks'/>"
-    "	    <menuitem action='MenuViewActionAlbumRTViewModeBottom'/>"
-    "	    <separator/>"
     "	    <menuitem action='MenuViewActionFollowPlayingTrack'/>"
     "	    <separator/>"
     "	    <menuitem action='MenuViewActionUnderlineMatches'/>"
@@ -441,7 +439,7 @@ namespace MPX
 
 	Gtk::VBox* VBox2 = Gtk::manage( new Gtk::VBox ) ;
 	VBox2->set_border_width(0) ;
-	VBox2->set_spacing(2) ;
+	VBox2->set_spacing(0) ;
 
 	Gtk::Alignment * Main_Align = Gtk::manage( new Gtk::Alignment ) ;
 	Main_Align->add( *VBox2 ) ;
@@ -490,7 +488,7 @@ namespace MPX
 	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuViewActionUnderlineMatches", "Underline Search Matches" ), sigc::mem_fun( *this, &YoukiController::handle_action_underline_matches)) ; 
 	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuPlaybackControlActionStartAlbumAtFavorite", "Start Albums at Favorite Track")) ; 
 	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuPlaybackControlActionContinueCurrentAlbum", "Always Continue Playing Current Album" )) ; 
-	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuViewActionAlbumRTViewModeBottom", "Show Release Type" ), sigc::mem_fun( *this, &YoukiController::on_rt_viewmode_change  )) ; 
+//	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuViewActionAlbumRTViewModeBottom", "Show Release Type" ), sigc::mem_fun( *this, &YoukiController::on_rt_viewmode_change  )) ; 
 	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuViewActionAlbumsShowTimeDiscsTracks", "Show Release Year and Release Label" ), sigc::mem_fun( *this, &YoukiController::handle_action_underline_matches ) ); 
 
 	Glib::RefPtr<Gtk::ToggleAction> action_MOP = Gtk::ToggleAction::create( "MenuPlaybackControlActionMinimizeOnPause", "Minimize Youki on Pause" ) ;
@@ -773,8 +771,8 @@ namespace MPX
                 , &YoukiController::on_status_icon_clicked
         ))) ;
 
-	Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("MenuViewActionAlbumsShowTimeDiscsTracks"))->set_active( false ) ;
-	Glib::RefPtr<Gtk::RadioAction>::cast_static( m_UI_Actions_Main->get_action("MenuViewActionAlbumRTViewModeBottom"))->set_active( false ) ;
+	Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("MenuViewActionAlbumsShowTimeDiscsTracks"))->set_active( true ) ;
+	//Glib::RefPtr<Gtk::RadioAction>::cast_static( m_UI_Actions_Main->get_action("MenuViewActionAlbumRTViewModeBottom"))->set_active( false ) ;
 
         on_style_changed() ;
 
@@ -1056,8 +1054,10 @@ namespace MPX
     void
     YoukiController::on_rt_viewmode_change()
     {
+	using namespace MPX::View::Albums ;
+
 	MPX::View::Albums::RTViewMode m = MPX::View::Albums::RTViewMode( int(Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("MenuViewActionAlbumRTViewModeBottom"))->get_active())) ;
-	m_ListViewAlbums->set_rt_viewmode( m ) ;
+	m_ListViewAlbums->set_rt_viewmode( m?RT_VIEW_BOTTOM:RT_VIEW_NONE ) ;
     }
 
     void
@@ -1540,6 +1540,7 @@ namespace MPX
     )
     {
         try{
+                m_play->request_status( PLAYSTATUS_WAITING ) ;
                 m_track_current = t ; 
                 m_play->switch_stream( m_library->trackGetLocation( t ) ) ;
 		assign_metadata_to_DBus_property() ;
@@ -1675,7 +1676,8 @@ namespace MPX
 	m_play->request_status( PLAYSTATUS_STOPPED ) ; 
 
 	x1:
-        m_library->trackPlayed( m_track_previous, t ) ;
+	if( m_track_previous )
+            m_library->trackPlayed( m_track_previous, t ) ;
     }
 
     void
@@ -1749,6 +1751,7 @@ namespace MPX
 
             case PLAYSTATUS_WAITING:
 
+                m_main_position->set_position( 0, 0 ) ;
 		m_main_position->unpause() ;
                 m_seek_position.reset() ; 
                 m_main_info->clear() ;
@@ -1778,13 +1781,16 @@ namespace MPX
     void
     YoukiController::on_play_stream_switched()
     {
-        m_main_position->start() ;
-
         Track_sp t = m_track_current ;
-        g_return_if_fail( bool(t) ) ;
+
+	if( !t )
+	{
+	    return ;
+	}
 
         const MPX::Track& track = *(t.get()) ;
 
+        m_main_position->start() ;
         emit_track_new() ;
 
         guint id_track = boost::get<guint>(track[ATTRIBUTE_MPX_TRACK_ID].get()) ;
@@ -1812,9 +1818,30 @@ namespace MPX
                 ))
                 {
                     m_main_info->set_cover( cover ) ;
+
 		    Gdk::RGBA mean = Util::get_mean_color_for_pixbuf( cover ) ;
-		    m_main_position->set_color( mean ) ;
-		    goto skip1 ;
+
+		    double h,s,b ;
+		    Util::color_to_hsb( mean, h, s, b ) ;
+
+		    if( (s<0.35&&b>0.75) || (b<0.25) )
+		    {
+			mean = Util::pick_color_for_pixbuf( cover ) ;	
+			Util::color_to_hsb( mean, h, s, b ) ;
+			if( (s<0.35&&b>0.75) || (b<0.25) )
+			{
+			    mean = Util::make_rgba( 0.45, 0.45, 0.45, 1 ) ;
+			    goto set_color ;
+			}
+		    }
+
+		    s = std::min<double>( s * 2, 1. ) ; 
+		    mean = Util::color_from_hsb( h, s, b ) ;
+
+		    set_color:
+
+			m_main_position->set_color( mean ) ;
+			goto skip1 ;
                 }
         }
 
@@ -2490,6 +2517,8 @@ void
     YoukiController::API_prev(
     )
     {
+	guint mod = (m_play->property_position().get_value() > 5)?0:1 ;
+
 	//FIXME: This doesn't work at all with flow plugins, of course we also don't have any yet
 	if( private_->FilterModelTracks->size() )
 	{
@@ -2499,7 +2528,7 @@ void
 
 	    if( idx ) 
 	    {
-		d = std::max<int>( 0, idx.get() - 1 ) ;
+		d = std::max<int>( 0, idx.get() - mod ) ;
 	    }
 
 	    play_track( boost::get<4>(private_->FilterModelTracks->row( d ))) ;

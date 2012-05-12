@@ -171,6 +171,17 @@ namespace
                 }
             }
             else
+            if( attribute == "time" )
+            {
+                try{
+                        c.TargetValue = (unsigned int)(boost::lexical_cast<int>(value)) ;
+                        c.TargetAttr = ATTRIBUTE_TIME ;
+
+                        constraints.push_back(c) ;
+                } catch( boost::bad_lexical_cast ) {
+                }
+            }
+            else
             if( attribute == "year" )
             {
                 try{
@@ -519,7 +530,7 @@ namespace AQE
                         , inverse
                     ) ;
 
-		    if( constraints[constraints.size()-1].Processing == CONSTRAINT_PROCESSING_ASYNC )
+		    if( constraints.size() && constraints[constraints.size()-1].Processing == CONSTRAINT_PROCESSING_ASYNC )
 		    {
 			async = true ;
 		    }

@@ -25,7 +25,7 @@ namespace
         return r ;
     }
 
-    const double rounding = 6.;
+    const double rounding = 2. ;
 }
 
 namespace MPX
@@ -77,12 +77,12 @@ namespace MPX
 
     void
     KoboPosition::set_position(
-          guint    duration
-        , guint    position
+          gint    duration
+        , gint    position
     )
     {
-        m_position = std::max<guint>( 0, position ) ;
-        m_duration = std::max<guint>( 0, duration ) ;
+        m_position = std::max<gint>( 0, position ) ;
+        m_duration = std::max<gint>( 0, duration ) ;
         queue_draw () ;
     }
 
@@ -106,22 +106,9 @@ namespace MPX
 	if( m_color )
 	{
 	    cgdk = m_color.get() ;
-	    Util::color_to_hsb( cgdk, h, s, b ) ;
-
-	    if( s < 0.85 )
-		s = std::min<double>( s * 1.2, 1. ) ; 
-	    if( b < 0.75 )
-		b = std::min<double>( b * 1.3, 0.90) ;
-
-	    if( (b >= 0.85 && s < 0.2 ) || b < 0.15 )
-	    {
-		cgdk.set_rgba( 0.45, 0.45, 0.45, 1.0 ) ;
-	    }
-	    else
-		cgdk = Util::color_from_hsb( h, s, b ) ;
 	}
 	else
-	    cgdk.set_rgba( 0.45, 0.45, 0.45, 1.0);
+	    cgdk.set_rgba( 0.45, 0.45, 0.45, 1.0 ) ;
 
 	Util::color_to_hsb( cgdk, h, s, b ) ;
 	b *= 0.75 ; 
@@ -133,11 +120,11 @@ namespace MPX
 	c1 = Util::color_from_hsb( h, s, b ) ;
 
 	Util::color_to_hsb( cgdk, h, s, b ) ;
-	b *= 0.55 ; 
+	b *= 0.90 ; 
 	c2 = Util::color_from_hsb( h, s, b ) ;
 
 	Util::color_to_hsb( cgdk, h, s, b ) ;
-	b *= 0.35 ; 
+	b *= 0.85 ; 
 	c3 = Util::color_from_hsb( h, s, b ) ;
 
         Cairo::RefPtr<Cairo::LinearGradient> position_bar_back_gradient = Cairo::LinearGradient::create(
@@ -160,7 +147,7 @@ namespace MPX
             , cgdk.get_red()
             , cgdk.get_green()
             , cgdk.get_blue()
-            , 0.22
+            , 0.28
         ) ;
 
         position_bar_back_gradient->add_color_stop_rgba(
@@ -168,7 +155,7 @@ namespace MPX
             , cgdk.get_red()
             , cgdk.get_green()
             , cgdk.get_blue()
-            , 0.22
+            , 0.28
         ) ;
         
         position_bar_back_gradient->add_color_stop_rgba(
@@ -222,9 +209,9 @@ namespace MPX
 
             position_bar_gradient->add_color_stop_rgba(
                   0. 
-                , c1.get_red()
-                , c1.get_green()
-                , c1.get_blue()
+                , cgdk.get_red()
+                , cgdk.get_green()
+                , cgdk.get_blue()
                 , 1 // factor 
             ) ;
 
@@ -244,8 +231,7 @@ namespace MPX
                 , 1 // factor
             ) ;
 
-            //cairo->set_source( position_bar_gradient ) ;
-	    cairo->set_source_rgba(c1.get_red(), c1.get_green(), c1.get_blue(), 0.8) ;
+            cairo->set_source( position_bar_gradient ) ;
             cairo->rectangle(
                   r.x 
                 , r.y
@@ -256,9 +242,8 @@ namespace MPX
             cairo->restore() ;
         }
 
-	Pango::Rectangle rl, ri ;
-
 	Pango::FontDescription font_desc = get_style_context()->get_font() ;
+	Pango::Rectangle rl, ri ;
 	Glib::RefPtr<Pango::Layout> layout = Glib::wrap( pango_cairo_create_layout(cairo->cobj()) ) ;
 
 	const int text_size_px = 14 ;
@@ -267,46 +252,44 @@ namespace MPX
 	font_desc.set_size( text_size_pt * PANGO_SCALE ) ;
 	layout->set_font_description( font_desc ) ;
 
-        if( m_duration && m_position >= 0 ) // position 
-        {
-	    // Set layout
-            layout->set_markup(
-                (boost::format("<b>%02d</b>:<b>%02d</b>") % ( position / 60 ) % ( position % 60 )).str()
-            ) ;
-            layout->get_extents( rl, ri ) ; 
+	int width, height ;
 
-	    int width, height ;
-
+	if( m_duration && position )
+	{
+	    layout->set_markup(
+		(boost::format("<b>%02d</b>:<b>%02d</b>") % ( position / 60 ) % ( position % 60 )).str()
+	    ) ;
+	    layout->get_extents( rl, ri ) ; 
 	    layout->get_pixel_size( width, height ) ;
 
-	    // Render text shadow
-	    Cairo::RefPtr<Cairo::ImageSurface> s = Cairo::ImageSurface::create( Cairo::FORMAT_A8, width, height ) ;
-	    Cairo::RefPtr<Cairo::Context> c2 = Cairo::Context::create( s ) ;
+	    // Render text shadow surface
+	    Cairo::RefPtr<Cairo::ImageSurface> s2 = Cairo::ImageSurface::create( Cairo::FORMAT_A8, width, height ) ;
+	    Cairo::RefPtr<Cairo::Context> cairo2 = Cairo::Context::create( s2 ) ;
 
-	    c2->set_operator( Cairo::OPERATOR_CLEAR ) ;
-	    c2->paint() ;
+	    cairo2->set_operator( Cairo::OPERATOR_CLEAR ) ;
+	    cairo2->paint() ;
 
-	    c2->set_operator( Cairo::OPERATOR_OVER ) ;
-	    c2->set_source_rgba(
+	    cairo2->set_operator( Cairo::OPERATOR_OVER ) ;
+	    cairo2->set_source_rgba(
 		      0. 
 		    , 0. 
 		    , 0.
 		    , 0.65
 	    ) ;
-	    c2->move_to(
+	    cairo2->move_to(
 		      0 
 		    , 0  
 	    ) ;
 	    pango_cairo_show_layout(
-		  c2->cobj()
+		  cairo2->cobj()
 		, layout->gobj()
 	    ) ;
 
-	    Util::cairo_image_surface_blur( s, 1. ) ;
+	    Util::cairo_image_surface_blur( s2, 1. ) ;
 
 	    double alpha = get_alpha_at_time() ;
 
-	    // Render Position; clip and split for bar overlay 
+	    // Render Position; split for bar overlay 
 	    if( r.width-6 < (ri.get_width() / PANGO_SCALE)) 
 	    {
 		GdkRectangle r1 ;
@@ -321,7 +304,7 @@ namespace MPX
 
 		if( alpha ) 
 		{
-		    cairo->set_source( s, r1.x+1, r1.y+1 ) ;
+		    cairo->set_source( s2, r1.x+1, r1.y+1 ) ;
 		    cairo->rectangle( r1.x+1, r1.y+1, ri.get_width(), 17 ) ;
 		    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 		    cairo->fill() ;
@@ -351,7 +334,7 @@ namespace MPX
 		      c_text_dark.get_red()
 		    , c_text_dark.get_green()
 		    , c_text_dark.get_blue()
-		    , 1. * get_alpha_at_time()
+		    , 1. * alpha 
 		) ;
 		pango_cairo_show_layout( cairo->cobj(), layout->gobj() ) ;
 		cairo->reset_clip() ;
@@ -367,7 +350,7 @@ namespace MPX
 
 		if( alpha )
 		{
-		    cairo->set_source( s, r1.x+1, r1.y+1 ) ;
+		    cairo->set_source( s2, r1.x+1, r1.y+1 ) ;
 		    cairo->rectangle( r1.x+1, r1.y+1, ri.get_width()+1, 15 ) ;
 		    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 		    cairo->fill() ;
@@ -389,8 +372,10 @@ namespace MPX
 
 	if( m_duration )
 	{
+	    guint rem = m_duration-m_position ;
+
 	    layout->set_markup(
-		(boost::format("<b>%02d</b>:<b>%02d</b>") % ( m_duration / 60 ) % ( m_duration % 60 )).str()
+		(boost::format("<b>-%02d</b>:<b>%02d</b>") % ( rem / 60 ) % ( rem % 60 )).str()
 	    ) ;
 
 	    layout->get_extents( rl, ri ) ; 
@@ -460,13 +445,13 @@ namespace MPX
         
             const Gtk::Allocation& a = get_allocation() ;
 
-            Interval<guint> i (
+            Interval<guint> I (
                   Interval<guint>::IN_IN
                 , 0 
                 , a.get_width()
             ) ;
 
-            if( i.in( event->x ) ) 
+            if( I( event->x ) ) 
             {
                 m_clicked       = true ;
                 m_seek_factor   = double(a.get_width()-2) / double(m_duration) ;

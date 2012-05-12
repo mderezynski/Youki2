@@ -59,7 +59,7 @@ namespace
         , RT_OTHER
     };
 
-    const char* rt_string[] = { "ALBUM", "SINGLE", "COMPIL.", "EP", "LIVE", "REMIX", "OST", "  ?  " } ;
+    const char* rt_string[] = { "Album", "Single", "Compilation", "EP", "Live", "Remixes", "Soundtrack", "?" } ;
 
     ReleaseType
     get_rt(const std::string& type)
@@ -781,13 +781,9 @@ namespace Albums
 
 		    if( album->coverart )
 		    {
-			cairo->set_source_rgba(
-			      0
-			    , 0
-			    , 0
-			    , 0.70
-			) ;
+			Gdk::RGBA c = Util::get_mean_color_for_pixbuf( Util::cairo_image_surface_to_pixbuf( album->coverart )) ;
 
+			Gdk::Cairo::set_source_rgba( cairo, c ) ;
 			RoundedRectangle(
 			      cairo
 			    , 2
@@ -796,153 +792,8 @@ namespace Albums
 			    , 64
 			    , rounding 
 			) ;
-			cairo->set_line_width( 1.25 ) ; 
+			cairo->set_line_width( 2.5 ) ; 
 			cairo->stroke() ;
-		    }
-
-		    // Render release type if not album or unknown
-		    ReleaseType rt = get_rt( album->type ) ;
-
-		    if( !rt_viewmode == RT_VIEW_NONE && !album->type.empty() && rt != RT_OTHER /*&& rt != RT_ALBUM*/ )
-		    {
-		    	std::string release_type = rt_string[rt] ;
-
-			const int text_size_px = 10 ;
-			const int text_size_pt = static_cast<int> ((text_size_px * 72) / Util::screen_get_y_resolution (Gdk::Screen::get_default ())) ;
-
-			int width, height;
-
-			Pango::FontDescription font_desc =  widget.get_style_context()->get_font() ;
-			font_desc.set_size( text_size_pt * PANGO_SCALE ) ;
-			font_desc.set_weight( Pango::WEIGHT_BOLD ) ;
-
-			Glib::RefPtr<Pango::Context> ctx = widget.get_pango_context() ;
-			Glib::RefPtr<Pango::Layout> layout = Pango::Layout::create( ctx ) ;
-
-			layout->set_font_description( font_desc ) ;
-			layout->set_text( release_type ) ;
-			layout->get_pixel_size( width, height ) ;
-
-			cairo->save() ;
-
-			if( !(width && width > 0) || !(height && height > 0))
-			    return s ;
-
-			Cairo::RefPtr<Cairo::ImageSurface> s2 = Cairo::ImageSurface::create( Cairo::FORMAT_ARGB32, width, height ) ;
-			Cairo::RefPtr<Cairo::Context> c2 = Cairo::Context::create( s2 ) ;
-
-			if( s2 && c2 )
-			{
-				c2->set_operator( Cairo::OPERATOR_CLEAR ) ;
-				c2->paint() ;
-				c2->set_operator( Cairo::OPERATOR_OVER ) ;
-				c2->move_to( 0, 0 ) ;
-				c2->set_source_rgba(
-				      1.
-				    , 1.
-				    , 1.
-				    , 1.
-				) ;
-				pango_cairo_show_layout(c2->cobj(), layout->gobj()) ;
-
-				if( rt_viewmode == RT_VIEW_RANDOM )
-				{
-				    boost::mt19937 rng ;
-				    boost::uniform_int<> rtmap (1,2) ;
-
-				    rt_viewmode = RTViewMode( rtmap(rng)) ;
-				}
-
-				double x, y ;
-
-				switch( rt_viewmode )
-				{
-				    case RT_VIEW_NONE:
-				    case RT_VIEW_RANDOM:
-					break ;
-
-				    case RT_VIEW_BOTTOM:
-				    {
-					/// RECTANGULAR; AT BOTTOM
-					if( album->coverart )
-					{
-					    cairo->rectangle(
-						  2+0
-						, 2+50
-						, 64
-						, 14
-					    ) ;
-					    cairo->clip() ;
-					}
-
-					RoundedRectangle(
-					      cairo
-					    , 2	  + 0
-					    , 2   + (album->coverart?46:50)
-					    , 64
-					    , 18  - (album->coverart?0:4)
-					    , rounding 
-					) ;
-
-					cairo->set_operator( Cairo::OPERATOR_OVER ) ;
-					cairo->set_source_rgba( 0., 0., 0., 0.60 ) ;
-					cairo->fill() ;
-
-					x = 2+((64 - width)/2) ;
-					y = 2+50+((12 - height)/2) + 1 ;
-
-					break ;
-				    }
-
-				    case RT_VIEW_STRIPE:
-				    {
-					/// STRIPE ACROSS
-					double degrees = -45 ;
-					double w = width+6 ;
-					double h = (w/2) * std::tan( (M_PI*std::abs(degrees)) / 180. ) ;
-
-					RoundedRectangle(
-					      cairo
-					    , 2  + 1
-					    , 2  + 1
-					    , 64 - 2
-					    , 64 - 2
-					    , rounding 
-					) ;
-					cairo->clip() ;
-
-					cairo->rotate_degrees( degrees ) ;
-					cairo->rectangle(
-					      2  - w*1.5
-					    , 2  + h + 3
-					    , 64 + w*1.5
-					    , height - 1
-					) ;
-					cairo->set_operator( Cairo::OPERATOR_ATOP ) ;
-					cairo->set_source_rgba( 0., 0., 0., 0.65 ) ;
-					cairo->fill() ;
-
-					x = (2-width/2.) - 3; y = 2+h+1 ;
-
-					break ;
-				    }
-
-				    default:
-					break ;
-				}
-
-				cairo->rectangle(
-				      x
-				    , y
-				    , width
-				    , height
-				) ;
-				cairo->set_operator( Cairo::OPERATOR_OVER ) ;
-				cairo->set_source( s2, x, y ) ;
-				cairo->fill() ;
-
-				cairo->restore() ;
-			}
 		    }
 
 		    return s ;
@@ -1091,7 +942,7 @@ namespace Albums
 
                     if( row > 0 )
                     {
-			xpos += 74 ; 
+			xpos += 76 ; 
 			int yoff = 1 ; 
 
 			font_desc[L2] = widget.get_style_context()->get_font() ;
@@ -1170,7 +1021,7 @@ namespace Albums
 
 			    layout[L3]->set_markup( year_label ) ;
 			    layout[L3]->set_width((m_width-sx) * PANGO_SCALE ) ;
-			    layout[L3]->set_ellipsize( Pango::ELLIPSIZE_NONE ) ;
+			    layout[L3]->set_ellipsize( Pango::ELLIPSIZE_END ) ;
 
 			    layout[L3]->get_pixel_size( width, height ) ;
 
@@ -1241,6 +1092,13 @@ namespace Albums
 			    }
 
 			    out += tmp ;
+
+	    		    ReleaseType rt = get_rt( album->type ) ;
+
+			    if( rt != RT_OTHER && rt != RT_ALBUM )
+			    {
+				out += (boost::format("::<b> %s</b>") % rt_string[rt]).str() ;
+			    }
 
 			    layout[L3]->set_markup( out ) ;
 			    layout[L3]->get_pixel_size( width, height ) ;
@@ -1626,7 +1484,6 @@ namespace Albums
                     using boost::get;
 
 		    cancel_search() ;
-		    grab_focus() ;
 
 		    if( event->button == 1 && event->type == GDK_2BUTTON_PRESS ) 
                     {
@@ -1638,25 +1495,30 @@ namespace Albums
 
 		    guint d = (vadj_value() + event->y) / ViewMetrics.RowHeight ;
 
-		    if( !m_selection || (m_selection && get<S_INDEX>(m_selection.get()) != d))
+		    if( !m_selection || (get<S_INDEX>(m_selection.get()) != d))
 		    {
 			if( m_ModelExtents( d ))
 			{
 			    select_index( d ) ;
 			}
 
-			if( ymod != 0 )
+			if( d == ViewMetrics.ViewPort.upper()) 
 			{
-			    if( d == ViewMetrics.ViewPort.upper() ) 
-			    {
-				vadj_value_set( std::max<int>(0, ViewMetrics.ViewPortPx.upper() - ymod + 1)) ;
-			    }
-			    else if( d == ViewMetrics.ViewPort.lower())
-			    {
-				vadj_value_set( std::min<int>(vadj_upper(), ViewMetrics.ViewPortPx.upper() + (ViewMetrics.RowHeight - ymod) - ViewMetrics.Excess )) ;
-			    }
+			    vadj_value_set( std::max<int>(0, ViewMetrics.ViewPortPx.upper() - ymod + 1)) ;
+			}
+			else
+			if( d == ViewMetrics.ViewPort.lower())
+			{
+			    vadj_value_set( std::min<int>(vadj_upper(), ViewMetrics.ViewPortPx.upper() + (ViewMetrics.RowHeight - ymod) - ViewMetrics.Excess )) ;
+			}
+			else
+			if( d > ViewMetrics.ViewPort.lower())
+			{
+			    vadj_value_set( std::min<int>(vadj_upper(), ViewMetrics.ViewPortPx.upper() + ViewMetrics.RowHeight + (ViewMetrics.RowHeight - ymod) - ViewMetrics.Excess )) ;
 			}
 		    }
+
+		    grab_focus() ;
 
                     if( event->button == 3 )
                     {
@@ -1691,7 +1553,19 @@ namespace Albums
 		    queue_draw() ;
 		}
 
-                bool
+		virtual bool
+		on_focus_in_event(GdkEventFocus* G_GNUC_UNUSED)
+		{
+		    if( !m_selection || (!ViewMetrics.ViewPort(get<S_INDEX>(m_selection.get()))))
+		    {
+			select_index( ViewMetrics.ViewPort.upper()) ;
+			scroll_to_index( ViewMetrics.ViewPort.upper()) ;
+		    }
+    
+		    return true ;
+		}
+
+                virtual bool
                 on_configure_event(
                     GdkEventConfigure* event
                 )
@@ -1732,32 +1606,27 @@ namespace Albums
                 {
                     const ThemeColor& c_text		= m_theme->get_color( THEME_COLOR_TEXT ) ;
                     const ThemeColor& c_text_sel	= m_theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
-
-                    const ThemeColor& c_base_rules_hint = m_theme->get_color( THEME_COLOR_BASE_ALTERNATE ) ;
 		    const ThemeColor& c_treelines	= m_theme->get_color( THEME_COLOR_TREELINES ) ;
+                    const ThemeColor& c_base_rules_hint = m_theme->get_color( THEME_COLOR_BASE_ALTERNATE ) ;
 
 		    std::valarray<double> dashes ( 2 ) ;
 		    dashes[0] = 1. ; 
 	            dashes[1] = 2. ;
 
-
-
                     guint d       = ViewMetrics.ViewPort.upper() ; 
                     guint max_d   = std::min<guint>( m_model->size(), ViewMetrics.ViewPort.size() + 1 ) ;
-
-                    int ypos   = 0 ;
-                    int offset = ViewMetrics.ViewPortPx.upper() - (d*ViewMetrics.RowHeight) ;
-
+                    gint ypos	  = 0 ;
+                    gint offset   = ViewMetrics.ViewPortPx.upper() - (d*ViewMetrics.RowHeight) ;
+		   
+		    boost::optional<GdkRectangle> r_sel ; 
                     
 		    if( offset )
                     {
-                        ypos -= offset ;
+                        ypos  -= offset ;
 			max_d += 1 ;
                     }
 
 		    /* Let's see if we can save some rendering */	
-
-#if 0    
 		    double clip_x1, clip_y1, clip_x2, clip_y2 ;
 		
 		    cairo->get_clip_extents( clip_x1, clip_y1, clip_x2, clip_y2 ) ;
@@ -1769,17 +1638,14 @@ namespace Albums
 			d += d_clip ;
 			max_d -= (d_clip-1) ;
 		    }
+/*
 		    else
 		    if( clip_y1 == 0 && clip_y2 < ViewMetrics.ViewPortPx.lower() )
 		    {
 			guint d_clip = clip_y2 / ViewMetrics.RowHeight ;
 			max_d = d_clip+1 ;
 		    }
-#endif
-
-		    /* Now let's render the actual data */
-
-		    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
+*/
 
 		    RowRowMapping_t::const_iterator iter = m_model->iter( d ) ;
 		    MPX::CairoCorners::CORNERS c = MPX::CairoCorners::CORNERS(0) ;
@@ -1799,6 +1665,8 @@ namespace Albums
                             r.y         = ypos ; 
                             r.width     = get_allocation().get_width() ;
                             r.height    = ViewMetrics.RowHeight ;
+    
+			    r_sel = r ;
 
                             m_theme->draw_selection_rectangle(
                                   cairo
@@ -1842,25 +1710,17 @@ namespace Albums
 			++ iter ;
 		    }
 
-		    guint rend_offset = 0 ;
+		    /* Treeline */
 
+		    guint rend_offset = 0 ;
 		    if( d == 0 )
 		    {
 			rend_offset = ViewMetrics.RowHeight - ViewMetrics.ViewPortPx.upper() ;	
 		    }
-
-		    cairo->save() ;
 		    cairo->set_antialias( Cairo::ANTIALIAS_NONE ) ;
+		    cairo->set_operator( Cairo::OPERATOR_OVER ) ; 
 		    cairo->set_line_width(
-			  1. 
-		    ) ;
-		    cairo->move_to(
-			  78
-			, rend_offset 
-		    ) ; 
-		    cairo->line_to(
-			  78
-			, ViewMetrics.ViewPortPx.size() 
+			  1.5
 		    ) ;
 		    cairo->set_dash(
 			  dashes
@@ -1870,10 +1730,73 @@ namespace Albums
 			  c_treelines.get_red()
 			, c_treelines.get_green()
 			, c_treelines.get_blue()
-			, c_treelines.get_alpha() * 0.8
+			, 1. 
+		    ) ;
+
+		    if( r_sel ) 
+		    {
+			cairo->rectangle( 0, 0, get_allocated_width(), r_sel.get().y ) ;
+			cairo->clip() ;
+		    }
+
+		    cairo->move_to(
+			  78
+			, rend_offset 
+		    ) ; 
+		    cairo->line_to(
+			  78
+			, ViewMetrics.ViewPortPx.size() 
 		    ) ;
 		    cairo->stroke() ;
-		    cairo->restore() ;
+
+		    if( r_sel ) 
+		    {
+			guint y = r_sel.get().y + ViewMetrics.RowHeight ;
+		
+			cairo->reset_clip() ;
+
+			cairo->rectangle(
+			      0
+			    , y 
+			    , get_allocated_width()
+			    , get_allocated_height() - y
+			) ;
+			cairo->clip() ;
+			cairo->move_to(
+			      78
+			    , rend_offset 
+			) ; 
+			cairo->line_to(
+			      78
+			    , ViewMetrics.ViewPortPx.size() 
+			) ;
+			cairo->stroke() ;
+
+			cairo->reset_clip() ;
+
+			cairo->rectangle(
+			      r_sel.get().x
+			    , r_sel.get().y
+			    , r_sel.get().width
+			    , r_sel.get().height
+			) ;
+			cairo->clip() ;
+			cairo->set_source_rgba(
+			      c_text_sel.get_red()
+			    , c_text_sel.get_green()
+			    , c_text_sel.get_blue()
+			    , 1. 
+			) ;
+			cairo->move_to(
+			      78
+			    , rend_offset 
+			) ; 
+			cairo->line_to(
+			      78
+			    , ViewMetrics.ViewPortPx.size() 
+			) ;
+			cairo->stroke() ;
+		    }
 
 		    if( !is_sensitive() )
 		    {

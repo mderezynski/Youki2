@@ -497,41 +497,180 @@ namespace MPX
         return pixbuf ;
     }
 
+namespace
+{
+struct HSL
+{
+    float h, s, l;
+};
+
+HSL make_hsl (float h, float s, float l)
+{
+    HSL hsl = { h, s, l };
+
+    return hsl;
+}
+
+HSL hsl_from_rgb (uint8_t r8, uint8_t g8, uint8_t b8)
+{
+    float r = r8 / 255.0;
+    float g = g8 / 255.0;
+    float b = b8 / 255.0;
+
+    float max = std::max(r, std::max (g, b));
+    float min = std::min(r, std::min (g, b));
+
+    float h;
+    float s;
+    float l = (max + min) / 2;
+
+    if (max == min) {
+        h = s = 0; // achromatic
+    } else {
+        float d = max - min;
+
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+
+        if (max == r) {
+            h = (g - b) / d + (g < b ? 6 : 0);
+        } else if (max == g) {
+            h = (b - r) / d + 2;
+        } else if (max == b) {
+            h = (r - g) / d + 4;
+        }
+
+        h /= 6;
+    }
+
+    return make_hsl (h, s, l);
+}
+
+HSL get_dominant_color (Glib::RefPtr<Gdk::Pixbuf> const& image)
+{
+    int bytes_per_pixel = image->get_has_alpha () ? 4 : 3;
+
+    int width  = image->get_width ();
+    int height = image->get_height ();
+    int row_stride = image->get_rowstride ();
+
+    int count[64][64];
+
+    int* start = &count[0][0];
+    int* end   = start + 64*64;
+
+    std::fill (start, end, 0);
+
+    uint8_t const *pixel_row = image->get_pixels ();
+
+    for (int y = 0; y < height; y++) {
+        uint8_t const* p = pixel_row;
+
+        for (int x = 0; x < width; x++) {
+            HSL hsl = hsl_from_rgb (p[0], p[1], p[2]);
+
+            count[int (hsl.h * 63)][int (hsl.s * 63)]++;
+
+            p += bytes_per_pixel;
+        }
+
+        pixel_row += row_stride;
+    }
+
+    int* entry = std::max_element (start, end);
+
+    std::ptrdiff_t index = entry - start;
+
+    int h = index >> 6;
+    int s = index & 0x3f;
+
+    return make_hsl (h / 63.0, s / 63.0, 0.5);
+}
+}
+
+    Gdk::RGBA
+    get_dominant_color_for_pixbuf(
+          Glib::RefPtr<Gdk::Pixbuf>             pb0
+    )
+    {
+	HSL hsl = get_dominant_color( pb0 ) ;
+	return Util::color_from_hsb( hsl.h, hsl.s, hsl.l ) ;
+    }
+
+    Gdk::RGBA
+    pick_color_for_pixbuf(
+          Glib::RefPtr<Gdk::Pixbuf>             pb0
+    )
+    {
+	Gdk::RGBA c ;
+	Glib::RefPtr<Gdk::Pixbuf> pb3 = pb0->scale_simple(  1,  1 , Gdk::INTERP_NEAREST ) ;
+	guchar * pixels = gdk_pixbuf_get_pixels(GDK_PIXBUF(pb3->gobj())) ;
+	c.set_rgba( double(pixels[0])/255., double(pixels[1])/255., double(pixels[2])/255., 1.0 ) ;
+	return c ;
+    }
+
     Gdk::RGBA
     get_mean_color_for_pixbuf(
           Glib::RefPtr<Gdk::Pixbuf>             pb0
     )
     {
-        Gdk::RGBA c ;
+	GdkPixbuf * pixbuf = pb0->gobj() ;
 
-        Glib::RefPtr<Gdk::Pixbuf> pb3 = pb0->scale_simple(  1,  1 , Gdk::INTERP_NEAREST ) ;
-        guchar * pixels = gdk_pixbuf_get_pixels(GDK_PIXBUF(pb3->gobj())) ;
-        c.set_rgba( double(pixels[0])/255., double(pixels[1])/255., double(pixels[2])/255., 1.0 ) ;
+	guint64 a_total, r_total, g_total, b_total;
+	guint row, column;
+	int row_stride;
+	const guchar *pixels, *p;
+	int r, g, b, a;
+	guint64 dividend;
+	guint width, height ;
+	gdouble dd;
 
-/*
+	width = gdk_pixbuf_get_width (pixbuf);
+	height = gdk_pixbuf_get_height (pixbuf)/*/2*/;
+	row_stride = gdk_pixbuf_get_rowstride (pixbuf);
+	pixels = gdk_pixbuf_get_pixels (pixbuf);
 
-NUX AverageColor()
+	/* iterate through the pixbuf, counting up each component */
+	a_total = 0;
+	r_total = 0;
+	g_total = 0;
+	b_total = 0;
 
-        guchar* pixels = gdk_pixbuf_get_pixels(GDK_PIXBUF(pb0->gobj())) ;
-	float r, g, b, a;
-	r = g = b = a = 0;
+	if (gdk_pixbuf_get_has_alpha (pixbuf)) {
+		for (row = 0; row < height; row++) {
+			p = pixels + (row * row_stride);
+			for (column = 0; column < width; column++) {
+				r = *p++;
+				g = *p++;
+				b = *p++;
+				a = *p++;
 
-	for (int j = 0; j < pb0->get_height(); j++)
-	{
-	    for (int i = 0; i < pb0->get_width(); i++)
-	    {
-		r += pixels[pb0->get_rowstride()*j + i*4 + 1 ] ; 
-		g += pixels[pb0->get_rowstride()*j + i*4 + 2 ] ; 
-		b += pixels[pb0->get_rowstride()*j + i*4 + 3 ] ; 
-		a += pixels[pb0->get_rowstride()*j + i*4 + 0 ] ; 
-	    }
+				a_total += a;
+				r_total += r * a;
+				g_total += g * a;
+				b_total += b * a;
+			}
+		}
+		dividend = height * width * 0xFF;
+		a_total *= 0xFF;
+	} else {
+		for (row = 0; row < height; row++) {
+			p = pixels + (row * row_stride);
+			for (column = 0; column < width; column++) {
+				r = *p++;
+				g = *p++;
+				b = *p++;
+
+				r_total += r;
+				g_total += g;
+				b_total += b;
+			}
+		}
+		dividend = height * width;
+		a_total = dividend * 0xFF;
 	}
 
-	unsigned int num_pixels = pb0->get_width() * pb0->get_height() ;
-	c = Util::make_rgba( r/num_pixels, g/num_pixels, b/num_pixels, a/num_pixels) ;
-*/
-
-        return c ;
+	dd = dividend * 0xFF ;
+	return Util::make_rgba((r_total/dd) , (g_total/dd) , (b_total/dd)) ;
     }
   } // namespace Util
 } // namespace MPX

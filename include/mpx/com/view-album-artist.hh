@@ -88,7 +88,6 @@ namespace Artist
                 Model_sp_t                      m_realmodel ;
                 IdIterMap_t                     m_iter_map ;
                 guint				m_upper_bound ;
-                boost::optional<guint>          m_selected ;
                 Signal_1                        m_changed ;
 
                 DataModel()
@@ -143,14 +142,6 @@ namespace Artist
                 )
                 {
                     m_upper_bound = row ;
-                }
-
-                virtual void
-                set_selected(
-                    const boost::optional<guint>& d = boost::optional<guint>()
-                )
-                {
-                    m_selected = d ;
                 }
 
                 virtual void
@@ -320,14 +311,6 @@ namespace Artist
                     RowRowMapping_t new_mapping;
                     new_mapping.reserve( m_realmodel->size() ) ;
 
-		    boost::optional<guint> id_sel ;
-
-		    if( m_selected )
-		    {
-			id_sel = m_selected ;
-		    }
-
-                    m_selected.reset() ;
                     m_upper_bound = 0 ;
 
                     IdVector_t * constraints_artist = m_constraints_artist.get() ;
@@ -488,12 +471,12 @@ namespace Artist
 
 		    if( selected )
 		    {
-			Util::render_text_shadow( l, xpos+6, ypos+2, cairo ) ;
+			Util::render_text_shadow( l, xpos+2, ypos+2, cairo ) ;
 		    }
 
 	            Gdk::Cairo::set_source_rgba(cairo, color);
                     cairo->move_to(
-                          xpos + 6
+                          xpos + 2
                         , ypos + 2
                     ) ;
                     pango_cairo_show_layout(
@@ -575,7 +558,7 @@ namespace Artist
 		    configure_vadj(
 			  (m_model->size() * m_height__row)
 			, m_height__current_viewport
-			, m_height__row * 8
+			, m_height__row
 		    ) ;
 		}
 
@@ -959,7 +942,7 @@ namespace Artist
                         configure_vadj(
                               (m_model->size() * m_height__row)
                             , m_height__current_viewport
-                            , m_height__row * 8
+                            , m_height__row 
                         ) ;
                     }
 
@@ -1147,7 +1130,7 @@ namespace Artist
                 configure_vadj(
 		     (m_model->size() * m_height__row)
                    , m_height__current_viewport
-                   , m_height__row * 8
+                   , m_height__row
                 ) ;
 
 		m_Model_I = Interval<guint>(
@@ -1194,7 +1177,6 @@ namespace Artist
                     {
                         boost::optional<guint>& id = get<1>(*m_model->m_mapping[row]) ;
 
-                        m_model->set_selected( id ) ;
                         m_selection = boost::make_tuple( m_model->m_mapping[row], id, row ) ;
                         m_SIGNAL_selection_changed.emit() ;
                         queue_draw();
@@ -1283,7 +1265,7 @@ namespace Artist
                 clear_selection(
                 )
                 {
-                    m_model->set_selected() ;
+		    m_selection.reset() ;
                 }
 
                 void

@@ -110,8 +110,8 @@ namespace MPX
 
             void
             set_position(
-                  guint
-                , guint
+                  gint
+                , gint
             ) ;
 
             void

@@ -30,7 +30,7 @@ namespace
 	}
     } ;
 
-    const double rounding = 6. ;
+    const double rounding = 2. ;
 
     Gdk::RGBA
     get_color_at_pos(
@@ -118,15 +118,6 @@ namespace MPX
 	Gdk::RGBA c_gradient = get_color_at_pos( c1, c2, percent ) ;
 
         cairo->set_operator( Cairo::OPERATOR_OVER ) ;
-        RoundedRectangle(
-              cairo
-            , 1 
-            , 1 
-            , w 
-            , 19
-            , rounding 
-	    , MPX::CairoCorners::CORNERS(8)
-        ) ;
 
         Cairo::RefPtr<Cairo::LinearGradient> position_bar_back_gradient = Cairo::LinearGradient::create(
               a.get_width() / 2 

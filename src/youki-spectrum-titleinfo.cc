@@ -14,7 +14,7 @@
 
 namespace
 {
-    const double rounding = 6. ; 
+    const double rounding = 1. ; 
 }
 
 namespace MPX

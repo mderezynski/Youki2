@@ -336,7 +336,7 @@ namespace MPX
                         }
                     }
                     
-                    stop_stream() ;
+                    //stop_stream() ;
                 }
 
         void
@@ -362,7 +362,7 @@ namespace MPX
                         }
                     }
 
-                    stop_stream()  ;
+                    //stop_stream()  ;
                 }
 
         void
@@ -492,7 +492,7 @@ namespace MPX
                     }
                     catch (...)
                     {
-                        stop_stream (); 
+			//stop_stream (); 
                         return ;
                     }
 
@@ -932,6 +932,25 @@ namespace MPX
                                 g_message("%s: Debug........: '%s'", G_STRLOC, debug.get()) ;
 
 				play.signal_error_.emit("Playback Engine", error->message, debug.get()) ; 
+
+				if( error->domain == GST_STREAM_ERROR ) 
+				{
+				    g_message("%s: Continuing to next stream", G_STRLOC) ;
+
+				    gst_element_set_state(
+					  play.m_playback_bin
+					, GST_STATE_NULL
+				    )  ;
+
+				    gst_element_get_state(
+					  play.m_playback_bin
+					, NULL
+					, NULL
+					, GST_CLOCK_TIME_NONE
+				    ) ; 
+
+				    play.signal_eos_.emit() ;
+				}
                             }
                             break ;
 
