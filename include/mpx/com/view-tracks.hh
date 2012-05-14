@@ -1226,7 +1226,7 @@ namespace Tracks
 
                                 vec[0] = Glib::ustring(r->Artist).lowercase() ;
                                 vec[1] = Glib::ustring(r->Album).lowercase() ;
-                                vec[2] = Glib::ustring(r->Artist).lowercase() ;
+                                vec[2] = Glib::ustring(r->Title).lowercase() ;
                                 vec[3] = Glib::ustring(r->AlbumArtist).lowercase() ;
 
                                 if( Util::match_vec( f, vec ))
@@ -1898,7 +1898,7 @@ namespace Tracks
 
                     (*m_SearchEntry).send_focus_change( event ) ;
 
-                    gdk_event_free( event ) ;
+                    //gdk_event_free( event ) ;
                 }
 
 		void

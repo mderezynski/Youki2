@@ -345,10 +345,7 @@ namespace MPX
 	, MPX::CairoCorners::CORNERS		corners
     )
     {
-        const ThemeColor& c = get_color( THEME_COLOR_SELECT ) ;
-
-        Gdk::RGBA cgdk ;
-        cgdk.set_rgba( c.get_red(), c.get_green(), c.get_blue() ) ;
+        const ThemeColor& cgdk = get_color( THEME_COLOR_SELECT ) ;
 
         cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 
@@ -372,6 +369,11 @@ namespace MPX
 	s *= 0.95 ;
         Gdk::RGBA c2 = Util::color_from_hsb( h, s, b ) ;
 
+        Util::color_to_hsb( cgdk, h, s, b ) ;
+        b *= 0.40 ; 
+	s *= 0.85 ;
+        Gdk::RGBA c3 = Util::color_from_hsb( h, s, b ) ;
+
         gradient->add_color_stop_rgba(
               0
             , c1.get_red()
@@ -381,10 +383,18 @@ namespace MPX
         ) ;
        
         gradient->add_color_stop_rgba(
-              1. 
+              0.70 
             , c2.get_red()
             , c2.get_green()
             , c2.get_blue()
+            , alpha
+        ) ;
+
+        gradient->add_color_stop_rgba(
+              1. 
+            , c3.get_red()
+            , c3.get_green()
+            , c3.get_blue()
             , alpha
         ) ;
 
@@ -400,16 +410,9 @@ namespace MPX
         cairo->set_source( gradient ) ;
         cairo->fill(); 
 
-/*
-        cairo->set_source_rgba(
-              c.r
-            , c.g
-            , c.b
-            , .95
-        ) ;
-        cairo->set_line_width( 1.25 ) ; 
+	Gdk::Cairo::set_source_rgba( cairo, cgdk ) ;
+        cairo->set_line_width( 0.75 ) ; 
         cairo->stroke () ;
-*/
     }
 
     void

@@ -22,7 +22,7 @@
 
 namespace
 {
-    const double rounding = 3.5 ;
+    const double rounding = 2.5 ;
 
     template <typename T>
     struct PangoScaleAdaptor
@@ -107,9 +107,9 @@ namespace MPX
 	b *= 0.45 ;
 	c2 = Util::color_from_hsb( h, s, b ) ;
 
-	Gdk::RGBA c_gradient = fade_colors( c1, c2, percent ) ;
+	ColorFade F( c1, c2 ) ;
 
-        cairo->set_operator( Cairo::OPERATOR_OVER ) ;
+	Gdk::RGBA c_gradient = F( percent ) ; 
 
         Cairo::RefPtr<Cairo::LinearGradient> position_bar_back_gradient = Cairo::LinearGradient::create(
               a.get_width() / 2 

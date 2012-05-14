@@ -779,9 +779,10 @@ namespace Albums
 
 		    if( album->coverart )
 		    {
-			Gdk::RGBA c = Util::get_mean_color_for_pixbuf( Util::cairo_image_surface_to_pixbuf( album->coverart )) ;
+			//Gdk::RGBA c = Util::get_mean_color_for_pixbuf( Util::cairo_image_surface_to_pixbuf( album->coverart )) ;
 
-			Gdk::Cairo::set_source_rgba( cairo, c ) ;
+			//Gdk::Cairo::set_source_rgba( cairo, c ) ;
+			Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(.15,.15,.15,1.)) ;
 			RoundedRectangle(
 			      cairo
 			    , 2
@@ -981,7 +982,7 @@ namespace Albums
 			pango_cairo_show_layout(cairo->cobj(), layout[L1]->gobj()) ;
 
 			/* ALBUM */
-			yoff += 15 ;
+			yoff += 17 ;
 
 			layout[L2]->set_text( album->album )  ;
 			layout[L2]->get_pixel_size( width, height ) ;
@@ -1027,12 +1028,12 @@ namespace Albums
 
 			    if( selected )
 			    {
-				Util::render_text_shadow( layout[L3], sx, r.y+row_height-height-27, cairo) ; 
+				Util::render_text_shadow( layout[L3], sx, r.y+row_height-height-24, cairo) ; 
 			    }
 
 			    cairo->move_to(
 				  sx
-				, r.y + row_height - height - 27
+				, r.y + row_height - height - 24
 			    ) ;
 
 			    Gdk::Cairo::set_source_rgba(cairo, /*c2*/Util::make_rgba(c1, 1.)) ;
@@ -1105,12 +1106,12 @@ namespace Albums
 
 			    if( selected )
 			    {
-				Util::render_text_shadow( layout[L3], xpos+8, r.y+row_height-height-(m_show_release_label?13:29), cairo) ; 
+				Util::render_text_shadow( layout[L3], xpos+8, r.y+row_height-height-(m_show_release_label?9:24), cairo) ; 
 			    }
 
 			    cairo->move_to(
 				  xpos+8 
-				, r.y+row_height-height-(m_show_release_label?13:29)
+				, r.y+row_height-height-(m_show_release_label?9:24)
 			    ) ;
 
 			    Gdk::Cairo::set_source_rgba(cairo, /*c2*/Util::make_rgba(c1,1.)) ;
@@ -1517,7 +1518,7 @@ namespace Albums
 			    vadj_value_set( std::max<int>(0, ViewMetrics.ViewPortPx.upper() - ymod + 1)) ;
 			}
 			else
-			if( d == ViewMetrics.ViewPort.lower())
+			if( !ymod && d == ViewMetrics.ViewPort.lower())
 			{
 			    vadj_value_set( std::min<int>(vadj_upper(), ViewMetrics.ViewPortPx.upper() + (ViewMetrics.RowHeight - ymod) - ViewMetrics.Excess )) ;
 			}

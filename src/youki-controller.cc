@@ -863,13 +863,10 @@ namespace MPX
 
 	SQL::RowV v ;
 	m_library->getSQL(v, (boost::format("SELECT * FROM album_artist")).str()) ; 
-
 	std::stable_sort( v.begin(), v.end(), CompareAlbumArtists ) ;
 
-	for( SQL::RowV::iterator i = v.begin(); i != v.end(); ++i )
+	for( auto& r : v ) 
 	{
-	    SQL::Row & r = *i;
-
 	    private_->FilterModelArtist->append_artist(
 		  Util::row_get_album_artist_name( r )
 		, boost::get<guint>(r["id"])
@@ -901,9 +898,9 @@ namespace MPX
 	    handle_sql_error( cxe ) ;
 	}
 
-	for( SQL::RowV::iterator i = v.begin(); i != v.end(); ++i )
+	for( auto& r : v ) 
 	{
-	    guint id = get<guint>((*i)["id"]); 
+	    guint id = get<guint>(r["id"]); 
 
 	    try{
 		private_->FilterModelAlbums->append_album( get_album_from_id( id )) ;
@@ -933,12 +930,10 @@ namespace MPX
 	v.clear() ;
 	m_library->getSQL(v, "SELECT * FROM track_view ORDER BY album_artist, mb_release_date, album, discnr, track_view.track") ;
 
-	for( SQL::RowV::iterator i = v.begin(); i != v.end(); ++i )
+	for( auto& r : v ) 
 	{
-	    SQL::Row & r = *i;
-
 	    try{
-		private_->FilterModelTracks->append_track(r, m_library->sqlToTrack(r, true, false ) ) ;
+		private_->FilterModelTracks->append_track(r, m_library->sqlToTrack(r, true, false )) ;
 	    } catch( Library::FileQualificationError )
 	    {
 	    }
@@ -1445,8 +1440,7 @@ namespace MPX
 		    ))
 		    {
 			m_main_info->set_cover( cover ) ;
-			Gdk::RGBA mean = Util::get_mean_color_for_pixbuf( cover ) ;
-			m_main_position->set_color( mean ) ;
+			m_main_position->set_color(Util::pick_color_for_pixbuf( cover )) ;
 		    }
 	    }
 	}
@@ -1509,13 +1503,13 @@ namespace MPX
     YoukiController::push_new_tracks(
     )
     {
-        for( std::vector<guint>::const_iterator i = m_new_tracks.begin(); i != m_new_tracks.end() ; ++i )
+        for( auto n : m_new_tracks ) 
         {
             SQL::RowV v ;
 
-	    m_library->getSQL(v, (boost::format("SELECT * FROM track_view WHERE track_view.id = '%u' ORDER BY ifnull(album_artist_sortname,album_artist), mb_release_date, album, discnr, track_view.track") % *i ).str()) ; 
+	    m_library->getSQL(v, (boost::format("SELECT * FROM track_view WHERE track_view.id = '%u' ORDER BY ifnull(album_artist_sortname,album_artist), mb_release_date, album, discnr, track_view.track") % n ).str()) ; 
 
-            if( v.size() != 1)
+            if(v.size() != 1)
             {
                 g_critical(" Got multiple tracks with the same ID / this can not happen.") ;
                 continue ;
@@ -1525,7 +1519,6 @@ namespace MPX
         }
 
         m_new_tracks.clear() ;
-
 	tracklist_regen_mapping() ;
 
         while (gtk_events_pending())
@@ -1615,7 +1608,6 @@ namespace MPX
 		const MPX::Track& track = *(m_track_previous.get()) ;
 	
 		guint album_id = boost::get<guint>(track[ATTRIBUTE_MPX_ALBUM_ID].get()) ;
-    
 		const char * album_top_f = "SELECT id FROM track WHERE album_j = '%u' ORDER BY track ASC" ;
 
 		SQL::RowV v ;
@@ -1623,24 +1615,22 @@ namespace MPX
 
 		if( !v.empty() )
 		{
-		    SQL::RowV::iterator i = v.begin() ;
+		    bool next = false ;
 
-		    for( ; i != v.end(); ++i )
+		    for( auto& r : v ) 
 		    {
-			guint id = boost::get<guint>((*i)["id"]) ;
+			guint id = boost::get<guint>(r["id"]) ;
+
+			if( next ) 
+			{
+			    play_track( m_library->getTrackById( id )) ;		    
+			    goto x1 ;
+			}
 
 			if( id == boost::get<guint>(track[ATTRIBUTE_MPX_TRACK_ID].get()))
 			{
-		    	    ++i ;		    
-			    break ;
+			    next = true ;
 			}
-		    }
-
-		    if( i != v.end() ) 
-		    {
-			guint next_id = boost::get<guint>((*i)["id"]) ;
-			play_track( m_library->getTrackById( next_id )) ;		    
-			goto x1 ;
 		    }
 		}
 	    }
@@ -1652,7 +1642,7 @@ namespace MPX
 		/* The currently playing track is in the current filter projection... */
 		if( pos )
 		{
-		    /*/ ...so advance to the next FIXME: Flow plugins: HERE */
+		    /*...so advance to the next FIXME: Flow plugins: HERE */
 		    guint pos_next = pos.get() + 1 ;
 
 		    if( pos_next < private_->FilterModelTracks->size() )
@@ -1663,7 +1653,7 @@ namespace MPX
 		}
 		else
 		{
-		    /*/ Not in the current projection? OK, so start with the top tracki, if the projection's size is > 0 */
+		    /*/ Not in the current projection? OK, so start with the top track, if the projection's size is > 0 */
 		    if( private_->FilterModelTracks->size() )
 		    {
 			play_track( private_->FilterModelTracks->row(0)->TrackSp ) ;
@@ -1818,30 +1808,8 @@ namespace MPX
                 ))
                 {
                     m_main_info->set_cover( cover ) ;
-
-		    Gdk::RGBA mean = Util::get_mean_color_for_pixbuf( cover ) ;
-
-		    double h,s,b ;
-		    Util::color_to_hsb( mean, h, s, b ) ;
-
-		    if((b>0.85) || (b<0.25)) 
-		    {
-			mean = Util::pick_color_for_pixbuf( cover ) ;	
-			Util::color_to_hsb( mean, h, s, b ) ;
-			if( (s<0.35&&b>0.75) || (b<0.25) )
-			{
-			    mean = Util::make_rgba( 0.45, 0.45, 0.45, 1 ) ;
-			}
-			goto set_color ;
-		    }
-
-		    s = std::min<double>( s * 2, 1. ) ; 
-		    mean = Util::color_from_hsb( h, s, b ) ;
-
-		    set_color:
-
-			m_main_position->set_color( mean ) ;
-			goto skip1 ;
+		    m_main_position->set_color(Util::pick_color_for_pixbuf( cover )) ;
+		    goto skip1 ;
                 }
         }
 
@@ -1849,7 +1817,6 @@ namespace MPX
 	m_main_position->set_color() ;
 	
 	skip1:
-
 	m_main_window->set_title((boost::format("Youki :: %s - %s") % info[0] % info[2]).str()) ;
     }
 
