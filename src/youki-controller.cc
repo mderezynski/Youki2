@@ -1440,7 +1440,9 @@ namespace MPX
 		    ))
 		    {
 			m_main_info->set_cover( cover ) ;
-			m_main_position->set_color(Util::pick_color_for_pixbuf( cover )) ;
+			Gdk::RGBA c = Util::pick_color_for_pixbuf(cover) ;
+			m_main_info->set_color(c) ;
+			m_main_position->set_color(c) ;
 		    }
 	    }
 	}
@@ -1724,12 +1726,16 @@ namespace MPX
 
                 m_track_current.reset() ;
 		assign_metadata_to_DBus_property() ;
-
                 m_seek_position.reset() ; 
+
                 m_main_info->clear() ;
-		m_main_position->unpause() ;
+
+		m_main_info->set_color() ;
 		m_main_position->set_color() ;
+
+		m_main_position->unpause() ;
                 m_main_position->set_position( 0, 0 ) ;
+
 		m_main_window->set_title("Youki") ;
 
                 private_->FilterModelTracks->clear_active_track() ;
@@ -1808,12 +1814,15 @@ namespace MPX
                 ))
                 {
                     m_main_info->set_cover( cover ) ;
-		    m_main_position->set_color(Util::pick_color_for_pixbuf( cover )) ;
+		    Gdk::RGBA c = Util::pick_color_for_pixbuf(cover) ;
+		    m_main_info->set_color(c) ;
+		    m_main_position->set_color(c) ;
 		    goto skip1 ;
                 }
         }
 
 	m_main_info->set_cover( Glib::RefPtr<Gdk::Pixbuf>(0) ) ;
+	m_main_info->set_color() ;
 	m_main_position->set_color() ;
 	
 	skip1:

@@ -777,24 +777,6 @@ namespace Albums
 		    ) ;
 		    cairo->fill() ;
 
-		    if( album->coverart )
-		    {
-			//Gdk::RGBA c = Util::get_mean_color_for_pixbuf( Util::cairo_image_surface_to_pixbuf( album->coverart )) ;
-
-			//Gdk::Cairo::set_source_rgba( cairo, c ) ;
-			Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(.15,.15,.15,1.)) ;
-			RoundedRectangle(
-			      cairo
-			    , 2
-			    , 2
-			    , 64
-			    , 64
-			    , rounding 
-			) ;
-			cairo->set_line_width( 2.5 ) ; 
-			cairo->stroke() ;
-		    }
-
 		    return s ;
 		}
 
@@ -848,9 +830,29 @@ namespace Albums
 		    , TCVector_sp&			    album_constraints
                 )
                 {
-                    GdkRectangle r ;
-                    r.y = ypos + 4 ;
+		    double h,s,b ;
 
+		    Util::color_to_hsb( color, h, s, b ) ;
+		    s *= 0.45 ;
+		    Gdk::RGBA c1 = Util::color_from_hsb( h, s, b ) ;
+		    c1.set_alpha( 1. ) ;
+
+		    Util::color_to_hsb( color, h, s, b ) ;
+		    s *= 0.95 ;
+		    Gdk::RGBA c2 = Util::color_from_hsb( h, s, b ) ;
+		    c2.set_alpha( 1. ) ;
+		    
+		    Gdk::RGBA c3 = color ;
+		    c3.set_alpha( 0.7 ) ;
+		    Util::color_to_hsb( color, h, s, b ) ;
+		    s *= 0.25 ;
+		    b *= 1.80 ;
+		    c3 = Util::color_from_hsb( h, s, b ) ;
+		    c3.set_alpha( 1. ) ;
+
+                    GdkRectangle r ;
+
+                    r.y = ypos + 4 ;
 		    guint xpos = 0 ;
 
                     if( row > 0 )
@@ -874,7 +876,9 @@ namespace Albums
 			if( !album->caching )
 			{
 			    if( !album->surface_cache ) 
-				    album->surface_cache = render_icon( album, widget, m_display_additional_info ) ;
+			    {
+				album->surface_cache = render_icon( album, widget, m_display_additional_info ) ;
+			    }
 
 			    if( album->coverart && selected )
 			    {
@@ -884,6 +888,21 @@ namespace Albums
 			    cairo->set_source( album->surface_cache, r.x, r.y ) ;
 			    cairo->rectangle( r.x, r.y , 68, 68 ) ;
 			    cairo->fill() ;
+
+			    if( album->coverart )
+			    {
+				Gdk::Cairo::set_source_rgba(cairo, c2) ;
+				RoundedRectangle(
+				      cairo
+				    , r.x+2
+				    , r.y+2
+				    , 64
+				    , 64
+				    , rounding 
+				) ;
+				cairo->set_line_width( 1.5 ) ; 
+				cairo->stroke() ;
+			    }
 			}
 			else
 			{
@@ -894,75 +913,56 @@ namespace Albums
 			}
                     }
 
-		    Gdk::RGBA c1, c2, c3 ;
-		    double h,s,b ;
-
-		    Util::color_to_hsb( color, h, s, b ) ;
-		    s *= 0.45 ;
-		    c1 = Util::color_from_hsb( h, s, b ) ;
-
-		    Util::color_to_hsb( color, h, s, b ) ;
-		    s *= 0.95 ;
-		    c2 = Util::color_from_hsb( h, s, b ) ;
-		    c2.set_alpha( 1. ) ;
-		    
-		    c3 = color ;
-		    c3.set_alpha( 0.7 ) ;
-		    Util::color_to_hsb( color, h, s, b ) ;
-		    s *= 0.25 ;
-		    b *= 1.80 ;
-		    c3 = Util::color_from_hsb( h, s, b ) ;
-		    c3.set_alpha( 1. ) ;
-
                     enum { L1, L2, L3, N_LS } ;
 
                     const int text_size_px[N_LS] = { 15, 15, 12 } ;
                     const int text_size_pt[N_LS] = {   static_cast<int> ((text_size_px[L1] * 72)
-                                                            / Util::screen_get_y_resolution (Gdk::Screen::get_default ()))
+                                                            / Util::screen_get_y_resolution(Gdk::Screen::get_default()))
                                                      , static_cast<int> ((text_size_px[L2] * 72)
-                                                            / Util::screen_get_y_resolution (Gdk::Screen::get_default ()))
+                                                            / Util::screen_get_y_resolution(Gdk::Screen::get_default()))
                                                      , static_cast<int> ((text_size_px[L3] * 72)
-                                                            / Util::screen_get_y_resolution (Gdk::Screen::get_default ())) } ;
+                                                            / Util::screen_get_y_resolution(Gdk::Screen::get_default()))} ;
 
                     int width, height;
 
-                    Pango::FontDescription font_desc[N_LS] ;
+                    std::vector<Pango::FontDescription> font_desc (3) ;
 
-                    Glib::RefPtr<Pango::Layout> layout[N_LS] = { Glib::wrap( pango_cairo_create_layout( cairo->cobj() )),
-                                                                 Glib::wrap( pango_cairo_create_layout( cairo->cobj() )),
-                                                                 Glib::wrap( pango_cairo_create_layout( cairo->cobj() )) } ;
+                    std::vector<Glib::RefPtr<Pango::Layout> > layout { Glib::wrap( pango_cairo_create_layout(cairo->cobj())),
+                                                                       Glib::wrap( pango_cairo_create_layout(cairo->cobj())),
+	                                                               Glib::wrap( pango_cairo_create_layout(cairo->cobj()))} ;
 
                     font_desc[L1] = widget.get_style_context()->get_font() ;
                     font_desc[L1].set_size( text_size_pt[L1] * PANGO_SCALE ) ;
+
                     font_desc[L1].set_weight( Pango::WEIGHT_BOLD ) ;
 		    font_desc[L1].set_stretch( Pango::STRETCH_EXTRA_CONDENSED ) ;
 
+		    font_desc[L2] = widget.get_style_context()->get_font() ;
+		    font_desc[L2].set_size( text_size_pt[L2] * PANGO_SCALE ) ;
+
+		    font_desc[L2].set_weight( Pango::WEIGHT_BOLD ) ;
+		    font_desc[L2].set_stretch( Pango::STRETCH_EXTRA_CONDENSED ) ;
+
+		    font_desc[L3] = widget.get_style_context()->get_font() ;
+		    font_desc[L3].set_size( text_size_pt[L3] * PANGO_SCALE ) ;
+
                     layout[L1]->set_font_description( font_desc[L1] ) ;
                     layout[L1]->set_ellipsize( Pango::ELLIPSIZE_END ) ;
-                    layout[L1]->set_width(( m_width - 90 ) * PANGO_SCALE ) ;
+
+		    layout[L2]->set_font_description( font_desc[L2] ) ;
+		    layout[L2]->set_ellipsize( Pango::ELLIPSIZE_END ) ;
+
+		    layout[L3]->set_font_description( font_desc[L3] ) ;
+		    layout[L3]->set_ellipsize( Pango::ELLIPSIZE_END ) ;
+
+		    layout[L1]->set_width((m_width-90) * PANGO_SCALE ) ;
+		    layout[L2]->set_width((m_width-90) * PANGO_SCALE ) ;
+		    layout[L3]->set_width((m_width-90) * PANGO_SCALE ) ;
 
                     if( row > 0 )
                     {
-			xpos += 76 ; 
+			xpos += 72 ; 
 			int yoff = 1 ; 
-
-			font_desc[L2] = widget.get_style_context()->get_font() ;
-			font_desc[L2].set_size( text_size_pt[L2] * PANGO_SCALE ) ;
-			font_desc[L2].set_weight( Pango::WEIGHT_BOLD ) ;
-			font_desc[L2].set_stretch( Pango::STRETCH_EXTRA_CONDENSED ) ;
-
-			font_desc[L3] = widget.get_style_context()->get_font() ;
-			font_desc[L3].set_size( text_size_pt[L3] * PANGO_SCALE ) ;
-
-			layout[L2]->set_font_description( font_desc[L2] ) ;
-			layout[L2]->set_ellipsize( Pango::ELLIPSIZE_END ) ;
-			layout[L2]->set_width(( m_width - 90 ) * PANGO_SCALE ) ;
-
-			layout[L3]->set_font_description( font_desc[L3] ) ;
-			layout[L3]->set_ellipsize( Pango::ELLIPSIZE_END ) ;
-			layout[L3]->set_width(( m_width - 90 ) * PANGO_SCALE ) ;
-
-			layout[L1]->set_width(( m_width - 90 ) * PANGO_SCALE ) ;
 
 			/* ARTIST */
 			layout[L1]->set_text( album->album_artist ) ;
@@ -1486,7 +1486,7 @@ namespace Albums
 
                     (*m_SearchEntry).send_focus_change( event ) ;
 
-                    gdk_event_free( event ) ;
+                    //gdk_event_free( event ) ;
                 }
 
                 bool
@@ -1555,7 +1555,7 @@ namespace Albums
                     }
                 }
 
-		void
+		virtual void
 		on_size_allocate( Gtk::Allocation& a )
 		{
 		    a.set_x(0) ;
@@ -1613,16 +1613,14 @@ namespace Albums
                 bool
                 on_draw(
 		    const Cairo::RefPtr<Cairo::Context>& cairo 
-		)	
+		)
                 {
                     const ThemeColor& c_text		= m_theme->get_color( THEME_COLOR_TEXT ) ;
                     const ThemeColor& c_text_sel	= m_theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
 		    const ThemeColor& c_treelines	= m_theme->get_color( THEME_COLOR_TREELINES ) ;
                     const ThemeColor& c_base_rules_hint = m_theme->get_color( THEME_COLOR_BASE_ALTERNATE ) ;
 
-		    std::valarray<double> dashes ( 2 ) ;
-		    dashes[0] = 1. ; 
-	            dashes[1] = 2. ;
+		    const std::vector<double> dashes { 1., 2. } ; 
 
                     guint d       = ViewMetrics.ViewPort.upper() ; 
                     guint d_max   = std::min<guint>( m_model->size(), ViewMetrics.ViewPort.size() + 1 ) ;
@@ -1649,14 +1647,12 @@ namespace Albums
 			d += d_clip ;
 			d_max -= (d_clip-1) ;
 		    }
-/*
 		    else
 		    if( clip_y1 == 0 && clip_y2 < ViewMetrics.ViewPortPx.lower() )
 		    {
 			guint d_clip = clip_y2 / ViewMetrics.RowHeight ;
-			d_max = d_clip+1 ;
+			d_max = d_clip+2 ;
 		    }
-*/
 
 		    guint n = 0 ;
 		    Algorithm::Adder<guint> d_cur( d, n ) ;
@@ -1730,10 +1726,9 @@ namespace Albums
 			rend_offset = ViewMetrics.RowHeight - ViewMetrics.ViewPortPx.upper() ;	
 		    }
 
-		    cairo->set_antialias( Cairo::ANTIALIAS_NONE ) ;
 		    cairo->set_operator( Cairo::OPERATOR_OVER ) ; 
 		    cairo->set_line_width(
-			  1
+			  1. 
 		    ) ;
 		    cairo->set_dash(
 			  dashes
@@ -1743,15 +1738,15 @@ namespace Albums
 			  c_treelines.get_red()
 			, c_treelines.get_green()
 			, c_treelines.get_blue()
-			, 1. 
+			, 0.8 
 		    ) ;
 
 		    cairo->move_to(
-			  78
+			  76
 			, rend_offset 
 		    ) ; 
 		    cairo->line_to(
-			  78
+			  76
 			, ViewMetrics.ViewPortPx.size() 
 		    ) ;
 		    cairo->stroke() ;

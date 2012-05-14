@@ -842,7 +842,7 @@ namespace Artist
                     (*m_SearchEntry).send_focus_change( event ) ;
                     (*m_SearchEntry).property_has_focus() = in;
 
-                    gdk_event_free( event ) ;
+                    //gdk_event_free( event ) ;
                 }
 
 		void

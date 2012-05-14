@@ -23,6 +23,8 @@ namespace MPX
 	, TAP_RIGHT
     };
 
+    typedef boost::optional<Gdk::RGBA> Color_opt_t ;
+
     class YoukiSpectrumTitleinfo
     : public Gtk::DrawingArea 
     {
@@ -31,6 +33,8 @@ namespace MPX
             sigc::signal<void, int>		  m_SIGNAL__area_tapped ;
             boost::shared_ptr<IYoukiThemeEngine>  m_theme ;
 	    bool				  m_cursor_inside ;
+
+	    Color_opt_t m_color ;
 
         public:
 
@@ -46,6 +50,15 @@ namespace MPX
             void
             reset(
             ) ;
+
+	    void
+	    set_color(
+		  const Color_opt_t& v = Color_opt_t()
+	    )
+	    {
+		m_color = v ;
+		queue_draw() ;
+	    }
 
         protected:
 

@@ -616,10 +616,11 @@ namespace MPX
 	    Glib::RefPtr<Gdk::Pixbuf> pb3 = pb0->scale_simple(  1,  1 , Gdk::INTERP_NEAREST ) ;
 	    guchar * pixels = gdk_pixbuf_get_pixels(GDK_PIXBUF(pb3->gobj())) ;
 	    mean.set_rgba( double(pixels[0])/255., double(pixels[1])/255., double(pixels[2])/255., 1.0 ) ;
+	    //Util::color_to_hsb( mean, h, s, b ) ;
 	}
 
-	s = std::min<double>( s * 2, 1. ) ; 
-	mean = Util::color_from_hsb( h, s, b ) ;
+	//s = std::min<double>( s * 2, 1. ) ; 
+	//mean = Util::color_from_hsb( h, s, b ) ;
 
 	return mean ;
     }

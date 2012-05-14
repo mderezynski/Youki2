@@ -97,6 +97,9 @@ namespace MPX
 	if( m_color )
 	{
 	    cgdk = m_color.get() ;
+	    Util::color_to_hsb( cgdk, h,s,b ) ;
+	    b *= 0.85 ;
+	    cgdk = Util::color_from_hsb( h,s,b ) ;
 	}
 	else
 	    cgdk.set_rgba( 0.45, 0.45, 0.45, 1.0 ) ;
@@ -107,15 +110,15 @@ namespace MPX
 	c_text_dark = Util::color_from_hsb( h, s, b ) ;
 
 	Util::color_to_hsb( cgdk, h, s, b ) ;
-	b *= 0.85 ; 
+	b *= 0.80 ; 
 	c1 = Util::color_from_hsb( h, s, b ) ;
 
 	Util::color_to_hsb( cgdk, h, s, b ) ;
-	b *= 0.90 ; 
+	b *= 0.85 ; 
 	c2 = Util::color_from_hsb( h, s, b ) ;
 
 	Util::color_to_hsb( cgdk, h, s, b ) ;
-	b *= 0.85 ; 
+	b *= 0.95 ; 
 	c3 = Util::color_from_hsb( h, s, b ) ;
 
         Cairo::RefPtr<Cairo::LinearGradient> position_bar_back_gradient = Cairo::LinearGradient::create(
@@ -200,14 +203,14 @@ namespace MPX
 
             position_bar_gradient->add_color_stop_rgba(
                   0. 
-                , cgdk.get_red()
-                , cgdk.get_green()
-                , cgdk.get_blue()
+                , c1.get_red()
+                , c1.get_green()
+                , c1.get_blue()
                 , 1 // factor 
             ) ;
 
             position_bar_gradient->add_color_stop_rgba(
-                  .60
+                  .4
                 , c2.get_red()
                 , c2.get_green()
                 , c2.get_blue()

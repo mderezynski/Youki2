@@ -64,6 +64,8 @@ namespace MPX
         add_events( Gdk::EventMask(Gdk::BUTTON_PRESS_MASK | Gdk::ENTER_NOTIFY_MASK | Gdk::LEAVE_NOTIFY_MASK )) ;
         set_size_request( -1, 111 ) ;
         m_theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;
+        const ThemeColor& c_bg   = m_theme->get_color( THEME_COLOR_BACKGROUND ) ; // all hail to the C-Base!
+	override_background_color(c_bg) ;
     }
 
     bool
@@ -222,13 +224,6 @@ namespace MPX
 
         const Gtk::Allocation& a = get_allocation ();
 
-        const ThemeColor& c_base = m_theme->get_color( THEME_COLOR_BACKGROUND ) ; // all hail to the C-Base!
-        const ThemeColor& c_info = m_theme->get_color( THEME_COLOR_INFO_AREA ) ; 
-
-        cairo->set_operator(Cairo::OPERATOR_SOURCE) ;
-        Gdk::Cairo::set_source_rgba (cairo, c_base) ;
-        cairo->paint () ;
-
         GdkRectangle r ;
         r.x = 1 ;
         r.y = 4 ;
@@ -243,20 +238,21 @@ namespace MPX
             cairo->clip() ;
         }
 
-        Gdk::Cairo::set_source_rgba (cairo, c_info);
-        RoundedRectangle(
-              cairo
-            , r.x 
-            , r.y
-            , r.width 
-            , r.height 
-            , rounding 
-	    , MPX::CairoCorners::CORNERS(3)
-        ) ;
-        cairo->fill () ;
-
         Gdk::RGBA cgdk ;
-        cgdk.set_rgba( 0.25, 0.25, 0.25, 1.0 ) ;
+        double h, s, b ;
+
+/*	
+	if(m_color)
+	{
+	    cgdk = m_color.get() ;
+	    Util::color_to_hsb( cgdk, h,s,b ) ;
+	    s *= 0.55 ;
+	    b *= 0.38 ;
+	    cgdk = Util::color_from_hsb( h,s,b ) ;
+	}
+	else
+*/
+	    cgdk.set_rgba( 0.25, 0.25, 0.25, 1.0 ) ;
 
         Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create(
               r.x + r.width / 2
@@ -265,8 +261,6 @@ namespace MPX
             , r.y + r.height
         ) ;
 
-        double h, s, b ;
-    
         double alpha = 1. ; 
         
         Util::color_to_hsb( cgdk, h, s, b ) ;
