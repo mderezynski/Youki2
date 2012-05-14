@@ -1,17 +1,29 @@
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include "kobo-volume.hh"
+#include "mpx/i-youki-theme-engine.hh"
+
 #include <gtkmm.h>
 #include <glibmm/i18n.h>
-#include <boost/format.hpp>
 #include <cmath>
-#include "kobo-volume.hh"
+
+#include <boost/format.hpp>
+
+#include "mpx/algorithm/colorfade.hh"
+
 #include "mpx/widgets/cairo-extensions.hh"
 #include "mpx/widgets/cairo-blur.hh"
+
 #include "mpx/util-graphics.hh"
 
-#include "mpx/i-youki-theme-engine.hh"
 #include "mpx/mpx-main.hh"
 
 namespace
 {
+    const double rounding = 3.5 ;
+
     template <typename T>
     struct PangoScaleAdaptor
     {
@@ -29,26 +41,6 @@ namespace
 	    return (a-b) / 2 ;
 	}
     } ;
-
-    const double rounding = 2. ;
-
-    Gdk::RGBA
-    get_color_at_pos(
-          const Gdk::RGBA&     c1
-        , const Gdk::RGBA&     c2
-        , const double          ratio
-    )
-    {
-        Gdk::RGBA c ;
-
-        double r = ( c1.get_red()   * ( 1 - ratio ) + c2.get_red()   * ratio ) ;
-        double g = ( c1.get_green() * ( 1 - ratio ) + c2.get_green() * ratio ) ;
-        double b = ( c1.get_blue()  * ( 1 - ratio ) + c2.get_blue()  * ratio ) ;
-
-        c.set_rgba( r, g, b ) ;
-
-        return c ;
-    }
 }
 
 namespace MPX
@@ -59,7 +51,7 @@ namespace MPX
     {
 	m_posv.push_back( m_volume ); // ha, let's play!
 
-        add_events(Gdk::EventMask(Gdk::LEAVE_NOTIFY_MASK | Gdk::ENTER_NOTIFY_MASK | Gdk::POINTER_MOTION_MASK | Gdk::POINTER_MOTION_HINT_MASK | Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK )) ;
+        add_events(Gdk::EventMask(Gdk::LEAVE_NOTIFY_MASK | Gdk::ENTER_NOTIFY_MASK | Gdk::POINTER_MOTION_MASK | Gdk::POINTER_MOTION_HINT_MASK | Gdk::BUTTON_PRESS_MASK | Gdk::BUTTON_RELEASE_MASK | Gdk::SCROLL_MASK )) ;
 
         set_can_focus(false) ;
 
@@ -115,7 +107,7 @@ namespace MPX
 	b *= 0.45 ;
 	c2 = Util::color_from_hsb( h, s, b ) ;
 
-	Gdk::RGBA c_gradient = get_color_at_pos( c1, c2, percent ) ;
+	Gdk::RGBA c_gradient = fade_colors( c1, c2, percent ) ;
 
         cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 
@@ -452,8 +444,7 @@ namespace MPX
     void
     KoboVolume::vol_down()
     {
-        m_volume -= 5 ; 
-        m_volume = std::max<guint>( std::min<guint>( m_volume, 100), 0 ) ;
+        m_volume = std::max<int>( std::min<int>( m_volume-5, 100), 0 ) ;
         m_SIGNAL_set_volume.emit( m_volume ) ;
         queue_draw () ;
     }
@@ -461,8 +452,7 @@ namespace MPX
     void
     KoboVolume::vol_up()
     {
-        m_volume += 5 ; 
-        m_volume = std::max<guint>( std::min<guint>( m_volume, 100), 0 ) ;
+        m_volume = std::max<int>( std::min<int>( m_volume+5, 100), 0 ) ;
         m_SIGNAL_set_volume.emit( m_volume ) ;
         queue_draw () ;
     }

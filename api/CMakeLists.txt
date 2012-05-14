@@ -46,6 +46,7 @@ SET(mpx_api_VERSION 0.0)
 SET(mpx_api_SOURCES
   aque.cc
   base64.c
+  colorfade.cc
   error.cc
   libxml2-sax-base.cc
   md5.c

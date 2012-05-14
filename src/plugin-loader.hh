@@ -38,7 +38,6 @@
 #include <gtkmm/widget.h>
 #include <boost/shared_ptr.hpp>
 #include <mcs/mcs.h>
-#include <Python.h>
 
 #include "mpx/plugin-types.hh"
 

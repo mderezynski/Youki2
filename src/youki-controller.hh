@@ -16,7 +16,10 @@
 #include "kobo-main.hh"
 #include "kobo-position.hh"
 #include "kobo-volume.hh"
+
 #include "youki-spectrum-titleinfo.hh"
+
+#include "mpx-mlibman-dbus-proxy-actual.hh"
 
 #include <sigx/sigx.h>
 
@@ -263,6 +266,8 @@ namespace MPX
             std::deque<guint>                 m_play_queue ;
             boost::optional<guint>            m_seek_position ;
             bool                              m_follow_track ;
+
+            info::backtrace::Youki::MLibMan_proxy_actual * m_mlibman_dbus_proxy ;
 
             sigc::connection                  m_conn1
                                             , m_conn2

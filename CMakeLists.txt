@@ -225,7 +225,7 @@ SET(COMMON_FLAGS "-Wall -D_FORTIFY_SOURCE=2")
 IF(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
   SET(COMPILER_FLAGS "-pipe -fno-strict-aliasing -fmessage-length=0")
   SET(C_LANG_FLAGS   "-std=c99 -pedantic")
-  SET(CXX_LANG_FLAGS "-std=c++98")
+  SET(CXX_LANG_FLAGS "-std=gnu++0x")
 ELSEIF(CMAKE_C_COMPILER_ID STREQUAL "Clang")
   SET(COMPILER_FLAGS "-Wno-mismatched-tags")
   SET(C_LANG_FLAGS   "-pedantic") # Clang defaults to C99

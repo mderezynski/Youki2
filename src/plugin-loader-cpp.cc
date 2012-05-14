@@ -35,7 +35,6 @@
 #include <gtkmm/widget.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/algorithm/string.hpp>
-#include <Python.h>
 
 #include "mpx/mpx-main.hh" 
 #include "mpx/util-string.hh"

@@ -5,14 +5,15 @@
 #include <cairomm/cairomm.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/algorithm/string.hpp>
-#include <boost/tuple/tuple.hpp>
 #include <boost/optional.hpp>
 #include <boost/format.hpp>
+#include <boost/ref.hpp>
+#include <boost/unordered_set.hpp>
 #include <boost/lexical_cast.hpp>
+
 #include <cmath>
 #include <deque>
 #include <algorithm>
-#include <boost/unordered_set.hpp>
 #include <sigx/sigx.h>
 
 #include "mpx/util-string.hh"
@@ -27,6 +28,7 @@
 #include "mpx/algorithm/interval.hh"
 #include "mpx/algorithm/limiter.hh"
 #include "mpx/algorithm/vector_compare.hh"
+#include "mpx/algorithm/adder.hh"
 
 #include "mpx/com/indexed-list.hh"
 #include "mpx/aux/glibaddons.hh"
@@ -41,6 +43,22 @@ namespace
     typedef Glib::RefPtr<Gtk::Adjustment>		    RPAdj ;
     typedef Glib::Property<RPAdj>			    PropAdjustment ;
     typedef Glib::Property<Gtk::ScrollablePolicy>	    PropScrollPolicy ;
+
+    template <typename T>
+    struct BSPAdaptor
+    {
+	boost::shared_ptr<T> sp_ ;
+
+	BSPAdaptor( boost::shared_ptr<T> sp )    
+	: sp_(sp)
+	{
+	}
+
+	operator const T& () const
+	{
+	    return boost::ref(*(sp_.get())) ;
+	}
+    } ;
 }
 
 namespace MPX
@@ -59,6 +77,7 @@ namespace Tracks
             if( r.count( "album_artist" )) 
             {
                 Glib::ustring in_utf8 = boost::get<std::string>(r.find("album_artist")->second) ; 
+
                 gunichar c = in_utf8[0] ;
 
                 if( g_unichar_get_script( c ) != G_UNICODE_SCRIPT_LATIN && r.count("album_artist_sortname") ) 
@@ -91,30 +110,69 @@ namespace Tracks
             const double rounding = 1. ; 
         }
 
-        typedef boost::tuple<std::string, std::string, std::string, guint, Track_sp, guint, guint, std::string, std::string, guint>  Row_t ;
-
-	bool operator==(const Row_t& a, const Row_t& b)
+	struct NewRow_t
 	{
-	    return boost::get<3>(a) == boost::get<3>(b) ;
+	    Track_sp	    TrackSp ;
+	    guint	    ID ;
+
+	    std::string	    Title ;
+	    std::string	    Album ;
+	    std::string	    Artist ;
+	    std::string	    AlbumArtist ;
+	    std::string	    ReleaseDate ;
+	    guint	    Track ;	
+	    guint	    Time ;
+	} ;
+
+	typedef boost::shared_ptr<NewRow_t> NewRow_sp ;
+
+	enum class RowDatum
+	{
+	      R_TITLE
+	    , R_ARTIST
+	    , R_ALBUM
+	    , R_ID
+	    , R_TRACK_SP
+	    , R_TRACK
+	    , R_ALBUM_ARTIST
+	    , R_MB_RELEASE_DATE
+	    , R_TIME
+	} ;
+
+
+	bool operator==(const NewRow_t& a, const NewRow_t& b)
+	{
+	    return a.ID == b.ID ;
 	}
 
-	bool operator==( Row_t& a, Row_t& b )
+	bool operator!=(const NewRow_t& a, const NewRow_t& b)
 	{
-	    return boost::get<3>(a) == boost::get<3>(b) ;
+	    return a.ID != b.ID ;
 	}
 
-	bool operator!=(const Row_t& a, const Row_t& b)
+	bool operator<(const NewRow_t& a, const NewRow_t& b)
 	{
-	    return boost::get<3>(a) == boost::get<3>(b) ;
+	    return a.ID < b.ID ; 
 	}
 
-	bool operator!=( Row_t& a, Row_t& b )
+
+	bool operator==(const NewRow_sp& a, const NewRow_sp& b)
 	{
-	    return boost::get<3>(a) == boost::get<3>(b) ;
+	    return a->ID == b->ID ;
 	}
 
-        typedef std::vector<Row_t>			Model_t ;
-        typedef boost::shared_ptr<Model_t>		Model_sp_t ;
+	bool operator!=(const NewRow_sp& a, const NewRow_sp& b)
+	{
+	    return a->ID != b->ID ;
+	}
+
+	bool operator<(const NewRow_sp& a, const NewRow_sp& b)
+	{
+	    return a->ID < b->ID ; 
+	}
+
+        typedef std::vector<NewRow_sp>			Model_t ;
+        typedef boost::shared_ptr<Model_t>		Model_sp ;
 
 	typedef sigc::signal<void>			Signal0 ;
         typedef sigc::signal<void, guint, bool>		Signal2 ;
@@ -179,28 +237,28 @@ namespace Tracks
         } ;
 
         struct OrderFunc
-        : public std::binary_function<Row_t, Row_t, bool>
+        : public std::binary_function<NewRow_sp, NewRow_sp, bool>
         {
             bool operator() (
-                  const Row_t&  a
-                , const Row_t&  b
+                  const NewRow_sp&  a
+                , const NewRow_sp&  b
             )
             {
-		Track_sp t_a = get<4>( a ) ;
-		Track_sp t_b = get<4>( b ) ;
+		Track_sp t_a = a->TrackSp ; 
+		Track_sp t_b = b->TrackSp ; 
 
-                const std::string&  order_artist_a = get<7>( a ) ; 
-                const std::string&  order_artist_b = get<7>( b ) ; 
+                const std::string&  order_artist_a = a->AlbumArtist ; 
+                const std::string&  order_artist_b = b->AlbumArtist ; 
 
-                const std::string&  order_album_a  = get<2>( a ) ; 
-                const std::string&  order_album_b  = get<2>( b ) ; 
+                const std::string&  order_album_a  = a->Album ; 
+                const std::string&  order_album_b  = b->Album ; 
 
-                const std::string&  order_date_a   = get<8>( a ) ; 
-                const std::string&  order_date_b   = get<8>( b ) ; 
+                const std::string&  order_date_a   = a->ReleaseDate ; 
+                const std::string&  order_date_b   = b->ReleaseDate ; 
 
                 guint order_track [2] = {
-                      get<5>( a )
-                    , get<5>( b )
+                      a->Track 
+                    , b->Track 
                 } ;
 
                 if( order_artist_a < order_artist_b)
@@ -243,39 +301,24 @@ namespace Tracks
             }
         };
 
-        struct FindIdFunc
-        : public std::binary_function<guint, Model_t::iterator, bool>
-        {
-            bool operator() (
-		  const long long int& id
-                , const Model_t::const_iterator& i
-            ) const
-            {
-		return(boost::get<3>(*i) < id) ;
-            }
-	};
-
-
         struct DataModel
         : public sigc::trackable 
         {
 		typedef std::vector<Model_t::size_type>		ModelIdxVec_t ;
 		typedef std::vector<ModelIdxVec_t>		AlbumTrackMapping_t ;
 
-                Signal2         m_SIGNAL__changed;
-
-                Model_sp_t      m_realmodel;
-                guint		m_upper_bound ;
-
-		AlbumTrackMapping_t m_album_track_mapping ;
+                Model_sp		m_realmodel;
+                guint			m_upper_bound ;
+                Signal2			m_SIGNAL__changed;
+		AlbumTrackMapping_t	m_album_track_mapping ;
 
                 DataModel()
                 : m_upper_bound( 0 )
                 {
-                    m_realmodel = Model_sp_t(new Model_t); 
+                    m_realmodel = Model_sp(new Model_t); 
                 }
 
-                DataModel(Model_sp_t model)
+                DataModel(Model_sp model)
                 : m_upper_bound( 0 )
                 {
                     m_realmodel = model; 
@@ -295,29 +338,29 @@ namespace Tracks
                 }
 
                 virtual bool
-                is_set ()
+                is_set()
                 {
                     return bool(m_realmodel) ;
                 }
 
                 virtual guint
-                size ()
+                size()
                 {
                     return m_realmodel->size() ;
                 }
 
-                inline virtual const Row_t&
-                row(guint row)
+                inline virtual const NewRow_sp&
+                row(guint d)
                 {
-                    return (*m_realmodel)[row] ;
+                    return (*m_realmodel)[d] ;
                 }
 
                 virtual void
                 set_current_row(
-                    guint row
+                    guint d
                 )
                 {
-                    m_upper_bound = row ;
+                    m_upper_bound = d ;
                 }
 
                 virtual void
@@ -328,37 +371,36 @@ namespace Tracks
                 {
                     using boost::get ;
 
-                    Row_t row (
-                              r.count("title") ? get<std::string>(r["title"]) : ""
-                            , Util::row_get_artist_name( r )
-                            , r.count("album") ? get<std::string>(r["album"]) : ""
-                            , get<guint>(r["id"])
-                            , track 
-                            , r.count("track") ? get<guint>(r["track"]) : 0
-                            , r.count("mpx_album_artist_id") ? get<guint>(r["mpx_album_artist_id"]) : 0
-                            , Util::row_get_album_artist_name( r ) 
-                            , r.count("mb_release_date") ? get<std::string>(r["mb_release_date"]) : ""
-                            , r.count("time") ? get<guint>(r["time"]) : 0
-                    ) ;
+		    NewRow_t * nr = new NewRow_t ;
 
-                    m_realmodel->push_back(row) ;
+		    nr->TrackSp = track ;
+		    nr->ID = get<guint>(r["id"]) ;
 
+		    nr->Title = r.count("title") ? get<std::string>(r["title"]) : "" ;
+		    nr->Album = r.count("album") ? get<std::string>(r["album"]) : "" ;
+		    nr->Artist = Util::row_get_artist_name( r ) ;
+		    nr->AlbumArtist = Util::row_get_album_artist_name( r ) ;
+		    nr->ReleaseDate = r.count("mb_release_date") ? get<std::string>(r["mb_release_date"]) : "" ;
+		    nr->Time = r.count("time") ? get<guint>(r["time"]) : 0 ;
+		    nr->Track = r.count("track") ? get<guint>(r["track"]) : 0 ;
+
+                    m_realmodel->push_back(NewRow_sp(nr)) ;
+
+/*
                     Model_t::iterator i = m_realmodel->end() ;
                     std::advance( i, -1 ) ;
-
 		    guint album_id = get<guint>(r["mpx_album_id"]) ;
 		    ModelIdxVec_t& vy = m_album_track_mapping[album_id] ;
 		    vy.push_back( m_realmodel->size() - 1 ) ; 
+*/
                 }
 
                 void
                 erase_track(guint id)
                 {
-                    for( Model_t::iterator i = m_realmodel->begin(); i != m_realmodel->end(); ++i )
+                    for( Model_t::iterator i = m_realmodel->begin() ; i != m_realmodel->end() ; ++i ) 
                     {
-                        guint model_id = get<3>( *i ) ;
-
-                        if( model_id == id )
+                        if( (*i)->ID == id )
                         {
                             m_realmodel->erase( i ) ;
                             return ;
@@ -367,7 +409,7 @@ namespace Tracks
                 }
         };
 
-        typedef boost::shared_ptr<DataModel> DataModel_sp_t;
+        typedef boost::shared_ptr<DataModel> DataModel_sp;
 
         struct DataModelFilter
         : public DataModel
@@ -429,7 +471,7 @@ namespace Tracks
                     return m_SIGNAL__process_end ;
                 }
 
-                DataModelFilter( DataModel_sp_t& model )
+                DataModelFilter( DataModel_sp& model )
 
                     : DataModel( model->m_realmodel )
                     , m_max_size_constraints_artist( 0 )
@@ -592,10 +634,10 @@ namespace Tracks
                     return m_mapping ? m_mapping->size() : 0 ;
                 }
 
-                virtual const Row_t&
-                row (guint row)
+                virtual const NewRow_sp&
+                row(guint d)
                 {
-                    return *((*m_mapping)[row]);
+                    return *((*m_mapping)[d]);
                 }
 
                 void
@@ -641,46 +683,50 @@ namespace Tracks
                     , const MPX::Track_sp&  track
                 )
                 {
-                    const std::string&                    title             = get<std::string>(r["title"]) ;
-                    const std::string&                    artist            = Util::row_get_artist_name( r ) ;
-                    const std::string&                    album             = get<std::string>(r["album"]) ; 
-	
-                    std::string release_date ;
-		    if( r.count("mb_release_date"))
-			release_date = get<std::string>(r["mb_release_date"]) ;
+                    const std::string& title  = get<std::string>(r["title"]) ;
+                    const std::string& artist = Util::row_get_artist_name( r ) ;
+                    const std::string& album  = get<std::string>(r["album"]) ; 
+                    guint id         = get<guint>(r["id"]) ;
+                    guint track_n    = get<guint>(r["track"]) ;
+                    guint time       = get<guint>(r["time"]) ;
 
-                    guint                                id                = get<guint>(r["id"]) ;
-                    guint                                track_n           = get<guint>(r["track"]) ;
-                    guint                                time              = get<guint>(r["time"]) ;
-                    guint                                id_artist         = get<guint>(r["mpx_album_artist_id"]) ;
 
                     std::string order_artist ;
+                    std::string release_date ;
+
 		    if( r.count("album_artist_sortname"))
+		    {
                     	order_artist = get<std::string>(r["album_artist_sortname"]); 
+		    }
+
+		    if( r.count("mb_release_date"))
+		    {
+			release_date = get<std::string>(r["mb_release_date"]) ;
+		    }
 
                     static OrderFunc order ;
 
-                    Row_t row(
-                          title
-                        , artist
-                        , album
-                        , id
-                        , track
-                        , track_n 
-                        , id_artist
-                        , order_artist
-                        , release_date
-                        , time
-                    ) ; 
+		    NewRow_t * nr = new NewRow_t ;
+
+		    nr->TrackSp = track ;
+		    nr->ID = id ; 
+
+		    nr->Title = title ; 
+		    nr->Album = album ; 
+		    nr->Artist = artist ; 
+		    nr->AlbumArtist = order_artist ; 
+		    nr->ReleaseDate = release_date ; 
+		    nr->Time = time ; 
+		    nr->Track = track_n ;
 
                     m_realmodel->insert(
                           std::upper_bound(
                               m_realmodel->begin()
                             , m_realmodel->end()
-                            , row
+                            , NewRow_sp(nr)
                             , order
                           )
-                        , row
+                        , NewRow_sp(nr)
                     ) ;
                 }
  
@@ -727,9 +773,7 @@ namespace Tracks
                     {
                         m_current_filter = text ;
 			m_current_filter_noaque = Util::stdstrjoin( m_frags, " " ) ;
-                        //Util::window_set_busy( * dynamic_cast<Gtk::Window*>(m_widget->get_toplevel()) ) ;
                         regen_mapping() ;
-                        //Util::window_set_idle( * dynamic_cast<Gtk::Window*>(m_widget->get_toplevel()) ) ;
                     }
                 }
 
@@ -748,44 +792,13 @@ namespace Tracks
                 {
                     if( m_id_currently_playing )
                     {
-#if 0
-			RowRowMapping_t::const_iterator it, first, last, begin = m_mapping->begin() ;
-
-			guint count, step ;
-
-			first = m_mapping->begin() ;
-			last = m_mapping->end() ;
-
-			count = std::distance( first, last ) ; 
-
-			while( count > 0 )
-			{
-			    it = first ;
-			    step = count / 2 ;
-
-			    std::advance( it, step ) ;
-
-			    if(!(m_id_currently_playing.get() < boost::get<3>(**it)))
-			    {
-				first = ++it ;
-				count -= step + 1 ;
-			    } else count = step ;
-
-			}
-
-			if( first != m_mapping->end() )
-			{
-			    m_row_currently_playing_in_mapping = std::distance(first,begin) - 1 ;
-			    return ;
-			}
-#endif
+			BSPAdaptor<RowRowMapping_t> adp( m_mapping ) ;
 			guint d = 0 ;
-
-			for( RowRowMapping_t::const_iterator i = m_mapping->begin() ; i != m_mapping->end() ; ++i )
+			for( auto& i : (const RowRowMapping_t&)(adp) ) 
 			{
-			    if( m_id_currently_playing.get() == boost::get<3>(**i))
+			    if( m_id_currently_playing.get() == (*i)->ID ) 
 			    {
-				m_row_currently_playing_in_mapping = d ;
+				m_row_currently_playing_in_mapping = d ; 
 				return ;
 			    }
 			    ++d ;
@@ -802,44 +815,13 @@ namespace Tracks
                 {
                     if( id )
                     {
-#if 0
-			RowRowMapping_t::const_iterator it, first, last, begin = m_mapping->begin() ;
-
-			guint count, step ;
-
-			first = m_mapping->begin() ;
-			last = m_mapping->end() ;
-
-			count = std::distance( first, last ) ; 
-
-			while( count > 0 )
-			{
-			    it = first ;
-			    step = count / 2 ;
-
-			    std::advance( it, step ) ;
-
-			    if(!(id.get() < boost::get<3>(**it)))
-			    {
-				first = ++it ;
-				count -= step + 1 ;
-			    } else count = step ;
-
-			}
-
-			if( first != m_mapping->end() )
-			{
-			    m_upper_bound = std::distance(begin, first) - 1 ;
-			    return ;
-			}
-#endif
+			BSPAdaptor<RowRowMapping_t> adp( m_mapping ) ;
 			guint d = 0 ;
-
-			for( RowRowMapping_t::const_iterator i = m_mapping->begin() ; i != m_mapping->end() ; ++i )
+			for( auto& i : (const RowRowMapping_t&)(adp) ) 
 			{
-			    if( id.get() == boost::get<3>(**i))
+			    if( id.get() == (*i)->ID )
 			    {
-				m_upper_bound = d ;
+				m_upper_bound = d ; 
 				return ;
 			    }
 			    ++d ;
@@ -848,61 +830,6 @@ namespace Tracks
                     }
 
 		    m_upper_bound = 0 ;
-                }
-
-                virtual void
-                cache_current_fragments(
-                )
-                {
-                    using boost::get;
-                    using boost::algorithm::split;
-                    using boost::algorithm::is_any_of;
-                    using boost::algorithm::find_first;
-
-                    if( !m_cache_enabled )
-                    {
-                        return ;
-                    }
-
-                    if( m_frags.empty() )
-                    {
-                        return ;
-                    }
-
-                    std::vector<std::string> vec( 3 ) ;
-
-                    for( guint n = 0 ; n < m_frags.size(); ++n )
-                    {
-                        if( m_frags[n].empty() )
-                        {
-                            continue ;
-                        }
-
-                        if( m_fragment_cache.count( m_frags[n] )) 
-                        {
-                            continue ;
-                        }
-                        else
-                        {
-                            ModelIteratorSet_sp model_iterator_set ( new ModelIteratorSet_t ) ;
-
-                            for( Model_t::const_iterator i = m_realmodel->begin(); i != m_realmodel->end(); ++i ) // determine all the matches
-                            {
-                                const Row_t& row = *i;
-
-                                vec[0] = Glib::ustring(boost::get<0>(row)).lowercase() ;
-                                vec[1] = Glib::ustring(boost::get<1>(row)).lowercase() ;
-                                vec[2] = Glib::ustring(boost::get<2>(row)).lowercase() ;
-
-                                if( Util::match_vec( m_frags[n], vec) )
-                                {
-                                    model_iterator_set->insert( i ) ; 
-                                }
-                            }
-    
-                            m_fragment_cache.insert( std::make_pair( m_frags[n], model_iterator_set )) ;
-                        }
-                    }
                 }
 
                 virtual void
@@ -939,7 +866,7 @@ namespace Tracks
 		    else
 		    if( m_mapping && m_upper_bound < m_mapping->size() )
 		    {
-			id = get<3>(row(m_upper_bound)) ;
+			id = row(m_upper_bound)->ID ; 
 		    }
 
                     m_upper_bound = 0 ;
@@ -994,10 +921,9 @@ namespace Tracks
                         new_mapping->reserve( m_realmodel->size() ) ;
                         new_mapping_unfiltered->reserve( m_realmodel->size() ) ;
 
-                        for( Model_t::const_iterator i = m_realmodel->begin(); i != m_realmodel->end(); ++i ) // determine all the matches
+                        for( Model_t::iterator i = m_realmodel->begin() ; i != m_realmodel->end() ; ++i ) 
                         {
-                            const Row_t& row = *i;
-                            const MPX::Track_sp& t = get<4>(row);
+                            const MPX::Track_sp& t = (*i)->TrackSp ; 
                             const MPX::Track& track = *(t.get()) ;
 
                             if( !m_constraints_aqe.empty() && !AQE::match_track( m_constraints_aqe, t ))
@@ -1013,13 +939,12 @@ namespace Tracks
                             }
 
                             guint id_album  = get<guint>(track[ATTRIBUTE_MPX_ALBUM_ID].get()) ;
-                            guint id_artist = get<6>(*i) ;
 
 			    TracksConstraint& tc = constraints_albums[id_album] ;
-
                             tc.Count ++ ; 
 			    tc.Time += get<guint>(track[ATTRIBUTE_TIME].get()) ;
 
+                            guint id_artist = get<guint>(track[ATTRIBUTE_MPX_ALBUM_ARTIST_ID].get()) ;
                             constraints_artist[id_artist] = constraints_artist[id_artist] + 1 ;
 
                             new_mapping->push_back( i ) ; 
@@ -1030,7 +955,7 @@ namespace Tracks
                         IntersectVector_t intersect ;
                         intersect.reserve( m_frags.size() ) ; 
 
-                        StrV vec( 3 ) ;
+                        StrV vec (4) ;
 
                         for( guint n = 0 ; n < m_frags.size(); ++n )
                         {
@@ -1054,11 +979,12 @@ namespace Tracks
 
                             for( Model_t::const_iterator i = m_realmodel->begin(); i != m_realmodel->end(); ++i )
                             {
-                                const Row_t& row = *i;
+                                const NewRow_sp r = *i;
 
-                                vec[0] = Glib::ustring(boost::get<0>(row)).lowercase() ;
-                                vec[1] = Glib::ustring(boost::get<1>(row)).lowercase() ;
-                                vec[2] = Glib::ustring(boost::get<2>(row)).lowercase() ;
+                                vec[0] = Glib::ustring(r->Artist).lowercase() ;
+                                vec[1] = Glib::ustring(r->Album).lowercase() ;
+                                vec[2] = Glib::ustring(r->Title).lowercase() ;
+                                vec[3] = Glib::ustring(r->AlbumArtist).lowercase() ;
 
                                 if( Util::match_vec( m_frags[n], vec ))
                                 {
@@ -1118,9 +1044,11 @@ namespace Tracks
                         TCVector_t& constraints_albums = *(m_constraints_albums.get()) ;
                         IdVector_t& constraints_artist = *(m_constraints_artist.get()) ;
 
-                        for( ModelIteratorSet_t::iterator i = output->begin() ; i != output->end(); ++i )
+			BSPAdaptor<ModelIteratorSet_t> adp( output ) ;
+
+                        for( auto& i : (const ModelIteratorSet_t&)(adp))
                         {
-                            const MPX::Track_sp& t = get<4>(**i);
+                            const MPX::Track_sp& t = (*i)->TrackSp ; 
                             const MPX::Track& track = *(t.get()) ;
 
                             if( !m_constraints_aqe.empty() && !AQE::match_track( m_constraints_aqe, t ))
@@ -1128,7 +1056,7 @@ namespace Tracks
                                 continue ;
                             }
 
-                            new_mapping_unfiltered->push_back( *i ) ;
+                            new_mapping_unfiltered->push_back( i ) ;
 
                             if( !m_constraints_ext.empty() && !AQE::match_track( m_constraints_ext, t ))
                             {
@@ -1136,16 +1064,14 @@ namespace Tracks
                             }
 
                             guint id_album  = get<guint>(track[ATTRIBUTE_MPX_ALBUM_ID].get()) ;
-                            guint id_artist = get<6>(**i) ;
-
 			    TracksConstraint& tc = constraints_albums[id_album] ;
-
                             tc.Count ++ ; 
 			    tc.Time += get<guint>(track[ATTRIBUTE_TIME].get()) ;
 
+                            guint id_artist = get<guint>(track[ATTRIBUTE_MPX_ALBUM_ARTIST_ID].get()) ;
                             constraints_artist[id_artist] = constraints_artist[id_artist] + 1 ;
 
-                            new_mapping->push_back( *i ) ;
+                            new_mapping->push_back( i ) ;
                         }
                     }
 
@@ -1183,7 +1109,7 @@ namespace Tracks
 		    }
 		    if( m_mapping && m_upper_bound < m_mapping->size() )
 		    {
-			id = get<3>(row(m_upper_bound)) ;
+			id = row(m_upper_bound)->ID ;
 		    }
 
                     m_upper_bound = 0 ;
@@ -1234,12 +1160,12 @@ namespace Tracks
 
                         new_mapping->reserve( m_mapping_unfiltered->size() ) ;
                         new_mapping_unfiltered->reserve( m_mapping_unfiltered->size() ) ;
+	
+			BSPAdaptor<RowRowMapping_t> adp( m_mapping_unfiltered ) ;
 
-                        for( RowRowMapping_t::const_iterator i = m_mapping_unfiltered->begin(); i != m_mapping_unfiltered->end(); ++i )
+                        for( auto& i : (const RowRowMapping_t&)(adp))
                         {
-                            const Row_t& row = **i ;
-
-                            const MPX::Track_sp& t = get<4>(row);
+                            const MPX::Track_sp& t = (*i)->TrackSp ; 
                             const MPX::Track& track = *(t.get()) ;
 
                             if( !m_constraints_aqe.empty() && !AQE::match_track( m_constraints_aqe, t ))
@@ -1247,7 +1173,7 @@ namespace Tracks
                                 continue ;
                             }
 
-                            new_mapping_unfiltered->push_back( *i ) ;
+                            new_mapping_unfiltered->push_back( i ) ;
 
                             if( !m_constraints_ext.empty() && !AQE::match_track( m_constraints_ext, t )) 
                             {
@@ -1255,16 +1181,14 @@ namespace Tracks
                             }
 
                             guint id_album  = get<guint>(track[ATTRIBUTE_MPX_ALBUM_ID].get()) ;
-                            guint id_artist = get<6>(**i) ;
-
 			    TracksConstraint& tc = constraints_albums[id_album] ;
-
                             tc.Count ++ ; 
 			    tc.Time += get<guint>(track[ATTRIBUTE_TIME].get()) ;
 
+                            guint id_artist = get<guint>(track[ATTRIBUTE_MPX_ALBUM_ARTIST_ID].get()) ;
                             constraints_artist[id_artist] = constraints_artist[id_artist] + 1 ;
 
-                            new_mapping->push_back( *i ) ; 
+                            new_mapping->push_back( i ) ; 
                         }
                     }
                     else
@@ -1272,18 +1196,18 @@ namespace Tracks
                         IntersectVector_t intersect ; 
                         intersect.reserve( m_frags.size() ) ;
 
-                        StrV vec( 3 ) ;
+                        StrV vec (4) ;
 
-                        for( guint n = 0 ; n < m_frags.size(); ++n )
+                        for( auto& f : m_frags ) 
                         {
-                            if( m_frags[n].empty() ) 
+                            if( f.empty() ) 
                             {
                                 continue ;
                             }
 
                             if( m_cache_enabled ) 
                             {
-                                FragmentCache_t::iterator cache_iter = m_fragment_cache.find( m_frags[n] ) ;
+                                FragmentCache_t::iterator cache_iter = m_fragment_cache.find( f ) ;
 
                                 if( cache_iter != m_fragment_cache.end() )
                                 {
@@ -1294,17 +1218,20 @@ namespace Tracks
 
                             ModelIteratorSet_sp model_iterator_set ( new ModelIteratorSet_t ) ;
 
-                            for( RowRowMapping_t::const_iterator i = m_mapping_unfiltered->begin(); i != m_mapping_unfiltered->end(); ++i )
+			    BSPAdaptor<RowRowMapping_t> adp( m_mapping_unfiltered ) ;
+
+                            for( auto& i : (const RowRowMapping_t&)(adp))
                             {
-                                const Row_t& row = **i ;
+                                const NewRow_sp& r = *i ;
 
-                                vec[0] = Glib::ustring(boost::get<0>(row)).lowercase() ;
-                                vec[1] = Glib::ustring(boost::get<1>(row)).lowercase() ;
-                                vec[2] = Glib::ustring(boost::get<2>(row)).lowercase() ;
+                                vec[0] = Glib::ustring(r->Artist).lowercase() ;
+                                vec[0] = Glib::ustring(r->Album).lowercase() ;
+                                vec[0] = Glib::ustring(r->Artist).lowercase() ;
+                                vec[0] = Glib::ustring(r->AlbumArtist).lowercase() ;
 
-                                if( Util::match_vec( m_frags[n], vec ))
+                                if( Util::match_vec( f, vec ))
                                 {
-                                    model_iterator_set->insert( *i ) ; 
+                                    model_iterator_set->insert( i ) ; 
                                 }
                             }
 
@@ -1326,11 +1253,12 @@ namespace Tracks
                                 m_constraints_aqe.empty()
                             )
                             {
-                                m_fragment_cache.insert( std::make_pair( m_frags[n], model_iterator_set )) ;
+                                m_fragment_cache.insert( std::make_pair( f, model_iterator_set )) ;
                             }
                         }
 
                         std::sort( intersect.begin(), intersect.end(), IntersectSort() ) ;
+
                         ModelIteratorSet_sp output( new ModelIteratorSet_t ) ; 
 
                         if( !intersect.empty() )
@@ -1376,7 +1304,7 @@ namespace Tracks
 
                         for( ModelIteratorSet_t::iterator i = output->begin() ; i != output->end(); ++i )
                         {
-                            const MPX::Track_sp& t = get<4>(**i);
+                            const MPX::Track_sp& t = (**i)->TrackSp ; 
                             const MPX::Track& track = *(t.get()) ;
 
                             if( !m_constraints_aqe.empty() && !AQE::match_track( m_constraints_aqe, t ))
@@ -1392,13 +1320,12 @@ namespace Tracks
                             }
 
                             guint id_album  = get<guint>(track[ATTRIBUTE_MPX_ALBUM_ID].get()) ;
-                            guint id_artist = get<6>(**i) ;
 
 			    TracksConstraint& tc = constraints_albums[id_album] ;
-
                             tc.Count ++ ; 
 			    tc.Time += get<guint>(track[ATTRIBUTE_TIME].get()) ;
 
+                            guint id_artist = get<guint>(track[ATTRIBUTE_MPX_ALBUM_ARTIST_ID].get()) ;
                             constraints_artist[id_artist] = constraints_artist[id_artist] + 1 ;
 
                             new_mapping->push_back( *i ) ;
@@ -1420,7 +1347,7 @@ namespace Tracks
                 }
         };
 
-        typedef boost::shared_ptr<DataModelFilter> DataModelFilter_sp_t;
+        typedef boost::shared_ptr<DataModelFilter> DataModelFilter_sp;
 
         class Column
         {
@@ -1510,163 +1437,104 @@ namespace Tracks
                     , const ThemeColor&			    color
                 )
                 {
-                    using boost::get;
-
-		    cairo->save() ;
-                    cairo->rectangle(
-                          xpos
-                        , ypos
-                        , m_width
-                        , rowheight
-                    ) ;
-
-                    cairo->clip() ;
-
                     cairo->move_to(
                           xpos + 6
                         , ypos + 4
                     ) ;
 
-                    cairo->set_operator(Cairo::OPERATOR_OVER);
-                    cairo->set_source_rgba(color.get_red(), color.get_green(), color.get_blue(), color.get_alpha() * 0.8);
-
                     Glib::RefPtr<Pango::Layout> layout = widget.create_pango_layout(m_title) ;
-
-                    layout->set_ellipsize(
-                          Pango::ELLIPSIZE_END
-                    ) ;
-
-                    layout->set_width(
-                          (m_width-12)*PANGO_SCALE
-                    ) ;
-
-                    layout->set_alignment(
-                          m_alignment
-                    ) ;
-
-                    pango_cairo_show_layout(
-                          cairo->cobj()
-                        , layout->gobj()
-                    ) ;
-
-                    cairo->reset_clip() ;
-		    cairo->restore() ;
+                    layout->set_ellipsize(Pango::ELLIPSIZE_END) ;
+                    layout->set_width( (m_width-12)*PANGO_SCALE ) ;
+                    layout->set_alignment( m_alignment ) ;
+                    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(color,0.8));
+		    layout->show_in_cairo_context( cairo ) ;
                 }
 
                 void
                 render(
                       const Cairo::RefPtr<Cairo::Context>&  cairo
                     , Gtk::Widget&			    widget
-                    , const Row_t&			    datarow
-                    , int				    row
+                    , const NewRow_sp&			    r
                     , int				    xpos
                     , int				    ypos
                     , int				    rowheight
                     , const ThemeColor&			    color
-                    , double				    alpha
 		    , bool				    highlight
 		    , const std::string&		    matches
 		    , bool				    selected
                 )
                 {
-		      using boost::get ;
+		    using boost::get ;
 
-		      cairo->save() ;
-		      cairo->set_operator(Cairo::OPERATOR_OVER) ;
-		      cairo->rectangle(
-			    xpos
-			  , ypos
-			  , m_width
-			  , rowheight
-		      ) ;
-		      cairo->clip();
+		    std::string s ;
 
-		      std::string str ;
+		    switch( m_column )
+		    {
+			  case 0:
+			      s = r->Title ; 
+			      break;
+			  case 1:
+			      s = r->Artist ; 
+			      break;
+			  case 2:
+			      s = r->Album ; 
+			      break;
+			  case 5:
+			      try{
+				  s = boost::lexical_cast<std::string>(r->Track) ;
+			      } catch(...) {}
+			      break;
+			  case 9:
+			      s = ((boost::format("%02d:%02d") % (r->Time/60) % (r->Time%60)).str()) ;
+			      break;
+		    }
 
-		      switch( m_column )
-		      {
-			    case 0:
-				str = get<0>(datarow);
-				break;
-			    case 1:
-				str = get<1>(datarow);
-				break;
-			    case 2:
-				str = get<2>(datarow);
-				break;
-			    case 3:
-				str = get<3>(datarow);
-				break;
-			    case 5:
-				str = boost::lexical_cast<std::string>(get<5>(datarow)) ;
-				break;
-			    case 9:
-				{
-				  guint time_ = get<9>(datarow) ;
-				  str = ((boost::format("%02d:%02d") % (time_/60) % (time_ % 60)).str()) ;
-				}
-				break;
-		      }
+		    Glib::RefPtr<Pango::Layout> layout; 
 
-		      Glib::RefPtr<Pango::Layout> layout; 
-
-		      if( !matches.empty() && highlight )
-		      {
-			std::string highlighted = Util::text_match_highlight( str, matches, "#ffd0d0" ) ;
+		    if( !matches.empty() && highlight )
+		    {
 			layout = widget.create_pango_layout("");
-			layout->set_markup( highlighted ) ;
-		      }
-		      else
-		      {
-			layout = widget.create_pango_layout( str ) ;
-		      }
+			layout->set_markup(Util::text_match_highlight( s, matches, "#ff4040" )) ;
+		    }
+		    else
+		    {
+			layout = widget.create_pango_layout(s) ;
+		    }
 
-		      layout->set_ellipsize(
-			    Pango::ELLIPSIZE_END
-		      ) ;
+		    layout->set_ellipsize( Pango::ELLIPSIZE_END ) ;
+		    layout->set_width((m_width - 12) * PANGO_SCALE ) ;
+		    layout->set_alignment( m_alignment ) ;
+		    Gdk::Cairo::set_source_rgba( cairo, color ) ;
 
-		      layout->set_width(
-			    (m_width - 12) * PANGO_SCALE
-		      ) ;
+		    if( selected )
+		    {
+			Util::render_text_shadow( layout, xpos+6,ypos+3, cairo, 2, 0.55 ) ;
+		    }
 
-		      layout->set_alignment(
-			    m_alignment
-		      ) ;
+		    cairo->move_to(
+			    xpos + 6
+			  , ypos + 3
+		    ) ;
 
-		      if( selected )
-  		      {
-			    Util::render_text_shadow( layout, xpos+6,ypos+3, cairo, 2, 0.55 ) ;
-		      }
-
-		      cairo->set_source_rgba(color.get_red(), color.get_green(), color.get_blue(), color.get_alpha() * alpha);
-		      cairo->move_to(
-			      xpos + 6
-			    , ypos + 3
-		      ) ;
-		      pango_cairo_show_layout(
-			    cairo->cobj()
-			  , layout->gobj()
-		      ) ;
-
-		      cairo->reset_clip();
-		      cairo->restore() ;
-                  }
+		    layout->show_in_cairo_context( cairo ) ;
+		}
         };
 
-        typedef boost::shared_ptr<Column>               Column_sp_t ;
-        typedef std::vector<Column_sp_t>                Columns ;
+        typedef boost::shared_ptr<Column>               Column_sp ;
+        typedef std::vector<Column_sp>			Columns ;
 
         typedef sigc::signal<void, MPX::Track_sp, bool> SignalTrackActivated ;
         typedef sigc::signal<void>                      SignalVAdjChanged ;
         typedef sigc::signal<void>                      SignalFindAccepted ;
         typedef sigc::signal<void, const std::string&>  SignalFindPropagate ;
+	typedef sigc::signal<void, const std::string&>	SignalMBID ;
 
         class Class
         : public Gtk::DrawingArea, public Gtk::Scrollable
         {
             public:
 
-                DataModelFilter_sp_t                m_model ;
+                DataModelFilter_sp                m_model ;
 		std::deque<std::pair<guint,guint> > m_motion_queue ;
 
             private:
@@ -1678,16 +1546,16 @@ namespace Tracks
                 int                                 m_height__headers ;
                 int                                 m_height__current_viewport ;
 
-                Interval<guint>			    m_ModelExtents ;
+                Interval<guint>			    ModelExtents ;
 		Interval<guint>			    m_Current_Viewport_I ;
 
                 Columns                             m_columns ;
 
                 boost::optional<boost::tuple<Model_t::const_iterator, guint> >  m_selection ;
     
-		enum SelValue
+		enum SelDatum
 		{
-		      S_ITER
+		      S_ITERATOR
 		    , S_INDEX
 		} ;
 
@@ -1713,8 +1581,6 @@ namespace Tracks
                 Glib::RefPtr<Gtk::UIManager>	    m_refUIManager ;
                 Glib::RefPtr<Gtk::ActionGroup>	    m_refActionGroup ;
                 Gtk::Menu*			    m_pMenuPopup ;
-
-                typedef sigc::signal<void, const std::string&> SignalMBID ;
 
                 SignalMBID _signal_0 ; 
                 SignalMBID _signal_1 ; 
@@ -1811,13 +1677,19 @@ namespace Tracks
                                 cancel_search() ;
                                 goto continue_matching ;
 
+			    case GDK_KEY_BackSpace:
+				if( m_SearchEntry->get_text().empty() )
+				{
+				    cancel_search() ;
+				    return true ;
+				}
+
                             default: ;
                         }
 
                         GdkEvent *copy_event = gdk_event_copy( (GdkEvent*)(event) ) ;
                         //g_object_unref( ((GdkEventKey*)copy_event)->window ) ;
                         ((GdkEventKey *) copy_event)->window = m_SearchEntry->get_window()->gobj();
-
                         m_SearchEntry->event(copy_event) ;
                         //gdk_event_free(copy_event) ;
 
@@ -1859,7 +1731,8 @@ namespace Tracks
                             {
                                 using boost::get;
 
-                                MPX::Track_sp track = get<4>(*(get<0>(m_selection.get()))) ;
+                                MPX::Track_sp track = (*(get<0>(m_selection.get())))->TrackSp ;
+
                                 m_SIGNAL_track_activated.emit( track, !(event->state & GDK_CONTROL_MASK) ) ;
 
                                 if( event->state & GDK_CONTROL_MASK )
@@ -1886,7 +1759,7 @@ namespace Tracks
 
                             if( event->state & GDK_SHIFT_MASK )
                             {
-                                if( m_ModelExtents( origin - step ))
+                                if( ModelExtents( origin - step ))
                                 {
                                     m_model->swap( origin, origin-step ) ;
                                     m_selection = boost::make_tuple((*m_model->m_mapping)[origin-step], origin-step) ;
@@ -1901,17 +1774,17 @@ namespace Tracks
                             }
                             else
                             {
-                                guint row = std::max<int>( 0, origin-step ) ;
+                                guint d = std::max<int>( 0, origin-step ) ;
 
-                                if( row < get_upper_row() ) 
+                                if( d < get_upper_row() ) 
                                 {
 				    if( step == 1 )
 					scroll_to_index( get_upper_row() - 1 ) ;
 				    else
-					scroll_to_index( row ) ;
+					scroll_to_index( d ) ;
                                 }
     
-                                select_index( row ) ;
+                                select_index( d ) ;
                             }
 
                             return true;
@@ -1948,7 +1821,7 @@ namespace Tracks
 
                             if( event->state & GDK_SHIFT_MASK )
                             {
-                                if( m_ModelExtents( origin + step ))
+                                if( ModelExtents( origin + step ))
                                 {
                                     m_model->swap( origin, origin+step ) ;
                                     m_selection = boost::make_tuple((*m_model->m_mapping)[origin+step], origin+step) ;
@@ -1963,17 +1836,17 @@ namespace Tracks
                             }
                             else
                             {
-                                guint row = std::min<guint>( origin+step, m_model->size()-1 ) ;
+                                guint d = std::min<guint>( origin+step, m_model->size()-1 ) ;
 
-                                if( row >= get_lower_row())
+                                if( d >= get_lower_row())
                                 {
 				    if( step == 1 )
                                         scroll_to_index( get_upper_row() + 1 ) ;
 				    else
-					scroll_to_index( row ) ;
+					scroll_to_index( d ) ;
                                 }
 
-                                select_index( row ) ;
+                                select_index(d) ;
                             }
 
                             return true;
@@ -2100,7 +1973,7 @@ namespace Tracks
 
 			    if( I( d )) 
 			    {
-				MPX::Track_sp track = get<4>(m_model->row(d)) ;
+				MPX::Track_sp track = m_model->row(d)->TrackSp ;
 				m_SIGNAL_track_activated.emit( track, true ) ;
 			    }
 			}
@@ -2153,7 +2026,7 @@ namespace Tracks
 
                     if( m_row__button_press && row != m_row__button_press.get() ) 
                     {
-			if( m_ModelExtents( row )) 
+			if( ModelExtents( row )) 
 			{
 			    m_motion_queue.push_back(std::make_pair( row, m_row__button_press.get())) ;
 			    m_row__button_press = row ;
@@ -2236,17 +2109,17 @@ namespace Tracks
                 }
 
                 inline bool
-                compare_id_to_optional(
-                      const Row_t&                     row
+                Compare(
+                      const NewRow_sp&                 r
                     , const boost::optional<guint>&    id
                 )
                 {
-                    return( id && id.get() == boost::get<3>( row )) ;
+                    return( id && id.get() == r->ID ) ;
                 }
 
                 template <typename T>
                 inline bool
-                compare_val_to_optional(
+                Compare(
                       const T&                          val
                     , const boost::optional<T>&         cmp
                 )
@@ -2257,11 +2130,13 @@ namespace Tracks
 		void
 		render_now_playing_arrow(
 		      const Cairo::RefPtr<Cairo::Context>&  cairo
-		    , guint x
-		    , guint y
+		    , guint n
 		    , bool  selected 
 		)	
 		{ 
+		    const guint x = 0,
+				y = m_height__headers + n*m_height__row ;
+
 		    cairo->save() ;
 		    cairo->set_line_join( Cairo::LINE_JOIN_ROUND ) ;
 		    cairo->set_line_cap( Cairo::LINE_CAP_ROUND ) ;
@@ -2279,36 +2154,22 @@ namespace Tracks
 		    cairo->restore() ;
 		}
 
-                bool
-                on_draw(
-		    const Cairo::RefPtr<Cairo::Context>& cairo
+		void
+		render_header_background(
+		      const Cairo::RefPtr<Cairo::Context>&  cairo
+		    , guint mw
+		    , guint mh
+		    , const Gdk::RGBA& c_base
+		    , const Gdk::RGBA& c_treelines
 		)
-                {
-                    boost::shared_ptr<IYoukiThemeEngine> theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;
-
-                    const ThemeColor& c_text        = theme->get_color( THEME_COLOR_TEXT ) ;
-                    const ThemeColor& c_text_sel    = theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
-                    const ThemeColor& c_rules_hint  = theme->get_color( THEME_COLOR_BASE_ALTERNATE ) ;
-		    const ThemeColor& c_treelines   = theme->get_color( THEME_COLOR_TREELINES ) ;
-		    const ThemeColor& c_base	    = theme->get_color( THEME_COLOR_BASE ) ;
-
-		    std::valarray<double> dashes ( 2 ) ;
-		    dashes[0] = 1. ; 
-	            dashes[1] = 2. ;
-
-
-
-		    Gdk::Cairo::set_source_rgba(cairo, c_base);
-		    cairo->paint() ;
-
-		    // RENDER HEADER BACKGROUND
+		{
 		    cairo->save() ;
 		    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 		    cairo->rectangle(
 			  0
 			, 0
-			, get_allocated_width()
-			, m_height__headers
+			, mw 
+			, mh 
 		    ) ;
 		
 		    double h,s,b ;
@@ -2325,7 +2186,9 @@ namespace Tracks
 		    b *= 0.88 ;
 		    c2 = Util::color_from_hsb( h, s, b ) ;
 
-		    Cairo::RefPtr<Cairo::LinearGradient> gr = Cairo::LinearGradient::create( get_allocated_width()/2., 1, get_allocated_width() / 2., m_height__headers - 2 ) ;
+		    Cairo::RefPtr<Cairo::LinearGradient> gr =
+			Cairo::LinearGradient::create( mw/2., 0, mw/2., mh ) ;
+
 		    gr->add_color_stop_rgba( 0., c1.get_red(), c1.get_green(), c1.get_blue(), 1. ) ;
 		    gr->add_color_stop_rgba( .35, c1.get_red(), c1.get_green(), c1.get_blue(), 1. ) ;
 		    gr->add_color_stop_rgba( 1., c2.get_red(), c2.get_green(), c2.get_blue(), 1. ) ;
@@ -2335,207 +2198,239 @@ namespace Tracks
 		    cairo->restore() ;
 
 		    cairo->save() ;
+
+		    Gdk::Cairo::set_source_rgba( cairo, Util::make_rgba( c_treelines, 0.6 )) ;
+
 		    cairo->set_antialias( Cairo::ANTIALIAS_NONE ) ;
 		    cairo->set_line_width( 1. ) ;
-		    cairo->set_source_rgba( c_treelines.get_red(), c_treelines.get_green(), c_treelines.get_blue(), 0.6 ) ;
-		    cairo->move_to( 0, m_height__headers ) ;
-		    cairo->line_to( get_allocated_width(), m_height__headers ) ;
+		    cairo->move_to( 0, mh ) ;
+		    cairo->line_to( mw, mh ) ;
 		    cairo->stroke() ;
+
 		    cairo->restore() ;
+		}
 
-		    /// Variables mostly for viewport vertical and horizontal iteration 
-                    guint upper_row   = get_upper_row() ;
-                    guint row_limit   = Limiter<guint>(
-				            Limiter<guint>::ABS_ABS
-					  , 0
-					  , m_model->size()
-					  , get_page_size() + 1
-					) ;
-                    guint xpos        = 0 ;
+		void
+		render_rules_hint(
+		      const Cairo::RefPtr<Cairo::Context>& cairo
+		    , const Gdk::RGBA& c_rules_hint
+		    , GdkRectangle& rr
+		    , guint d_max
+		)
+		{
+		    Gdk::Cairo::set_source_rgba(cairo, c_rules_hint);
 
-		    for( Columns::iterator i = m_columns.begin(); i != m_columns.end(); ++i )
+		    for( guint n = 0 ; n < d_max ; ++n ) 
 		    {
-			(*i)->render_header(
+			if( n % 2 )
+			{
+			    rr.y = m_height__headers + (n*m_height__row) ;
+
+			    cairo->rectangle(
+				  rr.x
+				, rr.y
+				, rr.width
+				, rr.height
+			    ) ;
+
+			    cairo->fill() ;
+			}
+		    }
+		}
+
+		void
+		render_headers(
+		      const Cairo::RefPtr<Cairo::Context>& cairo
+		    , const Gdk::RGBA& c_text
+		)
+		{
+		    guint xpos = 0 ;
+		    guint n = 0 ;
+
+		    for( auto& c : m_columns ) 
+		    {
+			c->render_header(
 				cairo
 			      , *this
 			      , xpos
 			      , 0
 			      , m_height__headers
-			      , std::distance( m_columns.begin(), i )
+			      , n 
 			      , c_text
 			) ;
 
-			xpos += (*i)->get_width() ; 
+			xpos += c->get_width() ; 
+			++n ;
 		    }
+		}
 
-		    // RULES HINT
+		void
+		render_treelines(
+		      const Cairo::RefPtr<Cairo::Context>& cairo
+		    , const Gdk::RGBA& c_treelines
+		)
+		{
+		    const std::vector<double> dashes { 1., 2. } ; 
+
+		    Columns::iterator i2 = m_columns.end() ;
+		    std::advance( i2, -1 ) ;	
+
+		    std::vector<guint> xpos_v ;
+		    guint xpos = 0 ;
+
+		    for( Columns::const_iterator i = m_columns.begin() ; i != i2; ++i )
 		    {
-			GdkRectangle rect ;
-
-			rect.x       = 0 ;
-			rect.width   = get_allocated_width() ; 
-			rect.height  = m_height__row ; 
-
-			Gdk::Cairo::set_source_rgba(cairo, c_rules_hint);
-
-			for( guint n = 0 ; n < row_limit ; ++n ) 
-			{
-			    if( n % 2 )
-			    {
-				rect.y = m_height__headers + (n*m_height__row) ;
-
-				RoundedRectangle(
-				      cairo
-				    , rect.x
-				    , rect.y
-				    , rect.width
-				    , rect.height
-				    , rounding
-				    , MPX::CairoCorners::CORNERS(0)
-				) ;
-
-				cairo->fill() ;
-			    }
-			}
+			xpos += (*i)->get_width() ; // adjust us to the column's end
+			xpos_v.push_back( xpos ) ; 
 		    }
 
-		    // SELECTION
-		    boost::optional<guint> d_sel ;
+		    std::vector<guint>::iterator ix = xpos_v.end() ;
+		    std::advance( ix, -1 ) ;
 
-		    if( m_selection )
+		    cairo->save() ;
+
+		    cairo->set_antialias( Cairo::ANTIALIAS_NONE ) ;
+
+		    cairo->set_line_width(
+			  1. 
+		    ) ;
+
+		    cairo->set_source_rgba(
+			  c_treelines.get_red()
+			, c_treelines.get_green()
+			, c_treelines.get_blue()
+			, c_treelines.get_alpha() * 0.8
+		    ) ;
+
+		    for( std::vector<guint>::iterator i = xpos_v.begin() ; i != xpos_v.end() ; ++i ) 
 		    {
-			d_sel = boost::get<1>(m_selection.get()) ; 
-		    }
+			guint xpos = *i ; 
 
-		    // Selection Rectangle, if any
+			cairo->set_dash(
+			      dashes
+			    , 0
+			) ;
+			cairo->move_to(
+			      xpos
+			    , m_height__headers + 1 
+			) ; 
+			cairo->line_to(
+			      xpos
+			    , get_allocated_height() + m_height__headers
+			) ;
+			cairo->stroke() ;
+
+			cairo->unset_dash() ;
+			cairo->move_to(
+			      xpos
+			    , 0
+			) ;
+			cairo->line_to(
+			      xpos
+			    , m_height__headers - 1
+			) ;
+			cairo->set_source_rgba(
+			      c_treelines.get_red()
+			    , c_treelines.get_green()
+			    , c_treelines.get_blue()
+			    , 0.55
+			) ;
+			cairo->stroke() ;
+		    }
+		}
+
+                bool
+                on_draw(
+		    const Cairo::RefPtr<Cairo::Context>& cairo
+		)
+                {
+                    boost::shared_ptr<IYoukiThemeEngine> theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;
+
+                    const ThemeColor& c_text        = theme->get_color( THEME_COLOR_TEXT ) ;
+                    const ThemeColor& c_text_sel    = theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
+                    const ThemeColor& c_rules_hint  = theme->get_color( THEME_COLOR_BASE_ALTERNATE ) ;
+		    const ThemeColor& c_treelines   = theme->get_color( THEME_COLOR_TREELINES ) ;
+		    const ThemeColor& c_base	    = theme->get_color( THEME_COLOR_BASE ) ;
+
+                    guint d       = get_upper_row() ;
+                    guint d_max   = std::min<guint>( m_model->size(), get_page_size()+1 ) ;
+                    guint xpos    = 0 ;
+
+		    /* Row Rectangle for reusal */
+		    GdkRectangle rr ;
+		    rr.x       = 0 ;
+		    rr.width   = get_allocated_width() ; 
+		    rr.height  = m_height__row ; 
+
+		    /* Header Background */ 
+		    render_header_background(
+			  cairo
+			, get_allocated_width()
+			, m_height__headers
+			, c_base
+			, c_treelines
+		    ) ;
+    
+		    /* Headers */
+		    render_headers( cairo, c_text ) ;
+
+		    /* Rules Hint */
+		    render_rules_hint( cairo, c_rules_hint, rr, d_max ) ;
+
+		    /* Determine Selected ID */
+		    boost::optional<guint> d_sel = m_selection ? get<S_INDEX>(m_selection.get()) : boost::optional<guint>() ; 
+
+		    /* Render Selection Rectangle */
 		    if( d_sel && m_Current_Viewport_I(d_sel.get()))
 		    {
-			GdkRectangle rect ;
-
-			rect.x         = 0 ; 
-			rect.width     = get_allocated_width() ;
-			rect.height    = m_height__row ; 
-
-			rect.y = m_height__headers + ((d_sel.get() - upper_row)*m_height__row) ;
+			rr.y = m_height__headers + ((d_sel.get() - d)*m_height__row) ;
 
 			theme->draw_selection_rectangle(
 			      cairo
-			    , rect
+			    , rr
 			    , has_focus()
-			    , rounding
+			    , 0
 			    , MPX::CairoCorners::CORNERS(0)
 			) ;
 		    }
 
-		    // ROW DATA
-		    for( guint n = 0 ; n < row_limit && m_ModelExtents( n + upper_row ) ; ++n ) 
+		    /* Row Data */
+		    guint n = 0 ;
+		    Algorithm::Adder<guint> d_cur( n, d ) ;	
+
+		    while( n < d_max && ModelExtents(d_cur)) 
 		    {
 			xpos = 0 ;
 
-			const Row_t& r = m_model->row( n + upper_row ) ;
+			const NewRow_sp& r = m_model->row( d_cur ) ;
 
-			// RENDER "playing" ARROW
-			if( compare_id_to_optional( r, m_model->m_id_currently_playing )) 
+			if( Compare( r, m_model->m_id_currently_playing )) 
 			{
-			    const guint x = 0,
-					y = m_height__headers + n*m_height__row ;
-
-			    render_now_playing_arrow( cairo, x, y, compare_val_to_optional(n+upper_row,d_sel)) ;
+			    render_now_playing_arrow( cairo, n, Compare<guint>(d_cur,d_sel)) ;
 			}
 
-			for( Columns::const_iterator i = m_columns.begin(); i != m_columns.end(); ++i )
+			for( auto& c : m_columns ) 
 			{
-			    (*i)->render(
+			    c->render(
 				  cairo
 				, *this
 				, r 
-				, n + upper_row
 				, xpos
-				, m_height__headers + (n*m_height__row) - 1
+				, m_height__headers + (n*m_height__row)
 				, m_height__row
-				, compare_val_to_optional( n + upper_row, d_sel ) ? c_text_sel : c_text
-				, 1.0
+				, Compare<guint>( d_cur, d_sel ) ? c_text_sel : c_text
 				, m_highlight_matches
 				, m_model->m_current_filter_noaque
-				, compare_val_to_optional( n + upper_row, d_sel )
+				, Compare<guint>( d_cur, d_sel )
 			    ) ;
 
-			    xpos += (*i)->get_width() ; 
-			}
-		    }
-
-		    // TREELINES
-		    {
-			Columns::iterator i2 = m_columns.end() ;
-			std::advance( i2, -1 ) ;	
-
-			std::vector<guint> xpos_v ;
-
-			guint xpos = 0 ;
-
-			for( Columns::const_iterator i = m_columns.begin() ; i != i2; ++i )
-			{
-			    xpos += (*i)->get_width() ; // adjust us to the column's end
-			    xpos_v.push_back( xpos ) ; 
+			    xpos += c->get_width() ; 
 			}
 
-			std::vector<guint>::iterator ix = xpos_v.end() ;
-			std::advance( ix, -1 ) ;
-
-			for( std::vector<guint>::iterator i = xpos_v.begin() ; i != xpos_v.end() ; ++i ) 
-			{
-			    guint xpos = *i ; 
-
-			    cairo->save() ;
-			    cairo->set_antialias( Cairo::ANTIALIAS_NONE ) ;
-			    cairo->set_line_width(
-				  1. 
-			    ) ;
-			    cairo->move_to(
-				  xpos
-				, m_height__headers + 1 
-			    ) ; 
-			    cairo->line_to(
-				  xpos
-				, get_allocated_height() + m_height__headers
-			    ) ;
-			    cairo->set_dash(
-				  dashes
-				, 0
-			    ) ;
-			    cairo->set_source_rgba(
-				  c_treelines.get_red()
-				, c_treelines.get_green()
-				, c_treelines.get_blue()
-				, c_treelines.get_alpha() * 0.8
-			    ) ;
-			    cairo->stroke() ;
-			    cairo->restore() ;
-
-                            cairo->save() ;
-                            cairo->set_antialias( Cairo::ANTIALIAS_NONE ) ;
-                            cairo->set_line_width(
-                                  1.
-                            ) ;
-                            cairo->move_to(
-                                  xpos
-                                , 0
-                            ) ;
-                            cairo->line_to(
-                                  xpos
-                                , m_height__headers - 1
-                            ) ;
-                            cairo->set_source_rgba(
-                                  c_treelines.get_red()
-                                , c_treelines.get_green()
-                                , c_treelines.get_blue()
-                                , 0.4
-                            ) ;
-
-                            cairo->stroke() ;
-                            cairo->restore();
-		        }
+			++n ;
 		    }
+
+		    render_treelines( cairo, c_treelines ) ;
 
 		    if( !is_sensitive() )
 		    {
@@ -2582,7 +2477,7 @@ namespace Tracks
                 {
                     if( size_changed ) 
                     {
-                        m_ModelExtents = Interval<guint> (
+                        ModelExtents = Interval<guint> (
 			      Interval<guint>::IN_EX
 			    , 0
 			    , m_model->size()
@@ -2624,28 +2519,10 @@ namespace Tracks
                 )
                 {
                     guint row = (double( tooltip_y ) - m_height__headers) / double(m_height__row) ;
-
-                    MPX::Track_sp t = boost::get<4>( m_model->row(row) ) ;
+                    MPX::Track_sp t = m_model->row(row)->TrackSp ;
                     const MPX::Track& track = *(t.get()) ;
-
-                    boost::shared_ptr<Covers> covers = services->get<Covers>("mpx-service-covers") ;
-                    Glib::RefPtr<Gdk::Pixbuf> cover ;
-
-                    const std::string& mbid = boost::get<std::string>( track[ATTRIBUTE_MB_ALBUM_ID].get() ) ;
-
-                    Gtk::Image * image = Gtk::manage( new Gtk::Image ) ;
-
-                    if( covers->fetch(
-                          mbid
-                        , cover
-                    ))
-                    {   
-                        image->set( cover ) ;
-                        tooltip->set_custom( *image ) ;
-                        return true ;
-                    }
-
-                    return false ;
+		    tooltip->set_text( boost::get<std::string>(track[ATTRIBUTE_TITLE].get())) ;
+                    return true ;
                 }
 
             public:
@@ -2707,7 +2584,7 @@ namespace Tracks
 		}
 
                 void
-                set_model(DataModelFilter_sp_t model)
+                set_model(DataModelFilter_sp model)
                 {
                     if( m_model )
                     {
@@ -2733,7 +2610,7 @@ namespace Tracks
 
                 void
                 append_column(
-                      Column_sp_t   column
+                      Column_sp   column
                 )
                 {
                     m_columns.push_back(column) ;
@@ -2821,30 +2698,26 @@ namespace Tracks
                       guint id
                 )
                 {
-		    guint row = 0 ;
-
-                    for( DataModelFilter::RowRowMapping_t::iterator i = m_model->m_mapping->begin() ; i != m_model->m_mapping->end(); ++i )
+                    for( DataModelFilter::RowRowMapping_t::iterator i = m_model->m_mapping->begin() ; i != m_model->m_mapping->end() ; ++i )
                     {
-                        if( boost::get<3>(**i) == id )
+                        if( (**i)->ID == id )
                         {
                             Limiter<guint> d ( 
                                   Limiter<guint>::ABS_ABS
                                 , 0
                                 , m_model->m_mapping->size() - get_page_size()
-                                , row 
+                                , std::distance( m_model->m_mapping->begin(), i ) 
                             ) ;
 
                             vadj_value_set( d ) ; 
                             break ;
                         }
-
-			++ row ;
                     } 
                 }
 
                 void
                 scroll_to_index(
-                      guint row
+                      guint d
                 )
                 {
                     if( m_height__current_viewport && m_height__row && m_model )
@@ -2853,13 +2726,13 @@ namespace Tracks
                               Limiter<guint>::ABS_ABS
                             , 0
                             , m_model->m_mapping->size() - get_page_size()
-                            , row 
+                            , d 
                         ) ;
 
                         if( m_model->m_mapping->size() < get_page_size()) 
                             vadj_value_set( 0 ) ; 
                         else
-                        if( row > (m_model->m_mapping->size() - get_page_size()) )
+                        if( d > (m_model->m_mapping->size() - get_page_size()) )
                             vadj_value_set( m_model->m_mapping->size() - get_page_size() ) ; 
                         else
                             vadj_value_set( d ) ; 
@@ -2928,14 +2801,14 @@ namespace Tracks
 
                     for( ; i != m_model->m_mapping->end(); ++i )
                     {
-			if( numeric && nr == get<5>(**i )) 
+			if( numeric && nr == (**i)->Track ) 
 			{
 			    scroll_to_index( std::max<int>( 0, d-get_page_size()/2)) ;
 			    select_index( d ) ;
 			    return ;
 			}
 
-                        Glib::ustring match = Glib::ustring(get<0>(**i)).casefold() ;
+                        Glib::ustring match = Glib::ustring((**i)->Title).casefold() ;
 
                         if( match.length() && match.substr( 0, text.length()) == text.substr( 0, text.length()) )
                         {
@@ -2977,14 +2850,14 @@ namespace Tracks
 
                     for( ; i >= m_model->m_mapping->begin(); --i )
                     {
-			if( numeric && nr == get<5>(**i )) 
+			if( numeric && nr == (**i)->Track ) 
 			{
 			    scroll_to_index( std::max<int>( 0, d-get_page_size()/2)) ;
 			    select_index( d ) ;
 			    return ;
 			}
 
-                        Glib::ustring match = Glib::ustring(get<0>(**i)).casefold() ;
+                        Glib::ustring match = Glib::ustring((**i)->Title).casefold() ;
 
                         if( match.length() && match.substr( 0, text.length()) == text.substr( 0, text.length()) )
                         {
@@ -3028,7 +2901,7 @@ namespace Tracks
 
                     for( ; i != m_model->m_mapping->end(); ++i )
                     {
-			if( numeric && nr == get<5>(**i )) 
+			if( numeric && nr == (**i)->Track ) 
 			{
 			    scroll_to_index( std::max<int>( 0, d-get_page_size()/2)) ;
 			    select_index( d ) ;
@@ -3036,7 +2909,7 @@ namespace Tracks
 			    return ;
 			}
 
-                        Glib::ustring match = Glib::ustring(get<0>(**i)).casefold() ;
+                        Glib::ustring match = Glib::ustring((**i)->Title).casefold() ;
 
                         if( match.length() && match.substr( 0, text.length()) == text.substr( 0, text.length()) )
                         {
@@ -3083,8 +2956,8 @@ namespace Tracks
                 {
                     if( m_selection )
                     {
-                        const Row_t& row = *(boost::get<0>(m_selection.get())) ;
-                        const MPX::Track_sp& t = get<4>(row);
+                        const NewRow_sp& r = *(boost::get<0>(m_selection.get())) ;
+                        const MPX::Track_sp& t = r->TrackSp ; 
                         const MPX::Track& track = *(t.get()) ;
 
                         _signal_0.emit( get<std::string>(track[ATTRIBUTE_MB_ALBUM_ID].get()));
@@ -3096,8 +2969,8 @@ namespace Tracks
                 {
                     if( m_selection )
                     {
-                        const Row_t& row = *(boost::get<0>(m_selection.get())) ;
-                        const MPX::Track_sp& t = get<4>(row);
+                        const NewRow_sp& r = *(boost::get<0>(m_selection.get())) ;
+                        const MPX::Track_sp& t = r->TrackSp ; 
                         const MPX::Track& track = *(t.get()) ;
 
                         _signal_1.emit( get<std::string>(track[ATTRIBUTE_MB_ALBUM_ARTIST_ID].get()));
@@ -3109,7 +2982,7 @@ namespace Tracks
 		{	
 		    if( m_selection )
 		    {
-			MPX::Track_sp track = get<4>(*(get<0>(m_selection.get()))) ;
+			MPX::Track_sp track = (*(get<S_ITERATOR>(m_selection.get())))->TrackSp ;
 			m_SIGNAL_track_activated.emit( track, false ) ;
 		    }
 		}
@@ -3200,16 +3073,12 @@ namespace Tracks
 
                     boost::shared_ptr<IYoukiThemeEngine> theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;
                     const ThemeColor& c = theme->get_color( THEME_COLOR_BASE ) ;
-
-                    Gdk::RGBA bg1 ;
-                    bg1.set_rgba( c.get_red(), c.get_green(), c.get_blue() ) ;
-                    override_background_color( bg1, Gtk::STATE_FLAG_NORMAL ) ;
+                    override_background_color( c, Gtk::STATE_FLAG_NORMAL ) ;
 
                     set_can_focus(true);
 
                     add_events(Gdk::EventMask(GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_EXPOSURE_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_LEAVE_NOTIFY_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_MOTION_MASK | GDK_SCROLL_MASK ));
 
-                    /*
                     signal_query_tooltip().connect(
                         sigc::mem_fun(
                               *this
@@ -3217,7 +3086,6 @@ namespace Tracks
                     )) ;
 
                     set_has_tooltip(true) ;
-                    */
 
                     m_SearchEntry = Gtk::manage( new Gtk::Entry ) ;
                     m_SearchEntry->show() ;

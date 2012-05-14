@@ -63,8 +63,8 @@ SET(youki_bin_SOURCES
   library.cc
   library.hh
 # mpx-mlibman-dbus-proxy-actual.hh
-# ${CMAKE_CURRENT_BINARY_DIR}/mpx-mlibman-dbus-proxy.hh
-# ${CMAKE_CURRENT_BINARY_DIR}/mpx-app-dbus-adaptor.hh
+  ${CMAKE_CURRENT_BINARY_DIR}/mpx-mlibman-dbus-proxy.hh
+  ${CMAKE_CURRENT_BINARY_DIR}/mpx-app-dbus-adaptor.hh
   markov-analyzer-thread.cc
   markov-analyzer-thread.hh
   play.hh

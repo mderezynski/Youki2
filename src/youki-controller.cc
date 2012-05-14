@@ -1,4 +1,8 @@
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif 
+
+#include "youki-controller.hh"
 
 #include <tr1/random>
 
@@ -35,8 +39,6 @@
 #include "plugin-manager-gui.hh"
 #include "play.hh"
 #include "preferences.hh"
-
-#include "youki-controller.hh"
 
 using boost::get ;
 
@@ -158,9 +160,9 @@ namespace MPX
 {
     struct YoukiController::Private
     { 
-        View::Artist::DataModelFilter_sp_t  FilterModelArtist ;
-        View::Albums::DataModelFilter_sp_t  FilterModelAlbums ;
-        View::Tracks::DataModelFilter_sp_t  FilterModelTracks ;
+        View::Artist::DataModelFilter_sp  FilterModelArtist ;
+        View::Albums::DataModelFilter_sp  FilterModelAlbums ;
+        View::Tracks::DataModelFilter_sp  FilterModelTracks ;
 
     } ;
 
@@ -220,7 +222,6 @@ namespace MPX
         m_play      = services->get<MPX::Play>("mpx-service-play").get() ;
         m_library   = services->get<Library>("mpx-service-library").get() ;
 
-/*
         m_mlibman_dbus_proxy = services->get<info::backtrace::Youki::MLibMan_proxy_actual>("mpx-service-mlibman").get() ; 
 
         m_mlibman_dbus_proxy->signal_scan_start().connect(
@@ -264,7 +265,6 @@ namespace MPX
                   *this
                 , &YoukiController::on_library_entity_updated
         )) ;
- */
 
 	/* Connect Library */
         m_library->signal_album_updated().connect(
@@ -569,8 +569,8 @@ namespace MPX
         {
 	    /* Tracks */
 
-	    View::Tracks::DataModel_sp_t m ( new View::Tracks::DataModel ) ;
-	    private_->FilterModelTracks = View::Tracks::DataModelFilter_sp_t (new View::Tracks::DataModelFilter( m )) ;
+	    View::Tracks::DataModel_sp m ( new View::Tracks::DataModel ) ;
+	    private_->FilterModelTracks = View::Tracks::DataModelFilter_sp (new View::Tracks::DataModelFilter( m )) ;
 
 	    private_->FilterModelTracks->signal_process_begin().connect( sigc::bind( sigc::mem_fun( *this, &YoukiController::show_hide_spinner), true )) ;
 	    private_->FilterModelTracks->signal_process_begin().connect( sigc::bind( sigc::mem_fun( *m_Entry, &Gtk::Widget::set_sensitive), false )) ;
@@ -588,21 +588,21 @@ namespace MPX
 
 	    m_ListViewTracks->set_model( private_->FilterModelTracks ) ; 
 
-	    View::Tracks::Column_sp_t c1 (new View::Tracks::Column(_("Track"))) ;
+	    View::Tracks::Column_sp c1 (new View::Tracks::Column(_("Track"))) ;
 	    c1->set_column(5) ;
 	    c1->set_alignment( Pango::ALIGN_RIGHT ) ;
 
-	    View::Tracks::Column_sp_t c2 (new View::Tracks::Column(_("Title"))) ;
+	    View::Tracks::Column_sp c2 (new View::Tracks::Column(_("Title"))) ;
 	    c2->set_column(0) ;
 
-	    View::Tracks::Column_sp_t c3 (new View::Tracks::Column(_("Time"))) ;
+	    View::Tracks::Column_sp c3 (new View::Tracks::Column(_("Time"))) ;
 	    c3->set_column(9) ;
 	    c3->set_alignment( Pango::ALIGN_RIGHT ) ;
 
-	    View::Tracks::Column_sp_t c4 (new View::Tracks::Column(_("Artist"))) ;
+	    View::Tracks::Column_sp c4 (new View::Tracks::Column(_("Artist"))) ;
 	    c4->set_column(1) ;
 
-	    View::Tracks::Column_sp_t c5 (new View::Tracks::Column(_("Album"))) ;
+	    View::Tracks::Column_sp c5 (new View::Tracks::Column(_("Album"))) ;
 	    c5->set_column(2) ;
 
 	    m_ListViewTracks->append_column(c1) ;
@@ -631,14 +631,14 @@ namespace MPX
         {
 	    /* Album Artists */
 
-	    View::Artist::DataModel_sp_t m (new View::Artist::DataModel) ;
-	    private_->FilterModelArtist = View::Artist::DataModelFilter_sp_t (new View::Artist::DataModelFilter( m )) ;
+	    View::Artist::DataModel_sp m (new View::Artist::DataModel) ;
+	    private_->FilterModelArtist = View::Artist::DataModelFilter_sp (new View::Artist::DataModelFilter( m )) ;
 
 	    preload__artists() ;
 
 	    m_ListViewArtist->set_model( private_->FilterModelArtist ) ;
 
-	    View::Artist::Column_sp_t c1 (new View::Artist::Column(_("Album Artist"))) ;
+	    View::Artist::Column_sp c1 (new View::Artist::Column(_("Album Artist"))) ;
 	    c1->set_column(0) ;
 	    m_ListViewArtist->append_column(c1) ;
 
@@ -650,14 +650,14 @@ namespace MPX
         {
 	    /* Albums */
 
-	    View::Albums::DataModel_sp_t m ( new View::Albums::DataModel ) ;
-	    private_->FilterModelAlbums = View::Albums::DataModelFilter_sp_t (new View::Albums::DataModelFilter( m )) ;
+	    View::Albums::DataModel_sp m ( new View::Albums::DataModel ) ;
+	    private_->FilterModelAlbums = View::Albums::DataModelFilter_sp (new View::Albums::DataModelFilter( m )) ;
 
 	    preload__albums() ;
 
 	    m_ListViewAlbums->set_model( private_->FilterModelAlbums ) ;
 
-	    View::Albums::Column_sp_t c1 ( new View::Albums::Column ) ;
+	    View::Albums::Column_sp c1 ( new View::Albums::Column ) ;
 	    c1->set_column(0) ;
 	    m_ListViewAlbums->append_column( c1 ) ;
 
@@ -1657,7 +1657,7 @@ namespace MPX
 
 		    if( pos_next < private_->FilterModelTracks->size() )
 		    {
-			play_track( boost::get<4>(private_->FilterModelTracks->row( pos_next )) ) ;
+			play_track( private_->FilterModelTracks->row( pos_next )->TrackSp ) ;
 			goto x1 ;
 		    }
 		}
@@ -1666,7 +1666,7 @@ namespace MPX
 		    /*/ Not in the current projection? OK, so start with the top tracki, if the projection's size is > 0 */
 		    if( private_->FilterModelTracks->size() )
 		    {
-			play_track( boost::get<4>(private_->FilterModelTracks->row(0)) ) ;
+			play_track( private_->FilterModelTracks->row(0)->TrackSp ) ;
 			goto x1 ;
 		    }
 		}
@@ -1824,15 +1824,15 @@ namespace MPX
 		    double h,s,b ;
 		    Util::color_to_hsb( mean, h, s, b ) ;
 
-		    if( (s<0.35&&b>0.75) || (b<0.25) )
+		    if((b>0.85) || (b<0.25)) 
 		    {
 			mean = Util::pick_color_for_pixbuf( cover ) ;	
 			Util::color_to_hsb( mean, h, s, b ) ;
 			if( (s<0.35&&b>0.75) || (b<0.25) )
 			{
 			    mean = Util::make_rgba( 0.45, 0.45, 0.45, 1 ) ;
-			    goto set_color ;
 			}
+			goto set_color ;
 		    }
 
 		    s = std::min<double>( s * 2, 1. ) ; 
@@ -2013,7 +2013,7 @@ namespace MPX
     {
 	if( private_->FilterModelTracks->size() )
         {
-        	play_track( boost::get<4>(private_->FilterModelTracks->row( m_ListViewTracks->get_upper_row()  )) ) ;
+	    play_track( private_->FilterModelTracks->row( m_ListViewTracks->get_upper_row())->TrackSp ) ;
 	}
     }
 
@@ -2210,7 +2210,7 @@ namespace MPX
 		if( private_->FilterModelTracks->size() )
 		{
 		    OptUInt idx = m_ListViewTracks->get_selected_index() ; 
-		    play_track( boost::get<4>(private_->FilterModelTracks->row( idx ? idx.get() : 0 )) ) ;
+		    play_track( private_->FilterModelTracks->row( idx ? idx.get() : 0)->TrackSp ) ;
 		}
 	    }
 	    else
@@ -2253,7 +2253,7 @@ namespace MPX
 
 			if( model_track_pos )
 			{
-			    play_track( boost::get<4>(private_->FilterModelTracks->row(model_track_pos.get()))) ;
+			    play_track( private_->FilterModelTracks->row(model_track_pos.get())->TrackSp ) ;
 			    return ;
 			}
 			/* ...unwind */
@@ -2263,7 +2263,7 @@ namespace MPX
 
 	    /* ...aaaand... fallback */
 	   
-	    play_track( boost::get<4>(private_->FilterModelTracks->row(0))) ;
+	    play_track( private_->FilterModelTracks->row(0)->TrackSp ) ;
         }
     }
 
@@ -2279,7 +2279,7 @@ namespace MPX
 		break; 
 
             case 1:
-                //m_mlibman_dbus_proxy->ShowWindow () ;
+                m_mlibman_dbus_proxy->ShowWindow () ;
 		break; 
 
             case 2:
@@ -2531,7 +2531,7 @@ void
 		d = std::max<int>( 0, idx.get() - mod ) ;
 	    }
 
-	    play_track( boost::get<4>(private_->FilterModelTracks->row( d ))) ;
+	    play_track( private_->FilterModelTracks->row( d )->TrackSp ) ;
 	}
     }
 

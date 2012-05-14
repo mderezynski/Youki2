@@ -7,25 +7,16 @@
 #include "mpx/mpx-main.hh"
 #include "mpx/algorithm/limiter.hh"
 #include "mpx/algorithm/interval.hh"
+#include "mpx/algorithm/colorfade.hh"
+
 #include "mpx/widgets/cairo-extensions.hh"
 #include "mpx/widgets/cairo-blur.hh"
+
 #include "mpx/util-graphics.hh"
 
 namespace
 {
-    MPX::ThemeColor
-    fade_colors(const MPX::ThemeColor& c_a, const MPX::ThemeColor& c_b, double position)
-    {
-        MPX::ThemeColor r ;
-
-        r.set_red   (c_a.get_red()   + (c_b.get_red()   - c_a.get_red())   * position);
-        r.set_green (c_a.get_green() + (c_b.get_green() - c_a.get_green()) * position);
-        r.set_blue  (c_a.get_blue()  + (c_b.get_blue()  - c_a.get_blue())  * position);
-
-        return r ;
-    }
-
-    const double rounding = 2. ;
+    const double rounding = 3.5 ;
 }
 
 namespace MPX

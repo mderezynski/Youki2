@@ -34,6 +34,7 @@
 #include <cstdlib>
 #include <string>
 #include <locale.h>
+#include <dbus-c++/glib-integration.h>
 
 #include "mpx/mpx-covers.hh"
 #include "mpx/mpx-main.hh"
@@ -63,8 +64,7 @@
 #include "youki-controller.hh"
 #include "youki-theme-engine.hh"
 
-#undef PACKAGE
-#define PACKAGE "youki"
+#include "mpx-mlibman-dbus-proxy-actual.hh"
 
 using namespace MPX ;
 using namespace Glib ;
@@ -249,10 +249,6 @@ int main(int argc, char ** argv)
 {
     setup_i18n();
 
-    //Glib::thread_init(0);
-    //Glib::init();
-    //Gio::init();
-
     try{
         gtk = Gtk::Application::create(argc, argv, "info.backtrace.Youki") ;
     } catch( Glib::OptionError & cxe )
@@ -272,6 +268,12 @@ int main(int argc, char ** argv)
 
     Splashscreen* splash = new Splashscreen;
 
+    DBus::Glib::BusDispatcher dispatcher ;
+    dispatcher.attach( g_main_context_default() ) ;
+    DBus::default_dispatcher = &dispatcher ;
+    DBus::Connection conn = DBus::Connection::SessionBus() ;
+    conn.request_name( "info.backtrace.Youki.App" ) ;
+
 #ifdef HAVE_HAL
     try{
 
@@ -283,12 +285,10 @@ int main(int argc, char ** argv)
         services->add(boost::shared_ptr<Covers>(new MPX::Covers));
         services->get<Covers>("mpx-service-covers")->run() ;
 
-/*
         splash->set_message(_("Starting Library Manager..."), 2.5/10.);
-        info::backtrace::Youki::MLibMan_proxy_actual * p = new info::backtrace::Youki::MLibMan_proxy_actual() ;
+        info::backtrace::Youki::MLibMan_proxy_actual * p = new info::backtrace::Youki::MLibMan_proxy_actual( conn ) ;
         p->Start() ;
         services->add(boost::shared_ptr<info::backtrace::Youki::MLibMan_proxy_actual>( p ));
-*/
 
         splash->set_message(_("Starting Library"),3/10.);
         services->add(boost::shared_ptr<Library>(new MPX::Library));

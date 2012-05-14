@@ -77,6 +77,100 @@ namespace
         src_pixel += 4 ;
       }
    }
+
+    struct HSL
+    {
+	float h, s, l;
+    };
+
+    HSL make_hsl (float h, float s, float l)
+    {
+	HSL hsl = { h, s, l };
+
+	return hsl;
+    }
+
+    HSL hsl_from_rgb_f (float r, float g, float b) ;
+
+    HSL hsl_from_rgb (uint8_t r8, uint8_t g8, uint8_t b8)
+    {
+	float r = r8 / 255.0;
+	float g = g8 / 255.0;
+	float b = b8 / 255.0;
+
+	return hsl_from_rgb_f( r, g, b ) ;
+    }
+
+    HSL hsl_from_rgb_f (float r, float g, float b)
+    {
+	float max = std::max(r, std::max (g, b));
+	float min = std::min(r, std::min (g, b));
+
+	float h;
+	float s;
+	float l = (max + min) / 2;
+
+	if (max == min) {
+	    h = s = 0; // achromatic
+	} else {
+	    float d = max - min;
+
+	    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+
+	    if (max == r) {
+		h = (g - b) / d + (g < b ? 6 : 0);
+	    } else if (max == g) {
+		h = (b - r) / d + 2;
+	    } else if (max == b) {
+		h = (r - g) / d + 4;
+	    }
+
+	    h /= 6;
+	}
+
+	return make_hsl (h, s, l);
+    }
+
+    HSL get_dominant_color (Glib::RefPtr<Gdk::Pixbuf> const& image)
+    {
+	int bytes_per_pixel = image->get_has_alpha () ? 4 : 3;
+
+	int width  = image->get_width ();
+	int height = image->get_height ();
+	int row_stride = image->get_rowstride ();
+
+	int count[64][64];
+
+	int* start = &count[0][0];
+	int* end   = start + 64*64;
+
+	std::fill (start, end, 0);
+
+	uint8_t const *pixel_row = image->get_pixels ();
+
+	for (int y = 0; y < height; y++) {
+	    uint8_t const* p = pixel_row;
+
+	    for (int x = 0; x < width; x++) {
+		HSL hsl = hsl_from_rgb (p[0], p[1], p[2]);
+
+		count[int (hsl.h * 63)][int (hsl.s * 63)]++;
+
+		p += bytes_per_pixel;
+	    }
+
+	    pixel_row += row_stride;
+	}
+
+	int* entry = std::max_element (start, end);
+
+	std::ptrdiff_t index = entry - start;
+
+	int h = index >> 6;
+	int s = index & 0x3f;
+
+	return make_hsl (h / 63.0, s / 63.0, 0.5);
+    }
 }
 
 namespace MPX
@@ -300,7 +394,7 @@ namespace MPX
     Gdk::RGBA
     color_adjust_brightness(
           const Gdk::RGBA& base
-        , double            brightness
+        , double           brightness
     )
     {
         double h, s, b ;
@@ -497,95 +591,6 @@ namespace MPX
         return pixbuf ;
     }
 
-namespace
-{
-struct HSL
-{
-    float h, s, l;
-};
-
-HSL make_hsl (float h, float s, float l)
-{
-    HSL hsl = { h, s, l };
-
-    return hsl;
-}
-
-HSL hsl_from_rgb (uint8_t r8, uint8_t g8, uint8_t b8)
-{
-    float r = r8 / 255.0;
-    float g = g8 / 255.0;
-    float b = b8 / 255.0;
-
-    float max = std::max(r, std::max (g, b));
-    float min = std::min(r, std::min (g, b));
-
-    float h;
-    float s;
-    float l = (max + min) / 2;
-
-    if (max == min) {
-        h = s = 0; // achromatic
-    } else {
-        float d = max - min;
-
-        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-
-        if (max == r) {
-            h = (g - b) / d + (g < b ? 6 : 0);
-        } else if (max == g) {
-            h = (b - r) / d + 2;
-        } else if (max == b) {
-            h = (r - g) / d + 4;
-        }
-
-        h /= 6;
-    }
-
-    return make_hsl (h, s, l);
-}
-
-HSL get_dominant_color (Glib::RefPtr<Gdk::Pixbuf> const& image)
-{
-    int bytes_per_pixel = image->get_has_alpha () ? 4 : 3;
-
-    int width  = image->get_width ();
-    int height = image->get_height ();
-    int row_stride = image->get_rowstride ();
-
-    int count[64][64];
-
-    int* start = &count[0][0];
-    int* end   = start + 64*64;
-
-    std::fill (start, end, 0);
-
-    uint8_t const *pixel_row = image->get_pixels ();
-
-    for (int y = 0; y < height; y++) {
-        uint8_t const* p = pixel_row;
-
-        for (int x = 0; x < width; x++) {
-            HSL hsl = hsl_from_rgb (p[0], p[1], p[2]);
-
-            count[int (hsl.h * 63)][int (hsl.s * 63)]++;
-
-            p += bytes_per_pixel;
-        }
-
-        pixel_row += row_stride;
-    }
-
-    int* entry = std::max_element (start, end);
-
-    std::ptrdiff_t index = entry - start;
-
-    int h = index >> 6;
-    int s = index & 0x3f;
-
-    return make_hsl (h / 63.0, s / 63.0, 0.5);
-}
-}
 
     Gdk::RGBA
     get_dominant_color_for_pixbuf(
