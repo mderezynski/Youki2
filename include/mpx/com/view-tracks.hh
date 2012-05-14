@@ -43,22 +43,6 @@ namespace
     typedef Glib::RefPtr<Gtk::Adjustment>		    RPAdj ;
     typedef Glib::Property<RPAdj>			    PropAdjustment ;
     typedef Glib::Property<Gtk::ScrollablePolicy>	    PropScrollPolicy ;
-
-    template <typename T>
-    struct BSPAdaptor
-    {
-	boost::shared_ptr<T> sp_ ;
-
-	BSPAdaptor( boost::shared_ptr<T> sp )    
-	: sp_(sp)
-	{
-	}
-
-	operator const T& () const
-	{
-	    return boost::ref(*(sp_.get())) ;
-	}
-    } ;
 }
 
 namespace MPX
@@ -792,9 +776,8 @@ namespace Tracks
                 {
                     if( m_id_currently_playing )
                     {
-			BSPAdaptor<RowRowMapping_t> adp( m_mapping ) ;
 			guint d = 0 ;
-			for( auto& i : (const RowRowMapping_t&)(adp) ) 
+			for( auto& i : *m_mapping ) 
 			{
 			    if( m_id_currently_playing.get() == (*i)->ID ) 
 			    {
@@ -815,9 +798,8 @@ namespace Tracks
                 {
                     if( id )
                     {
-			BSPAdaptor<RowRowMapping_t> adp( m_mapping ) ;
 			guint d = 0 ;
-			for( auto& i : (const RowRowMapping_t&)(adp) ) 
+			for( auto& i : *m_mapping ) 
 			{
 			    if( id.get() == (*i)->ID )
 			    {
@@ -1044,9 +1026,7 @@ namespace Tracks
                         TCVector_t& constraints_albums = *(m_constraints_albums.get()) ;
                         IdVector_t& constraints_artist = *(m_constraints_artist.get()) ;
 
-			BSPAdaptor<ModelIteratorSet_t> adp( output ) ;
-
-                        for( auto& i : (const ModelIteratorSet_t&)(adp))
+                        for( auto& i : *output ) 
                         {
                             const MPX::Track_sp& t = (*i)->TrackSp ; 
                             const MPX::Track& track = *(t.get()) ;
@@ -1161,9 +1141,7 @@ namespace Tracks
                         new_mapping->reserve( m_mapping_unfiltered->size() ) ;
                         new_mapping_unfiltered->reserve( m_mapping_unfiltered->size() ) ;
 	
-			BSPAdaptor<RowRowMapping_t> adp( m_mapping_unfiltered ) ;
-
-                        for( auto& i : (const RowRowMapping_t&)(adp))
+                        for( auto& i : *m_mapping_unfiltered ) 
                         {
                             const MPX::Track_sp& t = (*i)->TrackSp ; 
                             const MPX::Track& track = *(t.get()) ;
@@ -1218,9 +1196,7 @@ namespace Tracks
 
                             ModelIteratorSet_sp model_iterator_set ( new ModelIteratorSet_t ) ;
 
-			    BSPAdaptor<RowRowMapping_t> adp( m_mapping_unfiltered ) ;
-
-                            for( auto& i : (const RowRowMapping_t&)(adp))
+                            for( auto& i : *m_mapping_unfiltered ) 
                             {
                                 const NewRow_sp& r = *i ;
 
