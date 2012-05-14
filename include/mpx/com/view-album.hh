@@ -1027,12 +1027,12 @@ namespace Albums
 
 			    if( selected )
 			    {
-				Util::render_text_shadow( layout[L3], sx, r.y+row_height-height-28, cairo) ; 
+				Util::render_text_shadow( layout[L3], sx, r.y+row_height-height-27, cairo) ; 
 			    }
 
 			    cairo->move_to(
 				  sx
-				, r.y + row_height - height - 28
+				, r.y + row_height - height - 27
 			    ) ;
 
 			    Gdk::Cairo::set_source_rgba(cairo, /*c2*/Util::make_rgba(c1, 1.)) ;

@@ -1225,9 +1225,9 @@ namespace Tracks
                                 const NewRow_sp& r = *i ;
 
                                 vec[0] = Glib::ustring(r->Artist).lowercase() ;
-                                vec[0] = Glib::ustring(r->Album).lowercase() ;
-                                vec[0] = Glib::ustring(r->Artist).lowercase() ;
-                                vec[0] = Glib::ustring(r->AlbumArtist).lowercase() ;
+                                vec[1] = Glib::ustring(r->Album).lowercase() ;
+                                vec[2] = Glib::ustring(r->Artist).lowercase() ;
+                                vec[3] = Glib::ustring(r->AlbumArtist).lowercase() ;
 
                                 if( Util::match_vec( f, vec ))
                                 {
@@ -1504,18 +1504,18 @@ namespace Tracks
 		    layout->set_ellipsize( Pango::ELLIPSIZE_END ) ;
 		    layout->set_width((m_width - 12) * PANGO_SCALE ) ;
 		    layout->set_alignment( m_alignment ) ;
-		    Gdk::Cairo::set_source_rgba( cairo, color ) ;
 
 		    if( selected )
 		    {
-			Util::render_text_shadow( layout, xpos+6,ypos+3, cairo, 2, 0.55 ) ;
+			Util::render_text_shadow( layout, xpos+6,ypos+2, cairo, 2, 0.55 ) ;
 		    }
 
 		    cairo->move_to(
 			    xpos + 6
-			  , ypos + 3
+			  , ypos + 2
 		    ) ;
 
+		    Gdk::Cairo::set_source_rgba( cairo, color ) ;
 		    layout->show_in_cairo_context( cairo ) ;
 		}
         };
@@ -2518,8 +2518,11 @@ namespace Tracks
                     , const Glib::RefPtr<Gtk::Tooltip>&     tooltip
                 )
                 {
-                    guint row = (double( tooltip_y ) - m_height__headers) / double(m_height__row) ;
-                    MPX::Track_sp t = m_model->row(row)->TrackSp ;
+                    guint d = (double( tooltip_y ) - m_height__headers) / double(m_height__row) ;
+
+		    if(!ModelExtents(d+get_upper_row())) return false ;
+
+                    MPX::Track_sp t = m_model->row(d+get_upper_row())->TrackSp ;
                     const MPX::Track& track = *(t.get()) ;
 		    tooltip->set_text( boost::get<std::string>(track[ATTRIBUTE_TITLE].get())) ;
                     return true ;
@@ -2722,7 +2725,7 @@ namespace Tracks
                 {
                     if( m_height__current_viewport && m_height__row && m_model )
                     {
-                        Limiter<guint> d ( 
+                        Limiter<guint> d_lim ( 
                               Limiter<guint>::ABS_ABS
                             , 0
                             , m_model->m_mapping->size() - get_page_size()
@@ -2732,10 +2735,10 @@ namespace Tracks
                         if( m_model->m_mapping->size() < get_page_size()) 
                             vadj_value_set( 0 ) ; 
                         else
-                        if( d > (m_model->m_mapping->size() - get_page_size()) )
+                        if( d_lim > (m_model->m_mapping->size() - get_page_size()) )
                             vadj_value_set( m_model->m_mapping->size() - get_page_size() ) ; 
                         else
-                            vadj_value_set( d ) ; 
+                            vadj_value_set( d_lim ) ; 
                     }
                 }
 
