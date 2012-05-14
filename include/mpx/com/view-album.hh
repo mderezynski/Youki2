@@ -579,8 +579,6 @@ namespace Albums
                     typedef Model_t::iterator Iter ;
                     Iter i = m_realmodel->begin() ;
 
-                    new_mapping.push_back( i++ ) ;
-
 		    if( (!m_constraints_albums || m_constraints_albums->empty()) && (!m_constraints_artist || m_constraints_artist->empty()))
 		    {
 /*
@@ -704,7 +702,7 @@ namespace Albums
                     m_image_disc = Util::cairo_image_surface_from_pixbuf(
 					    Gdk::Pixbuf::create_from_file(
 						    Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "disc.png" )
-		    )->scale_simple(64, 64, Gdk::INTERP_BILINEAR)) ;
+		    )->scale_simple(90, 90, Gdk::INTERP_BILINEAR)) ;
 
                     m_image_new  = Util::cairo_image_surface_from_pixbuf(
 					    Gdk::Pixbuf::create_from_file(
@@ -747,13 +745,12 @@ namespace Albums
 		Cairo::RefPtr<Cairo::ImageSurface>
 		render_icon(
                       const Album_sp                        album
-		    , Gtk::Widget&			    widget
-		    , RTViewMode			    rt_viewmode
+		    , guint				    width 
 		)
 		{
                     using boost::get;
 
-		    Cairo::RefPtr<Cairo::ImageSurface> s = Cairo::ImageSurface::create( Cairo::FORMAT_ARGB32, 68, 68 ) ;
+		    Cairo::RefPtr<Cairo::ImageSurface> s = Cairo::ImageSurface::create( Cairo::FORMAT_ARGB32, 94, 94 ) ;
 		    Cairo::RefPtr<Cairo::Context> cairo = Cairo::Context::create( s ) ;
 
 		    cairo->set_operator( Cairo::OPERATOR_CLEAR ) ;
@@ -771,8 +768,8 @@ namespace Albums
 			  cairo
 			, 2
 			, 2
-			, 64
-			, 64
+			, 90
+			, 90
 			, rounding 
 		    ) ;
 		    cairo->fill() ;
@@ -852,12 +849,11 @@ namespace Albums
 
                     GdkRectangle r ;
 
-                    r.y = ypos + 4 ;
+                    r.y = ypos + 10 ;
 		    guint xpos = 0 ;
 
-                    if( row > 0 )
                     {
-               		r.x = 5 ;
+               		r.x = 0 ;
 
 			time_t now = time(NULL) ;
 
@@ -865,9 +861,8 @@ namespace Albums
 
 			if( PastDay( album->insert_date ))
 			{
-			    int x = m_width - m_image_new->get_width() - 4 ;
-			    int y = r.y + row_height - 22 ;
-
+			    int x = 4 ; 
+			    int y = r.y + 2 ; 
 			    cairo->set_source( m_image_new, x, y ) ; 
 			    cairo->rectangle( x, y, m_image_new->get_width(), m_image_new->get_height() ) ; 
 			    cairo->fill() ;
@@ -877,16 +872,16 @@ namespace Albums
 			{
 			    if( !album->surface_cache ) 
 			    {
-				album->surface_cache = render_icon( album, widget, m_display_additional_info ) ;
+				album->surface_cache = render_icon( album, m_width ) ;
 			    }
 
-			    if( album->coverart && selected )
+			    if( album->coverart /*&& selected*/ )
 			    {
-				render_rect_shadow( r.x+3, r.y+3, 64, 64, 4., cairo ) ;
+				render_rect_shadow( ((m_width-90)/2)+2, r.y+4, 90, 90, 4., cairo ) ;
 			    }
 
-			    cairo->set_source( album->surface_cache, r.x, r.y ) ;
-			    cairo->rectangle( r.x, r.y , 68, 68 ) ;
+			    cairo->set_source( album->surface_cache, ((m_width-94)/2), r.y ) ;
+			    cairo->rectangle( ((m_width-94)/2), r.y , 94, 94 ) ;
 			    cairo->fill() ;
 
 			    if( album->coverart )
@@ -894,10 +889,10 @@ namespace Albums
 				Gdk::Cairo::set_source_rgba(cairo, c2) ;
 				RoundedRectangle(
 				      cairo
-				    , r.x+2
+				    , (m_width-90)/2. 
 				    , r.y+2
-				    , 64
-				    , 64
+				    , 90
+				    , 90
 				    , rounding 
 				) ;
 				cairo->set_line_width( 1.5 ) ; 
@@ -934,13 +929,13 @@ namespace Albums
                     font_desc[L1] = widget.get_style_context()->get_font() ;
                     font_desc[L1].set_size( text_size_pt[L1] * PANGO_SCALE ) ;
 
-                    font_desc[L1].set_weight( Pango::WEIGHT_BOLD ) ;
+                    //font_desc[L1].set_weight( Pango::WEIGHT_BOLD ) ;
 		    font_desc[L1].set_stretch( Pango::STRETCH_EXTRA_CONDENSED ) ;
 
 		    font_desc[L2] = widget.get_style_context()->get_font() ;
 		    font_desc[L2].set_size( text_size_pt[L2] * PANGO_SCALE ) ;
 
-		    font_desc[L2].set_weight( Pango::WEIGHT_BOLD ) ;
+		    //font_desc[L2].set_weight( Pango::WEIGHT_BOLD ) ;
 		    font_desc[L2].set_stretch( Pango::STRETCH_EXTRA_CONDENSED ) ;
 
 		    font_desc[L3] = widget.get_style_context()->get_font() ;
@@ -955,26 +950,27 @@ namespace Albums
 		    layout[L3]->set_font_description( font_desc[L3] ) ;
 		    layout[L3]->set_ellipsize( Pango::ELLIPSIZE_END ) ;
 
-		    layout[L1]->set_width((m_width-90) * PANGO_SCALE ) ;
-		    layout[L2]->set_width((m_width-90) * PANGO_SCALE ) ;
-		    layout[L3]->set_width((m_width-90) * PANGO_SCALE ) ;
+		    layout[L1]->set_width((m_width-8) * PANGO_SCALE ) ;
+		    layout[L2]->set_width((m_width-8) * PANGO_SCALE ) ;
+		    layout[L3]->set_width((m_width-8) * PANGO_SCALE ) ;
 
-                    if( row > 0 )
                     {
-			xpos += 72 ; 
-			int yoff = 1 ; 
+			int yoff = 98 ; 
+			guint xpos = 0 ;
 
 			/* ARTIST */
 			layout[L1]->set_text( album->album_artist ) ;
 			layout[L1]->get_pixel_size( width, height ) ;
 
+			xpos = (m_width - width) / 2. ;
+
 			if( selected )
 			{
-			    Util::render_text_shadow( layout[L1], xpos+8, r.y+yoff, cairo ) ;
+			    Util::render_text_shadow( layout[L1], xpos, r.y+yoff, cairo ) ;
 			}
 
 			cairo->move_to(
-			      xpos + 8
+			      xpos
 			    , r.y + yoff
 			) ;
 
@@ -987,22 +983,23 @@ namespace Albums
 			layout[L2]->set_text( album->album )  ;
 			layout[L2]->get_pixel_size( width, height ) ;
 
+			xpos = (m_width - width) / 2. ;
+
 			if( selected )
 			{
-			    Util::render_text_shadow( layout[L2], xpos+8, r.y+yoff, cairo ) ;
+			    Util::render_text_shadow( layout[L2], xpos, r.y+yoff, cairo ) ;
 			}
 
 			cairo->move_to(
-			      xpos+8 
+			      xpos 
 			    , r.y + yoff
 			) ;
 
 			Gdk::Cairo::set_source_rgba(cairo, color) ;
 			pango_cairo_show_layout(cairo->cobj(), layout[L2]->gobj()) ;
 
+#if 0
 			/* YEAR + LABEL */
-			guint sx = xpos + 8 ;
-
 			std::string year_label ;
 
 			if( !album->year.empty())
@@ -1021,36 +1018,39 @@ namespace Albums
 			    layout[L3]->set_font_description( font_desc[L3] ) ;
 
 			    layout[L3]->set_markup( year_label ) ;
-			    layout[L3]->set_width((m_width-sx) * PANGO_SCALE ) ;
+			    layout[L3]->set_width(m_width * PANGO_SCALE ) ;
 			    layout[L3]->set_ellipsize( Pango::ELLIPSIZE_END ) ;
 
 			    layout[L3]->get_pixel_size( width, height ) ;
 
+			    guint sx = ((m_width-94) / 2.) - width - 4 ;
+
 			    if( selected )
 			    {
-				Util::render_text_shadow( layout[L3], sx, r.y+row_height-height-24, cairo) ; 
+				Util::render_text_shadow( layout[L3], sx, r.y, cairo) ; 
 			    }
 
 			    cairo->move_to(
 				  sx
-				, r.y + row_height - height - 24
+				, r.y
 			    ) ;
 
-			    Gdk::Cairo::set_source_rgba(cairo, /*c2*/Util::make_rgba(c1, 1.)) ;
+			    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(c1, 1.)) ;
 			    pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj()) ;
 			}
+#endif
 
 			/* Total Time, no. of Discs, no. of Tracks */ 
 			{
 			    font_desc[L3].set_weight( Pango::WEIGHT_NORMAL ) ;
 			    layout[L3]->set_font_description( font_desc[L3] ) ;
 
-			    layout[L3]->set_width((m_width-108)*PANGO_SCALE) ; 
+			    layout[L3]->set_width(m_width*PANGO_SCALE) ; 
 			    layout[L3]->set_ellipsize( Pango::ELLIPSIZE_END ) ;
 
 			    guint tm = 0 ;
 
-			    std::string out, tmp ;
+			    std::string s_time, s_tracks, s_discs, s_rt ;
 
 			    if( album_constraints )
 			    {
@@ -1064,15 +1064,19 @@ namespace Albums
 
 				guint totaltracks = ((*album_constraints)[album->album_id.get()]).Count ;
 
+/*
 				if( tm != album->total_time )
-				    tmp = ((boost::format("<b> %02u:%02u </b>of<b> %02u:%02u </b>") % min % sec % min_total % sec_total).str()) ;
+				    s_time = ((boost::format("<b>%02u:%02u</b>of<b>%02u:%02u</b>") % min % sec % min_total % sec_total).str()) ;
 				else
-				    tmp = ((boost::format("<b> %02u:%02u </b>") % min % sec).str()) ;
+*/
+				    s_time = ((boost::format("<b>%02u:%02u</b>") % min % sec).str()) ;
 
+/*
 				if( totaltracks != album->track_count )
 				    out = ((boost::format("<b>%u </b>%s %s<b> %u </b>::") % totaltracks % ((totaltracks>1) ? "Tracks" : "Track") % _("of") % album->track_count).str()) ;
 				else
-				    out = ((boost::format("<b>%u </b>%s<b> </b>::") % totaltracks % ((totaltracks>1) ? "Tracks" : "Track")).str()) ;
+*/
+				    s_tracks = ((boost::format("<b>%u</b> %s") % totaltracks % ((totaltracks>1) ? "Tracks" : "Track")).str()) ;
 			    }
 			    else
 			    {
@@ -1083,75 +1087,108 @@ namespace Albums
 
 				guint totaltracks = album->track_count ;
 
-				tmp = ((boost::format("<b> %02u:%02u </b>") % min % sec).str()) ;
-				out = ((boost::format("<b>%u </b>%s<b> </b>::") % totaltracks % ((totaltracks>1) ? "Tracks" : "Track")).str()) ;
+				s_time = ((boost::format("<b>%02u:%02u</b>") % min % sec).str()) ;
+				s_tracks = ((boost::format("<b>%u</b> %s") % totaltracks % ((totaltracks>1) ? "Tracks" : "Track")).str()) ;
 			    }
 
 			    if( album->discs_count > 1 && !album_constraints )
 			    { 
-				out += ((boost::format("<b> %u </b>Discs<b> </b>::") % album->discs_count).str()) ;
+				s_discs = ((boost::format("<b>%u</b> Discs") % album->discs_count).str()) ;
 			    }
-
-			    out += tmp ;
 
 	    		    ReleaseType rt = get_rt( album->type ) ;
 
 			    if( rt != RT_OTHER && rt != RT_ALBUM )
 			    {
-				out += (boost::format("::<b> %s</b>") % rt_string[rt]).str() ;
+				s_rt = (boost::format("<b>%s</b>") % rt_string[rt]).str() ;
 			    }
 
-			    layout[L3]->set_markup( out ) ;
+			    guint sx = 0 ;
+			    guint sy = r.y + 2 ;
+
+			    /* s_time */
+			    layout[L3]->set_markup( s_time ) ;
 			    layout[L3]->get_pixel_size( width, height ) ;
+
+			    sx = (m_width - width - 10) ;
 
 			    if( selected )
 			    {
-				Util::render_text_shadow( layout[L3], xpos+8, r.y+row_height-height-(m_show_release_label?9:24), cairo) ; 
+				Util::render_text_shadow( layout[L3], sx, sy, cairo ) ; 
 			    }
 
 			    cairo->move_to(
-				  xpos+8 
-				, r.y+row_height-height-(m_show_release_label?9:24)
+				  sx 
+				, sy 
 			    ) ;
-
-			    Gdk::Cairo::set_source_rgba(cairo, /*c2*/Util::make_rgba(c1,1.)) ;
+			    Gdk::Cairo::set_source_rgba(cairo, c1) ;
 			    pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj()) ;
+			    sy += height + 2 ;
+
+			    /* s_tracks */
+			    layout[L3]->set_markup( s_tracks ) ;
+			    layout[L3]->get_pixel_size( width, height ) ;
+
+			    sx = (m_width - width - 10) ;
+
+			    if( selected )
+			    {
+				Util::render_text_shadow( layout[L3], sx, sy, cairo ) ; 
+			    }
+
+			    cairo->move_to(
+				  sx 
+				, sy 
+			    ) ;
+			    Gdk::Cairo::set_source_rgba(cairo, c1) ;
+			    pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj()) ;
+			    sy += height + 2 ;
+
+			    /* s_discs */
+			    if( !s_discs.empty() )
+			    {
+				layout[L3]->set_markup( s_discs ) ;
+				layout[L3]->get_pixel_size( width, height ) ;
+
+				sx = (m_width - width - 10) ;
+
+				if( selected )
+				{
+				    Util::render_text_shadow( layout[L3], sx, sy, cairo ) ; 
+				}
+
+				cairo->move_to(
+				      sx 
+				    , sy 
+				) ;
+				Gdk::Cairo::set_source_rgba(cairo, c1) ;
+				pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj()) ;
+				sy += height + 2 ;
+			    }
+
+			    /* s_rt */
+			    if( !s_rt.empty() )
+			    {
+				layout[L3]->set_markup( s_rt ) ;
+				layout[L3]->get_pixel_size( width, height ) ;
+
+				sx = (m_width - width - 10) ;
+
+				if( selected )
+				{
+				    Util::render_text_shadow( layout[L3], sx, sy, cairo ) ; 
+				}
+
+				cairo->move_to(
+				      sx 
+				    , sy 
+				) ;
+				Gdk::Cairo::set_source_rgba(cairo, c1) ;
+				pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj()) ;
+				sy += height + 2 ;
+			    }
 			}
 		    }
-		    else /* ALBUM COUNT ONLY */
-		    {
-			font_desc[L1] = widget.get_style_context()->get_font() ;
-			font_desc[L1].set_size( text_size_pt[L1] * PANGO_SCALE * 1.5 ) ;
-			font_desc[L1].set_weight( Pango::WEIGHT_BOLD ) ;
-
-			layout[L1]->set_font_description( font_desc[L1] ) ;
-			layout[L1]->set_ellipsize( Pango::ELLIPSIZE_END ) ;
-			layout[L1]->set_width( m_width * PANGO_SCALE ) ;
-
-			if( model_mapping_size != model_size )
-			{
-			    layout[L1]->set_text( (boost::format(("%u %s")) % model_mapping_size % ( (model_mapping_size > 1) ? ("Albums") : ("Album"))).str()) ;
-			}
-			else
-			{
-			    layout[L1]->set_text( _("All Albums")) ;
-			}
-
-			layout[L1]->get_pixel_size( width, height ) ;
-
-			if( selected )
-			{
-			    Util::render_text_shadow( layout[L1], xpos+(m_width-width)/2, r.y+(row_height-height)/2, cairo ) ;
-			}
-
-			cairo->move_to(
-			      xpos+(m_width-width)/2
-			    , r.y+(row_height-height)/2
-			) ;
-
-			Gdk::Cairo::set_source_rgba(cairo, c2) ;
-			pango_cairo_show_layout(cairo->cobj(), layout[L1]->gobj()) ;
-                    }
                 }
         };
 
@@ -1226,7 +1263,7 @@ namespace Albums
                 initialize_metrics ()
                 {
 		    ViewMetrics.set_base__row_height(
-			  76
+			  147
 		    ) ;
                 }
 
@@ -1528,6 +1565,11 @@ namespace Albums
 			    vadj_value_set( std::min<int>(vadj_upper(), ViewMetrics.ViewPortPx.upper() + ViewMetrics.RowHeight + (ViewMetrics.RowHeight - ymod) - ViewMetrics.Excess )) ;
 			}
 		    }
+		    else
+		    if( m_selection && (get<Selection::INDEX>(m_selection.get()) == d))
+		    {
+			clear_selection() ;
+		    }
 
 		    grab_focus() ;
 
@@ -1569,8 +1611,8 @@ namespace Albums
 		{
 		    if( !m_selection || (!ViewMetrics.ViewPort(get<Selection::INDEX>(m_selection.get()))))
 		    {
-			select_index( ViewMetrics.ViewPort.upper()) ;
-			scroll_to_index( ViewMetrics.ViewPort.upper()) ;
+			//select_index( ViewMetrics.ViewPort.upper()) ;
+			//scroll_to_index( ViewMetrics.ViewPort.upper()) ;
 		    }
     
 		    return true ;
@@ -1617,7 +1659,6 @@ namespace Albums
                 {
                     const ThemeColor& c_text		= m_theme->get_color( THEME_COLOR_TEXT ) ;
                     const ThemeColor& c_text_sel	= m_theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
-		    const ThemeColor& c_treelines	= m_theme->get_color( THEME_COLOR_TREELINES ) ;
                     const ThemeColor& c_base_rules_hint = m_theme->get_color( THEME_COLOR_BASE_ALTERNATE ) ;
 
 		    const std::vector<double> dashes { 1., 2. } ; 
@@ -1717,40 +1758,6 @@ namespace Albums
 			++i ;
 		    }
 
-		    /* Treelines */
-
-		    guint rend_offset = 0 ;
-
-		    if( d == 0 )
-		    {
-			rend_offset = ViewMetrics.RowHeight - ViewMetrics.ViewPortPx.upper() ;	
-		    }
-
-		    cairo->set_operator( Cairo::OPERATOR_OVER ) ; 
-		    cairo->set_line_width(
-			  1. 
-		    ) ;
-		    cairo->set_dash(
-			  dashes
-			, 0
-		    ) ;
-		    cairo->set_source_rgba(
-			  c_treelines.get_red()
-			, c_treelines.get_green()
-			, c_treelines.get_blue()
-			, 0.8 
-		    ) ;
-
-		    cairo->move_to(
-			  76
-			, rend_offset 
-		    ) ; 
-		    cairo->line_to(
-			  76
-			, ViewMetrics.ViewPortPx.size() 
-		    ) ;
-		    cairo->stroke() ;
-
 		    if( !is_sensitive() )
 		    {
 			cairo->rectangle(0,0,get_allocated_width(),get_allocated_height()) ;
@@ -1812,7 +1819,7 @@ namespace Albums
 		    else
 		    {
 			scroll_to_index( d ) ;
-			select_index( d, true ) ;
+			//select_index( d, true ) ;
 		    }
                 }
 
@@ -2277,6 +2284,7 @@ namespace Albums
                 )
                 {
                     m_selection.reset() ;
+		    m_SIGNAL_selection_changed.emit() ;
                     queue_draw() ;
                 }
 

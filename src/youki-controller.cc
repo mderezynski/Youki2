@@ -744,8 +744,8 @@ namespace MPX
         )) ;
 
         m_HBox_Main->add_percentage( 0.15 ) ;
-        m_HBox_Main->add_percentage( 0.25 ) ;
-        m_HBox_Main->add_percentage( 0.60 ) ;
+        m_HBox_Main->add_percentage( 0.20 ) ;
+        m_HBox_Main->add_percentage( 0.65 ) ;
 
         m_HBox_Main->pack_start( *m_ScrolledWinArtist, true, true, 0 ) ;
         m_HBox_Main->pack_start( *m_ScrolledWinAlbums, true, true, 0 ) ;
@@ -879,9 +879,6 @@ namespace MPX
     void
     YoukiController::preload__albums()
     {
-	MPX::View::Albums::Album_sp dummy_album ( new MPX::View::Albums::Album ) ;
-	private_->FilterModelAlbums->append_album( dummy_album ) ;
-
 	SQL::RowV v ;
 
 	try{
@@ -1142,7 +1139,7 @@ namespace MPX
         m_covers->fetch(
               get<std::string>(r["mb_album_id"])
             , cover_pb
-            , 64
+            , 90
         ) ;
 
         if( cover_pb ) 
@@ -1905,8 +1902,6 @@ namespace MPX
 	private_->FilterModelAlbums->set_constraints_artist( private_->FilterModelTracks->m_constraints_artist ) ;
         private_->FilterModelAlbums->regen_mapping() ;
 
-	m_ListViewAlbums->select_index( 0, true ) ;
-	
 	//history_save() ;
     }
 
@@ -2111,7 +2106,7 @@ namespace MPX
 
         private_->FilterModelAlbums->regen_mapping() ;
         m_ListViewAlbums->scroll_to_index(0) ;
-        m_ListViewAlbums->select_index(0) ;
+        //m_ListViewAlbums->select_index(0) ;
 
 	private_->FilterModelTracks->regen_mapping() ;
 

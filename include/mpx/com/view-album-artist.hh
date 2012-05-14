@@ -472,12 +472,12 @@ namespace Artist
 
 		    if( selected )
 		    {
-			Util::render_text_shadow( l, xpos+2, ypos+2, cairo ) ;
+			Util::render_text_shadow( l, xpos+3, ypos+2, cairo ) ;
 		    }
 
 	            Gdk::Cairo::set_source_rgba(cairo, color);
                     cairo->move_to(
-                          xpos + 2
+                          xpos + 3
                         , ypos + 2
                     ) ;
                     pango_cairo_show_layout(
