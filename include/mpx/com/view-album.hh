@@ -902,8 +902,8 @@ namespace Albums
 			else
 			{
 			    Glib::RefPtr<Gdk::Pixbuf> pb = m_image_album_loading_iter->get_pixbuf() ;
-			    Gdk::Cairo::set_source_pixbuf( cairo, pb, r.x+24, r.y+24 ) ;
-			    cairo->rectangle( r.x+24, r.y+24, 20, 20 ) ;
+			    Gdk::Cairo::set_source_pixbuf( cairo, pb, (m_width-pb->get_width())/2., r.y+(row_height-pb->get_height())/2.) ;
+			    cairo->rectangle((m_width-pb->get_width())/2., r.y+(row_height-pb->get_height())/2., 20, 20) ;
 			    cairo->fill() ;
 			}
                     }
