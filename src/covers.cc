@@ -99,7 +99,7 @@ namespace MPX
         m_stores_all.push_back(StorePtr(new LocalCovers()));
         m_stores_all.push_back(StorePtr(new MusicBrainzCovers()));
 
-	for( int n = 0 ; n < m_stores_all.size(); ++n )
+	for( guint n = 0 ; n < m_stores_all.size(); ++n )
 	{
 	    m_stores_all[n]->signal_save_cover().connect( sigc::mem_fun( *this, &Covers::cache_artwork )) ;
 	}

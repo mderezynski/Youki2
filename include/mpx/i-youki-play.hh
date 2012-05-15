@@ -105,9 +105,6 @@ namespace MPX
                         virtual ProxyOf<PropString>::ReadWrite
                         property_stream () = 0 ;
 
-                        virtual ProxyOf<PropString>::ReadWrite
-                        property_stream_type() = 0 ;
-
                         virtual ProxyOf<PropInt>::ReadWrite
                         property_volume() = 0 ;
 

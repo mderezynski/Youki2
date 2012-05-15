@@ -60,7 +60,7 @@ namespace
         , RT_OTHER
     };
 
-    const char* rt_string[] = { "Album", "Single", "Compilation", "EP", "Live", "Remixes", "Soundtrack", "?" } ;
+    const char* rt_string[] = { "Album", "Single", "Compil.", "EP", "Live", "Remix", "OST", "?" } ;
 
     ReleaseType
     get_rt(const std::string& type)
@@ -849,24 +849,10 @@ namespace Albums
 
                     GdkRectangle r ;
 
-                    r.y = ypos + 10 ;
-		    guint xpos = 0 ;
+                    r.y = ypos + 7 ;
 
                     {
                		r.x = 0 ;
-
-			time_t now = time(NULL) ;
-
-			Range<time_t> PastDay (now-(24*60*60), now) ;
-
-			if( PastDay( album->insert_date ))
-			{
-			    int x = 4 ; 
-			    int y = r.y + 2 ; 
-			    cairo->set_source( m_image_new, x, y ) ; 
-			    cairo->rectangle( x, y, m_image_new->get_width(), m_image_new->get_height() ) ; 
-			    cairo->fill() ;
-			}
 
 			if( !album->caching )
 			{
@@ -897,6 +883,17 @@ namespace Albums
 				) ;
 				cairo->set_line_width( 1.5 ) ; 
 				cairo->stroke() ;
+			    }
+
+			    time_t now = time(NULL) ;
+			    Range<time_t> PastDay (now-(24*60*60), now) ;
+			    if( PastDay( album->insert_date ))
+			    {
+				int x = ((m_width-94)/2.) + 48 ; 
+				int y = r.y ; 
+				cairo->set_source( m_image_new, x, y ) ; 
+				cairo->rectangle( x, y, m_image_new->get_width(), m_image_new->get_height() ) ; 
+				cairo->fill() ;
 			    }
 			}
 			else
@@ -1059,8 +1056,8 @@ namespace Albums
 				guint min = tm / 60 ;
 				guint sec = tm % 60 ;
 
-				guint min_total = album->total_time / 60 ;
-				guint sec_total = album->total_time % 60 ;
+				//guint min_total = album->total_time / 60 ;
+				//guint sec_total = album->total_time % 60 ;
 
 				guint totaltracks = ((*album_constraints)[album->album_id.get()]).Count ;
 
@@ -1100,14 +1097,14 @@ namespace Albums
 
 			    if( rt != RT_OTHER && rt != RT_ALBUM )
 			    {
-				s_rt = (boost::format("<b>%s</b>") % rt_string[rt]).str() ;
+				s_rt = rt_string[rt] ;
 			    }
 
 			    guint sx = 0 ;
 			    guint sy = r.y + 2 ;
 
-			    /* s_time */
-			    layout[L3]->set_markup( s_time ) ;
+			    /* s_tracks */
+			    layout[L3]->set_markup( s_tracks ) ;
 			    layout[L3]->get_pixel_size( width, height ) ;
 
 			    sx = (m_width - width - 10) ;
@@ -1125,8 +1122,8 @@ namespace Albums
 			    pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj()) ;
 			    sy += height + 2 ;
 
-			    /* s_tracks */
-			    layout[L3]->set_markup( s_tracks ) ;
+			    /* s_time */
+			    layout[L3]->set_markup( s_time ) ;
 			    layout[L3]->get_pixel_size( width, height ) ;
 
 			    sx = (m_width - width - 10) ;
@@ -1263,7 +1260,7 @@ namespace Albums
                 initialize_metrics ()
                 {
 		    ViewMetrics.set_base__row_height(
-			  147
+			  144
 		    ) ;
                 }
 
@@ -1533,11 +1530,13 @@ namespace Albums
 
 		    cancel_search() ;
 
+/*
 		    if( event->button == 1 && event->type == GDK_2BUTTON_PRESS ) 
                     {
 			    m_SIGNAL_start_playback.emit() ;
 			    return true ;
 		    }
+*/
 
 		    double ymod = fmod( vadj_value(), ViewMetrics.RowHeight ) ;
 
@@ -1555,20 +1554,26 @@ namespace Albums
 			    vadj_value_set( std::max<int>(0, ViewMetrics.ViewPortPx.upper() - ymod + 1)) ;
 			}
 			else
-			if( !ymod && d == ViewMetrics.ViewPort.lower())
+			if( (!ymod && d == ViewMetrics.ViewPort.lower())||(ymod && d > ViewMetrics.ViewPort.lower()))
+
 			{
 			    vadj_value_set( std::min<int>(vadj_upper(), ViewMetrics.ViewPortPx.upper() + (ViewMetrics.RowHeight - ymod) - ViewMetrics.Excess )) ;
 			}
+/*
 			else
 			if( d > ViewMetrics.ViewPort.lower())
 			{
 			    vadj_value_set( std::min<int>(vadj_upper(), ViewMetrics.ViewPortPx.upper() + ViewMetrics.RowHeight + (ViewMetrics.RowHeight - ymod) - ViewMetrics.Excess )) ;
 			}
+*/
 		    }
 		    else
-		    if( m_selection && (get<Selection::INDEX>(m_selection.get()) == d))
+		    if( event->button == 1 && m_selection && (get<Selection::INDEX>(m_selection.get()) == d))
 		    {
-			clear_selection() ;
+			if( has_focus() )
+			{
+			    clear_selection() ;
+			}
 		    }
 
 		    grab_focus() ;
@@ -1657,9 +1662,8 @@ namespace Albums
 		    const Cairo::RefPtr<Cairo::Context>& cairo 
 		)
                 {
-                    const ThemeColor& c_text		= m_theme->get_color( THEME_COLOR_TEXT ) ;
-                    const ThemeColor& c_text_sel	= m_theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
-                    const ThemeColor& c_base_rules_hint = m_theme->get_color( THEME_COLOR_BASE_ALTERNATE ) ;
+                    const ThemeColor& c_text     = m_theme->get_color( THEME_COLOR_TEXT ) ;
+                    const ThemeColor& c_text_sel = m_theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
 
 		    const std::vector<double> dashes { 1., 2. } ; 
 
@@ -1722,6 +1726,7 @@ namespace Albums
 				, MPX::CairoCorners::CORNERS(0)
                             ) ;
                         }
+/*
 			else
 			if( d_cur % 2 )
 			{
@@ -1737,6 +1742,7 @@ namespace Albums
 			    Gdk::Cairo::set_source_rgba(cairo, c_base_rules_hint);
 			    cairo->fill() ;
 			}
+*/
 
 			m_columns[0]->render(
 			      cairo

@@ -82,7 +82,7 @@ namespace MPX
 
 		TapArea area ;
 
-		int x = event->x ;
+		guint x = event->x ;
 
 		if( x >= l && x < c ) 
 		{

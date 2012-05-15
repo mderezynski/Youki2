@@ -115,6 +115,7 @@ FIND_PACKAGE(XercesC REQUIRED)
 
 # GStreamer
 PKG_CHECK_MODULES(GST              REQUIRED gstreamer-0.10>=0.10.14 gstreamer-base-0.10>=0.10.14)
+PKG_CHECK_MODULES(GSTMM            REQUIRED gstreamermm-0.10)
 PKG_CHECK_MODULES(GST_PLUGINS_BASE REQUIRED gstreamer-plugins-base-0.10>=0.10.9)
 
 # D-Bus

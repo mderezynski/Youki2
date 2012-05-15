@@ -46,6 +46,8 @@
 #include <gst/interfaces/mixertrack.h>
 #include <gst/interfaces/mixeroptions.h>
 
+#include <gstreamermm.h>
+
 #include <sigc++/sigc++.h>
 #include <glibmm/ustring.h>
 #include <glibmm/refptr.h>
@@ -119,6 +121,8 @@ namespace MPX
                         sigc::connection    m_conn_stream_position ;
                         bool                m_accurate_seek ;
 
+			Glib::RefPtr<Gst::PlayBin2> m_playbin2 ;
+    
                 private:
 
                         //// MESSAGE QUEUE
@@ -138,9 +142,6 @@ namespace MPX
 
                         ProxyOf<PropString>::ReadWrite
                         property_stream ();
-
-                        ProxyOf<PropString>::ReadWrite
-                        property_stream_type ();
 
                         ProxyOf<PropInt>::ReadWrite
                         property_volume ();
@@ -290,7 +291,6 @@ namespace MPX
                         // Properties
 
                         PropString          property_stream_;
-                        PropString          property_stream_type_;
                         PropInt             property_volume_;
                         PropInt             property_status_;
                         PropBool            property_sane_;

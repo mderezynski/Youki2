@@ -1413,7 +1413,7 @@ namespace MPX
         m_covers->fetch(
               get<std::string>(v[0]["mb_album_id"])
             , cover_pb
-            , 64
+            , 90
         ) ;
 
         if( cover_pb ) 

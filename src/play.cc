@@ -48,23 +48,6 @@ using namespace Glib ;
 
 namespace
 {
-        static boost::format band_f ("band%d") ;
-
-        char const* NAME_CONVERT    = N_("Raw Audio Format Converter") ;
-        char const* NAME_VOLUME     = N_("Volume Adjustment") ;
-        char const* NAME_RESAMPLE   = N_("Resampler") ;
-
-        char const* m_pipeline_names[] =
-        {
-                "(none)",
-                "http",
-                "httpmad",
-                "mmsx",
-                "file",
-                "cdda"
-        } ;
-
-
         gboolean
                 drop_data(
                       GstPad*           G_GNUC_UNUSED 
@@ -108,7 +91,6 @@ namespace MPX
         , Service::Base           ("mpx-service-play")
         , m_playback_bin          (0)
         , property_stream_        (*this, "stream", "")
-        , property_stream_type_   (*this, "stream-type", "")
         , property_volume_        (*this, "volume", 50)
         , property_status_        (*this, "playstatus", PLAYSTATUS_STOPPED)
         , property_sane_          (*this, "sane", false)
@@ -129,29 +111,21 @@ namespace MPX
                             , &Play::on_stream_changed
                 )) ;
 
-                m_bin[BIN_FILE]     = 0 ;
-                m_bin[BIN_HTTP]     = 0 ;
-                m_bin[BIN_MMSX]     = 0 ;
-                m_bin[BIN_CDDA]     = 0 ;
-                m_bin[BIN_OUTPUT]   = 0 ;
-
-                m_pipeline = 0 ;
-
-                reset () ;
+		create_bins() ;
+                reset() ;
         }
 
         //dtor
         Play::~Play ()
         {
-                g_async_queue_unref (m_message_queue) ;
-                stop_stream () ;
-                destroy_bins () ;
+                stop_stream() ;
+                g_async_queue_unref(m_message_queue) ;
         }
 
         inline GstElement*
-                Play::control_pipe () const
+                Play::control_pipe() const
                 {
-                    return m_pipeline ; 
+                    return GST_ELEMENT(m_playbin2->gobj()) ; 
                 }
 
         void
@@ -163,53 +137,10 @@ namespace MPX
                 {
                         Play & play = *(static_cast<Play*>( data )) ;
 
-                        int count = gst_tag_list_get_tag_size( list, tag )  ;
+                        guint count = gst_tag_list_get_tag_size( list, tag )  ;
 
-                        for( int i = 0; i < count; ++i )
+                        for( guint i = 0; i < count; ++i )
                         {
-                                //// TITLE
-                                if( !std::strcmp( tag, GST_TAG_TITLE  ))
-                                {
-                                        if( play.m_pipeline_id == PIPELINE_HTTP ||
-                                            play.m_pipeline_id == PIPELINE_MMSX
-                                        )
-                                        {
-                                            Glib::ScopedPtr<char> w ;
-                                            if( gst_tag_list_get_string_index (list, tag, i, w.addr( ))) ;
-                                            {
-                                                std::string title (w.get()); 
-
-                                                if( !play.m_metadata.m_title || (play.m_metadata.m_title && (play.m_metadata.m_title.get( ) != title)))
-                                                {
-                                                    play.m_metadata.m_title = title ;
-                                                    play.signal_metadata_.emit(FIELD_TITLE) ;
-                                                }
-                                            }
-                                        }
-                                }
-                                else
-                                //// ALBUM
-                                if( !std::strcmp( tag, GST_TAG_ALBUM  ))
-                                {
-                                        if( play.m_pipeline_id == PIPELINE_HTTP ||
-                                            play.m_pipeline_id == PIPELINE_MMSX
-                                        )
-                                        {
-                                            Glib::ScopedPtr<char> w ;
-
-                                            if( gst_tag_list_get_string_index (list, tag, i, w.addr( ))) ;
-                                            {
-                                                std::string album (w.get()); 
-
-                                                if( !play.m_metadata.m_album || (play.m_metadata.m_album && (play.m_metadata.m_album.get( ) != album)))
-                                                {
-                                                    play.m_metadata.m_album = album ;
-                                                    play.signal_metadata_.emit(FIELD_ALBUM) ;
-                                                }
-                                            }
-                                        }
-                                }
-                                else
                                 //// IMAGE
                                 if( !std::strcmp( tag, GST_TAG_IMAGE  )) 
                                 {
@@ -253,7 +184,7 @@ namespace MPX
                                         }
                                 }
                                 else
-                                //// AUDIO CODEC
+                                //// VIDEO CODEC
                                 if( !std::strcmp( tag, GST_TAG_VIDEO_CODEC  )) 
                                 {
                                         Glib::ScopedPtr<char> w ;
@@ -289,7 +220,7 @@ namespace MPX
                     if( control_pipe() )
                     {
                         gst_element_set_state(
-                              control_pipe ()
+                              control_pipe()
                             , GST_STATE_NULL
                         )  ;
 
@@ -312,7 +243,7 @@ namespace MPX
                         GstState state ;
 
                         gst_element_set_state(
-                              control_pipe ()
+                              control_pipe()
                             , GST_STATE_READY
                         )  ;
 
@@ -331,12 +262,15 @@ namespace MPX
                             ) ;
 
                             property_status_ = PLAYSTATUS_WAITING ;
-
                             return ;
                         }
+			else
+			    g_message("%s: element not ready", G_STRLOC) ;
                     }
+		    else
+			g_message("%s: no control pipeline", G_STRLOC) ;
                     
-                    //stop_stream() ;
+                    stop_stream() ;
                 }
 
         void
@@ -360,15 +294,19 @@ namespace MPX
                             property_status_ = PLAYSTATUS_PLAYING  ;
                             return  ;
                         }
+			else
+			    g_message("%s: state is not playing", G_STRLOC) ;
                     }
+		    else
+			g_message("%s: state change failure", G_STRLOC) ;
 
-                    //stop_stream()  ;
+                    stop_stream()  ;
                 }
 
         void
                 Play::pause_stream ()
                 {
-                    if( GST_STATE (control_pipe() ) == GST_STATE_PAUSED )
+                    if( GST_STATE(control_pipe()) == GST_STATE_PAUSED )
                     {
                         GstStateChangeReturn G_GNUC_UNUSED statechange = gst_element_set_state( control_pipe (), GST_STATE_PLAYING )  ;
                         property_status_ = PLAYSTATUS_PLAYING ;
@@ -386,221 +324,29 @@ namespace MPX
         void
                 Play::on_volume_changed ()
                 {
-                    GstElement * volume = gst_bin_get_by_name(
-                          GST_BIN( m_bin[BIN_OUTPUT] )
-                        , NAME_VOLUME
-                    )  ;
-
-                    g_object_set(
-                          G_OBJECT( volume )
-                        , "volume"
-                        , property_volume().get_value()/100.
-                        , NULL
-                    )  ;
-
-                    gst_object_unref( volume )  ;
+		    m_playbin2->property_volume() = property_volume().get_value() / 100. ;
                 }
 
         void
-                Play::pipeline_configure (PipelineId id)
-                {
-                    if( m_pipeline_id != id )
-                    {
-                            if( m_playback_bin )
-                            {
-                                gst_element_set_state(
-                                      m_playback_bin
-                                    , GST_STATE_NULL
-                                )  ;
-
-                                gst_element_get_state(
-                                      m_playback_bin
-                                    , NULL
-                                    , NULL
-                                    , GST_CLOCK_TIME_NONE
-                                ) ; 
-
-                                gst_element_set_state(
-                                      m_bin[BIN_OUTPUT]
-                                    , GST_STATE_NULL
-                                )  ;
-
-                                gst_element_get_state(
-                                      m_bin[BIN_OUTPUT]
-                                    , NULL
-                                    , NULL
-                                    , GST_CLOCK_TIME_NONE
-                                ) ; 
-
-                                gst_element_unlink(
-                                      m_playback_bin
-                                    , m_bin[BIN_OUTPUT]
-                                )  ;
-
-                                gst_bin_remove_many(
-                                      GST_BIN( m_pipeline )
-                                    , m_playback_bin
-                                    , m_bin[BIN_OUTPUT]
-                                    , NULL
-                                )  ;
-                            }
-
-                            m_pipeline_id = id ;
-                            m_playback_bin   = m_bin[BinId(id)]  ;
-
-                            gst_element_set_state(
-                                  m_pipeline
-                                , GST_STATE_NULL
-                            )  ;
-
-                            gst_element_get_state(
-                                  m_pipeline
-                                , NULL
-                                , NULL
-                                , GST_CLOCK_TIME_NONE
-                            ) ; 
-
-                            gst_element_set_name(
-                                  m_pipeline
-                                , m_pipeline_names[id]
-                            )  ;
-
-                            gst_bin_add_many(
-                                  GST_BIN( m_pipeline )
-                                , m_playback_bin 
-                                , m_bin[BIN_OUTPUT]
-                                , NULL
-                            )  ;
-
-                            gst_element_link(
-                                  m_playback_bin 
-                                , m_bin[BIN_OUTPUT]
-                            )  ;
-                    }
-                }
-
-        void
-                Play::on_stream_changed ()
+                Play::on_stream_changed()
                 {
                     if( property_sane().get_value() == false )
-                        return ;
+		    {
+			reset() ;
+		    }
 
                     URI uri ;
 
                     try{
-                        uri = URI( property_stream().get_value() )  ;
+                        uri = URI(property_stream().get_value()) ;
                     }
                     catch (...)
                     {
-			//stop_stream (); 
+			stop_stream() ; 
                         return ;
                     }
 
-                    switch( uri.get_protocol() )
-                    {
-                            case URI::PROTOCOL_FILE:
-                            {
-                                            pipeline_configure (PIPELINE_FILE) ;
-
-                                            GstElement * src = gst_bin_get_by_name(
-                                                                      GST_BIN(m_bin[BIN_FILE])
-                                                                    , "src"
-                                            )  ;
-
-                                            g_object_set(
-                                                  src
-                                                , "location"
-                                                , property_stream().get_value().c_str()
-                                                , NULL
-                                            )  ;
-
-                                            gst_object_unref( src ) ;
-
-                            }
-                            break ;
-
-                            case URI::PROTOCOL_MMS:
-                            case URI::PROTOCOL_MMSU:
-                            case URI::PROTOCOL_MMST:
-                            {
-                                            pipeline_configure( PIPELINE_MMSX )  ;
-
-                                            GstElement * src = gst_bin_get_by_name(
-                                                                      GST_BIN(m_bin[BIN_MMSX])
-                                                                    , "src"
-                                            )  ;
-
-                                            g_object_set(
-                                                  src
-                                                , "location"
-                                                , property_stream().get_value().c_str()
-                                                , NULL
-                                            )  ;
-
-                                            gst_object_unref( src ) ;
-
-                            }
-                            break ;
-
-                            case URI::PROTOCOL_HTTP:
-                            {
-                                            pipeline_configure( PIPELINE_HTTP )  ;
-
-                                            GstElement * src = gst_bin_get_by_name(
-                                                                      GST_BIN(m_playback_bin)
-                                                                    , "src"
-                                            )  ;
-
-                                            g_object_set(
-                                                  src
-                                                , "location"
-                                                , property_stream().get_value().c_str()
-                                                , "prebuffer"
-                                                , TRUE
-                                                , NULL
-                                            )  ;
-
-                                            gst_object_unref( src ) ;
-
-                            }
-                            break ;
-
-                            case URI::PROTOCOL_CDDA:
-/*
-                            {
-                                            unsigned int track = static_cast<unsigned int>( std::atoi( uri.path.c_str()) + 1 ) ;
-
-                                            pipeline_configure( PIPELINE_CDDA )  ;
-
-                                            GstElement * src = gst_bin_get_by_name(
-                                                                      GST_BIN(m_playback_bin)
-                                                                    , "src"
-                                            )  ;
-
-                                            g_object_set(
-                                                  src
-                                                , "track"
-                                                , track 
-                                                , NULL
-                                            )  ;
-
-                                            gst_object_unref( src ) ;
-
-                            }
-*/
-                            break ;
-
-                            case URI::PROTOCOL_ITPC:
-                            case URI::PROTOCOL_FTP:
-                            case URI::PROTOCOL_QUERY:
-                            case URI::PROTOCOL_TRACK:
-                            case URI::PROTOCOL_LASTFM:
-                            case URI::PROTOCOL_UNKNOWN:
-                            {
-                                // No playback of these URI types 
-                            }
-                            break ;
-                    }
+		    m_playbin2->property_uri() = uri ;
                 }
 
         void
@@ -611,11 +357,10 @@ namespace MPX
                 {
                     m_metadata.reset() ;
 
-                    property_stream_type_ = type ;
-                    readify_stream (); 
-
                     property_stream_ = stream ;
-                    play_stream () ;
+
+                    readify_stream() ; 
+                    play_stream() ;
 
                     signal_stream_switched_.emit() ;
                 }
@@ -653,42 +398,27 @@ namespace MPX
                     {
                         case PLAYSTATUS_PAUSED:
                         {
-                                pause_stream ()  ;
+                                pause_stream() ;
                         }
                         break ;
 
                         case PLAYSTATUS_PLAYING:
                         {
-                                play_stream ()  ;
+                                play_stream() ;
                         }
                         break ;
 
                         case PLAYSTATUS_WAITING:
                         {
                                 m_metadata.reset() ;
-                                property_stream_type_ = std::string() ;
-                                readify_stream (); 
+                                readify_stream() ; 
                         }
                         break ;
 
                         case PLAYSTATUS_STOPPED:
                         {
-                                // FIXME: remove the need for this somehow
-
-                                if( BinId( m_pipeline_id ) == BIN_HTTP ) 
-                                {
-                                    g_object_set(
-                                        G_OBJECT(gst_bin_get_by_name (GST_BIN (m_bin[BIN_HTTP]), "src"))
-                                      , "abort"
-                                      , TRUE
-                                      , NULL
-                                    ) ; 
-                                }
-
                                 stop_stream () ;
-
                                 m_metadata.reset() ;
-                                property_stream_type_ = std::string() ;
                         }
                         break ;
 
@@ -714,7 +444,6 @@ namespace MPX
                     m_conn_stream_position.disconnect () ;
 
                     guint position_cur = property_position().get_value() ;
-
                     GstSeekFlags flags = GST_SEEK_FLAG_FLUSH ;
 
                     if( m_accurate_seek )
@@ -739,7 +468,7 @@ namespace MPX
                             , GST_CLOCK_TIME_NONE
                     ))
                     {
-                        g_print ("Seek failed!\n") ;
+                        g_message("%s: Seek failed!", G_STRLOC) ;
                     }
 
                     signal_seek_.emit( property_position().get_value() - position_cur ) ;
@@ -985,238 +714,104 @@ namespace MPX
                 }
 
         void
-                Play::create_bins ()
+                Play::create_bins()
                 {
-                    // Output Bin
-                    {
-                            std::string sink = mcs->key_get <std::string> ("audio", "sink") ;
-                            GstElement* sink_element = gst_element_factory_make (sink.c_str (), "sink") ;
+		    m_playbin2 = Gst::PlayBin2::create("pipeline") ;
 
-                            if( sink == "autoaudiosink" )
-                            {
-                                    /* nothing to do for it */
-                            }
-                            else
-                            if( sink == "gconfaudiosink" )
-                            {
-                                    g_object_set (G_OBJECT (sink_element), "profile", int (1) /* music/video */, NULL) ;
-                            }
-                            else
-                            if( sink == "osssink" )
-                            {
-                                    g_object_set (G_OBJECT (sink_element), "device",
-                                                    nullify_string (mcs->key_get <std::string> ("audio", "device-oss")),
-                                                    NULL) ;
-                                    g_object_set (G_OBJECT (sink_element), "buffer-time",
-                                                    guint64(mcs->key_get <int> ("audio", "oss-buffer-time")), NULL) ;
-                            }
-                            else
-                            if( sink == "esdsink" )
-                            {
-                                    g_object_set (G_OBJECT (sink_element), "host",
-                                                    nullify_string (mcs->key_get <std::string> ("audio", "device-esd")),
-                                                    NULL) ;
-                                    g_object_set (G_OBJECT (sink_element), "buffer-time",
-                                                    guint64(mcs->key_get <int> ("audio", "esd-buffer-time")),
-                                                    NULL) ;
-                            }
-                            else
-                            if( sink == "pulsesink" )
-                            {
-                                    g_object_set (G_OBJECT (sink_element), "server",
-                                                    nullify_string (mcs->key_get <std::string> ("audio", "pulse-server")),
-                                                    NULL) ;
-                                    g_object_set (G_OBJECT (sink_element), "device",
-                                                    nullify_string (mcs->key_get <std::string> ("audio", "pulse-device")),
-                                                    NULL) ;
-                                    g_object_set (G_OBJECT (sink_element), "buffer-time",
-                                                    guint64(mcs->key_get <int> ("audio", "pulse-buffer-time")),
-                                                    NULL) ;
-                            }
-                            else
-                            if( sink == "jackaudiosink" )
-                            {
-                                    g_object_set (G_OBJECT (sink_element), "server",
-                                                    nullify_string (mcs->key_get <std::string> ("audio", "jack-server")),
-                                                    NULL) ;
-                                    g_object_set (G_OBJECT (sink_element), "buffer-time",
-                                                    guint64(mcs->key_get <int> ("audio", "jack-buffer-time")),
-                                                    NULL) ;
-                            }
+		    std::string sink = mcs->key_get<std::string>("audio", "sink") ;
+		    GstElement* sink_element = gst_element_factory_make(sink.c_str(), "sink") ;
+
+		    if( sink == "autoaudiosink" )
+		    {
+			    /* nothing to do for it */
+		    }
+		    else
+		    if( sink == "gconfaudiosink" )
+		    {
+			    g_object_set (G_OBJECT (sink_element), "profile", int (1) /* music/video */, NULL) ;
+		    }
+		    else
+		    if( sink == "osssink" )
+		    {
+			    g_object_set (G_OBJECT (sink_element), "device",
+					    nullify_string (mcs->key_get <std::string> ("audio", "device-oss")),
+					    NULL) ;
+			    g_object_set (G_OBJECT (sink_element), "buffer-time",
+					    guint64(mcs->key_get <int> ("audio", "oss-buffer-time")), NULL) ;
+		    }
+		    else
+		    if( sink == "esdsink" )
+		    {
+			    g_object_set (G_OBJECT (sink_element), "host",
+					    nullify_string (mcs->key_get <std::string> ("audio", "device-esd")),
+					    NULL) ;
+			    g_object_set (G_OBJECT (sink_element), "buffer-time",
+					    guint64(mcs->key_get <int> ("audio", "esd-buffer-time")),
+					    NULL) ;
+		    }
+		    else
+		    if( sink == "pulsesink" )
+		    {
+			    g_object_set (G_OBJECT (sink_element), "server",
+					    nullify_string (mcs->key_get <std::string> ("audio", "pulse-server")),
+					    NULL) ;
+			    g_object_set (G_OBJECT (sink_element), "device",
+					    nullify_string (mcs->key_get <std::string> ("audio", "pulse-device")),
+					    NULL) ;
+			    g_object_set (G_OBJECT (sink_element), "buffer-time",
+					    guint64(mcs->key_get <int> ("audio", "pulse-buffer-time")),
+					    NULL) ;
+		    }
+		    else
+		    if( sink == "jackaudiosink" )
+		    {
+			    g_object_set (G_OBJECT (sink_element), "server",
+					    nullify_string (mcs->key_get <std::string> ("audio", "jack-server")),
+					    NULL) ;
+			    g_object_set (G_OBJECT (sink_element), "buffer-time",
+					    guint64(mcs->key_get <int> ("audio", "jack-buffer-time")),
+					    NULL) ;
+		    }
 #ifdef HAVE_ALSA
-                            else
-                            if( sink == "alsasink" )
-                            {
-                                    g_object_set (G_OBJECT (sink_element), "device",
-                                                    nullify_string (mcs->key_get <std::string> ("audio", "device-alsa")),
-                                                    NULL) ;
-                                    g_object_set (G_OBJECT (sink_element), "buffer-time",
-                                                    guint64(mcs->key_get <int> ("audio", "alsa-buffer-time")),
-                                                    NULL) ;
-                            }
+		    else
+		    if( sink == "alsasink" )
+		    {
+			    g_object_set (G_OBJECT (sink_element), "device",
+					    nullify_string (mcs->key_get <std::string> ("audio", "device-alsa")),
+					    NULL) ;
+			    g_object_set (G_OBJECT (sink_element), "buffer-time",
+					    guint64(mcs->key_get <int> ("audio", "alsa-buffer-time")),
+					    NULL) ;
+		    }
 #endif //HAVE_ALSA
 #ifdef HAVE_SUN
-                            else
-                            if( sink == "sunaudiosink" )
-                            {
-                                    g_object_set (G_OBJECT (sink_element), "device",
-                                                    nullify_string (mcs->key_get <std::string> ("audio", "device-sun")),
-                                                    NULL) ;
-                                    g_object_set (G_OBJECT (sink_element), "buffer-time",
-                                                    guint64(mcs->key_get <int> ("audio", "sun-buffer-time")),
-                                                    NULL) ;
-                            }
+		    else
+		    if( sink == "sunaudiosink" )
+		    {
+			    g_object_set (G_OBJECT (sink_element), "device",
+					    nullify_string (mcs->key_get <std::string> ("audio", "device-sun")),
+					    NULL) ;
+			    g_object_set (G_OBJECT (sink_element), "buffer-time",
+					    guint64(mcs->key_get <int> ("audio", "sun-buffer-time")),
+					    NULL) ;
+		    }
 #endif //HAVE_SUN
 #ifdef HAVE_HAL
-                            else
-                            if( sink == "halaudiosink" )
-                            {
-                                    g_object_set (G_OBJECT (sink_element), "udi",
-                                                    nullify_string (mcs->key_get <std::string> ("audio", "hal-udi")),
-                                                    NULL) ;
-                            }
+		    else
+		    if( sink == "halaudiosink" )
+		    {
+			    g_object_set (G_OBJECT (sink_element), "udi",
+					    nullify_string (mcs->key_get <std::string> ("audio", "hal-udi")),
+					    NULL) ;
+		    }
 #endif //HAVE_HAL
 
-                            m_bin[BIN_OUTPUT]     = gst_bin_new ("output") ;
-                            GstElement* convert   = gst_element_factory_make ("audioconvert", (NAME_CONVERT)) ;
-                            GstElement* resample  = gst_element_factory_make ("audioresample", (NAME_RESAMPLE)) ;
-                            GstElement* volume    = gst_element_factory_make ("volume", (NAME_VOLUME)) ;
+		    m_playbin2->property_audio_sink() = Glib::wrap( sink_element, true ) ; 
 
-			    gst_bin_add_many( GST_BIN (m_bin[BIN_OUTPUT]), convert, resample, volume, sink_element, NULL) ;
-			    gst_element_link_many (convert, resample, volume, sink_element, NULL) ;
+		    property_volume() = mcs->key_get <int> ("mpx", "volume") ;
+		    property_sane_ = true ;
 
-                            GstPad * pad = gst_element_get_static_pad (convert, "sink") ;
-                            gst_element_add_pad (m_bin[BIN_OUTPUT], gst_ghost_pad_new ("sink", pad)) ;
-                            gst_object_unref (pad) ;
-
-                            gst_object_ref (m_bin[BIN_OUTPUT]) ;
-
-                            property_volume() = mcs->key_get <int> ("mpx", "volume") ;
-                            property_sane_ = true ;
-                    }
-
-
-                    ////////////////// FILE BIN
-                    {
-                            GstElement* source    = gst_element_factory_make ("giosrc", "src") ;
-                            GstElement* decoder   = gst_element_factory_make ("decodebin", "Decoder File"); 
-                            GstElement* identity  = gst_element_factory_make ("identity", "Identity File"); 
-
-                            if( source && decoder && identity )
-                            {
-                                    m_bin[BIN_FILE] = gst_bin_new ("bin-file") ;
-
-                                    gst_bin_add_many(
-                                          GST_BIN(m_bin[BIN_FILE])
-                                        , source
-                                        , decoder
-                                        , identity
-                                        , NULL
-                                    )  ;
-
-                                    gst_element_link_many(
-                                          source
-                                        , decoder
-                                        , NULL
-                                    )  ;
-
-                                    g_signal_connect(
-                                          G_OBJECT (decoder)
-                                        , "new-decoded-pad"
-                                        , G_CALLBACK(Play::link_pad)
-                                        , identity
-                                    )  ;
-
-                                    GstPad * pad = gst_element_get_static_pad (identity, "src") ;
-                                    gst_element_add_pad (m_bin[BIN_FILE], gst_ghost_pad_new ("src", pad)) ;
-                                    gst_object_unref (pad) ;
-
-                                    gst_object_ref (m_bin[BIN_FILE]) ;
-                            }
-                    }
-
-
-                    ////////////////// HTTP BIN
-                    {
-                            GstElement  * source    = gst_element_factory_make ("jnethttpsrc", "src") ;
-                            GstElement  * decoder   = gst_element_factory_make ("decodebin", "Decoder HTTP"); 
-                            GstElement  * identity  = gst_element_factory_make ("identity", "Identity HTTP"); 
-
-                            if( source && decoder && identity )
-                            {
-                                    m_bin[BIN_HTTP] = gst_bin_new ("bin-http") ;
-                                    gst_bin_add_many (GST_BIN (m_bin[BIN_HTTP]), source, decoder, identity, NULL) ;
-                                    gst_element_link_many (source, decoder, NULL) ;
-
-                                    g_signal_connect (G_OBJECT (decoder),
-                                                    "new-decoded-pad",
-                                                    G_CALLBACK (Play::link_pad),
-                                                    identity) ;
-                                    g_object_set (G_OBJECT (source),
-                                                    "iradio-mode", TRUE, 
-                                                    NULL) ;
-
-                                    GstPad * pad = gst_element_get_static_pad (identity, "src") ;
-                                    gst_element_add_pad (m_bin[BIN_HTTP], gst_ghost_pad_new ("src", pad)) ;
-                                    gst_object_unref (pad) ;
-
-                                    gst_object_ref (m_bin[BIN_HTTP]) ;
-                            }
-                    }
-
-                    ////////////////// MMS* BIN
-                    {
-                            GstElement * source   = gst_element_factory_make ("mmssrc", "src") ;
-                            GstElement * decoder  = gst_element_factory_make ("decodebin", "Decoder MMSX"); 
-                            GstElement * identity = gst_element_factory_make ("identity", "Identity MMSX"); 
-
-                            if( source && decoder && identity )
-                            {
-                                    m_bin[BIN_MMSX] = gst_bin_new ("bin-mmsx") ;
-
-                                    gst_bin_add_many (GST_BIN (m_bin[BIN_MMSX]), source, decoder, identity, NULL) ;
-                                    gst_element_link_many (source, decoder, NULL) ;
-
-                                    g_signal_connect (G_OBJECT (decoder),
-                                                    "new-decoded-pad",
-                                                    G_CALLBACK (Play::link_pad),
-                                                    identity) ;
-
-                                    GstPad * pad = gst_element_get_static_pad (identity, "src") ;
-                                    gst_element_add_pad (m_bin[BIN_MMSX], gst_ghost_pad_new ("src", pad)) ;
-                                    gst_object_unref (pad) ;
-
-                                    gst_object_ref (m_bin[BIN_MMSX]) ;
-                            }
-                    }
-
-/*
-                    ////////////////// CDDA BIN
-                    {
-#if defined (HAVE_CDPARANOIA)
-                            GstElement * source = gst_element_factory_make ("cdparanoiasrc", "src") ;
-#elif defined (HAVE_CDIO)
-                            GstElement * source = gst_element_factory_make ("cdiocddasrc", "src") ;
-#endif
-
-                            if( source )
-                            {
-                                    m_bin[BIN_CDDA] = gst_bin_new ("bin-cdda") ;
-                                    gst_bin_add_many (GST_BIN (m_bin[BIN_CDDA]), source, NULL) ;
-
-                                    GstPad * pad = gst_element_get_static_pad (source, "src") ;
-                                    gst_element_add_pad (m_bin[BIN_CDDA], gst_ghost_pad_new ("src", pad)) ;
-                                    gst_object_unref (pad) ;
-
-                                    gst_object_ref (m_bin[BIN_CDDA]) ;
-                            }
-                    }
-*/
-
-                    m_pipeline      = gst_pipeline_new ("YoukiPipeline") ;
-                    m_pipeline_id   = PIPELINE_NONE ; // not configured yet
-
-                    GstBus * bus = gst_pipeline_get_bus( GST_PIPELINE( m_pipeline )) ;
+                    GstBus * bus = gst_pipeline_get_bus( GST_PIPELINE( control_pipe() )) ;
                     gst_bus_add_signal_watch( bus ) ;
                     g_signal_connect(
                           G_OBJECT( bus )
@@ -1230,78 +825,33 @@ namespace MPX
         void
                 Play::reset ()
                 {
-                    if( m_pipeline )
+                    if( control_pipe() )
                     {
-                            if( property_status().get_value() != PLAYSTATUS_STOPPED )
-                            {
-                                stop_stream () ;
-                            }
+			if( property_status().get_value() != PLAYSTATUS_STOPPED )
+			{
+			    stop_stream () ;
+			}
 
-                            if( m_playback_bin )
-                            {
-                                gst_element_set_state(
-                                      m_playback_bin
-                                    , GST_STATE_NULL
-                                )  ;
+			gst_element_set_state(
+			      control_pipe()
+			    , GST_STATE_NULL
+			)  ;
 
-                                gst_element_get_state(
-                                      m_playback_bin
-                                    , NULL
-                                    , NULL
-                                    , GST_CLOCK_TIME_NONE
-                                ) ; 
-
-                                gst_element_set_state(
-                                      m_bin[BIN_OUTPUT]
-                                    , GST_STATE_NULL
-                                )  ;
-
-                                gst_element_get_state(
-                                      m_bin[BIN_OUTPUT]
-                                    , NULL
-                                    , NULL
-                                    , GST_CLOCK_TIME_NONE
-                                ) ; 
-
-                                gst_element_unlink(
-                                      m_playback_bin
-                                    , m_bin[BIN_OUTPUT]
-                                )  ;
-
-                                gst_bin_remove_many(
-                                      GST_BIN( m_pipeline )
-                                    , m_playback_bin
-                                    , m_bin[BIN_OUTPUT]
-                                    , NULL
-                                )  ;
-                            }
-
-                            gst_object_unref( m_pipeline )  ;
-
-                            m_pipeline     = 0  ;
-                            m_playback_bin = 0  ;
+			gst_element_get_state(
+			      control_pipe()
+			    , NULL
+			    , NULL
+			    , GST_CLOCK_TIME_NONE
+			) ; 
                     }
 
-                    destroy_bins()  ;
-                    create_bins()  ;
-
                     m_accurate_seek = mcs->key_get<bool>( "audio","accurate-seek" ) ;
-
                     property_status_ = PLAYSTATUS_STOPPED ;
                 }
 
         ///////////////////////////////////////////////
         /// Object Properties
         ///////////////////////////////////////////////
-
-        ProxyOf<PropString>::ReadWrite
-                Play::property_stream_type()
-                {
-                        return ProxyOf<PropString>::ReadWrite(
-                            this
-                          , "stream-type"
-                        ) ;
-                }
 
         ProxyOf<PropString>::ReadWrite
                 Play::property_stream()
