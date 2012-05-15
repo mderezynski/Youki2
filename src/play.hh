@@ -1,5 +1,5 @@
-//  BMPx - The Dumb Music Player
-//  Copyright (C) 2005-2007 BMPx development team.
+//  Youki 
+//  Copyright (C) 2005-2012 Milosz Derezynski, Chong Kaixiong, BMP/BMPx/MPX/Youki developers 
 //
 //  This program is free software; you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License Version 2
