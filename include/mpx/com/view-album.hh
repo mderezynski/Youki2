@@ -6,11 +6,9 @@
 #include <cairomm/cairomm.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/algorithm/string.hpp>
-#include <boost/tuple/tuple.hpp>
 #include <boost/optional.hpp>
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/random.hpp>
 #include <cmath>
 
 #include "mpx/util-string.hh"
@@ -704,7 +702,7 @@ namespace Albums
 						    Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "disc.png" )
 		    )->scale_simple(90, 90, Gdk::INTERP_BILINEAR)) ;
 
-                    m_image_new  = Util::cairo_image_surface_from_pixbuf(
+                    m_image_new = Util::cairo_image_surface_from_pixbuf(
 					    Gdk::Pixbuf::create_from_file(
 						    Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "new.png" ))) ;
 
@@ -856,6 +854,9 @@ namespace Albums
 
 			if( !album->caching )
 			{
+			    time_t now = time(NULL) ;
+			    Range<time_t> WithinPastDay (now-(24*60*60), now) ;
+
 			    if( !album->surface_cache ) 
 			    {
 				album->surface_cache = render_icon( album, m_width ) ;
@@ -885,12 +886,11 @@ namespace Albums
 				cairo->stroke() ;
 			    }
 
-			    time_t now = time(NULL) ;
-			    Range<time_t> PastDay (now-(24*60*60), now) ;
-			    if( PastDay( album->insert_date ))
+			    /* 'new' top */
+			    if( WithinPastDay( album->insert_date ))
 			    {
-				int x = ((m_width-94)/2.) + 48 ; 
-				int y = r.y ; 
+				int x = ((m_width-94)/2.) - 9 ; 
+				int y = r.y + 20 ; 
 				cairo->set_source( m_image_new, x, y ) ; 
 				cairo->rectangle( x, y, m_image_new->get_width(), m_image_new->get_height() ) ; 
 				cairo->fill() ;
@@ -1038,6 +1038,7 @@ namespace Albums
 #endif
 
 			/* Total Time, no. of Discs, no. of Tracks */ 
+			if( m_show_release_label )
 			{
 			    font_desc[L3].set_weight( Pango::WEIGHT_NORMAL ) ;
 			    layout[L3]->set_font_description( font_desc[L3] ) ;
@@ -1107,7 +1108,7 @@ namespace Albums
 			    layout[L3]->set_markup( s_tracks ) ;
 			    layout[L3]->get_pixel_size( width, height ) ;
 
-			    sx = (m_width - width - 10) ;
+			    sx = ((m_width-94)/2.) + 102 ;
 
 			    if( selected )
 			    {
@@ -1118,7 +1119,7 @@ namespace Albums
 				  sx 
 				, sy 
 			    ) ;
-			    Gdk::Cairo::set_source_rgba(cairo, c1) ;
+			    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(c1,0.75)) ;
 			    pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj()) ;
 			    sy += height + 2 ;
 
@@ -1126,8 +1127,6 @@ namespace Albums
 			    layout[L3]->set_markup( s_time ) ;
 			    layout[L3]->get_pixel_size( width, height ) ;
 
-			    sx = (m_width - width - 10) ;
-
 			    if( selected )
 			    {
 				Util::render_text_shadow( layout[L3], sx, sy, cairo ) ; 
@@ -1137,7 +1136,7 @@ namespace Albums
 				  sx 
 				, sy 
 			    ) ;
-			    Gdk::Cairo::set_source_rgba(cairo, c1) ;
+			    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(c1,0.75)) ;
 			    pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj()) ;
 			    sy += height + 2 ;
 
@@ -1146,8 +1145,6 @@ namespace Albums
 			    {
 				layout[L3]->set_markup( s_discs ) ;
 				layout[L3]->get_pixel_size( width, height ) ;
-
-				sx = (m_width - width - 10) ;
 
 				if( selected )
 				{
@@ -1158,7 +1155,7 @@ namespace Albums
 				      sx 
 				    , sy 
 				) ;
-				Gdk::Cairo::set_source_rgba(cairo, c1) ;
+				Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(c1,0.75)) ;
 				pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj()) ;
 				sy += height + 2 ;
 			    }
@@ -1169,8 +1166,6 @@ namespace Albums
 				layout[L3]->set_markup( s_rt ) ;
 				layout[L3]->get_pixel_size( width, height ) ;
 
-				sx = (m_width - width - 10) ;
-
 				if( selected )
 				{
 				    Util::render_text_shadow( layout[L3], sx, sy, cairo ) ; 
@@ -1180,7 +1175,7 @@ namespace Albums
 				      sx 
 				    , sy 
 				) ;
-				Gdk::Cairo::set_source_rgba(cairo, c1) ;
+				Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(c1,0.75)) ;
 				pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj()) ;
 				sy += height + 2 ;
 			    }
@@ -1294,7 +1289,7 @@ namespace Albums
                 bool
                 key_press_event(GdkEventKey* event)
                 {
-                    if( event->is_modifier )
+                    if( !m_search_active && event->is_modifier )
                         return false ;
 
                     if( !m_model->size() )
@@ -1309,13 +1304,7 @@ namespace Albums
                 	    case GDK_KEY_ISO_Enter:
 			    case GDK_KEY_3270_Enter:
 				cancel_search() ;
-                                return true ;
-
-			    case GDK_KEY_Page_Up:
-			    case GDK_KEY_Page_Down:
-			    case GDK_KEY_Home:
-			    case GDK_KEY_End:
-				error_bell() ;
+				m_SIGNAL_start_playback.emit() ;
                                 return true ;
 
 			    case GDK_KEY_Up:
@@ -1364,7 +1353,6 @@ namespace Albums
                         case GDK_KEY_KP_Enter:
                         case GDK_KEY_ISO_Enter:
                         case GDK_KEY_3270_Enter:
-
                             if( m_selection )
                             {
                                 m_SIGNAL_start_playback.emit() ;
@@ -1539,7 +1527,6 @@ namespace Albums
 */
 
 		    double ymod = fmod( vadj_value(), ViewMetrics.RowHeight ) ;
-
 		    guint d = (vadj_value() + event->y) / ViewMetrics.RowHeight ;
 
 		    if( !m_selection || (get<Selection::INDEX>(m_selection.get()) != d))
@@ -1551,21 +1538,20 @@ namespace Albums
 
 			if( d == ViewMetrics.ViewPort.upper()) 
 			{
-			    vadj_value_set( std::max<int>(0, ViewMetrics.ViewPortPx.upper() - ymod + 1)) ;
+			    vadj_value_set( std::max<int>(0, ViewMetrics.ViewPortPx.upper() - ymod )) ;
 			}
 			else
-			if( (!ymod && d == ViewMetrics.ViewPort.lower())||(ymod && d > ViewMetrics.ViewPort.lower()))
+			if( (!ymod && d == ViewMetrics.ViewPort.lower()))
 
 			{
 			    vadj_value_set( std::min<int>(vadj_upper(), ViewMetrics.ViewPortPx.upper() + (ViewMetrics.RowHeight - ymod) - ViewMetrics.Excess )) ;
 			}
-/*
 			else
-			if( d > ViewMetrics.ViewPort.lower())
+			if( (ymod && d > ViewMetrics.ViewPort.lower()))
+
 			{
 			    vadj_value_set( std::min<int>(vadj_upper(), ViewMetrics.ViewPortPx.upper() + ViewMetrics.RowHeight + (ViewMetrics.RowHeight - ymod) - ViewMetrics.Excess )) ;
 			}
-*/
 		    }
 		    else
 		    if( event->button == 1 && m_selection && (get<Selection::INDEX>(m_selection.get()) == d))

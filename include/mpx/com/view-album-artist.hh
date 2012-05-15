@@ -612,6 +612,9 @@ namespace Artist
                       GdkEventKey* event
                 )
                 {
+		    if( !m_search_active && event->is_modifier )
+			return false ;
+
                     if( !m_model->size() )
                         return false ;
 
@@ -619,6 +622,14 @@ namespace Artist
                     {
                         switch( event->keyval )
                         {
+	                    case GDK_KEY_Return:
+        	            case GDK_KEY_KP_Enter:
+                	    case GDK_KEY_ISO_Enter:
+			    case GDK_KEY_3270_Enter:
+				cancel_search() ;
+				m_SIGNAL_start_playback.emit() ;
+				return true ;
+
                             case GDK_KEY_Up:
                             case GDK_KEY_KP_Up:
                                 find_prev_match() ;
@@ -884,17 +895,23 @@ namespace Artist
 				select_index( d ) ;
 			    }
 
-			    if( ymod != 0 )
+			    double Excess = get_allocation().get_height() - (get_page_size()*m_height__row) ;
+
+			    if( d == get_upper_row()) 
 			    {
-				if( d == get_upper_row() ) 
-				{
-				    vadj_value_set( std::max<int>(0, vadj_value() - ymod + 1)) ;
-				}
-				else if( d >= (get_upper_row()+get_page_size()-1))
-				{
-				    double Excess = get_allocation().get_height() - (get_page_size()*m_height__row) ;
-				    vadj_value_set( std::min<int>(vadj_upper(), vadj_value() + (m_height__row - ymod) - Excess )) ;
-				}
+				vadj_value_set( std::max<int>(0, vadj_value() - ymod )) ;
+			    }
+			    else
+			    if( (!ymod && d == (get_upper_row()+get_page_size())))
+
+			    {
+				vadj_value_set( std::min<int>(vadj_upper(), vadj_value() + (m_height__row-ymod) - Excess )) ;
+			    }
+			    else
+			    if( (ymod && d > (get_upper_row()+get_page_size())))
+
+			    {
+				vadj_value_set( std::min<int>(vadj_upper(), vadj_value() + m_height__row + (m_height__row-ymod) - Excess )) ;
 			    }
 			}
                     }

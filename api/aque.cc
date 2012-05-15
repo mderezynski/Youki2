@@ -422,13 +422,13 @@ namespace AQE
                 }
             }
             else
-            if( *i == '"' || *i == '\'')
+            if( *i == '"' ) 
             {
                 have_quot = true ;
 
                 if( rt == READ_ATTR )
                 {
-                    // we interpret this as the start of the attribute and use MT_EQUAL
+                    // we interpret this as the start of the attribute and use MT_FUZZY_EQUAL
 
                     type = MT_FUZZY_EQUAL ;
                     kv[KEY] = line ;

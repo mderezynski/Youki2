@@ -340,7 +340,7 @@ namespace MPX
     YoukiThemeEngine::draw_selection_rectangle(
           const Cairo::RefPtr<Cairo::Context>&  cairo
         , const GdkRectangle&			r
-        , bool					sensitive
+        , bool					focused
         , double				rounding
 	, MPX::CairoCorners::CORNERS		corners
     )
@@ -356,7 +356,7 @@ namespace MPX
             , r.y + r.height
         ) ;
 
-        double alpha = sensitive ? 1. : .8 ;
+        double alpha = focused ? 1. : .7 ;
         
         double h, s, b ;
         
@@ -410,7 +410,7 @@ namespace MPX
         cairo->set_source( gradient ) ;
         cairo->fill(); 
 
-	Gdk::Cairo::set_source_rgba( cairo, cgdk ) ;
+	Gdk::Cairo::set_source_rgba( cairo, Util::make_rgba(cgdk,alpha)) ;
         cairo->set_line_width( 0.75 ) ; 
         cairo->stroke () ;
     }
@@ -419,7 +419,7 @@ namespace MPX
     YoukiThemeEngine::draw_focus(
           const Cairo::RefPtr<Cairo::Context>&	cairo
         , const GdkRectangle&			r
-        , bool					sensitive
+        , bool					focused
         , double				rounding
 	, MPX::CairoCorners::CORNERS		corners
     )

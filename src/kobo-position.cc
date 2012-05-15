@@ -90,41 +90,52 @@ namespace MPX
         cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 
         Gdk::RGBA cgdk ;
-        Gdk::RGBA c_text_dark, c1, c2, c3, c4 ; 
+        Gdk::RGBA c_text_dark ; 
 
 	double h, s, b ;
 
 	if( m_color )
 	{
 	    cgdk = m_color.get() ;
-	    Util::color_to_hsb( cgdk, h,s,b ) ;
-	    b *= 0.85 ;
-	    cgdk = Util::color_from_hsb( h,s,b ) ;
 	}
 	else
-	    cgdk.set_rgba( 0.45, 0.45, 0.45, 1.0 ) ;
+	    cgdk.set_rgba( 0.25, 0.25, 0.25, 1.0 ) ;
 
 	Util::color_to_hsb( cgdk, h, s, b ) ;
-	b *= 0.75 ; 
-	s *= 0.85 ;
+	b *= 0.55 ; 
+	s *= 0.65 ;
 	c_text_dark = Util::color_from_hsb( h, s, b ) ;
 
+        Util::color_to_hsb( cgdk, h, s, b ) ;
+        b *= 0.9 ; 
+        s *= 0.60 ;
+        Gdk::RGBA c1 = Util::color_from_hsb( h, s, b ) ;
+
+        Util::color_to_hsb( cgdk, h, s, b ) ;
+        s *= 0.55 ; 
+        Gdk::RGBA c2 = Util::color_from_hsb( h, s, b ) ;
+
+        Util::color_to_hsb( cgdk, h, s, b ) ;
+        b *= 1.05 ; 
+        s *= 0.55 ; 
+        Gdk::RGBA c3 = Util::color_from_hsb( h, s, b ) ;
+
+/*
 	Util::color_to_hsb( cgdk, h, s, b ) ;
-	b *= 0.80 ; 
+	b *= 0.70 ; 
+	s *= 1 ;
 	c1 = Util::color_from_hsb( h, s, b ) ;
 
 	Util::color_to_hsb( cgdk, h, s, b ) ;
-	b *= 0.85 ; 
+	b *= 0.80 ; 
+	s *= 0.90 ;
 	c2 = Util::color_from_hsb( h, s, b ) ;
 
 	Util::color_to_hsb( cgdk, h, s, b ) ;
-	b *= 0.95 ; 
+	b *= 0.97 ; 
+	s *= 0.80 ;
 	c3 = Util::color_from_hsb( h, s, b ) ;
-
-	Util::color_to_hsb( cgdk, h, s, b ) ;
-	b *= 1.2 ; 
-	s *= 1.2 ;
-	c4 = Util::color_from_hsb( h, s, b ) ;
+*/
 
         Cairo::RefPtr<Cairo::LinearGradient> position_bar_back_gradient = Cairo::LinearGradient::create(
               a.get_width() / 2 
@@ -223,18 +234,10 @@ namespace MPX
             ) ;
             
             position_bar_gradient->add_color_stop_rgba(
-                  .97 
+                  1. 
                 , c3.get_red()
                 , c3.get_green()
                 , c3.get_blue()
-                , 1 // factor
-            ) ;
-
-            position_bar_gradient->add_color_stop_rgba(
-                  1. 
-                , c4.get_red()
-                , c4.get_green()
-                , c4.get_blue()
                 , 1 // factor
             ) ;
 

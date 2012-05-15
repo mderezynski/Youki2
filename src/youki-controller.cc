@@ -415,6 +415,7 @@ namespace MPX
 	Glib::RefPtr<Gdk::PixbufAnimation> anim = Gdk::PixbufAnimation::create_from_file(
 						    Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "album-cover-loading.gif" )) ;
 	m_AQUE_Spinner->set( anim ) ;
+	Glib::signal_timeout().connect( sigc::bind_return(sigc::mem_fun( *m_AQUE_Spinner, &Gtk::Widget::queue_draw), true), 100) ;
 
         m_HBox_Entry->pack_start( *m_Label_Search, true, true, 0 ) ;
         m_HBox_Entry->pack_start( *HBox_Navi, false, false, 0 ) ;
@@ -489,7 +490,7 @@ namespace MPX
 	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuPlaybackControlActionStartAlbumAtFavorite", "Start Albums at Favorite Track")) ; 
 	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuPlaybackControlActionContinueCurrentAlbum", "Always Continue Playing Current Album" )) ; 
 //	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuViewActionAlbumRTViewModeBottom", "Show Release Type" ), sigc::mem_fun( *this, &YoukiController::on_rt_viewmode_change  )) ; 
-	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuViewActionAlbumsShowTimeDiscsTracks", "Show Release Year and Release Label" ), sigc::mem_fun( *this, &YoukiController::handle_action_underline_matches ) ); 
+	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuViewActionAlbumsShowTimeDiscsTracks", "Show Additional Album Info" ), sigc::mem_fun( *this, &YoukiController::handle_action_underline_matches ) ); 
 
 	Glib::RefPtr<Gtk::ToggleAction> action_MOP = Gtk::ToggleAction::create( "MenuPlaybackControlActionMinimizeOnPause", "Minimize Youki on Pause" ) ;
 	m_UI_Actions_Main->add( action_MOP ) ; 
@@ -743,9 +744,9 @@ namespace MPX
                 , &YoukiController::on_list_view_ab_start_playback
         )) ;
 
-        m_HBox_Main->add_percentage( 0.15 ) ;
+        m_HBox_Main->add_percentage( 0.12 ) ;
         m_HBox_Main->add_percentage( 0.20 ) ;
-        m_HBox_Main->add_percentage( 0.65 ) ;
+        m_HBox_Main->add_percentage( 0.68 ) ;
 
         m_HBox_Main->pack_start( *m_ScrolledWinArtist, true, true, 0 ) ;
         m_HBox_Main->pack_start( *m_ScrolledWinAlbums, true, true, 0 ) ;
