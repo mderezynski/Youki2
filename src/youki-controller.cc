@@ -2,6 +2,7 @@
 #include "config.h"
 #endif 
 
+#include "youki-view-albums.hh"
 #include "youki-controller.hh"
 
 #include <tr1/random>
@@ -27,18 +28,17 @@
 #include "mpx/util-string.hh"
 
 #include "mpx/com/view-album-artist.hh"
-#include "mpx/com/view-album.hh"
 #include "mpx/com/view-tracks.hh"
 
 #include "mpx/widgets/cairo-extensions.hh"
 #include "mpx/widgets/percentual-distribution-hbox.hh"
 
-#include "mpx/i-youki-theme-engine.hh"
-
 #include "library.hh"
 #include "plugin-manager-gui.hh"
 #include "play.hh"
 #include "preferences.hh"
+
+#include "mpx/i-youki-theme-engine.hh"
 
 using boost::get ;
 
@@ -489,7 +489,6 @@ namespace MPX
 	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuViewActionUnderlineMatches", "Underline Search Matches" ), sigc::mem_fun( *this, &YoukiController::handle_action_underline_matches)) ; 
 	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuPlaybackControlActionStartAlbumAtFavorite", "Start Albums at Favorite Track")) ; 
 	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuPlaybackControlActionContinueCurrentAlbum", "Always Continue Playing Current Album" )) ; 
-//	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuViewActionAlbumRTViewModeBottom", "Show Release Type" ), sigc::mem_fun( *this, &YoukiController::on_rt_viewmode_change  )) ; 
 	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "MenuViewActionAlbumsShowTimeDiscsTracks", "Show Additional Album Info" ), sigc::mem_fun( *this, &YoukiController::handle_action_underline_matches ) ); 
 
 	Glib::RefPtr<Gtk::ToggleAction> action_MOP = Gtk::ToggleAction::create( "MenuPlaybackControlActionMinimizeOnPause", "Minimize Youki on Pause" ) ;
@@ -773,7 +772,6 @@ namespace MPX
         ))) ;
 
 	Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("MenuViewActionAlbumsShowTimeDiscsTracks"))->set_active( true ) ;
-	//Glib::RefPtr<Gtk::RadioAction>::cast_static( m_UI_Actions_Main->get_action("MenuViewActionAlbumRTViewModeBottom"))->set_active( false ) ;
 
         on_style_changed() ;
 
@@ -1048,9 +1046,6 @@ namespace MPX
     YoukiController::on_rt_viewmode_change()
     {
 	using namespace MPX::View::Albums ;
-
-	MPX::View::Albums::RTViewMode m = MPX::View::Albums::RTViewMode( int(Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("MenuViewActionAlbumRTViewModeBottom"))->get_active())) ;
-	m_ListViewAlbums->set_rt_viewmode( m?RT_VIEW_BOTTOM:RT_VIEW_NONE ) ;
     }
 
     void
@@ -1060,7 +1055,7 @@ namespace MPX
 	m_ListViewTracks->set_highlight( active ) ;
 
 	active = Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("MenuViewActionAlbumsShowTimeDiscsTracks"))->get_active() ;
-	m_ListViewAlbums->set_show_release_label( active ) ;
+	m_ListViewAlbums->set_show_additional_info( active ) ;
     }
 
     void
@@ -2078,7 +2073,7 @@ namespace MPX
 	    return ;
 
         private_->FilterModelAlbums->clear_constraints_artist() ;
-        private_->FilterModelAlbums->clear_constraints_album() ;
+        private_->FilterModelAlbums->clear_constraints_albums() ;
         private_->FilterModelAlbums->clear_all_constraints_quiet() ;
         private_->FilterModelArtist->clear_constraints_artist() ;
         private_->FilterModelTracks->clear_synthetic_constraints_quiet() ;
@@ -2127,14 +2122,12 @@ namespace MPX
         m_ListViewArtist->clear_selection() ;
 
         private_->FilterModelTracks->clear_synthetic_constraints_quiet() ;
-/*        private_->FilterModelTracks->clear_single_album_constraint_quiet() ; */
         private_->FilterModelTracks->set_filter( m_Entry->get_text() ) ;
 
         private_->FilterModelArtist->set_constraints_artist( private_->FilterModelTracks->m_constraints_artist ) ;
-/*        private_->FilterModelArtist->regen_mapping() ; */
+        private_->FilterModelArtist->regen_mapping() ;
 
         private_->FilterModelAlbums->set_constraints_albums( private_->FilterModelTracks->m_constraints_albums ) ;
-        private_->FilterModelAlbums->set_constraints_artist( private_->FilterModelTracks->m_constraints_artist ) ;
         private_->FilterModelAlbums->regen_mapping() ;
 
 	if( private_->FilterModelTracks->m_mapping->empty() )

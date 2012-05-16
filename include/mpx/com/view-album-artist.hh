@@ -218,7 +218,6 @@ namespace Artist
                     if( constraint != m_constraints_artist )
                     {
                         m_constraints_artist = constraint ;
-                        regen_mapping() ;
                     }
                 }
 

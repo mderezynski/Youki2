@@ -61,9 +61,11 @@ SET(youki_bin_SOURCES
   kobo-volume.cc
   youki-theme-engine.hh
   youki-theme-engine.cc
+  youki-view-albums.hh
+  youki-view-albums.cc
   library.cc
   library.hh
-# mpx-mlibman-dbus-proxy-actual.hh
+  mpx-mlibman-dbus-proxy-actual.hh
   ${CMAKE_CURRENT_BINARY_DIR}/mpx-mlibman-dbus-proxy.hh
   ${CMAKE_CURRENT_BINARY_DIR}/mpx-app-dbus-adaptor.hh
   markov-analyzer-thread.cc
