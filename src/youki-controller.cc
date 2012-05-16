@@ -2,8 +2,11 @@
 #include "config.h"
 #endif 
 
-#include "youki-view-albums.hh"
 #include "youki-controller.hh"
+
+#include "youki-view-albums.hh"
+#include "youki-view-artist.hh"
+#include "mpx/com/view-tracks.hh"
 
 #include <tr1/random>
 
@@ -26,9 +29,6 @@
 #include "mpx/mpx-stock.hh"
 
 #include "mpx/util-string.hh"
-
-#include "mpx/com/view-album-artist.hh"
-#include "mpx/com/view-tracks.hh"
 
 #include "mpx/widgets/cairo-extensions.hh"
 #include "mpx/widgets/percentual-distribution-hbox.hh"
@@ -638,7 +638,7 @@ namespace MPX
 
 	    m_ListViewArtist->set_model( private_->FilterModelArtist ) ;
 
-	    View::Artist::Column_sp c1 (new View::Artist::Column(_("Album Artist"))) ;
+	    View::Artist::Column_sp c1 (new View::Artist::Column) ;
 	    c1->set_column(0) ;
 	    m_ListViewArtist->append_column(c1) ;
 

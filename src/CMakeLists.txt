@@ -63,6 +63,8 @@ SET(youki_bin_SOURCES
   youki-theme-engine.cc
   youki-view-albums.hh
   youki-view-albums.cc
+  youki-view-artist.hh
+  youki-view-artist.cc
   library.cc
   library.hh
   mpx-mlibman-dbus-proxy-actual.hh

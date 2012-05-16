@@ -17,9 +17,6 @@
 
 #include "library.hh"
 
-#undef PACKAGE
-#define PACKAGE "youki"
-
 using boost::get;
 using namespace MPX;
 using namespace MPX::SQL;
@@ -146,6 +143,8 @@ MPX::ArtistImages::on_recache_images ()
             }
         }
     }
+
+    g_message("%s: Done recaching artists.") ;
 }
 
 void
