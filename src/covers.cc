@@ -144,8 +144,8 @@ namespace MPX
 	, Glib::RefPtr<Gdk::Pixbuf> 	cover
     )
     {
+	g_message("%s: Saving cover for %s", G_STRLOC, mbid.c_str()) ;
         cover->save( get_thumb_path( mbid ), "png" ) ;
-
         m_pixbuf_cache[mbid] = cover ;
     }
 
@@ -307,6 +307,7 @@ namespace MPX
             {
                     try{
                       cover = Gdk::Pixbuf::create_from_file( thumb_path )->scale_simple( size, size, Gdk::INTERP_BILINEAR ) ; 
+		      g_message("%s: Saving cover for %s", G_STRLOC, mbid.c_str()) ;
                       cover->save( get_thumb_path( mbid ), "png" );
                       m_pixbuf_cache.insert( std::make_pair( mbid, cover )) ;
                       return true;

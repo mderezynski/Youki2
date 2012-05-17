@@ -42,29 +42,31 @@ namespace MPX
     : m_url   (url)
     , m_post  (post)
     {
-      m_session = soup_session_sync_new ();
-      m_message = soup_message_new (m_post ? "POST" : "GET", m_url.c_str());
+      m_session = soup_session_sync_new_with_options("timeout",10000000,NULL) ;
+      m_message = soup_message_new(m_post ? "POST" : "GET", m_url.c_str()) ;
     }
     
     Glib::RefPtr<RequestSync>
-    RequestSync::create (std::string const& url, bool post)
+    RequestSync::create(std::string const& url, bool post)
     {
       return Glib::RefPtr<RequestSync>(new RequestSync (url, post));  
     }
 
     guint
-    RequestSync::run ()
+    RequestSync::run()
     {
-      //g_signal_connect (G_OBJECT (m_message), "got-chunk", G_CALLBACK (got_chunk), this);
-      //g_signal_connect (G_OBJECT (m_message), "restarted", G_CALLBACK (restarted), this);
-      soup_message_add_header_handler (m_message, "got-headers", "content-length", 
-                                       GCallback (got_content_length), this);
-      return soup_session_send_message (m_session, m_message);
+      //g_signal_connect(G_OBJECT(m_message), "got-chunk", G_CALLBACK(got_chunk), this ) ;
+      //g_signal_connect(G_OBJECT(m_message), "restarted", G_CALLBACK(restarted), this ) ;
+
+      soup_message_add_header_handler(m_message, "got-headers", "content-length", GCallback(got_content_length), this) ;
+                                      
+      return soup_session_send_message( m_session, m_message ) ;
     }
   
     RequestSync::~RequestSync ()
     {
-      g_object_unref (m_session);
+      g_object_unref(m_message);
+      g_object_unref(m_session);
     }
 
 
@@ -114,30 +116,34 @@ namespace MPX
     void
     RequestSync::restarted (SoupMessage* message, gpointer data)
     {
-      RequestSync & request = (*(reinterpret_cast<RequestSync*>(data)));
-
+      RequestSync& request = *(reinterpret_cast<RequestSync*>(data)) ;
       request.m_read = 0;
       request.m_size = 0;
     }
 
     void
-    RequestSync::got_chunk (SoupMessage* message, gpointer data)
+    RequestSync::got_chunk(SoupMessage* message, gpointer data)
     {
-      RequestSync & request = (*(reinterpret_cast<RequestSync*>(data)));
+      RequestSync& request = *(reinterpret_cast<RequestSync*>(data)) ;
 
       request.m_read += message->response_body->length;
-      double percent = (double (request.m_read) / double (request.m_size));
+
+      double percent  = double(request.m_read) / double(request.m_size) ;
+
       if(percent >= 0. && percent <= 1.)
       {
-        request.Signals.Progress.emit (percent);
+	SoupURI * uri = soup_message_get_uri(message) ;
+	Glib::ScopedPtr<char> s (soup_uri_to_string(uri,FALSE)) ;
+	g_message("%s: Progress for [%s] (%f)", G_STRLOC, s.get(), percent) ;
+	request.Signals.Progress.emit(percent) ;
       }
     }
 
     void
-    RequestSync::got_content_length (SoupMessage* message, gpointer data)
+    RequestSync::got_content_length(SoupMessage* message, gpointer data)
     {
-      RequestSync & request = (*(reinterpret_cast<RequestSync*>(data)));
-      request.m_size = g_ascii_strtoull (soup_message_headers_get (message->response_headers, "content-length"), NULL, 10);
+      RequestSync& request = *(reinterpret_cast<RequestSync*>(data)) ;
+      request.m_size = g_ascii_strtoull(soup_message_headers_get(message->response_headers, "content-length"), NULL, 10) ;
     }
 
 
@@ -145,10 +151,12 @@ namespace MPX
     // Default Request                 //
     /////////////////////////////////////
 
-    Request::Request (std::string const& url, bool post)
-    : m_post        (post)
-    , m_url         (url)
-    , m_block_reply (false)
+    Request::Request(std::string const& url, bool post)
+
+	: m_post        (post)
+	, m_url         (url)
+	, m_block_reply (false)
+
     {
       m_session = soup_session_async_new ();
       m_message = soup_message_new (m_post ? "POST" : "GET", m_url.c_str());

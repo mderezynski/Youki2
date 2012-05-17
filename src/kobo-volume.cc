@@ -226,7 +226,7 @@ namespace MPX
 	    layout->get_extents( rl, ri ) ;
 
             // Render Text Shadow
-            Cairo::RefPtr<Cairo::ImageSurface> s = Cairo::ImageSurface::create( Cairo::FORMAT_A8, PSA(ri.get_width()), PSA(ri.get_height())) ;
+            Cairo::RefPtr<Cairo::ImageSurface> s = Cairo::ImageSurface::create( Cairo::FORMAT_ARGB32, PSA(ri.get_width()), PSA(ri.get_height())) ;
             Cairo::RefPtr<Cairo::Context> c2 = Cairo::Context::create( s ) ;
 
             c2->set_operator( Cairo::OPERATOR_CLEAR ) ;

@@ -273,7 +273,7 @@ namespace MPX
 	    layout->get_pixel_size( width, height ) ;
 
 	    // Render text shadow surface
-	    Cairo::RefPtr<Cairo::ImageSurface> s2 = Cairo::ImageSurface::create( Cairo::FORMAT_A8, width, height ) ;
+	    Cairo::RefPtr<Cairo::ImageSurface> s2 = Cairo::ImageSurface::create( Cairo::FORMAT_ARGB32, width, height ) ;
 	    Cairo::RefPtr<Cairo::Context> cairo2 = Cairo::Context::create( s2 ) ;
 
 	    cairo2->set_operator( Cairo::OPERATOR_CLEAR ) ;

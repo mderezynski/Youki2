@@ -347,6 +347,11 @@ namespace MPX
     {
         const ThemeColor& cgdk = get_color( THEME_COLOR_SELECT ) ;
 
+	cairo->save() ;
+
+	cairo->rectangle( r.x, r.y, r.width, r.height ) ;
+	cairo->clip() ;
+
         cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 
         Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create(
@@ -413,6 +418,8 @@ namespace MPX
 	Gdk::Cairo::set_source_rgba( cairo, Util::make_rgba(cgdk,alpha)) ;
         cairo->set_line_width( 0.75 ) ; 
         cairo->stroke () ;
+
+	cairo->restore() ;
     }
 
     void

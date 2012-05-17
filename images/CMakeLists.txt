@@ -1,12 +1,13 @@
 INSTALL(
   FILES album-cover-loading.gif
         disc.png
+	new.png
+	artist.png
         emblem-compilation.png
         emblem-soundtrack.png
         jewelcase_bot.png
         jewelcase_top.png
 	mute-small-14x14px.png
-	new.png
         splash.png
 	youki-mlibman128x128.png
         youki512x512.png

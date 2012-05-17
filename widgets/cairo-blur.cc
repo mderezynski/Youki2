@@ -76,7 +76,7 @@ blur_image_surface (cairo_surface_t *surface,
 
         /* create pixman image for cairo image surface */
         p = cairo_image_surface_get_data (surface);
-        src = pixman_image_create_bits (PIXMAN_a8, w, h, (uint32_t*)p, s);
+        src = pixman_image_create_bits (PIXMAN_a8r8g8b8, w, h, (uint32_t*)p, s);
 
         /* attach gaussian kernel to pixman image */
         params = create_gaussian_blur_kernel (radius, sigma, &n_params);
@@ -85,12 +85,12 @@ blur_image_surface (cairo_surface_t *surface,
 
         /* render blured image to new pixman image */
         p = g_malloc0 (s * h);
-        dst = pixman_image_create_bits (PIXMAN_a8, w, h, (uint32_t*)p, s);
+        dst = pixman_image_create_bits (PIXMAN_a8r8g8b8, w, h, (uint32_t*)p, s);
         pixman_image_composite (PIXMAN_OP_SRC, src, NULL, dst, 0, 0, 0, 0, 0, 0, w, h);
         pixman_image_unref (src);
 
         /* create new cairo image for blured pixman image */
-        surface = cairo_image_surface_create_for_data((unsigned char*)p, CAIRO_FORMAT_A8, w, h, s);
+        surface = cairo_image_surface_create_for_data((unsigned char*)p, CAIRO_FORMAT_ARGB32, w, h, s);
         cairo_surface_set_user_data (surface, &data_key, p, g_free);
         pixman_image_unref (dst);
 
@@ -122,7 +122,7 @@ render_text_shadow(
     int width, height ;
     layout->get_pixel_size( width, height ) ;
 
-    Cairo::RefPtr<Cairo::ImageSurface> s = Cairo::ImageSurface::create( Cairo::FORMAT_A8, width, height ) ; 
+    Cairo::RefPtr<Cairo::ImageSurface> s = Cairo::ImageSurface::create( Cairo::FORMAT_ARGB32, width, height ) ; 
     Cairo::RefPtr<Cairo::Context> c2 = Cairo::Context::create( s ) ;
 
     c2->set_operator( Cairo::OPERATOR_CLEAR ) ;

@@ -152,14 +152,10 @@ namespace MPX
     static boost::format lastfm_no_MBID_f ("http://ws.audioscrobbler.com/2.0/?method=album.getinfo&artist=%s&album=%s&api_key=ff56d530598d65c1a4088e57da7be2f9");
     static boost::format lastfm_MBID_f ("http://ws.audioscrobbler.com/2.0/?method=album.getinfo&artist=%s&album=%s&mbid=%s&api_key=ff56d530598d65c1a4088e57da7be2f9");
 
-	if( rql.mbid.substr(0,3) != "mpx" )
-	{
+	if( rql.mbid.substr(0,4) != "mpx-" )
         	return (lastfm_MBID_f % (URI::escape_string(rql.artist)) % (URI::escape_string(rql.album)) % (URI::escape_string(rql.mbid))).str();
-	}
 	else
-	{
         	return (lastfm_no_MBID_f % (URI::escape_string(rql.artist)) % (URI::escape_string(rql.album))).str();
-	}
     }
  
     void
@@ -186,32 +182,37 @@ namespace MPX
                     "" 
                 ); 
 
+		if( album.empty() )
+		{
+		    request_failed() ;
+		    return ;
+		}
+
 		Glib::ustring utf8_album = Glib::ustring(album).lowercase() ;
 		Glib::ustring utf8_album_rql = Glib::ustring(rql.album).lowercase() ;
 
 		std::size_t ld = ld_distance<Glib::ustring>( utf8_album, utf8_album_rql ) ;
 
-		g_message("LastFMCovers: Qualifier['%s'] XML['%s'], LD: %u", rql.album.c_str(), album.c_str(), ld ) ;
-
                 if( ld > 0 )
                 {
+		    request_failed() ;
                     return;
                 }
 	    }
             catch( std::runtime_error& ) {}
 
-	    const char *sizes[] = { "extralarge", "large", "normal" } ;
+	    std::vector<std::string> sizes { "extralarge", "large", "normal" } ;
 
-	    for( int n = 0 ; n < 3 ; ++n )
+	    for( auto& s : sizes ) 
             {
                 try
                 {
                     std::string image_url = xpath_get_text(
                         request->get_data_raw(),
                         request->get_data_size(),
-                        (boost::format("//image[@size='%s']") % sizes[n]).str().c_str(),
+                        (boost::format("//image[@size='%s']") % s).str().c_str(),
                         ""
-                    ); 
+                    ) ;
 
 		    if(!image_url.empty())
 		    {
@@ -225,7 +226,7 @@ namespace MPX
             }
         }
 
-	g_message("LastFMCovers: @@ No Cover.") ;
+	g_message("LastFMCovers: No Cover.") ;
 	request_failed() ;
     }
 
@@ -239,7 +240,7 @@ namespace MPX
     MusicBrainzCovers::get_url(const RequestQualifier& rql)
     {
 
-	static boost::format mbxml_f ("http://www.uk.musicbrainz.org/ws/1/release/%s?type=xml&inc=url-rels");
+	static boost::format mbxml_f ("http://www.musicbrainz.org/ws/1/release/%s?type=xml&inc=url-rels");
 
         return (mbxml_f % rql.mbid).str();
     }
@@ -247,7 +248,11 @@ namespace MPX
     void
     MusicBrainzCovers::load_artwork(const RequestQualifier& rql)
     {
-        request = Soup::RequestSync::create( get_url( rql ));
+	std::string url = get_url( rql ) ;
+
+	g_message("%s: MusicBrainzCovers:URL [%s]",G_STRLOC,url.c_str()) ;
+
+        request = Soup::RequestSync::create(url) ;
 
 	int code = request->run() ;
 
@@ -263,14 +268,33 @@ namespace MPX
 		    "/mb:metadata/mb:release/mb:relation-list//mb:relation[@type='CoverArtLink']/@target",
 		    "mb=http://musicbrainz.org/ns/mmd-1.0# ext=http://musicbrainz.org/ns/ext-1.0#"
 		); 
-
-                g_message("MusicBrainzCovers: image_url:['%s']", image_url.c_str() ) ;
 	    }
             catch( std::runtime_error& ) {}
 
-            RemoteStore::fetch_image( image_url, rql ) ;
+	    if( !image_url.empty() )
+	    {
+		RemoteStore::fetch_image( image_url, rql ) ;
+		return ;
+	    }
+	    // try ASIN
 
-	    return ;
+	    std::string asin ;
+
+	    try{
+		asin = xpath_get_text(
+		    request->get_data_raw(),
+		    request->get_data_size(),
+		    "/mb:metadata/mb:release/mb:asin",
+		    "mb=http://musicbrainz.org/ns/mmd-1.0# ext=http://musicbrainz.org/ns/ext-1.0#"
+		); 
+	    }catch( std::runtime_error& ) {}
+
+	    if( !asin.empty() )
+	    {
+		image_url = (boost::format("http://images.amazon.com/images/P/%s.01.LZZZZZZZ.jpg") % asin).str() ;
+		RemoteStore::fetch_image( image_url, rql ) ;
+		return ;
+	    }
         }
 
 	request_failed() ;
@@ -307,6 +331,7 @@ namespace MPX
         {
             try{
                 Glib::RefPtr<Gdk::Pixbuf> cover = Gdk::Pixbuf::create_from_file( coverart_filename );
+		g_message("%s: LocalCovers: saving", G_STRLOC) ;
                 m_SIGNAL.emit( rql.mbid, cover );
                 m_state = FETCH_STATE_COVER_SAVED ;
             }
@@ -364,8 +389,8 @@ namespace MPX
 				    loader->write (reinterpret_cast<const guint8*>(picdata.data()), picdata.size());
 				    loader->close ();
 				    cover = loader->get_pixbuf();
-				    m_SIGNAL.emit( rql.mbid, cover );
 				    g_message("InlineCovers: Saved cover for MBID ['%s']", rql.mbid.c_str()) ;
+				    m_SIGNAL.emit( rql.mbid, cover );
 				    m_state = FETCH_STATE_COVER_SAVED ; 
 				    return ;
 				}

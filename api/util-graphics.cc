@@ -566,6 +566,7 @@ namespace MPX
         , double                                x
         , double                                y
         , double                                alpha
+	, double				r
     )
     {
         cairo->save() ;
@@ -574,7 +575,7 @@ namespace MPX
 
         cairo->set_operator( Cairo::OPERATOR_ATOP ) ;
         cairo->set_source( image, 0.0, 0.0 ) ;
-        cairo->rectangle( 0.0, 0.0, image->get_width(), image->get_height() ) ;
+        RoundedRectangle( cairo, 0.0, 0.0, image->get_width(), image->get_height(), r ) ;
         cairo->clip() ;
         cairo->paint_with_alpha( alpha ) ;
 

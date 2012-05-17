@@ -201,7 +201,6 @@ namespace Albums
 		if( album )
 		{
 		    album->caching = false ;
-		    m_SIGNAL__cover_updated.emit( id ) ;
 		    m_SIGNAL__redraw.emit() ;
 		}
 	    }
@@ -434,8 +433,8 @@ namespace Albums
 
 	Column::Column(
 	)
-	: m_width( 0 )
-	, m_column( 0 )
+	: m_width(0)
+	, m_column(0)
 	, m_show_additional_info( false )
 	{
 	    m_image_disc = Util::cairo_image_surface_from_pixbuf(
@@ -451,6 +450,8 @@ namespace Albums
 					    Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "album-cover-loading.gif" )) ;
 
 	    m_image_album_loading_iter = m_image_album_loading->get_iter( NULL ) ;
+
+	    m_rect_shadow = render_rect_shadow( 90, 90 ) ;
 	}
 
 	void
@@ -514,18 +515,14 @@ namespace Albums
 	    return s ;
 	}
 
-	void
+	Cairo::RefPtr<Cairo::ImageSurface>
 	Column::render_rect_shadow(	
-	      guint x
-	    , guint y
-	    , guint w
+	      guint w
 	    , guint h
-	    , double r
-	    , const Cairo::RefPtr<Cairo::Context>& cairo
 	)
 	{
-	    Cairo::RefPtr<Cairo::ImageSurface> s = Cairo::ImageSurface::create( Cairo::FORMAT_A8, w+2, h+2 ) ;
-	    Cairo::RefPtr<Cairo::Context> c2 = Cairo::Context::create( s ) ;
+	    Cairo::RefPtr<Cairo::ImageSurface> s = Cairo::ImageSurface::create( Cairo::FORMAT_ARGB32, w+2, h+2 ) ;
+	    Cairo::RefPtr<Cairo::Context> c2 = Cairo::Context::create(s) ;
 
 	    c2->set_operator( Cairo::OPERATOR_CLEAR ) ;
 	    c2->paint() ;
@@ -535,18 +532,12 @@ namespace Albums
 		      0 
 		    , 0 
 		    , 0 
-		    , 0.45 
+		    , 0.35 
 	    ) ;
-	    RoundedRectangle( c2, 0, 0, w, h, rounding ) ;
+	    c2->rectangle(0, 0, w, h) ;
 	    c2->fill() ;
 	    Util::cairo_image_surface_blur( s, 2.5 ) ;
-	    cairo->move_to(
-		  x 
-		, y 
-	    ) ;
-	    cairo->set_source( s, x, y ) ;
-	    cairo->rectangle( x, y, w+2, h+2 ) ;
-	    cairo->fill() ;
+	    return s ;
 	}
 
 	void
@@ -592,7 +583,7 @@ namespace Albums
 	    if( !album->caching )
 	    {
 		time_t now = time(NULL) ;
-		Range<time_t> WithinPastDay (now-(24*60*60), now) ;
+		Range<time_t> WithinPastDay(now-(24*60*60), now) ;
 
 		if( !album->surface_cache ) 
 		{
@@ -601,36 +592,36 @@ namespace Albums
 
 		if( album->coverart )
 		{
-		    render_rect_shadow( ((m_width-90)/2)+2, r.y+4, 90, 90, 4., cairo ) ;
+		    Util::draw_cairo_image( cairo, m_rect_shadow, (m_width-90)/2.+2, r.y+4, 1., 0 ) ;
 		}
 
-		cairo->set_source( album->surface_cache, ((m_width-94)/2), r.y ) ;
-		cairo->rectangle( ((m_width-94)/2), r.y , 94, 94 ) ;
-		cairo->fill() ;
+		/* The actual coverart surface cache */
+		Util::draw_cairo_image( cairo, album->surface_cache, (m_width-94)/2., r.y, 1., 0 ) ;
 
 		if( album->coverart )
 		{
-		    Gdk::Cairo::set_source_rgba(cairo, c2) ;
+		    cairo->save();
+		    cairo->translate((m_width-90)/2.,r.y+2) ;
 		    RoundedRectangle(
 			  cairo
-			, (m_width-90)/2. 
-			, r.y+2
+			, 0 
+			, 0 
 			, 90
 			, 90
 			, rounding 
 		    ) ;
 		    cairo->set_line_width( 1.5 ) ; 
+		    Gdk::Cairo::set_source_rgba(cairo, c2) ;
 		    cairo->stroke() ;
+		    cairo->restore() ;
 		}
 
 		/* 'new' */
 		if( WithinPastDay( album->insert_date ))
 		{
-		    int x = ((m_width-94)/2.) - 9 ; 
+		    int x = (m_width-94)/2. - 9 ; 
 		    int y = r.y + 10 ; 
-		    cairo->set_source( m_image_new, x, y ) ; 
-		    cairo->rectangle( x, y, m_image_new->get_width(), m_image_new->get_height() ) ; 
-		    cairo->fill() ;
+		    Util::draw_cairo_image( cairo, m_image_new, x, y, 1., 0 ) ;
 		}
 	    }
 	    else
@@ -1005,8 +996,8 @@ namespace Albums
 
 		case GDK_KEY_Home:
 		{
-		    select_index( 0 ) ;
-		    scroll_to_index( 0 ) ;
+		    select_index(0) ;
+		    scroll_to_index(0) ;
 
 		    return true ;
 		}
@@ -1701,7 +1692,7 @@ namespace Albums
 	void
 	Class::on_refetch_album_cover()
 	{
-	    if( m_selection && boost::get<Selection::INDEX>(m_selection.get()) != 0 )
+	    if( m_selection ) 
 	    {
 		set_has_tooltip(false) ;
 		while(gtk_events_pending()) gtk_main_iteration() ;

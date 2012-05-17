@@ -174,7 +174,7 @@ namespace MPX
         , Cairo::RefPtr<Cairo::ImageSurface>    /*overlay*/
         , double                                /*x*/
         , double                                /*y*/
-        , double                                alpha = 1.
+        , double                                /*alpha*/ = 1.
     ) ; 
 
     void
@@ -183,7 +183,8 @@ namespace MPX
         , Cairo::RefPtr<Cairo::ImageSurface>    /*image*/
         , double                                /*x*/
         , double                                /*y*/
-        , double                                /*alpha*/
+        , double                                /*alpha*/ = 1.
+	, double				/*r*/ = 0 
     ) ;
 
     Gdk::RGBA

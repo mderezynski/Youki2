@@ -300,6 +300,7 @@ namespace Albums
 
                 Cairo::RefPtr<Cairo::ImageSurface>  m_image_disc ;
                 Cairo::RefPtr<Cairo::ImageSurface>  m_image_new ;
+                Cairo::RefPtr<Cairo::ImageSurface>  m_rect_shadow ;
 
 		Glib::RefPtr<Gdk::PixbufAnimation>     m_image_album_loading ;
 		Glib::RefPtr<Gdk::PixbufAnimationIter> m_image_album_loading_iter ;
@@ -331,14 +332,10 @@ namespace Albums
 		    , guint				    width 
 		) ;
 
-		void
+		Cairo::RefPtr<Cairo::ImageSurface>	
 		render_rect_shadow(	
-		      guint x
-		    , guint y
-		    , guint w
+		      guint w
 		    , guint h
-		    , double r
-		    , const Cairo::RefPtr<Cairo::Context>& cairo
 		) ;
 
 	    public:

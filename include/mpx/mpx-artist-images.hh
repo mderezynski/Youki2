@@ -66,8 +66,10 @@ namespace MPX
             sigx::request_f<>
             recache_images ;
 
-            sigx::request_f<const std::string&>
-            get_image ;
+	    Glib::RefPtr<Gdk::Pixbuf>
+            get_image(
+		const std::string&
+	    ) ;
 
         protected:
 
@@ -87,7 +89,7 @@ namespace MPX
             void
             on_recache_images () ;
 
-            void
+	    Glib::RefPtr<Gdk::Pixbuf>
             on_get_image(
                   const std::string&
             ) ;
@@ -97,6 +99,7 @@ namespace MPX
             Glib::RefPtr<Gdk::Pixbuf>
             get_image_by_mbid(
                 const std::string&
+	      , const std::string&
             );
 
             PixbufCache_t     m_pixbuf_cache;

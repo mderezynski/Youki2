@@ -13,6 +13,7 @@
 #include "mpx/util-string.hh"
 #include "mpx/util-graphics.hh"
 #include "mpx/util-file.hh"
+#include "mpx/mpx-uri.hh"
 #include "xmlcpp/xsd-artist-info-2.0.hxx"
 
 #include "library.hh"
@@ -47,13 +48,6 @@ MPX::ArtistImages::ArtistImages(
             )
   )
 
-, get_image(
-            sigc::mem_fun(
-                *this,
-                &ArtistImages::on_get_image
-            )
-  )
-
 , m_SQL(new SQL::SQLDB(*(services->get<Library>("mpx-service-library")->get_sql_db())))
 
 {
@@ -73,7 +67,8 @@ MPX::ArtistImages::on_cleanup ()
 
 Glib::RefPtr<Gdk::Pixbuf>
 MPX::ArtistImages::get_image_by_mbid(
-    const std::string& mbid
+      const std::string& mbid
+    , const std::string& name
 )
 {
     Glib::RefPtr<Gdk::Pixbuf> artist_image ;
@@ -84,9 +79,20 @@ MPX::ArtistImages::get_image_by_mbid(
         using boost::algorithm::is_any_of;
         using boost::algorithm::find_first;
 
-        MPX::XmlInstance<LastFMArtistInfo::lfm> lfm ((boost::format("http://ws.audioscrobbler.com/2.0/?method=artist.getinfo&mbid=%s&api_key=37cd50ae88b85b764b72bb4fe4041fe4") % mbid).str());
+	std::string url ;
 
-        const std::string& image_url = *(lfm.xml().artist().image().begin());
+	if( mbid.substr(0,4) == "mpx-" )
+	{
+	    url = (boost::format("http://ws.audioscrobbler.com/2.0/?method=artist.getinfo&artist=%s&api_key=37cd50ae88b85b764b72bb4fe4041fe4") % URI::escape_string(name)).str() ;
+	}
+	else
+	{
+	    url = (boost::format("http://ws.audioscrobbler.com/2.0/?method=artist.getinfo&mbid=%s&api_key=37cd50ae88b85b764b72bb4fe4041fe4") % mbid).str() ;
+	}
+
+        MPX::XmlInstance<LastFMArtistInfo::lfm> xml (url) ; 
+
+        const std::string& image_url = *(xml.xml().artist().image().begin());
 
         StrV m;
 
@@ -102,7 +108,7 @@ MPX::ArtistImages::get_image_by_mbid(
 }
 
 void
-MPX::ArtistImages::on_recache_images ()
+MPX::ArtistImages::on_recache_images()
 {
     ThreadData * pthreaddata = m_ThreadData.get();
 
@@ -110,44 +116,62 @@ MPX::ArtistImages::on_recache_images ()
     
     m_SQL->get(
               v
-            , "SELECT mb_album_artist_id FROM album_artist WHERE is_mb_album_artist = '1'"
+            , "SELECT album_artist, mb_album_artist_id FROM album_artist"
     );
-
 
     for( SQL::RowV::iterator i = v.begin(); i != v.end(); ++i )
     {
         using boost::get;
 
         const std::string& mbid = get<std::string>((*i)["mb_album_artist_id"]);
-        const std::string& image_filename = build_filename( m_base_path, mbid + std::string(".png" ));
+	const std::string& name = get<std::string>((*i)["album_artist"]);
 
-        if( !file_test( image_filename, FILE_TEST_EXISTS )) 
+        const std::string& thumb_path = build_filename( m_base_path, mbid + std::string(".png" ));
+
+        if( !file_test( thumb_path, FILE_TEST_EXISTS )) 
         {
-                Glib::RefPtr<Gdk::Pixbuf> artist_image = get_image_by_mbid( mbid );
+                Glib::RefPtr<Gdk::Pixbuf> artist_image = get_image_by_mbid( mbid, name );
 
                 if( artist_image )
                 {
-                    artist_image->save( image_filename, "png" );
+                    artist_image->save( thumb_path, "png" );
                     m_pixbuf_cache.insert( std::make_pair( mbid, artist_image ));
                     pthreaddata->GotArtistImage.emit( mbid, artist_image );
                 }
         }
         else
         {
-            const std::string& image_filename = build_filename( m_base_path, mbid + std::string(".png" ));
-            Glib::RefPtr<Gdk::Pixbuf> artist_image = Gdk::Pixbuf::create_from_file( image_filename ); 
+            const std::string& thumb_path = build_filename( m_base_path, mbid + std::string(".png" ));
+            Glib::RefPtr<Gdk::Pixbuf> artist_image = Gdk::Pixbuf::create_from_file( thumb_path ); 
             if( artist_image )
             {
                 m_pixbuf_cache.insert( std::make_pair( mbid, artist_image ));
                 pthreaddata->GotArtistImage.emit( mbid, artist_image );
             }
         }
+
+	g_message("%s: Processed %u", G_STRLOC, std::distance( v.begin(), i)) ;
     }
 
-    g_message("%s: Done recaching artists.") ;
+    g_message("%s: Done recaching artists.", G_STRLOC) ;
 }
 
-void
+Glib::RefPtr<Gdk::Pixbuf>
+MPX::ArtistImages::get_image(
+    const std::string& mbid
+)
+{
+    return sigx::open_sync_tunnel(
+		sigc::bind(
+		sigc::mem_fun(
+			*this
+		      , &ArtistImages::on_get_image
+		)
+		, mbid
+    ))() ;
+}
+
+Glib::RefPtr<Gdk::Pixbuf>
 MPX::ArtistImages::on_get_image (
     const std::string& mbid
 )
@@ -156,16 +180,20 @@ MPX::ArtistImages::on_get_image (
 
     if( m_pixbuf_cache.find( mbid ) == m_pixbuf_cache.end() )
     {
-        const std::string& image_filename = build_filename( m_base_path, mbid + std::string(".png" ));
-        Glib::RefPtr<Gdk::Pixbuf> artist_image = Gdk::Pixbuf::create_from_file( image_filename ); 
-        if( artist_image )
-        {
-            m_pixbuf_cache.insert( std::make_pair( mbid, artist_image ));
-            pthreaddata->GotArtistImage.emit( mbid, artist_image );
-        }
+        const std::string& thumb_path = build_filename( m_base_path, mbid + std::string(".png" ));
+	try{
+	    Glib::RefPtr<Gdk::Pixbuf> artist_image = Gdk::Pixbuf::create_from_file( thumb_path ); 
+	    if( artist_image )
+	    {
+		m_pixbuf_cache.insert( std::make_pair( mbid, artist_image ));
+		return artist_image ;
+	    }
+	} catch( Glib::FileError ) {}
     }
     else
     {
-        pthreaddata->GotArtistImage.emit( mbid, m_pixbuf_cache.find( mbid )->second );
+        return m_pixbuf_cache.find( mbid )->second ;
     }
+
+    return Glib::RefPtr<Gdk::Pixbuf>(0) ;
 }

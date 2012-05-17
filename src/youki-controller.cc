@@ -743,9 +743,9 @@ namespace MPX
                 , &YoukiController::on_list_view_ab_start_playback
         )) ;
 
-        m_HBox_Main->add_percentage( 0.12 ) ;
+        m_HBox_Main->add_percentage( 0.15 ) ;
         m_HBox_Main->add_percentage( 0.20 ) ;
-        m_HBox_Main->add_percentage( 0.68 ) ;
+        m_HBox_Main->add_percentage( 0.65 ) ;
 
         m_HBox_Main->pack_start( *m_ScrolledWinArtist, true, true, 0 ) ;
         m_HBox_Main->pack_start( *m_ScrolledWinAlbums, true, true, 0 ) ;
@@ -858,8 +858,6 @@ namespace MPX
     void
     YoukiController::preload__artists()
     {
-	private_->FilterModelArtist->append_artist("");
-
 	SQL::RowV v ;
 	m_library->getSQL(v, (boost::format("SELECT * FROM album_artist")).str()) ; 
 	std::stable_sort( v.begin(), v.end(), CompareAlbumArtists ) ;
@@ -868,6 +866,7 @@ namespace MPX
 	{
 	    private_->FilterModelArtist->append_artist(
 		  Util::row_get_album_artist_name( r )
+		, boost::get<std::string>(r["mb_album_artist_id"])
 		, boost::get<guint>(r["id"])
 	    ) ;
 	}
@@ -1250,6 +1249,7 @@ namespace MPX
 
         private_->FilterModelArtist->insert_artist(
               boost::get<std::string>(v[0]["album_artist"])
+            , boost::get<std::string>(v[0]["mb_album_artist_id"])
             , id 
         ) ; 
 
@@ -2098,13 +2098,11 @@ namespace MPX
 
         private_->FilterModelArtist->regen_mapping() ;
         m_ListViewArtist->scroll_to_index(0) ;
-        m_ListViewArtist->select_index(0) ;
 
         private_->FilterModelAlbums->regen_mapping() ;
         m_ListViewAlbums->scroll_to_index(0) ;
-        //m_ListViewAlbums->select_index(0) ;
 
-	private_->FilterModelTracks->regen_mapping() ;
+	//private_->FilterModelTracks->regen_mapping() ;
 
         m_conn1.unblock() ;
         m_conn2.unblock() ;
@@ -2125,10 +2123,10 @@ namespace MPX
         private_->FilterModelTracks->set_filter( m_Entry->get_text() ) ;
 
         private_->FilterModelArtist->set_constraints_artist( private_->FilterModelTracks->m_constraints_artist ) ;
-        private_->FilterModelArtist->regen_mapping() ;
-
         private_->FilterModelAlbums->set_constraints_albums( private_->FilterModelTracks->m_constraints_albums ) ;
-        private_->FilterModelAlbums->regen_mapping() ;
+
+	private_->FilterModelAlbums->regen_mapping() ;
+        private_->FilterModelArtist->regen_mapping() ;
 
 	if( private_->FilterModelTracks->m_mapping->empty() )
 	{

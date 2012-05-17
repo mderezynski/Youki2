@@ -45,6 +45,7 @@ ADD_CUSTOM_COMMAND(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/mpx-app-dbus-adaptor.hh
 )
 
 SET(youki_bin_SOURCES
+  artist-images.cc
   covers.cc
   covers-stores.cc
   glib-marshalers.h

@@ -33,6 +33,8 @@
 
 #include "mpx/com/indexed-list.hh"
 
+#include "mpx/mpx-artist-images.hh"
+
 using boost::get ;
 
 namespace
@@ -48,7 +50,16 @@ namespace View
 {
 namespace Artist
 {
-        typedef boost::tuple<std::string, boost::optional<guint> > Row_t ;
+        typedef boost::tuple<std::string, boost::optional<guint>, std::string, Cairo::RefPtr<Cairo::ImageSurface>, Cairo::RefPtr<Cairo::ImageSurface>> Row_t ;
+
+	enum class RowDatum : unsigned int
+	{
+	      R_ARTIST
+	    , R_ID
+	    , R_MBID
+	    , R_ICON
+	    , R_ICON_DESATURATED
+	} ;
 
         typedef IndexedList<Row_t>                         Model_t ;
         typedef boost::shared_ptr<Model_t>                 Model_sp ;
@@ -94,6 +105,13 @@ namespace Artist
 
                 Signal_1	    m_SIGNAL__changed ;
 
+		ArtistImages	  * m_ArtistImages ;
+
+		Glib::RefPtr<Gdk::Pixbuf>	
+		get_icon(
+		    const std::string& mbid
+		) ;
+
 	    public:
 
                 DataModel() ;
@@ -128,12 +146,14 @@ namespace Artist
                 virtual void
                 append_artist(
                       const std::string&	    artist
+		    , const std::string&	    artist_mbid
                     , const boost::optional<guint>& artist_id = boost::optional<guint>()
                 ) ;
 
                 virtual void
                 insert_artist(
                       const std::string&	    artist
+		    , const std::string&	    artist_mbid
                     , const boost::optional<guint>& artist_id = boost::optional<guint>()
                 ) ;
         } ;
@@ -185,12 +205,14 @@ namespace Artist
                 virtual void
                 append_artist(
                       const std::string&	    artist
+		    , const std::string&	    artist_mbid
                     , const boost::optional<guint>& artist_id = boost::optional<guint>()
                 ) ;
 
                 virtual void
                 insert_artist(
                       const std::string&	    artist
+		    , const std::string&	    artist_mbid
                     , const boost::optional<guint>& artist_id = boost::optional<guint>()
                 ) ;
 
@@ -214,9 +236,11 @@ namespace Artist
         {
 	    private:
 
-                guint               m_width ;
-                guint		    m_column ;
-                Pango::Alignment    m_alignment ;
+                guint				    m_width ;
+                guint				    m_column ;
+                Pango::Alignment		    m_alignment ;
+
+                Cairo::RefPtr<Cairo::ImageSurface>  m_image_disc ;
 
             public:
 
@@ -374,7 +398,7 @@ namespace Artist
 
 		void
 		on_model_changed(
-		    guint position
+		    guint index
 		) ;
 
             public:
@@ -476,6 +500,14 @@ namespace Artist
 
                 virtual void
                 on_realize() ;
+
+                bool
+                query_tooltip(
+                      int                                   tooltip_x
+                    , int                                   tooltip_y
+                    , bool                                  keypress
+                    , const Glib::RefPtr<Gtk::Tooltip>&     tooltip
+                ) ;
 
             public:
 
