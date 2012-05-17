@@ -592,16 +592,16 @@ namespace Albums
 
 		if( album->coverart )
 		{
-		    Util::draw_cairo_image( cairo, m_rect_shadow, (m_width-90)/2.+2, r.y+4, 1., 0 ) ;
+		    Util::draw_cairo_image( cairo, m_rect_shadow, 12+2, r.y+4, 1., 0 ) ;
 		}
 
 		/* The actual coverart surface cache */
-		Util::draw_cairo_image( cairo, album->surface_cache, (m_width-94)/2., r.y, 1., 0 ) ;
+		Util::draw_cairo_image( cairo, album->surface_cache, 10, r.y, 1., 0 ) ;
 
 		if( album->coverart )
 		{
 		    cairo->save();
-		    cairo->translate((m_width-90)/2.,r.y+2) ;
+		    cairo->translate(12,r.y+2) ;
 		    RoundedRectangle(
 			  cairo
 			, 0 
@@ -619,17 +619,35 @@ namespace Albums
 		/* 'new' */
 		if( WithinPastDay( album->insert_date ))
 		{
-		    int x = (m_width-94)/2. - 9 ; 
+		    int x = 3 ; 
 		    int y = r.y + 10 ; 
 		    Util::draw_cairo_image( cairo, m_image_new, x, y, 1., 0 ) ;
 		}
 	    }
 	    else
 	    {
+		cairo->save();
+		cairo->translate(12,r.y+2) ;
+		RoundedRectangle(
+		      cairo
+		    , 0 
+		    , 0 
+		    , 90
+		    , 90
+		    , rounding 
+		) ;
+		cairo->set_line_width( 1.5 ) ; 
+		Gdk::Cairo::set_source_rgba(cairo, c2) ;
+		cairo->stroke() ;
+		cairo->restore() ;
+
+		cairo->save() ;
+		cairo->translate( 47, r.y+35 ) ;
 		Glib::RefPtr<Gdk::Pixbuf> pb = m_image_album_loading_iter->get_pixbuf() ;
-		Gdk::Cairo::set_source_pixbuf( cairo, pb, (m_width-pb->get_width())/2., r.y+(row_height-pb->get_height())/2.-20) ;
-		cairo->rectangle((m_width-pb->get_width())/2., r.y+(row_height-pb->get_height())/2.-20, 20, 20) ;
+		Gdk::Cairo::set_source_pixbuf( cairo, pb, 0, 0 ) ; 
+		cairo->rectangle(0,0, 20,20) ;
 		cairo->fill() ;
+		cairo->restore() ;
 	    }
 
 	    enum { L1, L2, L3, N_LS } ;
@@ -666,20 +684,18 @@ namespace Albums
 	    layout[L3]->set_font_description( font_desc[L3] ) ;
 	    layout[L3]->set_ellipsize( Pango::ELLIPSIZE_END ) ;
 
-	    layout[L1]->set_width((m_width-8) * PANGO_SCALE ) ;
-	    layout[L2]->set_width((m_width-8) * PANGO_SCALE ) ;
-	    layout[L3]->set_width((m_width-8) * PANGO_SCALE ) ;
+	    layout[L1]->set_width((m_width-16) * PANGO_SCALE ) ;
+	    layout[L2]->set_width((m_width-16) * PANGO_SCALE ) ;
+	    layout[L3]->set_width((m_width-16) * PANGO_SCALE ) ;
 
 	    int width, height;
 
 	    guint yoff = 98 ; 
-	    guint xpos = 0 ;
+	    guint xpos = 12 ;
 
 	    /* Artist */
 	    layout[L1]->set_text( album->album_artist ) ;
 	    layout[L1]->get_pixel_size( width, height ) ;
-
-	    xpos = (m_width - width) / 2. ;
 
 	    if( selected )
 	    {
@@ -699,8 +715,6 @@ namespace Albums
 
 	    layout[L2]->set_text( album->album )  ;
 	    layout[L2]->get_pixel_size( width, height ) ;
-
-	    xpos = (m_width - width) / 2. ;
 
 	    if( selected )
 	    {
@@ -782,7 +796,7 @@ namespace Albums
 		layout[L3]->set_markup( s_tracks ) ;
 		layout[L3]->get_pixel_size( width, height ) ;
 
-		sx = ((m_width-94)/2.) + 102 ;
+		sx = 112 ; 
 
 		if( selected )
 		{
@@ -1259,6 +1273,82 @@ namespace Albums
 	    const Cairo::RefPtr<Cairo::Context>& cairo 
 	)
 	{
+	    cairo->save() ;
+
+	    Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create(
+		  0 
+		, get_allocated_height()/2. 
+		, get_allocated_width() 
+		, get_allocated_height()/2. 
+	    ) ;
+
+	    gradient->add_color_stop_rgba(
+		  0
+		, 1. 
+		, 1. 
+		, 1. 
+		, 0.3 
+	    ) ;
+	   
+	    gradient->add_color_stop_rgba(
+		  0.33 
+		, 1. 
+		, 1. 
+		, 1. 
+		, 0.18 
+	    ) ;
+
+	    gradient->add_color_stop_rgba(
+		  0.43 
+		, 1. 
+		, 1. 
+		, 1. 
+		, 0.12
+	    ) ;
+
+	    gradient->add_color_stop_rgba(
+		  0.5 
+		, 1. 
+		, 1. 
+		, 1. 
+		, 0.10 
+	    ) ;
+
+	    gradient->add_color_stop_rgba(
+		  1. - 0.43 
+		, 1.
+		, 1. 
+		, 1. 
+		, 0.12 
+	    ) ;
+
+	    gradient->add_color_stop_rgba(
+		  1. - 0.33
+		, 1. 
+		, 1. 
+		, 1. 
+		, 0.18
+	    ) ;
+
+	    gradient->add_color_stop_rgba(
+		  1. 
+		, 1.
+		, 1. 
+		, 1. 
+		, 0.3 
+	    ) ;
+
+//	    cairo->set_source( gradient ) ;
+//	    cairo->fill() ;
+
+	    Cairo::RefPtr<Cairo::SurfacePattern> pattern = Cairo::SurfacePattern::create( m_background ) ;
+	    pattern->set_extend( Cairo::EXTEND_REPEAT ) ;
+	    cairo->set_source( pattern ) ;
+	    cairo->rectangle( 0, 0, get_allocated_width(), get_allocated_height() ) ;
+	    cairo->mask(gradient) ;
+	    cairo->restore() ;
+
+
 	    const ThemeColor& c_text     = m_theme->get_color( THEME_COLOR_TEXT ) ;
 	    const ThemeColor& c_text_sel = m_theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
 
@@ -1840,6 +1930,11 @@ namespace Albums
 	    , m_search_active( false )
 
 	{
+	    m_background = Util::cairo_image_surface_from_pixbuf(
+				    Gdk::Pixbuf::create_from_file(
+					    Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "album-background.png" )
+	    )) ;
+
 	    property_vadjustment().signal_changed().connect( sigc::mem_fun( *this, &Class::on_vadj_prop_changed )) ;
 
 	    set_double_buffered(true) ;
@@ -1848,8 +1943,8 @@ namespace Albums
 	    ModelCount = Minus<int>( 1 ) ;
 
 	    m_theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;
-	    const ThemeColor& c = m_theme->get_color(THEME_COLOR_BASE) ;
-	    override_background_color(c, Gtk::STATE_FLAG_NORMAL) ;
+	    //const ThemeColor& c = m_theme->get_color(THEME_COLOR_BASE) ;
+	    //override_background_color(c, Gtk::STATE_FLAG_NORMAL) ;
 
 	    add_events(Gdk::EventMask(GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_SCROLL_MASK ));
 

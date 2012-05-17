@@ -1,5 +1,6 @@
 INSTALL(
   FILES album-cover-loading.gif
+	album-background.png
         disc.png
 	new.png
 	artist.png
@@ -8,6 +9,7 @@ INSTALL(
         jewelcase_bot.png
         jewelcase_top.png
 	mute-small-14x14px.png
+	shuffle.png
         splash.png
 	youki-mlibman128x128.png
         youki512x512.png

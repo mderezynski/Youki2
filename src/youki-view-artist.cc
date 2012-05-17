@@ -27,22 +27,23 @@ namespace Artist
 
 	    if( i1 != m_mbid_map.end() )
 	    {
-		Glib::RefPtr<Gdk::Pixbuf> icon = icon->scale_simple( 64, 64, Gdk::INTERP_BILINEAR ) ; 
-		Glib::RefPtr<Gdk::Pixbuf> icon_desaturated ; 
+		icon = icon->scale_simple( 64, 64, Gdk::INTERP_BILINEAR ) ; 
+		
+		Glib::RefPtr<Gdk::Pixbuf> icon_desaturated_1 = icon->copy() ; 
+		Glib::RefPtr<Gdk::Pixbuf> icon_desaturated_2 = icon->copy() ;
 
 		Cairo::RefPtr<Cairo::ImageSurface>
 		      s1
 		    , s2
 		;
 
-		if( icon )
-		{
-		    icon_desaturated = icon->copy() ;
-		    icon->saturate_and_pixelate(icon_desaturated, 0., false) ;
-		    s1 = Util::cairo_image_surface_from_pixbuf(icon_desaturated) ;
-		    s2 = Util::cairo_image_surface_from_pixbuf(icon) ;
-		    Util::cairo_image_surface_blur( s1, 2. ) ;
-		}
+		icon->saturate_and_pixelate(icon_desaturated_1, 0.0, false) ;
+		icon->saturate_and_pixelate(icon_desaturated_2, 0.2, false) ;
+
+		s1 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_1) ;
+		s2 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_2) ;
+
+		Util::cairo_image_surface_blur( s1, 2. ) ;
 
 		boost::get<3>(*(i1->second)) = std::move(s1) ; 
 		boost::get<4>(*(i1->second)) = std::move(s2) ; 
@@ -113,9 +114,8 @@ namespace Artist
 	    , const boost::optional<guint>& artist_id
 	)
 	{
-	    Glib::RefPtr<Gdk::Pixbuf> icon = get_icon(artist_mbid) ;
-	    Glib::RefPtr<Gdk::Pixbuf> icon_desaturated ; 
-
+	    Glib::RefPtr<Gdk::Pixbuf> icon = get_icon(artist_mbid) ; 
+	    
 	    Cairo::RefPtr<Cairo::ImageSurface>
 		  s1
 		, s2
@@ -123,10 +123,15 @@ namespace Artist
 
 	    if( icon )
 	    {
-		icon_desaturated = icon->copy() ;
-		icon->saturate_and_pixelate(icon_desaturated, 0., false) ;
-		s1 = Util::cairo_image_surface_from_pixbuf(icon_desaturated) ;
-		s2 = Util::cairo_image_surface_from_pixbuf(icon) ;
+		Glib::RefPtr<Gdk::Pixbuf> icon_desaturated_1 = icon->copy() ; 
+		Glib::RefPtr<Gdk::Pixbuf> icon_desaturated_2 = icon->copy() ;
+
+		icon->saturate_and_pixelate(icon_desaturated_1, 0.0, false) ;
+		icon->saturate_and_pixelate(icon_desaturated_2, 0.2, false) ;
+
+		s1 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_1) ;
+		s2 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_2) ;
+
 		Util::cairo_image_surface_blur( s1, 2. ) ;
 	    }
 
@@ -158,9 +163,8 @@ namespace Artist
 	{
 	    static OrderFunc order ;
 
-	    Glib::RefPtr<Gdk::Pixbuf> icon = get_icon(artist_mbid) ;
-	    Glib::RefPtr<Gdk::Pixbuf> icon_desaturated = icon->copy() ; 
-
+	    Glib::RefPtr<Gdk::Pixbuf> icon = get_icon(artist_mbid) ; 
+	    
 	    Cairo::RefPtr<Cairo::ImageSurface>
 		  s1
 		, s2
@@ -168,10 +172,15 @@ namespace Artist
 
 	    if( icon )
 	    {
-		icon_desaturated = icon->copy() ;
-		icon->saturate_and_pixelate(icon_desaturated, 0., false) ;
-		s1 = Util::cairo_image_surface_from_pixbuf(icon_desaturated) ;
-		s2 = Util::cairo_image_surface_from_pixbuf(icon) ;
+		Glib::RefPtr<Gdk::Pixbuf> icon_desaturated_1 = icon->copy() ; 
+		Glib::RefPtr<Gdk::Pixbuf> icon_desaturated_2 = icon->copy() ;
+
+		icon->saturate_and_pixelate(icon_desaturated_1, 0.0, false) ;
+		icon->saturate_and_pixelate(icon_desaturated_2, 0.2, false) ;
+
+		s1 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_1) ;
+		s2 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_2) ;
+
 		Util::cairo_image_surface_blur( s1, 2. ) ;
 	    }
 
@@ -414,7 +423,7 @@ namespace Artist
 	{
 	    using boost::get;
 
-	    const int text_size_px = 13 ;
+	    const int text_size_px = 14 ;
 	    const int text_size_pt = static_cast<int>((text_size_px* 72)
 					/ Util::screen_get_y_resolution(Gdk::Screen::get_default())) ;
 
@@ -944,6 +953,81 @@ namespace Artist
 	    const Cairo::RefPtr<Cairo::Context>& cairo 
 	)
 	{
+	    cairo->save() ;
+
+	    Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create(
+		  0 
+		, get_allocated_height()/2. 
+		, get_allocated_width() 
+		, get_allocated_height()/2. 
+	    ) ;
+
+	    gradient->add_color_stop_rgba(
+		  0
+		, 1. 
+		, 1. 
+		, 1. 
+		, 0.3 
+	    ) ;
+	   
+	    gradient->add_color_stop_rgba(
+		  0.33 
+		, 1. 
+		, 1. 
+		, 1. 
+		, 0.18 
+	    ) ;
+
+	    gradient->add_color_stop_rgba(
+		  0.43 
+		, 1. 
+		, 1. 
+		, 1. 
+		, 0.12
+	    ) ;
+
+	    gradient->add_color_stop_rgba(
+		  0.5 
+		, 1. 
+		, 1. 
+		, 1. 
+		, 0.10 
+	    ) ;
+
+	    gradient->add_color_stop_rgba(
+		  1. - 0.43 
+		, 1.
+		, 1. 
+		, 1. 
+		, 0.12 
+	    ) ;
+
+	    gradient->add_color_stop_rgba(
+		  1. - 0.33
+		, 1. 
+		, 1. 
+		, 1. 
+		, 0.18
+	    ) ;
+
+	    gradient->add_color_stop_rgba(
+		  1. 
+		, 1.
+		, 1. 
+		, 1. 
+		, 0.3 
+	    ) ;
+
+//	    cairo->set_source( gradient ) ;
+//	    cairo->fill() ;
+
+	    Cairo::RefPtr<Cairo::SurfacePattern> pattern = Cairo::SurfacePattern::create( m_background ) ;
+	    pattern->set_extend( Cairo::EXTEND_REPEAT ) ;
+	    cairo->set_source( pattern ) ;
+	    cairo->rectangle( 0, 0, get_allocated_width(), get_allocated_height() ) ;
+	    cairo->mask(gradient) ;
+	    cairo->restore() ;
+
 	    boost::shared_ptr<IYoukiThemeEngine> theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;
 
 	    const ThemeColor& c_text            = theme->get_color( THEME_COLOR_TEXT ) ;
@@ -1400,6 +1484,11 @@ namespace Artist
 	    , m_search_active( false )
 
 	{
+	    m_background = Util::cairo_image_surface_from_pixbuf(
+				    Gdk::Pixbuf::create_from_file(
+					    Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "album-background.png" )
+	    )) ;
+
 	    property_vadjustment().signal_changed().connect( sigc::mem_fun( *this, &Class::on_vadj_prop_changed )) ;
 
 	    ModelCount = Minus<int>( -1 ) ;

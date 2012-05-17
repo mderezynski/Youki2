@@ -417,6 +417,7 @@ namespace Albums
 		sigc::connection 		    conn_vadj ;
 
 		boost::shared_ptr<IYoukiThemeEngine> m_theme ; 
+		Cairo::RefPtr<Cairo::ImageSurface>   m_background ;
 
 	    public:
 

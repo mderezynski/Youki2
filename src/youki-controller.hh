@@ -1,5 +1,5 @@
-#ifndef _YOUKI_CONTROLLER__HH
-#define _YOUKI_CONTROLLER__HH
+#ifndef YOUKI_CONTROLLER_HH
+#define YOUKI_CONTROLLER_HH
 
 #include "config.h"
 #include "mpx/i-youki-controller.hh"
@@ -18,7 +18,6 @@
 #include "kobo-volume.hh"
 
 #include "youki-spectrum-titleinfo.hh"
-
 #include "mpx-mlibman-dbus-proxy-actual.hh"
 
 #include <sigx/sigx.h>
@@ -263,9 +262,11 @@ namespace MPX
     
             Track_sp                          m_track_current ;          
             Track_sp                          m_track_previous ;          
-            std::deque<guint>                 m_play_queue ;
             boost::optional<guint>            m_seek_position ;
             bool                              m_follow_track ;
+
+            std::deque<guint>                 m_play_queue ;
+	    std::deque<guint>		      m_play_history ;
 
             info::backtrace::Youki::MLibMan_proxy_actual * m_mlibman_dbus_proxy ;
 
@@ -373,6 +374,10 @@ namespace MPX
             void
             on_list_view_ab_start_playback(
             ) ;
+
+	    void
+	    on_shuffle_toggled(
+	    ) ;
 
             void
             on_info_area_clicked(
@@ -552,6 +557,7 @@ namespace MPX
 
 	    Gtk::Button* m_BTN_HISTORY_PREV ;
 	    Gtk::Button* m_BTN_HISTORY_FFWD ;
+	    Gtk::ToggleButton* m_BTN_SHUFFLE ;
 
 	    bool m_history_ignore_save ;
 	

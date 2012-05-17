@@ -22,6 +22,7 @@
 #include <boost/format.hpp>
 #include <boost/ref.hpp>
 #include <boost/random.hpp>
+#include <boost/random/mersenne_twister.hpp>
 
 #include "mpx/mpx-main.hh"
 #include "mpx/mpx-covers.hh"
@@ -82,7 +83,8 @@ namespace
 	int Attr ;
 	const char* AttrName ;
     } ;
-    
+   
+/* 
     AttrInfo_t
     mpris_attribute_id_str[] =
     {
@@ -98,6 +100,7 @@ namespace
 	{ MPX::ATTRIBUTE_TRACK, "xesam:trackNumber" },
 	{ MPX::ATTRIBUTE_TIME, "mpris:length" },
     };
+*/
 
     bool
     CompareAlbumArtists(
@@ -154,6 +157,13 @@ namespace
     }
   
     typedef boost::optional<guint> OptUInt ;
+    
+    boost::mt19937 gen ;
+
+    int Rand(int n)
+    {
+	return gen() % n ;
+    }
 }
 
 namespace MPX
@@ -391,6 +401,7 @@ namespace MPX
 	HBox_Navi->set_spacing( 1 ) ;
 	HBox_Navi->set_border_width(0) ;
 
+/*
 	Gtk::Image * iprev = Gtk::manage( new Gtk::Image( Gtk::Stock::GO_BACK, Gtk::ICON_SIZE_BUTTON )) ;
         m_BTN_HISTORY_PREV = Gtk::manage( new Gtk::Button ) ;
 	m_BTN_HISTORY_PREV->set_relief( Gtk::RELIEF_NONE ) ;
@@ -406,10 +417,23 @@ namespace MPX
 	m_BTN_HISTORY_FFWD->add( *iffwd ) ;
 	m_BTN_HISTORY_FFWD->signal_clicked().connect( sigc::mem_fun( *this, &YoukiController::history_go_ffwd)) ;
 	m_BTN_HISTORY_FFWD->set_sensitive( false ) ;
+*/
+
+	Gtk::Alignment * ShufAlign = Gtk::manage( new Gtk::Alignment ) ;
+	ShufAlign->property_xalign() = 1. ;
+	ShufAlign->property_xscale() = 0. ;
+
+	Gtk::Image * ishuf = Gtk::manage( new Gtk::Image( Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "shuffle.png" ))) ;
+	m_BTN_SHUFFLE = Gtk::manage( new Gtk::ToggleButton ) ;
+	m_BTN_SHUFFLE->add( *ishuf ) ;
+	m_BTN_SHUFFLE->signal_toggled().connect( sigc::mem_fun( *this, &YoukiController::on_shuffle_toggled )) ;
+
+	ShufAlign->add( *m_BTN_SHUFFLE ) ;
 
 /*
         HBox_Navi->pack_start( *m_BTN_HISTORY_PREV, false, false, 0 ) ;
         HBox_Navi->pack_start( *m_BTN_HISTORY_FFWD, false, false, 0 ) ;
+        //m_HBox_Entry->pack_start( *HBox_Navi, false, false, 0 ) ;
  */
 	m_AQUE_Spinner = Gtk::manage( new Gtk::Image ) ;
 	Glib::RefPtr<Gdk::PixbufAnimation> anim = Gdk::PixbufAnimation::create_from_file(
@@ -417,16 +441,16 @@ namespace MPX
 	m_AQUE_Spinner->set( anim ) ;
 	Glib::signal_timeout().connect( sigc::bind_return(sigc::mem_fun( *m_AQUE_Spinner, &Gtk::Widget::queue_draw), true), 100) ;
 
-        m_HBox_Entry->pack_start( *m_Label_Search, true, true, 0 ) ;
-        m_HBox_Entry->pack_start( *HBox_Navi, false, false, 0 ) ;
+        m_HBox_Entry->pack_start( *m_Label_Search, false, false, 0 ) ;
         m_HBox_Entry->pack_start( *m_Entry, false, false, 0 ) ;
         m_HBox_Entry->pack_start( *m_AQUE_Spinner, false, false, 0 ) ;
+        m_HBox_Entry->pack_start( *ShufAlign, true, true, 0 ) ;
 
         Gtk::Alignment* Entry_Align = Gtk::manage( new Gtk::Alignment ) ;
         Entry_Align->add( *m_HBox_Entry ) ;
 	Entry_Align->set_padding( 2, 4, 2, 4 ) ;
-	Entry_Align->property_xalign() = 0.0 ;
-	Entry_Align->property_xscale() = 0.0 ;
+	Entry_Align->property_xalign() = 0. ;
+	Entry_Align->property_xscale() = 1. ; 
 
         Gtk::Alignment* Controls_Align = Gtk::manage( new Gtk::Alignment ) ;
         m_HBox_Controls = Gtk::manage( new Gtk::HBox ) ;
@@ -1584,7 +1608,7 @@ namespace MPX
 	m_track_previous = m_track_current ;
 	m_track_current.reset() ;
 
-	if( !m_play_queue.empty() ) /* tracks in the play queue? */
+	if(!m_play_queue.empty()) /* tracks in the play queue? */
 	{
 	    /* ... so get next track from the play queue! */
 
@@ -1600,7 +1624,7 @@ namespace MPX
 
 	    if( active ) 
 	    {
-		const MPX::Track& track = *(m_track_previous.get()) ;
+		const MPX::Track& track = *m_track_previous ;
 	
 		guint album_id = boost::get<guint>(track[ATTRIBUTE_MPX_ALBUM_ID].get()) ;
 		const char * album_top_f = "SELECT id FROM track WHERE album_j = '%u' ORDER BY track ASC" ;
@@ -1662,7 +1686,11 @@ namespace MPX
 
 	x1:
 	if( m_track_previous )
+	{
+	    guint id = boost::get<guint>((*m_track_previous)[ATTRIBUTE_MPX_TRACK_ID].get()) ;
+	    m_play_history.push_back(id) ;
             m_library->trackPlayed( m_track_previous, t ) ;
+	}
     }
 
     void
@@ -1676,7 +1704,7 @@ namespace MPX
         if( m_track_current && 
 	    Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("MenuViewActionFollowPlayingTrack"))->get_active())
         {
-            const MPX::Track& track = *(m_track_current.get()) ;
+            const MPX::Track& track = *m_track_current ;
             guint id_track = boost::get<guint>(track[ATTRIBUTE_MPX_TRACK_ID].get()) ;
 	    private_->FilterModelTracks->regen_mapping( id_track ) ;
         }
@@ -1692,7 +1720,7 @@ namespace MPX
         if( m_track_current && 
 	    Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("MenuViewActionFollowPlayingTrack"))->get_active())
         {
-            const MPX::Track& track = *(m_track_current.get()) ;
+            const MPX::Track& track = *m_track_current ;
             guint id_track = boost::get<guint>(track[ATTRIBUTE_MPX_TRACK_ID].get()) ;
 	    private_->FilterModelTracks->regen_mapping_iterative( id_track ) ;
         }
@@ -1716,9 +1744,10 @@ namespace MPX
                 break ;
 
             case PLAYSTATUS_STOPPED:
-
+    
+		m_play_history.clear() ;
+		m_play_queue.clear() ;
                 m_track_current.reset() ;
-		assign_metadata_to_DBus_property() ;
                 m_seek_position.reset() ; 
 
                 m_main_info->clear() ;
@@ -1770,14 +1799,10 @@ namespace MPX
     void
     YoukiController::on_play_stream_switched()
     {
-        Track_sp t = m_track_current ;
+	if(!m_track_current) 
+	  return ;
 
-	if( !t )
-	{
-	    return ;
-	}
-
-        const MPX::Track& track = *(t.get()) ;
+        const MPX::Track& track = *m_track_current ;
 
         m_main_position->start() ;
         emit_track_new() ;
@@ -1846,12 +1871,18 @@ namespace MPX
         , bool          play
     ) 
     {
-        const MPX::Track& track = *(t.get()) ;
+        const MPX::Track& track = *t ;
 
         emit_track_cancelled() ;
 
         if( play )
         {
+	    if( m_track_current )
+	    {
+		guint id = boost::get<guint>((*m_track_current)[ATTRIBUTE_MPX_TRACK_ID].get()) ;
+		m_play_history.push_back(id) ;
+	    }
+
             play_track( t ) ;
         }
         else
@@ -2087,7 +2118,8 @@ namespace MPX
         if( m_track_current && 
 	    Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("MenuViewActionFollowPlayingTrack"))->get_active())
         {
-            const MPX::Track& track = *(m_track_current.get()) ;
+            const MPX::Track& track = *m_track_current ;
+
             guint id_track = boost::get<guint>(track[ATTRIBUTE_MPX_TRACK_ID].get()) ;
 	    m_ListViewTracks->scroll_to_id( id_track ) ;
         }
@@ -2119,6 +2151,8 @@ namespace MPX
     YoukiController::on_entry_changed(
     )
     {
+	m_BTN_SHUFFLE->set_active( false ) ;
+
         m_ListViewAlbums->clear_selection() ;
         m_ListViewArtist->clear_selection() ;
 
@@ -2165,6 +2199,27 @@ namespace MPX
     }
 
     void
+    YoukiController::on_shuffle_toggled()
+    {
+	if(m_BTN_SHUFFLE->get_active())
+	{
+	    MPX::View::Tracks::IdVector_sp v = private_->FilterModelTracks->get_id_vector() ; 
+	    MPX::View::Tracks::IdVector_t& v_ = *v ;
+    
+	    std::random_shuffle( v_.begin(), v_.end(), std::pointer_to_unary_function<int,int>(Rand)) ;
+
+	    for( auto& id : v_ )
+	    {
+		m_play_queue.push_back( id ) ;
+	    }
+	}
+	else
+	{
+	   m_play_queue.clear() ; 
+	}
+    }
+
+    void
     YoukiController::on_info_area_clicked( int i )
     {
 	TapArea area = TapArea(i) ;
@@ -2173,6 +2228,16 @@ namespace MPX
 	{
 	    if( m_play->property_status().get_value() == PLAYSTATUS_STOPPED )
 	    {
+		if(!m_play_queue.empty()) /* tracks in the play queue? */
+		{
+		    /* ... so get next track from the play queue! */
+
+		    Track_sp p = m_library->getTrackById( m_play_queue.front() ) ;
+		    m_play_queue.pop_front() ;
+
+		    play_track( p ) ;
+		}
+		else
 		if( private_->FilterModelTracks->size() )
 		{
 		    OptUInt idx = m_ListViewTracks->get_selected_index() ; 
@@ -2438,7 +2503,7 @@ void
     )
     {
         if( m_track_current )
-            return *(m_track_current.get()) ;
+            return *m_track_current ;
         else
             throw std::runtime_error("No current track!") ; /* FIXME: Well */
     }
@@ -2448,7 +2513,7 @@ void
     )
     {
         if( m_track_previous )
-            return *(m_track_previous.get()) ;
+            return *m_track_previous ;
         else
             throw std::runtime_error("No previous track!") ;
     }
@@ -2483,21 +2548,42 @@ void
     YoukiController::API_prev(
     )
     {
-	guint mod = (m_play->property_position().get_value() > 5)?0:1 ;
+	bool rwnd = (m_play->property_position().get_value() > 5)?0:1 ;
 
 	//FIXME: This doesn't work at all with flow plugins, of course we also don't have any yet
-	if( private_->FilterModelTracks->size() )
+	if(rwnd)
 	{
-	    guint d = 0 ;
-
-	    OptUInt idx = private_->FilterModelTracks->get_active_track() ; 
-
-	    if( idx ) 
+	    if(!m_play_history.empty())
 	    {
-		d = std::max<int>( 0, idx.get() - mod ) ;
+		guint id = m_play_history.front() ;
+		m_play_history.pop_front() ;
+		play_track( m_library->getTrackById( id )) ;		    
 	    }
+	    else
+	    if( private_->FilterModelTracks->size() )
+	    {
+		guint d = 0 ;
 
-	    play_track( private_->FilterModelTracks->row( d )->TrackSp ) ;
+		OptUInt idx = private_->FilterModelTracks->get_active_track() ; 
+
+		if( idx ) 
+		{
+		    d = std::max<int>( 0, idx.get() - 1 ) ;
+		}
+
+		play_track( private_->FilterModelTracks->row( d )->TrackSp ) ;
+	    }
+	}
+	else
+	{
+	    if( private_->FilterModelTracks->size() )
+	    {
+		OptUInt idx = private_->FilterModelTracks->get_active_track() ; 
+		if( idx ) 
+		{
+		    play_track( private_->FilterModelTracks->row( idx.get() )->TrackSp ) ;
+		}
+	    }
 	}
     }
 

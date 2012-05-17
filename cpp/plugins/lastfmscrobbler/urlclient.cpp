@@ -16,13 +16,12 @@
 
 #include "urlclient.h"
 
-#include <curl/curl.h>
-#include <assert.h>
+#include <cassert>
 #include <stdexcept>
 
-using namespace std;
+#include "mpx/mpx-minisoup.hh"
 
-size_t receiveData(char* data, size_t size, size_t nmemb, string* pBuffer);
+using namespace std;
 
 UrlClient::UrlClient()
 {
@@ -36,92 +35,42 @@ UrlClient::~UrlClient()
 
 void UrlClient::initialize()
 {
-#ifdef WIN32
-    CURLcode rc = curl_global_init(CURL_GLOBAL_WIN32 | CURL_GLOBAL_ALL);
-#else
-    CURLcode rc = curl_global_init(CURL_GLOBAL_ALL);
-#endif
-
-    if (CURLE_OK != rc)
-    {
-        throw std::logic_error("Failed to initialize libcurl");
-    }
 }
 
 void UrlClient::cleanup()
 {
-    curl_global_cleanup();
 }
 
 void UrlClient::get(const string& url, string& response)
 {
-    CURL* curlHandle = curl_easy_init();
-    assert(curlHandle);
+    Glib::RefPtr<MPX::Soup::RequestSync> req = MPX::Soup::RequestSync::create( url, false ) ;
 
-    curl_easy_setopt(curlHandle, CURLOPT_URL, url.c_str());
-    curl_easy_setopt(curlHandle, CURLOPT_WRITEFUNCTION, receiveData);
-    curl_easy_setopt(curlHandle, CURLOPT_WRITEDATA, &response);
-    curl_easy_setopt(curlHandle, CURLOPT_FAILONERROR, 1);
-    curl_easy_setopt(curlHandle, CURLOPT_CONNECTTIMEOUT, 5);
-    curl_easy_setopt(curlHandle, CURLOPT_NOSIGNAL, 1);
+    int code = req->run() ;
 
-    CURLcode rc = curl_easy_perform(curlHandle);
-    curl_easy_cleanup(curlHandle);
-
-    if (CURLE_OK != rc)
+    if(code != 200)
     {
-        throw std::logic_error("Failed to get " + url + ": " + curl_easy_strerror(rc));
+        throw std::logic_error("Failed to GET data") ;
     }
+
+    response = req->get_data() ;
 }
 
 void UrlClient::getBinary(const string& url, void* callback, void* parameter)
 {
-    CURL* curlHandle = curl_easy_init();
-    assert(curlHandle);
-
-    curl_easy_setopt(curlHandle, CURLOPT_URL, url.c_str());
-    curl_easy_setopt(curlHandle, CURLOPT_WRITEFUNCTION, callback);
-    curl_easy_setopt(curlHandle, CURLOPT_WRITEDATA, parameter);
-    curl_easy_setopt(curlHandle, CURLOPT_FAILONERROR, 1);
-    curl_easy_setopt(curlHandle, CURLOPT_CONNECTTIMEOUT, 5);
-    curl_easy_setopt(curlHandle, CURLOPT_NOSIGNAL, 1);
-
-    CURLcode rc = curl_easy_perform(curlHandle);
-    curl_easy_cleanup(curlHandle);
-
-    if (CURLE_OK != rc)
-    {
-        throw std::logic_error("Failed to get " + url + ": " + curl_easy_strerror(rc));
-    }
 }
 
 void UrlClient::post(const string& url, const string& data, string& response)
 {
-    CURL* curlHandle = curl_easy_init();
-    assert(curlHandle);
+    Glib::RefPtr<MPX::Soup::RequestSync> req = MPX::Soup::RequestSync::create( url, true ) ;
 
-    curl_easy_setopt(curlHandle, CURLOPT_POSTFIELDS, data.c_str());
-    curl_easy_setopt(curlHandle, CURLOPT_URL, url.c_str());
-    curl_easy_setopt(curlHandle, CURLOPT_WRITEFUNCTION, receiveData);
-    curl_easy_setopt(curlHandle, CURLOPT_WRITEDATA, &response);
-    curl_easy_setopt(curlHandle, CURLOPT_FAILONERROR, 1);
-    curl_easy_setopt(curlHandle, CURLOPT_CONNECTTIMEOUT, 5);
-    curl_easy_setopt(curlHandle, CURLOPT_NOSIGNAL, 1);
+    req->add_request( "application/x-www-form-urlencoded", data ) ; 
 
-    CURLcode rc = curl_easy_perform(curlHandle);
-    curl_easy_cleanup(curlHandle);
+    int code = req->run() ;
 
-    if(CURLE_OK != rc)
+    if(code != 200)
     {
-        throw std::logic_error("Failed to post " + url + ": " + curl_easy_strerror(rc));
+        throw std::logic_error("Failed to POST data") ;
     }
-}
 
-size_t receiveData(char* data, size_t size, size_t nmemb, string* pBuffer)
-{
-    assert(pBuffer);
-    size_t dataSize = size * nmemb;
-    pBuffer->append(data, dataSize);
-
-    return dataSize;
+    response = req->get_data() ;
 }

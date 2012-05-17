@@ -344,6 +344,8 @@ namespace Artist
                 sigc::connection                    m_search_changed_conn ;
                 bool                                m_search_active ;
 
+		Cairo::RefPtr<Cairo::ImageSurface>  m_background ;
+
                 void
                 initialize_metrics() ;
 

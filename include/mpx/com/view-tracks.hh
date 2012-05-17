@@ -161,6 +161,9 @@ namespace Tracks
 	typedef sigc::signal<void>			Signal0 ;
         typedef sigc::signal<void, guint, bool>		Signal2 ;
 
+	typedef std::vector<guint>		    IdVector_t ;
+	typedef boost::shared_ptr<IdVector_t>	    IdVector_sp ;
+
         struct Model_t_iterator_equal
         : std::binary_function<Model_t::iterator, Model_t::iterator, bool>
         {
@@ -404,9 +407,6 @@ namespace Tracks
         struct DataModelFilter
         : public DataModel
         {
-                typedef std::vector<guint>		    IdVector_t ;
-                typedef boost::shared_ptr<IdVector_t>	    IdVector_sp ;
-
                 typedef std::set<Model_t::const_iterator>	ModelIteratorSet_t ;
                 typedef boost::shared_ptr<ModelIteratorSet_t>	ModelIteratorSet_sp ;
                 typedef std::vector<ModelIteratorSet_sp>	IntersectVector_t ;
@@ -479,8 +479,21 @@ namespace Tracks
 		void
 		shuffle()
 		{
-			std::random_shuffle( m_mapping->begin(), m_mapping->end() ) ;
-                    	m_SIGNAL__changed.emit( 0, false ) ;
+		    std::random_shuffle( m_mapping->begin(), m_mapping->end() ) ;
+		    m_SIGNAL__changed.emit( 0, false ) ;
+		}
+
+		IdVector_sp
+		get_id_vector()
+		{
+		    IdVector_t * v = new IdVector_t ;
+
+		    for( auto& r : *m_mapping )
+		    {
+			v->push_back( (*r)->ID ) ;
+		    }
+
+		    return IdVector_sp(v) ;
 		}
 
                 void
@@ -1565,6 +1578,8 @@ namespace Tracks
                 Glib::RefPtr<Gtk::ActionGroup>	    m_refActionGroup ;
                 Gtk::Menu*			    m_pMenuPopup ;
 
+		boost::shared_ptr<IYoukiThemeEngine> m_theme ; 
+
                 SignalMBID _signal_0 ; 
                 SignalMBID _signal_1 ; 
 
@@ -2338,13 +2353,11 @@ namespace Tracks
 		    const Cairo::RefPtr<Cairo::Context>& cairo
 		)
                 {
-                    boost::shared_ptr<IYoukiThemeEngine> theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;
-
-                    const ThemeColor& c_text        = theme->get_color( THEME_COLOR_TEXT ) ;
-                    const ThemeColor& c_text_sel    = theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
-                    const ThemeColor& c_rules_hint  = theme->get_color( THEME_COLOR_BASE_ALTERNATE ) ;
-		    const ThemeColor& c_treelines   = theme->get_color( THEME_COLOR_TREELINES ) ;
-		    const ThemeColor& c_base	    = theme->get_color( THEME_COLOR_BASE ) ;
+                    const ThemeColor& c_text        = m_theme->get_color( THEME_COLOR_TEXT ) ;
+                    const ThemeColor& c_text_sel    = m_theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
+                    const ThemeColor& c_rules_hint  = m_theme->get_color( THEME_COLOR_BASE_ALTERNATE ) ;
+		    const ThemeColor& c_treelines   = m_theme->get_color( THEME_COLOR_TREELINES ) ;
+		    const ThemeColor& c_base	    = m_theme->get_color( THEME_COLOR_BASE ) ;
 
                     guint d       = get_upper_row() ;
                     guint d_max   = std::min<guint>( m_model->size(), get_page_size()+1 ) ;
@@ -2379,7 +2392,7 @@ namespace Tracks
 		    {
 			rr.y = m_height__headers + ((d_sel.get() - d)*m_height__row) ;
 
-			theme->draw_selection_rectangle(
+			m_theme->draw_selection_rectangle(
 			      cairo
 			    , rr
 			    , has_focus()
@@ -3068,9 +3081,7 @@ namespace Tracks
                 {
 		    property_vadjustment().signal_changed().connect( sigc::mem_fun( *this, &Class::on_vadj_prop_changed )) ;
 
-                    boost::shared_ptr<IYoukiThemeEngine> theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;
-                    const ThemeColor& c = theme->get_color( THEME_COLOR_BASE ) ;
-                    override_background_color( c, Gtk::STATE_FLAG_NORMAL ) ;
+		    m_theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;
 
                     set_can_focus(true);
 
