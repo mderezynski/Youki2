@@ -30,7 +30,7 @@ namespace
         , RT_OTHER
     };
 
-    const char* rt_string[] = { "Album", "Single", "Compil.", "EP", "Live", "Remix", "OST", "?" } ;
+    const std::vector<std::string> rt_string { "Album", "Single", "Compilation", "EP", "Live", "Remix", "OST", "?" } ;
 
     ReleaseType
     get_rt(const std::string& type)
@@ -726,7 +726,7 @@ namespace Albums
 
 		guint tm = 0 ;
 
-		std::string s_time, s_tracks, s_discs, s_rt ;
+		std::string s_time, s_tracks, s_discs, s_rt, s_year ;
 
 		if( album_constraints )
 		{
@@ -734,13 +734,21 @@ namespace Albums
 
 		    guint min = tm / 60 ;
 		    guint sec = tm % 60 ;
+
 		    guint totaltracks = ((*album_constraints)[album->album_id.get()]).Count ;
 
-		    //guint min_total = album->total_time / 60 ;
-		    //guint sec_total = album->total_time % 60 ;
+		    guint min_total = album->total_time / 60 ;
+		    guint sec_total = album->total_time % 60 ;
 
-		    s_time = ((boost::format("<b>%02u:%02u</b>") % min % sec).str()) ;
-		    s_tracks = ((boost::format("<b>%u</b> %s") % totaltracks % ((totaltracks>1) ? "Tracks" : "Track")).str()) ;
+		    if( album->total_time != tm )
+			s_time = ((boost::format("<b>%02u:%02u</b>/<b>%02u:%02u</b>") % min % sec % min_total % sec_total).str()) ;
+		    else
+			s_time = ((boost::format("<b>%02u:%02u</b>") % min % sec).str()) ;
+
+		    if( totaltracks != album->track_count )
+			s_tracks = ((boost::format("<b>%u</b>/<b>%u</b>") % totaltracks % album->track_count).str()) ;
+		    else
+			s_tracks = ((boost::format("<b>%u</b> %s") % totaltracks % ((totaltracks>1) ? "Tracks" : "Track")).str()) ;
 		}
 		else
 		{
@@ -748,6 +756,7 @@ namespace Albums
 
 		    guint min = tm / 60 ;
 		    guint sec = tm % 60 ;
+
 		    guint totaltracks = album->track_count ;
 
 		    s_time = ((boost::format("<b>%02u:%02u</b>") % min % sec).str()) ;
@@ -829,6 +838,26 @@ namespace Albums
 		if( !s_rt.empty() )
 		{
 		    layout[L3]->set_markup( s_rt ) ;
+		    layout[L3]->get_pixel_size( width, height ) ;
+
+		    if( selected )
+		    {
+			Util::render_text_shadow( layout[L3], sx, sy, cairo ) ; 
+		    }
+
+		    cairo->move_to(
+			  sx 
+			, sy 
+		    ) ;
+		    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(c1,0.75)) ;
+		    pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj()) ;
+		    sy += height + 2 ;
+		}
+
+		/* s_rt */
+		if( !album->year.empty() )
+		{
+		    layout[L3]->set_markup( album->year.substr(0,4)) ;
 		    layout[L3]->get_pixel_size( width, height ) ;
 
 		    if( selected )
@@ -1377,6 +1406,8 @@ namespace Albums
 	    {
 		scroll_to_index( d ) ;
 	    }
+
+	    queue_draw() ;
 	}
 
 	void

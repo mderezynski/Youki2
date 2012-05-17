@@ -744,12 +744,12 @@ namespace MPX
         )) ;
 
         m_HBox_Main->add_percentage( 0.15 ) ;
-        m_HBox_Main->add_percentage( 0.20 ) ;
         m_HBox_Main->add_percentage( 0.65 ) ;
+        m_HBox_Main->add_percentage( 0.20 ) ;
 
         m_HBox_Main->pack_start( *m_ScrolledWinArtist, true, true, 0 ) ;
-        m_HBox_Main->pack_start( *m_ScrolledWinAlbums, true, true, 0 ) ;
         m_HBox_Main->pack_start( *m_ScrolledWinTracks, true, true, 0 ) ;
+        m_HBox_Main->pack_start( *m_ScrolledWinAlbums, true, true, 0 ) ;
 
         std::vector<Gtk::Widget*> widget_v( 4 ) ; /* NEEDS TO BE CHANGED IF WIDGETS ARE RE-ADDED */
         widget_v[0] = m_Entry ;
@@ -2096,13 +2096,16 @@ namespace MPX
 	    m_ListViewTracks->scroll_to_index(0) ;
 	}
 
+        m_ListViewArtist->clear_selection() ;
+        m_ListViewAlbums->clear_selection() ;
+
         private_->FilterModelArtist->regen_mapping() ;
         m_ListViewArtist->scroll_to_index(0) ;
 
         private_->FilterModelAlbums->regen_mapping() ;
         m_ListViewAlbums->scroll_to_index(0) ;
 
-	//private_->FilterModelTracks->regen_mapping() ;
+	private_->FilterModelTracks->regen_mapping() ;
 
         m_conn1.unblock() ;
         m_conn2.unblock() ;

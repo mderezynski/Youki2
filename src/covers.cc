@@ -96,7 +96,7 @@ namespace MPX
 
         m_stores_all.push_back(StorePtr(new InlineCovers()));
         m_stores_all.push_back(StorePtr(new LastFMCovers()));
-        m_stores_all.push_back(StorePtr(new LocalCovers()));
+        //m_stores_all.push_back(StorePtr(new LocalCovers()));
         m_stores_all.push_back(StorePtr(new MusicBrainzCovers()));
 
 	for( guint n = 0 ; n < m_stores_all.size(); ++n )
@@ -188,11 +188,11 @@ namespace MPX
 
         if( acquire ) 
         {
-            for( std::size_t n = 0 ; n < 4 ; ++n ) 
+            for( auto& Store : m_stores_all ) 
             {
-		m_stores_all[n]->load_artwork( qual ) ;
+		Store->load_artwork( qual ) ;
 
-		if( m_stores_all[n]->get_state() == FETCH_STATE_COVER_SAVED )
+		if( Store->get_state() == FETCH_STATE_COVER_SAVED )
 		{
 		    pthreaddata->GotCover.emit( qual.id ) ;
 		    return false ;	

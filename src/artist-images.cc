@@ -134,7 +134,9 @@ MPX::ArtistImages::on_recache_images()
 
                 if( artist_image )
                 {
-                    artist_image->save( thumb_path, "png" );
+		    try{
+			artist_image->save( thumb_path, "png" );
+		    }catch(Glib::FileError&){}
                     m_pixbuf_cache.insert( std::make_pair( mbid, artist_image ));
                     pthreaddata->GotArtistImage.emit( mbid, artist_image );
                 }

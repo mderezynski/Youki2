@@ -9,6 +9,9 @@
 #include <boost/optional.hpp>
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/interprocess/containers/stable_vector.hpp>
+#include <unordered_map>
+#include <sigx/sigx.h>
 
 #include "mpx/algorithm/aque.hh"
 #include "mpx/algorithm/interval.hh"
@@ -30,8 +33,6 @@
 
 #include "mpx/mpx-main.hh"
 #include "mpx/i-youki-theme-engine.hh"
-
-#include "mpx/com/indexed-list.hh"
 
 #include "mpx/mpx-artist-images.hh"
 
@@ -61,11 +62,15 @@ namespace Artist
 	    , R_ICON_DESATURATED
 	} ;
 
-        typedef IndexedList<Row_t>                         Model_t ;
-        typedef boost::shared_ptr<Model_t>                 Model_sp ;
-        typedef std::map<guint, Model_t::iterator>         IdIterMap_t ;
+        typedef boost::container::stable_vector<Row_t>Model_t ;
 
-        typedef std::vector<Model_t::iterator>             RowRowMapping_t ;
+        typedef boost::shared_ptr<Model_t> Model_sp ;
+
+        typedef std::map<guint, Model_t::iterator> IdIterMap_t ;
+
+        typedef std::vector<Model_t::iterator> RowRowMapping_t ;
+
+        typedef std::unordered_map<std::string, Model_t::iterator> MBIDIterMap_t;
 
         typedef sigc::signal<void>                         Signal_0 ;
         typedef sigc::signal<void, guint>		   Signal_1 ;
@@ -93,6 +98,7 @@ namespace Artist
 	class DataModelFilter ;
 	class DataModel
         : public sigc::trackable
+	, public sigx::glib_auto_dispatchable
         {
 		friend class Class ;
 		friend class DataModelFilter ;
@@ -101,6 +107,7 @@ namespace Artist
 
                 Model_sp	    m_datamodel ;
                 IdIterMap_t         m_iter_map ;
+		MBIDIterMap_t	    m_mbid_map ;
                 guint		    m_upper_bound ;
 
                 Signal_1	    m_SIGNAL__changed ;
@@ -110,6 +117,12 @@ namespace Artist
 		Glib::RefPtr<Gdk::Pixbuf>	
 		get_icon(
 		    const std::string& mbid
+		) ;
+
+		void
+		handle_got_artist_image(
+		      const std::string&
+		    , Glib::RefPtr<Gdk::Pixbuf>
 		) ;
 
 	    public:

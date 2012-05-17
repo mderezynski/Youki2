@@ -7,6 +7,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/optional.hpp>
 #include <boost/tuple/tuple.hpp>
+#include <boost/interprocess/containers/stable_vector.hpp>
+#include <sigx/sigx.h>
 
 #include "mpx/mpx-types.hh"
 #include "mpx/mpx-main.hh"
@@ -76,13 +78,16 @@ namespace Albums
 	    {}
         };
 
-        typedef boost::shared_ptr<Album>		    Album_sp ;
+        typedef boost::shared_ptr<Album> Album_sp ;
 
-        typedef IndexedList<Album_sp>                       Model_t ;
-        typedef boost::shared_ptr<Model_t>                  Model_sp ;
+        typedef boost::container::stable_vector<Album_sp> Model_t ;
+
+        typedef boost::shared_ptr<Model_t> Model_sp ;
 
         typedef std::map<boost::optional<guint>, Model_t::iterator> IdIterMap_t ;
-        typedef std::vector<Model_t::iterator>			    RowRowMapping_t ;
+
+        typedef std::vector<Model_t::iterator>RowRowMapping_t ;
+
 
 	bool operator==( const Album_sp& a, const Album_sp& b ) ;
 	bool operator!=( const Album_sp& a, const Album_sp& b ) ;
@@ -360,7 +365,9 @@ namespace Albums
         typedef std::vector<Column_sp>        Column_sp_vector_t ;
 
         class Class
-        : public Gtk::DrawingArea, public Gtk::Scrollable
+        : public Gtk::DrawingArea
+	, public Gtk::Scrollable
+	, public sigx::glib_auto_dispatchable
         {
             public:
 

@@ -61,6 +61,8 @@ namespace MPX
     void
     RemoteStore::load_artwork(const RequestQualifier& rql)
     {
+        m_state = FETCH_STATE_NOT_FETCHED ;
+
         if( can_load_artwork( rql ) )
         {
             fetch_image( get_url( rql ), rql ) ;
@@ -161,6 +163,8 @@ namespace MPX
     void
     LastFMCovers::load_artwork(const RequestQualifier& rql)
     {
+        m_state = FETCH_STATE_NOT_FETCHED ;
+
         request = Soup::RequestSync::create( get_url( rql ));
 
 	g_message("LastFMCovers: running HTTP request...") ;
@@ -169,7 +173,7 @@ namespace MPX
 
         if( code == 200 )
         {
-	    g_message("LastFMCovers: HTTP/200, parsing XML...") ;
+	    g_message("LastFMCovers: HTTP 200, parsing XML...") ;
     
 	    try
             {
@@ -248,6 +252,8 @@ namespace MPX
     void
     MusicBrainzCovers::load_artwork(const RequestQualifier& rql)
     {
+        m_state = FETCH_STATE_NOT_FETCHED ;
+
 	std::string url = get_url( rql ) ;
 
 	g_message("%s: MusicBrainzCovers:URL [%s]",G_STRLOC,url.c_str()) ;
@@ -308,6 +314,8 @@ namespace MPX
     void
     LocalCovers::load_artwork(const RequestQualifier& rql)
     {
+        m_state = FETCH_STATE_NOT_FETCHED ;
+
         Glib::RefPtr<Gio::File> directory = Gio::File::create_for_uri( rql.uri )->get_parent() ;
         Glib::RefPtr<Gio::FileEnumerator> files = directory->enumerate_children() ;
         Glib::RefPtr<Gio::FileInfo> file;
@@ -352,6 +360,8 @@ namespace MPX
     void
     InlineCovers::load_artwork(const RequestQualifier& rql)
     {
+        m_state = FETCH_STATE_NOT_FETCHED ;
+
         Glib::RefPtr<Gdk::Pixbuf> cover;
 
         if(!rql.uri.empty())

@@ -228,8 +228,14 @@ namespace Tracks
                 , const NewRow_sp&  b
             )
             {
+		if(! a && b )
+		    return false ;
+
 		Track_sp t_a = a->TrackSp ; 
 		Track_sp t_b = b->TrackSp ; 
+
+		if(! t_a && t_b )
+		    return false ;
 
                 const std::string&  order_artist_a = a->AlbumArtist ; 
                 const std::string&  order_artist_b = b->AlbumArtist ; 
@@ -691,6 +697,7 @@ namespace Tracks
                     static OrderFunc order ;
 
 		    NewRow_t * nr = new NewRow_t ;
+		    NewRow_sp nrsp (nr) ;
 
 		    nr->TrackSp = track ;
 		    nr->ID = id ; 
@@ -707,10 +714,10 @@ namespace Tracks
                           std::upper_bound(
                               m_realmodel->begin()
                             , m_realmodel->end()
-                            , NewRow_sp(nr)
+                            , nrsp 
                             , order
                           )
-                        , NewRow_sp(nr)
+                        , nrsp 
                     ) ;
                 }
  
@@ -2069,15 +2076,26 @@ namespace Tracks
                         , 8 
                     ) ;
 
-                    int width = event->width - 16 ;
+                    int width = event->width ;
 
                     double column_width_calculated = (double(width) - double(m_columns__fixed_total_width) - double(column_width_collapsed*double(m_columns__collapsed.size()))) / (m_columns.size() - m_columns__collapsed.size() - m_columns__fixed.size()) ;
 
                     for( guint n = 0; n < m_columns.size(); ++n )
                     {
+			double w_eff = 0 ;
+
+			if( n == 1 )
+			    w_eff = (column_width_calculated*3) * 0.60 ;
+			else
+			if( n == 3 )
+			    w_eff = (column_width_calculated*3) * 0.20 ;
+			else
+			if( n == 4 )
+			    w_eff = (column_width_calculated*3) * 0.20 ;
+	    
                         if( !m_columns__fixed.count( n ) )
                         {
-                            m_columns[n]->set_width(m_columns__collapsed.count( n ) ? column_width_collapsed : column_width_calculated ) ; 
+                            m_columns[n]->set_width(m_columns__collapsed.count( n ) ? column_width_collapsed : w_eff ) ; 
                         }
                     }
 

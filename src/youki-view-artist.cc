@@ -8,59 +8,91 @@ namespace View
 {
 namespace Artist
 {
-	DataModel::DataModel()
-	: m_datamodel(new Model_t)
-	, m_upper_bound(0)
-	{
-	    m_ArtistImages = new ArtistImages ;
-	    m_ArtistImages->run() ;
-	}
+    DataModel::DataModel()
+    : m_datamodel(new Model_t)
+    , m_upper_bound(0)
+    {
+	m_ArtistImages = new ArtistImages ;
+	m_ArtistImages->run() ;
+	m_ArtistImages->signal_got_artist_image().connect( sigc::mem_fun( *this, &DataModel::handle_got_artist_image )) ;
+    }
 
+    void
+    DataModel::handle_got_artist_image(
+	  const std::string&		mbid
+	, Glib::RefPtr<Gdk::Pixbuf>	icon
+    )
+    {
+	    MBIDIterMap_t::iterator i1 = m_mbid_map.find(mbid) ;
 
-	DataModel::DataModel(
-	    Model_sp model
-	)
-	: m_datamodel(model)
-	, m_upper_bound(0)
-	{
-	    m_ArtistImages = new ArtistImages ;
-	    m_ArtistImages->run() ;
-	}
+	    if( i1 != m_mbid_map.end() )
+	    {
+		Glib::RefPtr<Gdk::Pixbuf> icon = icon->scale_simple( 64, 64, Gdk::INTERP_BILINEAR ) ; 
+		Glib::RefPtr<Gdk::Pixbuf> icon_desaturated ; 
 
-	void
-	DataModel::clear()
-	{
-	    m_datamodel.reset() ;
-	}
+		Cairo::RefPtr<Cairo::ImageSurface>
+		      s1
+		    , s2
+		;
 
-	bool
-	DataModel::is_set()
-	{
-	    return bool(m_datamodel);
-	}
+		if( icon )
+		{
+		    icon_desaturated = icon->copy() ;
+		    icon->saturate_and_pixelate(icon_desaturated, 0., false) ;
+		    s1 = Util::cairo_image_surface_from_pixbuf(icon_desaturated) ;
+		    s2 = Util::cairo_image_surface_from_pixbuf(icon) ;
+		    Util::cairo_image_surface_blur( s1, 2. ) ;
+		}
 
-	guint
-	DataModel::size()
-	{
-	    return m_datamodel ? m_datamodel->size():0 ;
-	}
+		boost::get<3>(*(i1->second)) = std::move(s1) ; 
+		boost::get<4>(*(i1->second)) = std::move(s2) ; 
+	    }
+    }
 
-	const Row_t&
-	DataModel::row(guint d)
-	{
-	    return (*m_datamodel)[d];
-	}
+    DataModel::DataModel(
+	Model_sp model
+    )
+    : m_datamodel(model)
+    , m_upper_bound(0)
+    {
+	m_ArtistImages = new ArtistImages ;
+	m_ArtistImages->run() ;
+    }
 
-	void
-	DataModel::set_current_row(
-	    guint d
-	)
-	{
-	    m_upper_bound = d ;
-	}
-    
-	Glib::RefPtr<Gdk::Pixbuf>
-	DataModel::get_icon(
+    void
+    DataModel::clear()
+    {
+	m_datamodel.reset() ;
+    }
+
+    bool
+    DataModel::is_set()
+    {
+	return bool(m_datamodel);
+    }
+
+    guint
+    DataModel::size()
+    {
+	return m_datamodel ? m_datamodel->size():0 ;
+    }
+
+    const Row_t&
+    DataModel::row(guint d)
+    {
+	return (*m_datamodel)[d];
+    }
+
+    void
+    DataModel::set_current_row(
+	guint d
+    )
+    {
+	m_upper_bound = d ;
+    }
+
+    Glib::RefPtr<Gdk::Pixbuf>
+    DataModel::get_icon(
 	    const std::string& mbid
 	)
 	{
@@ -113,6 +145,7 @@ namespace Artist
 		Model_t::iterator i = m_datamodel->end();
 		std::advance( i, -1 );
 		m_iter_map.insert(std::make_pair(artist_id.get(), i));
+		m_mbid_map.insert(std::make_pair(artist_mbid, i)) ;
 	    }
 	}
 
@@ -163,6 +196,7 @@ namespace Artist
 	    if( artist_id )
 	    {
 		m_iter_map.insert( std::make_pair( artist_id.get(), i ));
+		m_mbid_map.insert(std::make_pair(artist_mbid, i)) ;
 	    }
 	}
 
@@ -262,6 +296,7 @@ namespace Artist
 		Model_t::iterator iter = (*i).second ;
 		m_iter_map.erase(i) ;
 		m_datamodel->erase(iter) ;
+		m_SIGNAL__changed.emit( m_upper_bound ) ;
 	    }
 	}
 

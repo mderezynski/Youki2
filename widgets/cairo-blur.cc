@@ -4,7 +4,7 @@
 #include <cairo.h>
 #include <gtk/gtk.h>
 #include <gtkmm.h>
-#include <math.h>
+#include <cmath>
 #include <pixman.h>
 
 #include "mpx/widgets/cairo-blur.hh"
@@ -105,7 +105,7 @@ namespace Util
 void
 cairo_image_surface_blur( Cairo::RefPtr<Cairo::ImageSurface>& s, double radius )
 {
-    cairo_surface_t* blurred = blur_image_surface( static_cast<cairo_surface_t*>(s->cobj()), radius, 4. ) ;
+    cairo_surface_t* blurred = blur_image_surface( static_cast<cairo_surface_t*>(s->cobj()), radius, 8. ) ;
     s = Cairo::RefPtr<Cairo::ImageSurface>(new Cairo::ImageSurface( blurred, false )) ;
 }
 
