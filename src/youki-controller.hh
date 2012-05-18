@@ -570,11 +570,6 @@ namespace MPX
 	    void
 	    tracklist_regen_mapping_iterative() ;
 
-        protected:
-    
-            void
-            initiate_quit() ;
-
 	protected:
 
 	    void
@@ -586,7 +581,7 @@ namespace MPX
             Raise(){ m_main_window->present(); } 
 
             virtual void
-            Quit(){ initiate_quit(); }
+            Quit(){ }
 
 	    virtual void
 	    Next(){ API_next(); }

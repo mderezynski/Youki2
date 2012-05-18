@@ -159,6 +159,11 @@ namespace MPX
           on_play_status_changed(
           ) ;
 
+	  void
+	  on_play_seek(
+	        int
+	  ) ;
+
           void
           on_entry_changed(
           ) ;

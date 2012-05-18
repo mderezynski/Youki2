@@ -102,7 +102,7 @@ namespace MPX
     }
 
     void
-    sigterm_handler (int signal_number)
+    sigterm_handler(int signal_number)
     {
         g_atomic_int_set( &terminate, 1 );
     }
@@ -112,14 +112,16 @@ namespace MPX
     {
         if( g_atomic_int_get(&terminate) )
         {
-            g_message (_("Got SIGTERM: Exiting (It's all right!)"));
+            g_message (_("SIGTERM: Exiting"));
 
-            bool gtk_running = Gtk::Main::level();
-
-            if (gtk_running)
-                Gtk::Main::quit() ;
+            if(g_main_depth()) 
+	    {
+		gtk->quit() ; 
+	    }
             else
-                std::exit(EXIT_SUCCESS) ;
+	    {
+		std::exit(EXIT_SUCCESS) ;
+	    }
 
             return false;
         }
@@ -146,12 +148,7 @@ namespace MPX
         mcs->load (Mcs::Config::VERSION_IGNORE);
 
         mcs->domain_register ("main-window");
-        mcs->key_register ("main-window", "width", 0); //FIXME:
-        mcs->key_register ("main-window", "height", 0); //FIXME:
-        mcs->key_register ("main-window", "pos_x", 0);
-        mcs->key_register ("main-window", "pos_y", 0);
-        mcs->key_register ("main-window", "paned1", 0);
-        mcs->key_register ("main-window", "paned2", 0);
+        mcs->key_register ("main-window", "maximized", bool(false));
 
         mcs->domain_register ("ui");
         mcs->key_register ("ui", "show-statusbar", true);
@@ -258,14 +255,21 @@ int main(int argc, char ** argv)
     }
 
     signal_handlers_install();
+
     create_user_dirs();
+
     setup_mcs();
+
     gst_init(&argc, &argv);
+
+    Gst::init() ;
+
 //  mpx_py_init() ;
+
     register_default_stock_icons();
 
-    services = new Service::Manager;
 
+    services = new Service::Manager;
     Splashscreen* splash = new Splashscreen;
 
     DBus::Glib::BusDispatcher dispatcher ;
@@ -273,6 +277,8 @@ int main(int argc, char ** argv)
     DBus::default_dispatcher = &dispatcher ;
     DBus::Connection conn = DBus::Connection::SessionBus() ;
     conn.request_name( "info.backtrace.Youki.App" ) ;
+
+    Gtk::Settings::get_default()->property_gtk_tooltip_timeout().set_value( 1500 ) ;
 
 #ifdef HAVE_HAL
     try{

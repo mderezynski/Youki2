@@ -37,26 +37,34 @@ static const time_t MIN_TRACK_LENGTH_TO_SUBMIT  = 30;
 static const time_t MIN_SECS_BETWEEN_CONNECT    = 60;
 static const time_t MAX_SECS_BETWEEN_CONNECT    = 7200;
 
-LastFmScrobbler::LastFmScrobbler(bool synchronous, ILog & log )
-: m_pLastFmClient(new LastFmClient())
-, m_LastConnectionAttempt(0)
-, m_AuthenticateThread(LastFmScrobbler::authenticateThread, this)
-, m_SendInfoThread(LastFmScrobbler::sendInfoThread, this)
-, m_FinishPlayingThread(LastFmScrobbler::finishPlayingThread, this)
-, m_Authenticated(false)
-, m_Disabled(true)
-, m_HardConnectionFailureCount(0)
-, m_Synchronous(synchronous)
-, m_CommitOnly(false)
-, m_Log(log)
+struct LastFmScrobbler::ThreadData
 {
-    boost::shared_ptr<MPX::IPlay> p = MPX::services->get<MPX::IPlay>("mpx-service-play") ;
+} ;
 
-    p->signal_seek().connect(
-        sigc::mem_fun(
-              *this
-            , &LastFmScrobbler::on_play_seek
-    )) ;
+LastFmScrobbler::LastFmScrobbler(bool synchronous, ILog & log )
+
+    : sigx::glib_threadable()
+
+    , startedPlaying(sigc::mem_fun( *this, &LastFmScrobbler::on_startedPlaying))
+    , finishedPlaying(sigc::mem_fun( *this, &LastFmScrobbler::on_finishedPlaying))
+    , pausePlaying(sigc::mem_fun( *this, &LastFmScrobbler::on_pausePlaying))
+    , set_credentials(sigc::mem_fun( *this, &LastFmScrobbler::on_set_credentials))
+    , set_enabled(sigc::mem_fun( *this, &LastFmScrobbler::on_set_enabled))
+    , play_seek(sigc::mem_fun( *this, &LastFmScrobbler::on_play_seek))
+
+    , m_pLastFmClient(new LastFmClient)
+    , m_LastConnectionAttempt(0)
+    , m_AuthenticateThread(LastFmScrobbler::authenticateThread, this)
+    , m_SendInfoThread(LastFmScrobbler::sendInfoThread, this)
+    , m_FinishPlayingThread(LastFmScrobbler::finishPlayingThread, this)
+    , m_Authenticated(false)
+    , m_Disabled(true)
+    , m_HardConnectionFailureCount(0)
+    , m_Synchronous(synchronous)
+    , m_CommitOnly(false)
+    , m_Log(log)
+
+{
 }
 
 LastFmScrobbler::~LastFmScrobbler()
@@ -66,13 +74,13 @@ LastFmScrobbler::~LastFmScrobbler()
 }
 
 void
-LastFmScrobbler::set_enabled( bool enable )
+LastFmScrobbler::on_set_enabled( bool enable )
 {
     m_Disabled = !enable ;
 }
 
 void
-LastFmScrobbler::set_credentials( const std::string& user, const std::string& pass)
+LastFmScrobbler::on_set_credentials( const std::string& user, const std::string& pass)
 {
     m_AuthenticateThread.cancel();
     
@@ -88,12 +96,12 @@ void LastFmScrobbler::setCommitOnlyMode(bool enabled)
     m_CommitOnly = enabled;
 }
 
-void LastFmScrobbler::on_play_seek( guint diff )
+void LastFmScrobbler::on_play_seek( int diff )
 {
     m_SeekDiff += (-diff) ; 
 }
 
-void LastFmScrobbler::startedPlaying(const SubmissionInfo& info)
+void LastFmScrobbler::on_startedPlaying(const SubmissionInfo& info)
 {
     m_CurrentTrackInfo = info;
     m_SeekDiff = 0. ;
@@ -113,11 +121,11 @@ void LastFmScrobbler::startedPlaying(const SubmissionInfo& info)
     }
 }
 
-void LastFmScrobbler::pausePlaying(bool paused)
+void LastFmScrobbler::on_pausePlaying(bool paused)
 {
 }
 
-void LastFmScrobbler::finishedPlaying()
+void LastFmScrobbler::on_finishedPlaying()
 {
     if( !m_CurrentTrackInfo )
         return ;
@@ -158,7 +166,7 @@ bool LastFmScrobbler::trackCanBeCommitted(const SubmissionInfo& info)
     }
     else
    {
-//        logger::info( m_Log, "Track \"" + info.getTrack() + "\" can be committed: conditions OK");
+	logger::info( m_Log, "Track \"" + info.getTrack() + "\" can be committed: conditions OK");
     }
 
     return (!trackTooShort) && trackPlayedLongEnough;
@@ -185,6 +193,7 @@ void LastFmScrobbler::authenticate()
 {
     try
     {
+	logger::info( m_Log, "Authenticating..." ) ;
         m_pLastFmClient->handshake(m_Username, m_Password);
         logger::info( m_Log, "Authentication successful for user: \"" + m_Username + "\"" );
         m_HardConnectionFailureCount = 0;
@@ -234,18 +243,20 @@ void* LastFmScrobbler::sendInfoThread(void* pInstance)
 
     ScopedLock lock(pScrobbler->m_TrackInfosMutex);
 
-    if (pScrobbler->m_Authenticated && pScrobbler->m_CurrentTrackInfo && !pScrobbler->m_Disabled)
+    if(!pScrobbler->m_Authenticated)
+	pScrobbler->authenticate() ;
+
+    if(pScrobbler->m_Authenticated && pScrobbler->m_CurrentTrackInfo && !pScrobbler->m_Disabled)
     {
-        if (!pScrobbler->m_CommitOnly)
+        if(!pScrobbler->m_CommitOnly)
         {
-	    std::cerr << "LastFM: Setting NOW PLAYING" << std::endl ;
+	    logger::info( pScrobbler->m_Log, "Setting Now Playing");
             pScrobbler->setNowPlaying();
 	    return NULL ;
         }
     }
 
-    std::cerr << "LastFM: No dice!!" << std::endl ;
-
+    logger::info( pScrobbler->m_Log, "Unable to set Now Playing");
     return NULL;
 }
 
@@ -257,10 +268,10 @@ void* LastFmScrobbler::finishPlayingThread(void* pInstance)
 
     {
         ScopedLock lock(pScrobbler->m_AuthenticatedMutex);
+
         if (!pScrobbler->m_Authenticated)
         {
-            //Program is probalby cleaning up, dont't try to start authentication
-            return NULL;
+	    pScrobbler->authenticate() ;
         }
     }
 
@@ -307,6 +318,8 @@ void LastFmScrobbler::setNowPlaying()
 
 void LastFmScrobbler::submitTrack(const SubmissionInfo& info)
 {
+    //ScopedLock lock(m_TrackInfosMutex);
+
     if (info.getTrackLength() < 0 || !trackCanBeCommitted(info))
     {
         logger::debug( m_Log, "Track can not be committed");
@@ -314,23 +327,29 @@ void LastFmScrobbler::submitTrack(const SubmissionInfo& info)
     }
     else
     {
-        //ScopedLock lock(m_TrackInfosMutex);
         m_BufferedTrackInfos.addInfo(info);
     }
 
-    SubmissionInfoCollection tracksToSubmit;
-    {
-        //ScopedLock lock(m_TrackInfosMutex);
-        tracksToSubmit = m_BufferedTrackInfos;
-    }
+    SubmissionInfoCollection tracksToSubmit = m_BufferedTrackInfos ;
 
     try
     {
+	if(!m_Authenticated)
+	    authenticate() ;
+
         if (m_Authenticated)
         {
-            m_pLastFmClient->submit(tracksToSubmit);
-            logger::info( m_Log, "Tracks submitted...");
-            m_BufferedTrackInfos.clear();
+            int code = m_pLastFmClient->submit(tracksToSubmit);
+
+	    if( code == 200 )
+	    {
+		logger::info( m_Log, "Track(s) submitted...");
+		m_BufferedTrackInfos.clear();
+	    }
+	    else
+	    {
+		logger::info( m_Log, "Could not submit, HTTP error...");
+	    }
         }
         else
         {

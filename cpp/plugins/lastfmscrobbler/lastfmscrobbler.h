@@ -29,6 +29,7 @@
 #include <ctime>
 
 #include <boost/optional.hpp>
+#include <sigx/sigx.h>
 
 #include "lastfmclient.h"
 #include "submissioninfo.h"
@@ -36,12 +37,22 @@
 #include "condition.h"
 #include "mutex.h"
 #include "thread.h"
-
 #include "i-log.hh"
 
 
 class LastFmScrobbler
+: public sigx::glib_threadable
 {
+protected:
+	struct ThreadData ;
+	Glib::Private<ThreadData> m_ThreadData ;
+
+	virtual void
+	on_startup() {} 
+
+	virtual void
+	on_cleanup() {} 
+
 public:
     /** Constructor
      * \param user Last.fm user name
@@ -67,25 +78,36 @@ public:
      * \param info SubmissionInfo object containing information about
      * the new song
      */
-    void startedPlaying(const SubmissionInfo& info);
+
+    sigx::request_f<const SubmissionInfo&> startedPlaying ;
+    void on_startedPlaying(const SubmissionInfo& info);
     /** Indicate that the current track has stopped playing. The current
      * track will be submitted to Last.fm
      */
-    void finishedPlaying();
+
+    sigx::request_f<> finishedPlaying ;
+    void on_finishedPlaying();
     /** Indicate that playback of the current track has been (un)paused
      * \param paused true if track is being paused, false if being unpaused
      */
-    void pausePlaying(bool paused);
+
+    sigx::request_f<bool> pausePlaying ;
+    void on_pausePlaying(bool paused);
 
     /** Sets new credentials and reauthenticates
      *
      */
-    void set_credentials(const std::string& user, const std::string& pass);
+    sigx::request_f<const std::string&, const std::string&> set_credentials ;
+    void on_set_credentials(const std::string& user, const std::string& pass);
 
     /** Set authentication to false 
      *
      */
-    void set_enabled( bool ) ;
+    sigx::request_f<bool> set_enabled ;
+    void on_set_enabled( bool ) ;
+
+    sigx::request_f<int> play_seek ;
+    void on_play_seek(int) ;
 
 protected:
     LastFmClient*   m_pLastFmClient;
@@ -106,8 +128,6 @@ protected:
     utils::Thread   m_FinishPlayingThread;
 
 private:
-
-    void on_play_seek(unsigned int) ;
 
     void authenticateIfNecessary();
     void authenticate();

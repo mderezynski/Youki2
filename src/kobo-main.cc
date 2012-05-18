@@ -14,6 +14,8 @@ namespace MPX
     {
         get_position( Mcs::Key::adaptor<int>(mcs->key("mpx", "window-x")), Mcs::Key::adaptor<int>(mcs->key("mpx", "window-y")));
         get_size( Mcs::Key::adaptor<int>(mcs->key("mpx", "window-w")), Mcs::Key::adaptor<int>(mcs->key("mpx", "window-h")) );
+
+	mcs->key_set<bool>("main-window","maximized", (get_window()->get_state()&Gdk::WINDOW_STATE_MAXIMIZED)) ;
     }
 
     MainWindow::MainWindow ()
@@ -51,6 +53,9 @@ namespace MPX
               mcs->key_get<int>("mpx","window-x"),
               mcs->key_get<int>("mpx","window-y")
         );
+
+	if( mcs->key_get<bool>("main-window","maximized"))
+	    maximize() ;
 
         while (gtk_events_pending())
           gtk_main_iteration();

@@ -25,7 +25,6 @@
 
 #include "md5.h"
 #include "stringoperations.h"
-
 #include "nowplayinginfo.h"
 #include "submissioninfo.h"
 #include "submissioninfocollection.h"
@@ -94,27 +93,28 @@ void LastFmClient::nowPlaying(const NowPlayingInfo& info)
     }
 }
 
-void LastFmClient::submit(const SubmissionInfo& info)
+int LastFmClient::submit(const SubmissionInfo& info)
 {
-    submit(createSubmissionString(info));
+    return submit(createSubmissionString(info));
 
 }
 
-void LastFmClient::submit(const SubmissionInfoCollection& infoCollection)
+int LastFmClient::submit(const SubmissionInfoCollection& infoCollection)
 {
-    submit(createSubmissionString(infoCollection));
+    return submit(createSubmissionString(infoCollection));
 }
 
-void LastFmClient::submit(const string& postData)
+int LastFmClient::submit(const string& postData)
 {
     throwOnInvalidSession();
 
     string response;
 
+    int code = 0 ;
+
     try
     {
-        std::cerr << "Posting data: " << postData << std::endl ;
-        m_UrlClient.post(m_SubmissionUrl, postData, response);
+        code = m_UrlClient.post(m_SubmissionUrl, postData, response);
     }
     catch (logic_error& e)
     {
@@ -135,6 +135,8 @@ void LastFmClient::submit(const string& postData)
     {
         throw logic_error("Hard failure of info submission: " + lines[0]);
     }
+
+    return code ;
 }
 
 

@@ -1224,14 +1224,15 @@ namespace Albums
 	Class::on_focus_in_event(GdkEventFocus* G_GNUC_UNUSED)
 	{
 	    using boost::get ;
-
+/*
 	    if( !m_selection || (!ViewMetrics.ViewPort(get<Selection::INDEX>(m_selection.get()))))
 	    {
 		select_index( ViewMetrics.ViewPort.upper()) ;
 		scroll_to_index( ViewMetrics.ViewPort.upper()) ;
 	    }
+*/
 
-	    return true ;
+	    return false ;
 	}
 
 	bool
@@ -1275,6 +1276,7 @@ namespace Albums
 	{
 	    cairo->save() ;
 
+#if 0
 	    Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create(
 		  0 
 		, get_allocated_height()/2. 
@@ -1347,7 +1349,7 @@ namespace Albums
 	    cairo->rectangle( 0, 0, get_allocated_width(), get_allocated_height() ) ;
 	    cairo->mask(gradient) ;
 	    cairo->restore() ;
-
+#endif
 
 	    const ThemeColor& c_text     = m_theme->get_color( THEME_COLOR_TEXT ) ;
 	    const ThemeColor& c_text_sel = m_theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
@@ -1439,6 +1441,26 @@ namespace Albums
 		cairo->rectangle(0,0,get_allocated_width(),get_allocated_height()) ;
 		cairo->set_source_rgba(0,0,0,0.2) ;
 		cairo->fill() ;
+	    }
+
+	    cairo->restore() ;
+
+	    if( has_focus() )
+	    {
+		GdkRectangle r ;
+
+		r.x = 1 ;
+		r.y = 1 ;
+		r.width = get_allocated_width() - 1 ;
+		r.height = get_allocated_height() - 1 ;
+
+		m_theme->draw_focus(
+		      cairo
+		    , r
+		    , has_focus()
+		    , 0
+		    , MPX::CairoCorners::CORNERS(0)
+		) ;
 	    }
 
 	    get_window()->process_all_updates() ;

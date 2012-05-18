@@ -54,6 +54,7 @@ namespace MPX
 
     CPPModLastFmScrobbler::~CPPModLastFmScrobbler ()
     {
+	m_LastFmScrobbler->finish() ;
         delete m_LastFmScrobbler ;
     }
 
@@ -110,7 +111,8 @@ namespace MPX
 
         m_Log = new TextViewLog( builder ) ;
 
-        m_LastFmScrobbler = new LastFmScrobbler( false, *m_Log ) ;
+        m_LastFmScrobbler = new LastFmScrobbler( true, *m_Log ) ;
+	m_LastFmScrobbler->run() ;
 
         boost::shared_ptr<IYoukiController> p1 = services->get<IYoukiController>("mpx-service-controller") ;
 
@@ -140,128 +142,148 @@ namespace MPX
         boost::shared_ptr<IPlay> p2 = services->get<IPlay>("mpx-service-play") ;
 
         p2->property_status().signal_changed().connect(
-                sigc::mem_fun(
-                      *this
-                    , &CPPModLastFmScrobbler::on_play_status_changed
+	    sigc::mem_fun(
+		  *this
+                 , &CPPModLastFmScrobbler::on_play_status_changed
         )) ;
 
-        show_all() ;
+	p2->signal_seek().connect(
+	    sigc::mem_fun(
+		  *this
+	    , &CPPModLastFmScrobbler::on_play_seek
+    )) ;
+
+    show_all() ;
+}
+
+Gtk::Widget*
+CPPModLastFmScrobbler::get_gui()
+{
+    return this ;
+}
+
+bool
+CPPModLastFmScrobbler::activate()
+{
+    logger::info( *m_Log, "Scrobbling turned ON" ) ;
+
+    m_Active = true ;
+
+    m_LastFmScrobbler->set_enabled( true ) ;
+
+    m_LastFmScrobbler->set_credentials(
+	  mcs->key_get<std::string>( "lastfm", "username" )
+	, mcs->key_get<std::string>( "lastfm", "password" )
+    ) ;
+
+    return true ;
+}
+
+bool
+CPPModLastFmScrobbler::deactivate()
+{
+    logger::info( *m_Log, "Scrobbling turned OFF" ) ;
+
+    m_LastFmScrobbler->set_enabled( false ) ;
+    m_Active = false ;
+
+    return true ;
+}
+
+void
+CPPModLastFmScrobbler::on_controller_track_out(
+      GObject *     controller
+    , gpointer      data
+)
+{
+    CPPModLastFmScrobbler & obj = *reinterpret_cast<CPPModLastFmScrobbler*>(data) ;
+
+    if( !obj.m_Active )
+	return ;
+
+    try{
+	logger::info( *(obj.m_Log), "Calling finishedPlaying()" ) ;
+	obj.m_LastFmScrobbler->finishedPlaying() ;
+    } catch( std::runtime_error )
+    {
+	logger::info( *(obj.m_Log), "Exception in: finishedPlaying()" ) ;
+    }
+}
+
+void
+CPPModLastFmScrobbler::on_controller_track_new(
+      GObject *     controller
+    , gpointer      data
+)
+{
+    CPPModLastFmScrobbler & obj = *reinterpret_cast<CPPModLastFmScrobbler*>(data) ;
+
+    if( !obj.m_Active )
+    {
+	logger::info( *(obj.m_Log), "Plugin not active" ) ;
+	return ;
     }
 
-    Gtk::Widget*
-    CPPModLastFmScrobbler::get_gui()
-    {
-        return this ;
-    }
+    boost::shared_ptr<IYoukiController> p = services->get<IYoukiController>("mpx-service-controller") ;
 
-    bool
-    CPPModLastFmScrobbler::activate()
-    {
-        logger::info( *m_Log, "Scrobbling turned ON" ) ;
+    try{
+	MPX::Track & t = p->get_metadata() ; 
 
-        m_Active = true ;
+	const std::string&  artist  =   boost::get<std::string>(t[ATTRIBUTE_ARTIST].get()) ;
+	const std::string&  title   =   boost::get<std::string>(t[ATTRIBUTE_TITLE].get()) ;
+	const std::string&  album   =   boost::get<std::string>(t[ATTRIBUTE_ALBUM].get()) ;
+	const guint&        time_    =   boost::get<guint>(t[ATTRIBUTE_TIME].get()) ;
+	const guint&        tracknr  =   boost::get<guint>(t[ATTRIBUTE_TRACK].get()) ;
 
-        m_LastFmScrobbler->set_enabled( true ) ;
+	SubmissionInfo info ( artist, title, time(NULL) ) ;
+	info.setTrackLength( int(time_) ) ;
+	info.setTrackNr( int(tracknr) ) ;
+	info.setAlbum( album ) ; 
 
-        m_LastFmScrobbler->set_credentials(
-              mcs->key_get<std::string>( "lastfm", "username" )
-            , mcs->key_get<std::string>( "lastfm", "password" )
-        ) ;
-
-        return true ;
-    }
-
-    bool
-    CPPModLastFmScrobbler::deactivate()
-    {
-        logger::info( *m_Log, "Scrobbling turned OFF" ) ;
-
-        m_LastFmScrobbler->set_enabled( false ) ;
-        m_Active = false ;
-
-        return true ;
-    }
-
-    void
-    CPPModLastFmScrobbler::on_controller_track_out(
-          GObject *     controller
-        , gpointer      data
-    )
-    {
-        CPPModLastFmScrobbler & obj = *reinterpret_cast<CPPModLastFmScrobbler*>(data) ;
-
-        if( !obj.m_Active )
-            return ;
-
-        try{
-            obj.m_LastFmScrobbler->finishedPlaying() ;
-        } catch( std::runtime_error )
-        {
-        }
-    }
-
-    void
-    CPPModLastFmScrobbler::on_controller_track_new(
-          GObject *     controller
-        , gpointer      data
-    )
-    {
-        CPPModLastFmScrobbler & obj = *reinterpret_cast<CPPModLastFmScrobbler*>(data) ;
-
-        if( !obj.m_Active )
+	if( t.has(ATTRIBUTE_MB_TRACK_ID) )
 	{
-	    std::cerr << "Not active!" << std::endl ;	
-	    return ;
+	    info.setMusicBrainzId( boost::get<std::string>(t[ATTRIBUTE_MB_TRACK_ID].get())) ;
 	}
 
-        boost::shared_ptr<IYoukiController> p = services->get<IYoukiController>("mpx-service-controller") ;
+	logger::info( *(obj.m_Log), "Started playing; setting info" ) ;
+	obj.m_LastFmScrobbler->startedPlaying( info ) ;
 
-        try{
-            MPX::Track & t = p->get_metadata() ; 
-
-            const std::string&  artist  =   boost::get<std::string>(t[ATTRIBUTE_ARTIST].get()) ;
-            const std::string&  title   =   boost::get<std::string>(t[ATTRIBUTE_TITLE].get()) ;
-            const std::string&  album   =   boost::get<std::string>(t[ATTRIBUTE_ALBUM].get()) ;
-            const guint&        time_    =   boost::get<guint>(t[ATTRIBUTE_TIME].get()) ;
-            const guint&        tracknr  =   boost::get<guint>(t[ATTRIBUTE_TRACK].get()) ;
-
-            SubmissionInfo info ( artist, title, time(NULL) ) ;
-            info.setTrackLength( int(time_) ) ;
-            info.setTrackNr( int(tracknr) ) ;
-            info.setAlbum( album ) ; 
-
-            if( t.has(ATTRIBUTE_MB_TRACK_ID) )
-            {
-                info.setMusicBrainzId( boost::get<std::string>(t[ATTRIBUTE_MB_TRACK_ID].get())) ;
-            }
-
-            obj.m_LastFmScrobbler->startedPlaying( info ) ;
-
-        } catch( std::runtime_error )
-        {
-        }
+    } catch( std::runtime_error )
+    {
+	logger::info( *(obj.m_Log), "Exception in: setting info" ) ;
     }
+}
 
-    void
-    CPPModLastFmScrobbler::on_controller_track_cancelled(
-          GObject *     controller
-        , gpointer      data
+void
+CPPModLastFmScrobbler::on_controller_track_cancelled(
+      GObject *     controller
+    , gpointer      data
+)
+{
+    CPPModLastFmScrobbler & obj = *reinterpret_cast<CPPModLastFmScrobbler*>(data) ;
+
+    if( !obj.m_Active )
+	return ;
+
+    try{
+	logger::info( *(obj.m_Log), "Calling finishedPlaying()" ) ;
+	obj.m_LastFmScrobbler->finishedPlaying() ;
+    } catch( std::runtime_error )
+    {
+	logger::info( *(obj.m_Log), "Exception in: finishedPlaying()" ) ;
+    }
+}
+
+void
+CPPModLastFmScrobbler::on_play_seek(
+	int diff
     )
     {
-        CPPModLastFmScrobbler & obj = *reinterpret_cast<CPPModLastFmScrobbler*>(data) ;
-
-        if( !obj.m_Active )
-            return ;
-
-        try{
-            obj.m_LastFmScrobbler->finishedPlaying() ;
-        } catch( std::runtime_error )
-        {
-        }
+	m_LastFmScrobbler->play_seek( diff ) ;
     }
 
-    void
-    CPPModLastFmScrobbler::on_play_status_changed(
+void
+CPPModLastFmScrobbler::on_play_status_changed(
     )
     {
         boost::shared_ptr<IPlay> p = services->get<IPlay>("mpx-service-play") ;
@@ -274,6 +296,12 @@ namespace MPX
         if( p->property_status().get_value() == PLAYSTATUS_PLAYING )
         {
             m_LastFmScrobbler->pausePlaying( false ) ;
+        }
+	else
+        if( p->property_status().get_value() == PLAYSTATUS_STOPPED )
+        {
+            m_LastFmScrobbler->pausePlaying( false ) ;
+	    on_controller_track_out( nullptr, this ) ;
         }
     }
 

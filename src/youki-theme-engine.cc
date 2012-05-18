@@ -1,5 +1,5 @@
-//  MPX
-//  Copyright (C) 2010 MPX development team.
+//  Youki (MPX)
+//  Copyright (C) 2006-2012 Youki developers 
 //
 //  This program is free software; you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License Version 2
@@ -347,24 +347,8 @@ namespace MPX
     {
         const ThemeColor& cgdk = get_color( THEME_COLOR_SELECT ) ;
 
-	cairo->save() ;
-
-	cairo->rectangle( r.x, r.y, r.width, r.height ) ;
-	cairo->clip() ;
-
-        cairo->set_operator( Cairo::OPERATOR_OVER ) ;
-
-        Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create(
-              r.x + r.width / 2
-            , r.y  
-            , r.x + r.width / 2
-            , r.y + r.height
-        ) ;
-
         double alpha = focused ? 1. : .7 ;
-        
         double h, s, b ;
-        
         Util::color_to_hsb( cgdk, h, s, b ) ;
         b *= 0.90 ; 
         Gdk::RGBA c1 = Util::color_from_hsb( h, s, b ) ;
@@ -379,44 +363,67 @@ namespace MPX
 	s *= 0.85 ;
         Gdk::RGBA c3 = Util::color_from_hsb( h, s, b ) ;
 
-        gradient->add_color_stop_rgba(
-              0
-            , c1.get_red()
-            , c1.get_green()
-            , c1.get_blue()
-            , alpha
-        ) ;
-       
-        gradient->add_color_stop_rgba(
-              0.70 
-            , c2.get_red()
-            , c2.get_green()
-            , c2.get_blue()
-            , alpha
-        ) ;
+	cairo->save() ;
 
-        gradient->add_color_stop_rgba(
-              1. 
-            , c3.get_red()
-            , c3.get_green()
-            , c3.get_blue()
-            , alpha
-        ) ;
+	cairo->rectangle( r.x, r.y, r.width, r.height ) ;
+	cairo->clip() ;
 
-        RoundedRectangle(
-              cairo
-            , r.x 
-            , r.y 
-            , r.width 
-            , r.height 
-            , rounding 
+        cairo->set_operator( Cairo::OPERATOR_OVER ) ;
+
+	if( r.height > 40 )
+	{
+	    Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create(
+		  r.x + (r.width/2.) - (r.height/15.) 
+		, r.y  
+		, r.x + (r.width/2.) + (r.height/15.) 
+		, r.y + r.height
+	    ) ;
+
+	    gradient->add_color_stop_rgba(
+		  0
+		, c1.get_red()
+		, c1.get_green()
+		, c1.get_blue()
+		, alpha
+	    ) ;
+	   
+	    gradient->add_color_stop_rgba(
+		  0.70 
+		, c2.get_red()
+		, c2.get_green()
+		, c2.get_blue()
+		, alpha
+	    ) ;
+
+	    gradient->add_color_stop_rgba(
+		  1. 
+		, c3.get_red()
+		, c3.get_green()
+		, c3.get_blue()
+		, alpha
+	    ) ;
+
+	    cairo->set_source( gradient ) ;
+	}
+	else
+	{
+	    Gdk::Cairo::set_source_rgba( cairo, Util::make_rgba(c2, alpha)) ;
+	}
+
+	RoundedRectangle(
+	      cairo
+	    , r.x 
+	    , r.y 
+	    , r.width 
+	    , r.height 
+	    , rounding 
 	    , corners
-        ) ;
-        cairo->set_source( gradient ) ;
-        cairo->fill(); 
+	) ;
 
-	Gdk::Cairo::set_source_rgba( cairo, Util::make_rgba(cgdk,alpha)) ;
-        cairo->set_line_width( 0.75 ) ; 
+        cairo->fill_preserve(); 
+
+	Gdk::Cairo::set_source_rgba( cairo, Util::make_rgba(c3,alpha)) ;
+        cairo->set_line_width( 0.5 ) ; 
         cairo->stroke () ;
 
 	cairo->restore() ;
@@ -462,11 +469,11 @@ namespace MPX
         ) ;
 
         std::valarray<double> dashes ( 2 ) ;
-        dashes[0] = 1.5 ;
+        dashes[0] = 2 ;
         dashes[1] = 1. ;
 
         cairo->set_dash( dashes, 0 ) ;
-        cairo->set_line_width( 1.75 ) ; 
+        cairo->set_line_width( 0.75 ) ; 
         cairo->stroke () ;
         cairo->restore() ;
     }

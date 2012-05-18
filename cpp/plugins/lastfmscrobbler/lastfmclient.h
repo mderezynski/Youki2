@@ -61,14 +61,14 @@ public:
      * \exception ConnectionError when connection to Last.fm server fails
      * \exception std::logic_error when submitting the Track info fails
      */
-    virtual void submit(const SubmissionInfo& info);
+    virtual int submit(const SubmissionInfo& info);
 
     /** Submit a collection of played tracks to the Last.fm server (max. 50)
      * \param infoCollection a SubmissionInfoCollection oject containing played tracks
      * \exception ConnectionError when connection to Last.fm server fails
      * \exception std::logic_error when submitting the Track info collection fails
      */
-    virtual void submit(const SubmissionInfoCollection& infoCollection);
+    virtual int submit(const SubmissionInfoCollection& infoCollection);
 
     /** Generates an md5 hash of the supplied password which can also be used
      * to login and is safer to store
@@ -83,7 +83,7 @@ private:
     std::string createSubmissionString(const SubmissionInfo& info);
     std::string createSubmissionString(const SubmissionInfoCollection& infoCollection);
     void throwOnInvalidSession();
-    void submit(const std::string& postData);
+    int submit(const std::string& postData);
 
     UrlClient       m_UrlClient;
     std::string     m_SessionId;

@@ -37,7 +37,7 @@ void error(ILog& obj, const std::string& message)
     syslog(LOG_ERR, "%s", message.c_str());
 #endif
 
-    obj << "ERROR: " + message + "\n";
+    obj << "ERR: " + message + "\n";
 }
 
 void info(ILog& obj, const std::string& message)
@@ -47,7 +47,7 @@ void info(ILog& obj, const std::string& message)
 #endif
 
 #ifdef ENABLE_DEBUG
-    obj << "INFO:  " + message + "\n";
+    obj << "INF:  " + message + "\n";
 #endif
 }
 
@@ -57,7 +57,7 @@ void warn(ILog& obj, const std::string& message)
     syslog(LOG_WARNING, "%s", message.c_str());
 #endif
 
-    obj << "WARN:  " + message + "\n";
+    obj << "WRN:  " + message + "\n";
 }
 
 void debug(ILog& obj, const std::string& message)
@@ -67,7 +67,7 @@ void debug(ILog& obj, const std::string& message)
 #endif
 
 #ifdef ENABLE_DEBUG
-    obj << "DEBUG: " + message + "\n";
+    obj << "DBG: " + message + "\n";
 #endif
 }
 
@@ -77,7 +77,7 @@ void critical(ILog& obj, const std::string& message)
     syslog(LOG_CRIT, "%s", message.c_str());
 #endif
 
-    obj << "CRIT:  " + message + "\n";
+    obj << "CRI:  " + message + "\n";
 }
 
 }

@@ -423,6 +423,8 @@ namespace Artist
 	{
 	    using boost::get;
 
+	    cairo->save() ;
+
 	    const int text_size_px = 14 ;
 	    const int text_size_pt = static_cast<int>((text_size_px* 72)
 					/ Util::screen_get_y_resolution(Gdk::Screen::get_default())) ;
@@ -450,6 +452,7 @@ namespace Artist
 
 	    double h,s,b ;
 
+/*
 	    Gdk::RGBA c3 = color ;
 	    c3.set_alpha( 0.7 ) ;
 	    Util::color_to_hsb( color, h, s, b ) ;
@@ -457,6 +460,7 @@ namespace Artist
 	    b *= 1.80 ;
 	    c3 = Util::color_from_hsb( h, s, b ) ;
 	    c3.set_alpha( 1. ) ;
+*/
 
 	    Util::color_to_hsb( color, h, s, b ) ;
 	    s *= 0.95 ;
@@ -499,12 +503,14 @@ namespace Artist
 		Util::render_text_shadow( L, 0.0, 0.0, cairo ) ;
 	    }
 
-	    Gdk::Cairo::set_source_rgba(cairo, c3);
+	    Gdk::Cairo::set_source_rgba(cairo, color);
 	    cairo->move_to(0.0, 0.0) ;
 	    pango_cairo_show_layout(
 		  cairo->cobj()
 		, L->gobj()
 	    ) ;
+	    cairo->restore() ;
+
 	    cairo->restore() ;
 	}
 
@@ -955,6 +961,7 @@ namespace Artist
 	{
 	    cairo->save() ;
 
+#if 0
 	    Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create(
 		  0 
 		, get_allocated_height()/2. 
@@ -1026,7 +1033,7 @@ namespace Artist
 	    cairo->set_source( pattern ) ;
 	    cairo->rectangle( 0, 0, get_allocated_width(), get_allocated_height() ) ;
 	    cairo->mask(gradient) ;
-	    cairo->restore() ;
+#endif
 
 	    boost::shared_ptr<IYoukiThemeEngine> theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;
 
@@ -1103,6 +1110,26 @@ namespace Artist
 		cairo->rectangle(0,0,get_allocated_width(),get_allocated_height()) ;
 		cairo->set_source_rgba(0,0,0,0.2) ;
 		cairo->fill() ;
+	    }
+
+	    cairo->restore() ;
+
+	    if( has_focus() )
+	    {
+		GdkRectangle r ;
+
+		r.x = 1 ;
+		r.y = 1 ;
+		r.width = get_allocated_width() - 1 ;
+		r.height = get_allocated_height() - 1 ;
+
+		theme->draw_focus(
+		      cairo
+		    , r
+		    , has_focus()
+		    , 0
+		    , MPX::CairoCorners::CORNERS(0)
+		) ;
 	    }
 
 	    get_window()->process_all_updates() ;
@@ -1473,6 +1500,33 @@ namespace Artist
 	    queue_resize();
 	}
 
+	bool
+	Class::query_tooltip(
+	      int                                   tooltip_x
+	    , int                                   tooltip_y
+	    , bool                                  keypress
+	    , const Glib::RefPtr<Gtk::Tooltip>&     tooltip
+	)
+	{
+	    guint d = (vadj_value() + tooltip_y) / m_height__row ;
+
+	    if(!ModelExtents(d)) return false ;
+
+	    const Row_t& r = *(m_model->m_mapping[d]) ;
+
+	    Glib::RefPtr<Gdk::Pixbuf> icon = m_model->m_ArtistImages->get_image( boost::get<2>(r)) ;
+
+	    if( icon ) 
+	    {   
+		Gtk::Image * image = Gtk::manage( new Gtk::Image ) ;
+		image->set( icon ) ; 
+		tooltip->set_custom( *image ) ;
+		return true ;
+	    }
+
+	    return false ;
+	}
+
 	Class::Class()
 
 	    : ObjectBase( "YoukiViewArtists" )
@@ -1493,10 +1547,13 @@ namespace Artist
 
 	    ModelCount = Minus<int>( -1 ) ;
 
-	    boost::shared_ptr<IYoukiThemeEngine> theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;
-	    const ThemeColor& c = theme->get_color( THEME_COLOR_BASE ) ;
-	    override_background_color(c, Gtk::STATE_FLAG_NORMAL ) ;
+	    signal_query_tooltip().connect(
+		sigc::mem_fun(
+		      *this
+		    , &Class::query_tooltip
+	    )) ;
 
+	    set_has_tooltip(true) ;
 	    set_can_focus (true);
 
 	    add_events(Gdk::EventMask(GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_EXPOSURE_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_LEAVE_NOTIFY_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_MOTION_MASK | GDK_SCROLL_MASK ));

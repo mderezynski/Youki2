@@ -47,19 +47,17 @@ void UrlClient::get(const string& url, string& response)
 
     int code = req->run() ;
 
-    if(code != 200)
+    if(code == 200)
     {
-        throw std::logic_error("Failed to GET data") ;
+	response = req->get_data() ;
     }
-
-    response = req->get_data() ;
 }
 
 void UrlClient::getBinary(const string& url, void* callback, void* parameter)
 {
 }
 
-void UrlClient::post(const string& url, const string& data, string& response)
+int UrlClient::post(const string& url, const string& data, string& response)
 {
     Glib::RefPtr<MPX::Soup::RequestSync> req = MPX::Soup::RequestSync::create( url, true ) ;
 
@@ -67,10 +65,10 @@ void UrlClient::post(const string& url, const string& data, string& response)
 
     int code = req->run() ;
 
-    if(code != 200)
+    if(code == 200)
     {
-        throw std::logic_error("Failed to POST data") ;
+	response = req->get_data() ;
     }
 
-    response = req->get_data() ;
+    return code ;
 }
