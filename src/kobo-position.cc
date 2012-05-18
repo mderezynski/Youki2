@@ -107,17 +107,18 @@ namespace MPX
 	c_text_dark = Util::color_from_hsb( h, s, b ) ;
 
         Util::color_to_hsb( cgdk, h, s, b ) ;
-        b *= 0.9 ; 
-        s *= 0.60 ;
+        b *= 0.8 ; 
+        s *= 0.80 ;
         Gdk::RGBA c1 = Util::color_from_hsb( h, s, b ) ;
 
         Util::color_to_hsb( cgdk, h, s, b ) ;
-        s *= 0.55 ; 
+	b *= 0.9 ;
+        s *= 0.80 ; 
         Gdk::RGBA c2 = Util::color_from_hsb( h, s, b ) ;
 
         Util::color_to_hsb( cgdk, h, s, b ) ;
-        b *= 1.05 ; 
-        s *= 0.55 ; 
+        b *= 1 ;
+        s *= 0.80 ; 
         Gdk::RGBA c3 = Util::color_from_hsb( h, s, b ) ;
 
 /*

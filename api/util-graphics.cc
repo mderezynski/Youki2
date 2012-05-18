@@ -131,8 +131,10 @@ namespace
 	return make_hsl (h, s, l);
     }
 
-    HSL get_dominant_color (Glib::RefPtr<Gdk::Pixbuf> const& image)
+    Gdk::RGBA get_dominant_color (Glib::RefPtr<Gdk::Pixbuf> const& image)
     {
+	using namespace MPX ;
+
 	int bytes_per_pixel = image->get_has_alpha () ? 4 : 3;
 
 	int width  = image->get_width ();
@@ -140,6 +142,8 @@ namespace
 	int row_stride = image->get_rowstride ();
 
 	int count[64][64];
+
+	int lightness = 0 ;
 
 	int* start = &count[0][0];
 	int* end   = start + 64*64;
@@ -152,9 +156,13 @@ namespace
 	    uint8_t const* p = pixel_row;
 
 	    for (int x = 0; x < width; x++) {
-		HSL hsl = hsl_from_rgb (p[0], p[1], p[2]);
 
-		count[int (hsl.h * 63)][int (hsl.s * 63)]++;
+		double h, s, b ;
+
+		Util::color_to_hsb(Util::make_rgba(p[0]/255.,p[1]/255.,p[2]/255.), h, s, b ) ; 
+		count[int (h / 6)][int (s * 63)]++;
+
+		lightness += (b*255) ;
 
 		p += bytes_per_pixel;
 	    }
@@ -169,7 +177,13 @@ namespace
 	int h = index >> 6;
 	int s = index & 0x3f;
 
-	return make_hsl (h / 63.0, s / 63.0, 0.5);
+	double hf, sf, lf ;
+
+	hf = h * 6 ; 
+	sf = s / 63. ;
+	lf = (lightness / ( width * height )) / 255. ; 
+
+	return Util::color_from_hsb( hf, sf, lf ) ; 
     }
 }
 
@@ -598,8 +612,7 @@ namespace MPX
           Glib::RefPtr<Gdk::Pixbuf>             pb0
     )
     {
-	HSL hsl = get_dominant_color( pb0 ) ;
-	return Util::color_from_hsb( hsl.h, hsl.s, hsl.l ) ;
+	return get_dominant_color( pb0->scale_simple(64,64,Gdk::INTERP_HYPER)) ;
     }
 
     Gdk::RGBA
@@ -607,22 +620,16 @@ namespace MPX
           Glib::RefPtr<Gdk::Pixbuf>             pb0
     )
     {
-/*
-	Gdk::RGBA mean ;
-	Glib::RefPtr<Gdk::Pixbuf> pb3 = pb0->scale_simple(  1,  1 , Gdk::INTERP_NEAREST ) ;
-	guchar * pixels = gdk_pixbuf_get_pixels(GDK_PIXBUF(pb3->gobj())) ;
-	mean.set_rgba( double(pixels[0])/255., double(pixels[1])/255., double(pixels[2])/255., 1.0 ) ;
-*/
+	Gdk::RGBA mean = get_dominant_color_for_pixbuf(pb0) ;
 
-	Gdk::RGBA mean = Util::get_mean_color_for_pixbuf(pb0) ;
-	return mean ;
+	double    r = mean.get_red()
+		, g = mean.get_green()
+		, b = mean.get_blue()
+	;
 
-	double h,s,b ;
-	Util::color_to_hsb( mean, h, s, b ) ;
-
-	if(s<0.10 || b>0.95)
+	if( r < 0.3 && g < 0.3 && b < 0.3 )
 	{
-	    mean = get_dominant_color_for_pixbuf(pb0) ; 
+	    mean = Util::get_mean_color_for_pixbuf(pb0) ; 
 	}
 
 	return mean ;
@@ -640,6 +647,7 @@ namespace MPX
 	int row_stride;
 	const guchar *pixels, *p;
 	int r, g, b, a;
+	guint64 sub ;
 	guint64 dividend;
 	guint width, height ;
 	gdouble dd;
@@ -654,6 +662,8 @@ namespace MPX
 	r_total = 0;
 	g_total = 0;
 	b_total = 0;
+
+	sub = 0 ;
 
 	if (gdk_pixbuf_get_has_alpha (pixbuf)) {
 		for (row = 0; row < height; row++) {
@@ -670,7 +680,7 @@ namespace MPX
 				b_total += b * a;
 			}
 		}
-		dividend = height * width * 0xFF;
+		dividend = height * width * 0xFF - sub ;
 		a_total *= 0xFF;
 	} else {
 		for (row = 0; row < height; row++) {
@@ -685,7 +695,7 @@ namespace MPX
 				b_total += b;
 			}
 		}
-		dividend = height * width;
+		dividend = height * width - sub ;
 		a_total = dividend * 0xFF;
 	}
 
