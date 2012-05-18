@@ -20,23 +20,11 @@
     <xs:complexType>
       <xs:sequence>
         <xs:element ref="name"/>
-        <xs:element ref="tagcount"/>
         <xs:element ref="mbid"/>
         <xs:element ref="url"/>
-        <xs:element ref="artist"/>
         <xs:element maxOccurs="unbounded" ref="image"/>
       </xs:sequence>
       <xs:attribute name="rank" use="required" type="xs:integer"/>
-    </xs:complexType>
-  </xs:element>
-  <xs:element name="tagcount" type="xs:integer"/>
-  <xs:element name="artist">
-    <xs:complexType>
-      <xs:sequence>
-        <xs:element ref="name"/>
-        <xs:element ref="mbid"/>
-        <xs:element ref="url"/>
-      </xs:sequence>
     </xs:complexType>
   </xs:element>
   <xs:element name="image">

@@ -206,7 +206,6 @@ namespace lfm_tagtopalbums
   class lfm;
   class topalbums;
   class album;
-  class artist;
   class image;
 }
 
@@ -374,20 +373,6 @@ namespace lfm_tagtopalbums
     void
     name (::std::auto_ptr< name_type > p);
 
-    // tagcount
-    // 
-    typedef ::xml_schema::integer tagcount_type;
-    typedef ::xsd::cxx::tree::traits< tagcount_type, char > tagcount_traits;
-
-    const tagcount_type&
-    tagcount () const;
-
-    tagcount_type&
-    tagcount ();
-
-    void
-    tagcount (const tagcount_type& x);
-
     // mbid
     // 
     typedef ::xml_schema::string mbid_type;
@@ -421,23 +406,6 @@ namespace lfm_tagtopalbums
 
     void
     url (::std::auto_ptr< url_type > p);
-
-    // artist
-    // 
-    typedef ::lfm_tagtopalbums::artist artist_type;
-    typedef ::xsd::cxx::tree::traits< artist_type, char > artist_traits;
-
-    const artist_type&
-    artist () const;
-
-    artist_type&
-    artist ();
-
-    void
-    artist (const artist_type& x);
-
-    void
-    artist (::std::auto_ptr< artist_type > p);
 
     // image
     // 
@@ -473,10 +441,8 @@ namespace lfm_tagtopalbums
     // Constructors.
     //
     album (const name_type&,
-           const tagcount_type&,
            const mbid_type&,
            const url_type&,
-           const artist_type&,
            const rank_type&);
 
     album (const ::xercesc::DOMElement& e,
@@ -500,97 +466,10 @@ namespace lfm_tagtopalbums
 
     private:
     ::xsd::cxx::tree::one< name_type > name_;
-    ::xsd::cxx::tree::one< tagcount_type > tagcount_;
     ::xsd::cxx::tree::one< mbid_type > mbid_;
     ::xsd::cxx::tree::one< url_type > url_;
-    ::xsd::cxx::tree::one< artist_type > artist_;
     image_sequence image_;
     ::xsd::cxx::tree::one< rank_type > rank_;
-  };
-
-  class artist: public ::xml_schema::type
-  {
-    public:
-    // name
-    // 
-    typedef ::xml_schema::string name_type;
-    typedef ::xsd::cxx::tree::traits< name_type, char > name_traits;
-
-    const name_type&
-    name () const;
-
-    name_type&
-    name ();
-
-    void
-    name (const name_type& x);
-
-    void
-    name (::std::auto_ptr< name_type > p);
-
-    // mbid
-    // 
-    typedef ::xml_schema::string mbid_type;
-    typedef ::xsd::cxx::tree::traits< mbid_type, char > mbid_traits;
-
-    const mbid_type&
-    mbid () const;
-
-    mbid_type&
-    mbid ();
-
-    void
-    mbid (const mbid_type& x);
-
-    void
-    mbid (::std::auto_ptr< mbid_type > p);
-
-    // url
-    // 
-    typedef ::xml_schema::uri url_type;
-    typedef ::xsd::cxx::tree::traits< url_type, char > url_traits;
-
-    const url_type&
-    url () const;
-
-    url_type&
-    url ();
-
-    void
-    url (const url_type& x);
-
-    void
-    url (::std::auto_ptr< url_type > p);
-
-    // Constructors.
-    //
-    artist (const name_type&,
-            const mbid_type&,
-            const url_type&);
-
-    artist (const ::xercesc::DOMElement& e,
-            ::xml_schema::flags f = 0,
-            ::xml_schema::type* c = 0);
-
-    artist (const artist& x,
-            ::xml_schema::flags f = 0,
-            ::xml_schema::type* c = 0);
-
-    virtual artist*
-    _clone (::xml_schema::flags f = 0,
-            ::xml_schema::type* c = 0) const;
-
-    // Implementation.
-    //
-    protected:
-    void
-    parse (::xsd::cxx::xml::dom::parser< char >&,
-           ::xml_schema::flags);
-
-    private:
-    ::xsd::cxx::tree::one< name_type > name_;
-    ::xsd::cxx::tree::one< mbid_type > mbid_;
-    ::xsd::cxx::tree::one< url_type > url_;
   };
 
   class image: public ::xml_schema::uri

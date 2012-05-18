@@ -22,6 +22,35 @@
 namespace
 {
     MPX::OVariant
+    _lastfm_tag_topalbums(
+	  const std::string& value
+    )
+    {
+	MPX::OVariant v ;
+	MPX::StrS s ;
+
+	try{
+	    MPX::URI u ((boost::format( "http://ws.audioscrobbler.com/2.0/?method=tag.gettopalbums&tag=%s&api_key=37cd50ae88b85b764b72bb4fe4041fe4" ) % value).str()) ;
+	    typedef MPX::XmlInstance<lfm_tagtopalbums::lfm> Instance ;
+	
+	    Instance* Xml = new Instance(Glib::ustring( u )) ;
+
+	    for( auto& album : Xml->xml().topalbums().album() )
+	    {
+		s.insert( album.mbid() ) ; 
+	    }
+
+	    delete Xml ;
+	}
+	catch(std::runtime_error& cxe){
+	    g_message("%s: RuntimeError: %s", G_STRLOC, cxe.what()) ;
+	}
+
+	v = s ;
+	return v ;
+    }
+
+    MPX::OVariant
     _lastfm_artist_toptracks(
 	  const std::string& value
     )
@@ -31,23 +60,17 @@ namespace
 
 	try{
 	    MPX::URI u ((boost::format( "http://ws.audioscrobbler.com/2.0/?method=artist.gettoptracks&artist=%s&api_key=37cd50ae88b85b764b72bb4fe4041fe4" ) % Glib::Markup::escape_text(value)).str(), true ) ;
+	    typedef MPX::XmlInstance<lfm_artisttoptracks::lfm> Instance ;
 
-	    MPX::XmlInstance<lfm_artisttoptracks::lfm> *Xml = new MPX::XmlInstance<lfm_artisttoptracks::lfm>(Glib::ustring(u)) ;
+	    Instance* Xml = new Instance(Glib::ustring( u )) ;
 
-	    for( lfm_artisttoptracks::toptracks::track_sequence::const_iterator
-
-		    i  = Xml->xml().toptracks().track().begin() ; 
-		    i != Xml->xml().toptracks().track().end() ;
-
-		    ++i
-	    )
+	    for( auto& track : Xml->xml().toptracks().track() )
 	    {
-		s.insert((*i).mbid()) ;
+		s.insert( track.mbid() ) ;
 	    }
-
-	    delete Xml ;
 	}
-	catch(...) {
+	catch(std::runtime_error& cxe){
+	    g_message("%s: RuntimeError: %s", G_STRLOC, cxe.what()) ;
 	}
 
 	v = s ;
@@ -63,17 +86,20 @@ namespace
 	MPX::StrS s ;
 
 	try{
-	    MPX::URI u ((boost::format( "http://ws.audioscrobbler.com/2.0/?method=artist.getsimilar&artist=%s&api_key=37cd50ae88b85b764b72bb4fe4041fe4" ) % Glib::Markup::escape_text(value)).str(), true ) ;
-	    MPX::XmlInstance<lfm_similarartists::lfm> * Xml = new MPX::XmlInstance<lfm_similarartists::lfm>( Glib::ustring( u ) );
+	    MPX::URI u ((boost::format( "http://ws.audioscrobbler.com/2.0/?method=artist.getsimilar&artist=%s&api_key=37cd50ae88b85b764b72bb4fe4041fe4" ) % Glib::Markup::escape_text(value)).str()) ;
+	    typedef MPX::XmlInstance<lfm_similarartists::lfm> Instance ; 
 
-	    for( lfm_similarartists::similarartists::artist_sequence::const_iterator i = Xml->xml().similarartists().artist().begin(); i != Xml->xml().similarartists().artist().end(); ++i )
+	    Instance* Xml = new Instance(Glib::ustring( u )) ;
+
+	    for( auto& artist : Xml->xml().similarartists().artist() )
 	    {
-		s.insert( (*i).mbid() ) ;
+		s.insert( artist.mbid() ) ; 
 	    }
 
 	    delete Xml ;
 	}
-	catch(...) {
+	catch(std::runtime_error& cxe){
+	    g_message("%s: RuntimeError: %s", G_STRLOC, cxe.what()) ;
 	}
 
 	v = s ;
@@ -102,6 +128,26 @@ namespace
             c.MatchType = type ;
             c.InverseMatch = inverse_match ;
 
+            if( attribute == "top-albums-for-tag" )
+            {
+                c.TargetAttr = ATTRIBUTE_MB_ALBUM_ID ;
+		c.Processing = CONSTRAINT_PROCESSING_ASYNC ;
+		c.SourceValue = value ;
+		c.GetValue = sigc::ptr_fun( &_lastfm_tag_topalbums ) ;	
+
+                constraints.push_back(c) ;
+            }
+            else
+            if( attribute == "top-tracks-for-artist" )
+            {
+                c.TargetAttr = ATTRIBUTE_MB_TRACK_ID ;
+		c.Processing = CONSTRAINT_PROCESSING_ASYNC ;
+		c.SourceValue = value ;
+		c.GetValue = sigc::ptr_fun( &_lastfm_artist_toptracks ) ;	
+
+                constraints.push_back(c) ;
+            }
+            else
             if( attribute == "artists-similar-to" )
             {
                 c.TargetAttr = ATTRIBUTE_MB_ALBUM_ARTIST_ID ;

@@ -1463,8 +1463,6 @@ namespace Albums
 		) ;
 	    }
 
-	    get_window()->process_all_updates() ;
-
 	    return true;
 	}
 

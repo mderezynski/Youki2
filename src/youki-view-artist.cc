@@ -337,6 +337,33 @@ namespace Artist
 	}
 
 	void
+	DataModelFilter::regen_mapping_iterative(
+	)
+	{
+	    using boost::get;
+
+	    if(m_mapping.empty())
+		return ;
+
+	    RowRowMapping_t new_mapping;
+	    new_mapping.reserve(m_mapping.size()) ;
+	    m_upper_bound = 0 ;
+
+	    for( auto& i : m_mapping ) 
+	    {
+		boost::optional<guint> id = get<1>(*i) ;
+
+		if(!m_constraints_artist || (*m_constraints_artist)[id.get()])
+		{
+		    new_mapping.push_back( i ) ;
+		}
+	    }
+
+	    std::swap( m_mapping, new_mapping ) ;
+	    m_SIGNAL__changed.emit(0) ;
+	}
+
+	void
 	DataModelFilter::update_count(
 	)
 	{

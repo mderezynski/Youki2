@@ -239,6 +239,10 @@ namespace Artist
                 ) ;
 
                 void
+                regen_mapping_iterative(
+                ) ;
+
+                void
                 update_count(
                 ) ;
         } ;

@@ -734,7 +734,7 @@ namespace Tracks
                     ) ;
                 }
  
-                virtual void
+                virtual bool
                 set_filter(
                     const std::string& text
                 )
@@ -743,6 +743,8 @@ namespace Tracks
                     using boost::algorithm::split;
                     using boost::algorithm::is_any_of;
                     using boost::algorithm::find_first;
+
+		    bool iterative = false ;
 
                     AQE::Constraints_t aqe = m_constraints_aqe ;
 
@@ -772,6 +774,7 @@ namespace Tracks
                         m_current_filter = text ;
 			m_current_filter_noaque = Util::stdstrjoin( m_frags, " " ) ;
                         regen_mapping_iterative() ;
+			iterative = true ;
                     }
                     else
                     {
@@ -779,6 +782,8 @@ namespace Tracks
 			m_current_filter_noaque = Util::stdstrjoin( m_frags, " " ) ;
                         regen_mapping() ;
                     }
+
+		    return iterative ;
                 }
 
                 void

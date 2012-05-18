@@ -1721,11 +1721,6 @@ namespace MPX
 
 	end = true ;
 
-	if( m_play_history.empty() && !repeat )
-	{
-	    m_play->request_status( PLAYSTATUS_STOPPED ) ; 
-	}
-
 	x1:
 	if( m_track_previous )
 	{
@@ -1734,13 +1729,20 @@ namespace MPX
             m_library->trackPlayed( m_track_previous, t ) ;
 	}
 
-	if( end && repeat && !m_play_history.empty() )
+	if( end )
 	{
-	    m_play_queue = m_play_history ;
+	    if( repeat && !m_play_history.empty())
+	    {
+		m_play_queue = m_play_history ;
 
-	    Track_sp p = m_library->getTrackById( m_play_queue.front() ) ;
-	    m_play_queue.pop_front() ;
-	    play_track( p ) ;
+		Track_sp p = m_library->getTrackById( m_play_queue.front() ) ;
+		m_play_queue.pop_front() ;
+		play_track( p ) ;
+	    }
+	    else
+	    {
+		m_play->request_status( PLAYSTATUS_STOPPED ) ;
+	    }
 	}
     }
 
@@ -1976,7 +1978,6 @@ namespace MPX
 	}
 
 	tracklist_regen_mapping() ;
-	
 
 	private_->FilterModelAlbums->set_constraints_albums( private_->FilterModelTracks->m_constraints_albums ) ;
 	private_->FilterModelAlbums->set_constraints_artist( private_->FilterModelTracks->m_constraints_artist ) ;
@@ -2212,13 +2213,21 @@ namespace MPX
         m_ListViewArtist->clear_selection() ;
 
         private_->FilterModelTracks->clear_synthetic_constraints_quiet() ;
-        private_->FilterModelTracks->set_filter( m_Entry->get_text() ) ;
+        bool iterative = private_->FilterModelTracks->set_filter( m_Entry->get_text() ) ;
 
         private_->FilterModelArtist->set_constraints_artist( private_->FilterModelTracks->m_constraints_artist ) ;
         private_->FilterModelAlbums->set_constraints_albums( private_->FilterModelTracks->m_constraints_albums ) ;
 
-	private_->FilterModelAlbums->regen_mapping() ;
-        private_->FilterModelArtist->regen_mapping() ;
+	if( iterative )
+	{
+	    private_->FilterModelArtist->regen_mapping_iterative() ;
+	    private_->FilterModelAlbums->regen_mapping_iterative() ;
+	}
+	else
+	{
+	    private_->FilterModelArtist->regen_mapping() ;
+	    private_->FilterModelAlbums->regen_mapping() ;
+	}
 
 	if( private_->FilterModelTracks->m_mapping->empty() )
 	{

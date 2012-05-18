@@ -167,24 +167,6 @@ namespace lfm_tagtopalbums
     this->name_.set (name);
   }
 
-  const album::tagcount_type& album::
-  tagcount () const
-  {
-    return this->tagcount_.get ();
-  }
-
-  album::tagcount_type& album::
-  tagcount ()
-  {
-    return this->tagcount_.get ();
-  }
-
-  void album::
-  tagcount (const tagcount_type& tagcount)
-  {
-    this->tagcount_.set (tagcount);
-  }
-
   const album::mbid_type& album::
   mbid () const
   {
@@ -233,30 +215,6 @@ namespace lfm_tagtopalbums
     this->url_.set (url);
   }
 
-  const album::artist_type& album::
-  artist () const
-  {
-    return this->artist_.get ();
-  }
-
-  album::artist_type& album::
-  artist ()
-  {
-    return this->artist_.get ();
-  }
-
-  void album::
-  artist (const artist_type& artist)
-  {
-    this->artist_.set (artist);
-  }
-
-  void album::
-  artist (::std::auto_ptr< artist_type > artist)
-  {
-    this->artist_.set (artist);
-  }
-
   const album::image_sequence& album::
   image () const
   {
@@ -291,82 +249,6 @@ namespace lfm_tagtopalbums
   rank (const rank_type& rank)
   {
     this->rank_.set (rank);
-  }
-
-
-  // artist
-  // 
-
-  const artist::name_type& artist::
-  name () const
-  {
-    return this->name_.get ();
-  }
-
-  artist::name_type& artist::
-  name ()
-  {
-    return this->name_.get ();
-  }
-
-  void artist::
-  name (const name_type& name)
-  {
-    this->name_.set (name);
-  }
-
-  void artist::
-  name (::std::auto_ptr< name_type > name)
-  {
-    this->name_.set (name);
-  }
-
-  const artist::mbid_type& artist::
-  mbid () const
-  {
-    return this->mbid_.get ();
-  }
-
-  artist::mbid_type& artist::
-  mbid ()
-  {
-    return this->mbid_.get ();
-  }
-
-  void artist::
-  mbid (const mbid_type& mbid)
-  {
-    this->mbid_.set (mbid);
-  }
-
-  void artist::
-  mbid (::std::auto_ptr< mbid_type > mbid)
-  {
-    this->mbid_.set (mbid);
-  }
-
-  const artist::url_type& artist::
-  url () const
-  {
-    return this->url_.get ();
-  }
-
-  artist::url_type& artist::
-  url ()
-  {
-    return this->url_.get ();
-  }
-
-  void artist::
-  url (const url_type& url)
-  {
-    this->url_.set (url);
-  }
-
-  void artist::
-  url (::std::auto_ptr< url_type > url)
-  {
-    this->url_.set (url);
   }
 
 
@@ -600,17 +482,13 @@ namespace lfm_tagtopalbums
 
   album::
   album (const name_type& name,
-         const tagcount_type& tagcount,
          const mbid_type& mbid,
          const url_type& url,
-         const artist_type& artist,
          const rank_type& rank)
   : ::xml_schema::type (),
     name_ (name, ::xml_schema::flags (), this),
-    tagcount_ (tagcount, ::xml_schema::flags (), this),
     mbid_ (mbid, ::xml_schema::flags (), this),
     url_ (url, ::xml_schema::flags (), this),
-    artist_ (artist, ::xml_schema::flags (), this),
     image_ (::xml_schema::flags (), this),
     rank_ (rank, ::xml_schema::flags (), this)
   {
@@ -622,10 +500,8 @@ namespace lfm_tagtopalbums
          ::xml_schema::type* c)
   : ::xml_schema::type (x, f, c),
     name_ (x.name_, f, this),
-    tagcount_ (x.tagcount_, f, this),
     mbid_ (x.mbid_, f, this),
     url_ (x.url_, f, this),
-    artist_ (x.artist_, f, this),
     image_ (x.image_, f, this),
     rank_ (x.rank_, f, this)
   {
@@ -637,10 +513,8 @@ namespace lfm_tagtopalbums
          ::xml_schema::type* c)
   : ::xml_schema::type (e, f | ::xml_schema::flags::base, c),
     name_ (f, this),
-    tagcount_ (f, this),
     mbid_ (f, this),
     url_ (f, this),
-    artist_ (f, this),
     image_ (f, this),
     rank_ (f, this)
   {
@@ -675,17 +549,6 @@ namespace lfm_tagtopalbums
         }
       }
 
-      // tagcount
-      //
-      if (n.name () == "tagcount" && n.namespace_ () == "")
-      {
-        if (!tagcount_.present ())
-        {
-          this->tagcount (tagcount_traits::create (i, f, this));
-          continue;
-        }
-      }
-
       // mbid
       //
       if (n.name () == "mbid" && n.namespace_ () == "")
@@ -714,20 +577,6 @@ namespace lfm_tagtopalbums
         }
       }
 
-      // artist
-      //
-      if (n.name () == "artist" && n.namespace_ () == "")
-      {
-        ::std::auto_ptr< artist_type > r (
-          artist_traits::create (i, f, this));
-
-        if (!artist_.present ())
-        {
-          this->artist (r);
-          continue;
-        }
-      }
-
       // image
       //
       if (n.name () == "image" && n.namespace_ () == "")
@@ -749,13 +598,6 @@ namespace lfm_tagtopalbums
         "");
     }
 
-    if (!tagcount_.present ())
-    {
-      throw ::xsd::cxx::tree::expected_element< char > (
-        "tagcount",
-        "");
-    }
-
     if (!mbid_.present ())
     {
       throw ::xsd::cxx::tree::expected_element< char > (
@@ -767,13 +609,6 @@ namespace lfm_tagtopalbums
     {
       throw ::xsd::cxx::tree::expected_element< char > (
         "url",
-        "");
-    }
-
-    if (!artist_.present ())
-    {
-      throw ::xsd::cxx::tree::expected_element< char > (
-        "artist",
         "");
     }
 
@@ -803,131 +638,6 @@ namespace lfm_tagtopalbums
           ::xml_schema::type* c) const
   {
     return new album (*this, f, c);
-  }
-
-  // artist
-  //
-
-  artist::
-  artist (const name_type& name,
-          const mbid_type& mbid,
-          const url_type& url)
-  : ::xml_schema::type (),
-    name_ (name, ::xml_schema::flags (), this),
-    mbid_ (mbid, ::xml_schema::flags (), this),
-    url_ (url, ::xml_schema::flags (), this)
-  {
-  }
-
-  artist::
-  artist (const artist& x,
-          ::xml_schema::flags f,
-          ::xml_schema::type* c)
-  : ::xml_schema::type (x, f, c),
-    name_ (x.name_, f, this),
-    mbid_ (x.mbid_, f, this),
-    url_ (x.url_, f, this)
-  {
-  }
-
-  artist::
-  artist (const ::xercesc::DOMElement& e,
-          ::xml_schema::flags f,
-          ::xml_schema::type* c)
-  : ::xml_schema::type (e, f | ::xml_schema::flags::base, c),
-    name_ (f, this),
-    mbid_ (f, this),
-    url_ (f, this)
-  {
-    if ((f & ::xml_schema::flags::base) == 0)
-    {
-      ::xsd::cxx::xml::dom::parser< char > p (e);
-      this->parse (p, f);
-    }
-  }
-
-  void artist::
-  parse (::xsd::cxx::xml::dom::parser< char >& p,
-         ::xml_schema::flags f)
-  {
-    for (; p.more_elements (); p.next_element ())
-    {
-      const ::xercesc::DOMElement& i (p.cur_element ());
-      const ::xsd::cxx::xml::qualified_name< char > n (
-        ::xsd::cxx::xml::dom::name< char > (i));
-
-      // name
-      //
-      if (n.name () == "name" && n.namespace_ () == "")
-      {
-        ::std::auto_ptr< name_type > r (
-          name_traits::create (i, f, this));
-
-        if (!name_.present ())
-        {
-          this->name (r);
-          continue;
-        }
-      }
-
-      // mbid
-      //
-      if (n.name () == "mbid" && n.namespace_ () == "")
-      {
-        ::std::auto_ptr< mbid_type > r (
-          mbid_traits::create (i, f, this));
-
-        if (!mbid_.present ())
-        {
-          this->mbid (r);
-          continue;
-        }
-      }
-
-      // url
-      //
-      if (n.name () == "url" && n.namespace_ () == "")
-      {
-        ::std::auto_ptr< url_type > r (
-          url_traits::create (i, f, this));
-
-        if (!url_.present ())
-        {
-          this->url (r);
-          continue;
-        }
-      }
-
-      break;
-    }
-
-    if (!name_.present ())
-    {
-      throw ::xsd::cxx::tree::expected_element< char > (
-        "name",
-        "");
-    }
-
-    if (!mbid_.present ())
-    {
-      throw ::xsd::cxx::tree::expected_element< char > (
-        "mbid",
-        "");
-    }
-
-    if (!url_.present ())
-    {
-      throw ::xsd::cxx::tree::expected_element< char > (
-        "url",
-        "");
-    }
-  }
-
-  artist* artist::
-  _clone (::xml_schema::flags f,
-          ::xml_schema::type* c) const
-  {
-    return new artist (*this, f, c);
   }
 
   // image
