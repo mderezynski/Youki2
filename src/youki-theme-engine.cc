@@ -407,7 +407,7 @@ namespace MPX
 	}
 	else
 	{
-	    Gdk::Cairo::set_source_rgba( cairo, Util::make_rgba(c2, alpha)) ;
+	    Gdk::Cairo::set_source_rgba( cairo, Util::make_rgba(cgdk, alpha)) ;
 	}
 
 	RoundedRectangle(

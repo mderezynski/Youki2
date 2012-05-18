@@ -2100,13 +2100,13 @@ namespace Tracks
 			double w_eff = 0 ;
 
 			if( n == 1 )
-			    w_eff = (column_width_calculated*3) * 0.60 ;
+			    w_eff = (column_width_calculated*3) * 0.50 ;
 			else
 			if( n == 3 )
-			    w_eff = (column_width_calculated*3) * 0.20 ;
+			    w_eff = (column_width_calculated*3) * 0.25 ;
 			else
 			if( n == 4 )
-			    w_eff = (column_width_calculated*3) * 0.20 ;
+			    w_eff = (column_width_calculated*3) * 0.25 ;
 	    
                         if( !m_columns__fixed.count( n ) )
                         {

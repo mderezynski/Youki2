@@ -480,8 +480,8 @@ namespace Artist
 
 	    if(surface)
 	    {
-		guint x = xpos+(m_width-64)/2. ;
-		guint y = ypos+8 ;
+		int x = xpos+(m_width-64)/2. ;
+		int y = ypos+8 ;
 
 		cairo->save() ;
 		cairo->translate( x, y ) ;
