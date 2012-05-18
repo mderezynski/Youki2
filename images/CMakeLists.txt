@@ -9,9 +9,9 @@ INSTALL(
         jewelcase_bot.png
         jewelcase_top.png
 	media-repeat.png
+	media-shuffle.png
 	mute-small-14x14px.png
 	new.png
-	shuffle.png
         splash.png
 	youki-mlibman128x128.png
         youki512x512.png
