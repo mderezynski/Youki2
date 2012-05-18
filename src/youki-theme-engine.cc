@@ -446,8 +446,8 @@ namespace MPX
         cgdk.set_rgba( c.get_red(), c.get_green(), c.get_blue() ) ;
 
         Util::color_to_hsb( cgdk, h, s, b ) ;
-        b = std::min( 1., b+0.04 ) ;
-        s = std::min( 1., s+0.05 ) ;
+        b *= 0.70 ; 
+        s *= 0.50 ; 
         Gdk::RGBA c1 = Util::color_from_hsb( h, s, b ) ;
 
         cairo->save() ;
@@ -469,11 +469,12 @@ namespace MPX
         ) ;
 
         std::valarray<double> dashes ( 2 ) ;
-        dashes[0] = 2 ;
+        dashes[0] = 1. ;
         dashes[1] = 1. ;
 
         cairo->set_dash( dashes, 0 ) ;
-        cairo->set_line_width( 0.75 ) ; 
+        cairo->set_line_width( 1 ) ; 
+	cairo->set_antialias( Cairo::ANTIALIAS_NONE );
         cairo->stroke () ;
         cairo->restore() ;
     }

@@ -2207,34 +2207,41 @@ namespace MPX
     YoukiController::on_entry_changed(
     )
     {
+	using namespace MPX::SearchController ;
+
 	m_BTN_SHUFFLE->set_active( false ) ;
 
-        m_ListViewAlbums->clear_selection() ;
-        m_ListViewArtist->clear_selection() ;
+        m_conn1.block() ;
+        m_conn2.block() ;
 
-        private_->FilterModelTracks->clear_synthetic_constraints_quiet() ;
-        bool iterative = private_->FilterModelTracks->set_filter( m_Entry->get_text() ) ;
+	private_->FilterModelTracks->clear_synthetic_constraints_quiet() ;
+	FilterMode mode = private_->FilterModelTracks->process_filter( m_Entry->get_text() ) ;
 
-        private_->FilterModelArtist->set_constraints_artist( private_->FilterModelTracks->m_constraints_artist ) ;
-        private_->FilterModelAlbums->set_constraints_albums( private_->FilterModelTracks->m_constraints_albums ) ;
+	if( mode != FilterMode::NONE ) {
 
-	if( iterative )
-	{
-	    private_->FilterModelArtist->regen_mapping_iterative() ;
-	    private_->FilterModelAlbums->regen_mapping_iterative() ;
+            m_ListViewAlbums->clear_selection() ;
+	    m_ListViewArtist->clear_selection() ;
+ 
+	    private_->FilterModelArtist->set_constraints_artist( private_->FilterModelTracks->m_constraints_artist ) ;
+	    private_->FilterModelAlbums->set_constraints_albums( private_->FilterModelTracks->m_constraints_albums ) ;
+
+	    if( mode == FilterMode::ITERATIVE ) {
+		private_->FilterModelArtist->regen_mapping_iterative() ;
+		private_->FilterModelAlbums->regen_mapping_iterative() ;
+	    }
+	    else {
+		private_->FilterModelArtist->regen_mapping() ;
+		private_->FilterModelAlbums->regen_mapping() ;
+	    }
 	}
-	else
-	{
-	    private_->FilterModelArtist->regen_mapping() ;
-	    private_->FilterModelAlbums->regen_mapping() ;
-	}
 
-	if( private_->FilterModelTracks->m_mapping->empty() )
-	{
+	m_conn1.unblock() ;
+	m_conn2.unblock() ;
+
+	if( private_->FilterModelTracks->m_mapping->empty()) {
 	    m_Entry->override_color(Util::make_rgba(1.,0.,0.,1.)) ;
 	}
-	else
-	{
+	else {
 	    m_Entry->unset_color() ;
 	}
     }

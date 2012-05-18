@@ -47,6 +47,18 @@ namespace
 
 namespace MPX
 {
+
+namespace SearchController
+{
+    enum class FilterMode
+    {
+	  ITERATIVE
+	, NONITERATIVE
+	, NONE
+    } ;
+}
+
+
 namespace View
 {
 namespace Tracks
@@ -734,17 +746,12 @@ namespace Tracks
                     ) ;
                 }
  
-                virtual bool
-                set_filter(
+                virtual SearchController::FilterMode 
+                process_filter(
                     const std::string& text
                 )
                 { 
-                    using boost::get ;
-                    using boost::algorithm::split;
-                    using boost::algorithm::is_any_of;
-                    using boost::algorithm::find_first;
-
-		    bool iterative = false ;
+		    const std::string m_old_filter = m_current_filter ;
 
                     AQE::Constraints_t aqe = m_constraints_aqe ;
 
@@ -756,7 +763,6 @@ namespace Tracks
 		    if( async )    
 		    {
 			m_SIGNAL__process_begin.emit() ;
-			while( gtk_events_pending()) gtk_main_iteration() ;
 		    }
 
 		    AQE::process_constraints( m_constraints_aqe ) ;
@@ -764,26 +770,27 @@ namespace Tracks
 		    if( async )    
 		    {
 			m_SIGNAL__process_end.emit() ;
-			while( gtk_events_pending()) gtk_main_iteration() ;
 		    }
 
                     bool aqe_diff = m_constraints_aqe != aqe ;
 
-                    if( !aqe_diff && ( text.substr( 0, text.size() - 1 ) == m_current_filter ) )
+		    m_current_filter_noaque = Util::stdstrjoin( m_frags, " " ) ;
+		    m_current_filter = text ;
+ 
+                    if( !aqe_diff && m_current_filter_noaque.empty() && (m_current_filter == m_old_filter)) 
+		    {
+			return SearchController::FilterMode::NONE ;	
+		    }
+                    if( !aqe_diff && !m_current_filter_noaque.empty() && (text.substr(0, text.size()-1) == m_old_filter))
                     {
-                        m_current_filter = text ;
-			m_current_filter_noaque = Util::stdstrjoin( m_frags, " " ) ;
-                        regen_mapping_iterative() ;
-			iterative = true ;
+			regen_mapping_iterative() ;
+			return SearchController::FilterMode::ITERATIVE ;
                     }
                     else
                     {
-                        m_current_filter = text ;
-			m_current_filter_noaque = Util::stdstrjoin( m_frags, " " ) ;
                         regen_mapping() ;
+			return SearchController::FilterMode::NONITERATIVE ;
                     }
-
-		    return iterative ;
                 }
 
                 void
@@ -1001,7 +1008,7 @@ namespace Tracks
 
                             intersect.push_back( model_iterator_set ) ; 
 
-                            if( m_cache_enabled && !m_fragment_cache.count( m_frags[n] ) && m_constraints_ext.empty() && m_constraints_aqe.empty() )
+                            if( m_cache_enabled && m_constraints_ext.empty() && m_constraints_aqe.empty())
                             {
                                 m_fragment_cache.insert( std::make_pair( m_frags[n], model_iterator_set )) ;
                             }
