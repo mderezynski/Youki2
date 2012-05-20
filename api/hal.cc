@@ -34,6 +34,7 @@
 #include <gtkmm.h>
 #include <glibmm.h>
 #include <glibmm/i18n.h>
+#include <giomm.h>
 
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
@@ -613,6 +614,18 @@ namespace MPX
         HAL::volume_insert( const std::string& udi )
     {
         Hal::RefPtr <Hal::Volume> volume_hal_instance;
+
+	Glib::RefPtr<Gio::Volume> vol = Gio::VolumeMonitor::get()->get_volume_for_uuid( udi ) ;
+
+	if( vol )
+	{
+	    Glib::RefPtr<Gio::Mount> mount = vol->get_mount() ;
+
+	    if( mount )
+	    {
+		g_message("%s:%s", udi.c_str(), mount->get_name().c_str()) ; 
+	    } 
+	}
 
         try
         {

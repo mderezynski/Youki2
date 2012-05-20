@@ -19,11 +19,7 @@
 #include "mpx/algorithm/range.hh"
 #include "mpx/algorithm/adder.hh"
 
-#include "mpx/com/indexed-list.hh"
 #include "mpx/com/viewmetrics.hh"
-
-#include "mpx/mpx-main.hh"
-
 #include "mpx/i-youki-theme-engine.hh"
 
 namespace

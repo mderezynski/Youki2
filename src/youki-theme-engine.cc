@@ -282,7 +282,6 @@ namespace MPX
 
         colors[THEME_COLOR_BACKGROUND] = Util::make_rgba( cbg, 1. ) ;
         colors[THEME_COLOR_BASE]       = Util::make_rgba( cbase, 1. ) ; 
-	//colors[THEME_COLOR_BASE_ALTERNATE] = Util::make_rgba( 0.98, 0.98, 0.98, 1. ) ;
         colors[THEME_COLOR_TEXT]          = Util::make_rgba( ctext, 1. ) ; 
         colors[THEME_COLOR_TEXT_SELECTED] = Util::make_rgba( ctext_sel, 1. ) ; 
         colors[THEME_COLOR_SELECT]     = Util::make_rgba( csel, 1. ) ;
@@ -293,8 +292,8 @@ namespace MPX
         Theme theme (
               "Youki-Default"
             , "Milosz Derezynski"
-            , "(C) 2009 Youki Project"
-            , "This is Youki's default theme"
+            , "(C) 2012 Youki Project"
+            , "This is Youki's default Theme"
             , "http://youki.mp"
             , colors 
         ) ;
@@ -350,7 +349,7 @@ namespace MPX
         double alpha = focused ? 1. : .7 ;
         double h, s, b ;
         Util::color_to_hsb( cgdk, h, s, b ) ;
-        b *= 0.90 ; 
+        b *= 0.95 ; 
         Gdk::RGBA c1 = Util::color_from_hsb( h, s, b ) ;
 
         Util::color_to_hsb( cgdk, h, s, b ) ;
@@ -370,45 +369,52 @@ namespace MPX
 
         cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 
+	Cairo::RefPtr<Cairo::LinearGradient> gradient ;
+
 	if( r.height > 40 )
 	{
-	    Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create(
+	    gradient = Cairo::LinearGradient::create(
 		  r.x + (r.width/2.) - (r.height/15.) 
 		, r.y  
 		, r.x + (r.width/2.) + (r.height/15.) 
 		, r.y + r.height
 	    ) ;
-
-	    gradient->add_color_stop_rgba(
-		  0
-		, c1.get_red()
-		, c1.get_green()
-		, c1.get_blue()
-		, alpha
-	    ) ;
-	   
-	    gradient->add_color_stop_rgba(
-		  0.70 
-		, c2.get_red()
-		, c2.get_green()
-		, c2.get_blue()
-		, alpha
-	    ) ;
-
-	    gradient->add_color_stop_rgba(
-		  1. 
-		, c3.get_red()
-		, c3.get_green()
-		, c3.get_blue()
-		, alpha
-	    ) ;
-
-	    cairo->set_source( gradient ) ;
 	}
 	else
 	{
-	    Gdk::Cairo::set_source_rgba( cairo, Util::make_rgba(cgdk, alpha)) ;
+	    gradient = Cairo::LinearGradient::create(
+		  r.x + (r.width/2.)
+		, r.y  
+		, r.x + (r.width/2.) 
+		, r.y + r.height
+	    ) ;
 	}
+
+	gradient->add_color_stop_rgba(
+	      0
+	    , c1.get_red()
+	    , c1.get_green()
+	    , c1.get_blue()
+	    , alpha
+	) ;
+       
+	gradient->add_color_stop_rgba(
+	      0.70 
+	    , c2.get_red()
+	    , c2.get_green()
+	    , c2.get_blue()
+	    , alpha
+	) ;
+
+	gradient->add_color_stop_rgba(
+	      1. 
+	    , c3.get_red()
+	    , c3.get_green()
+	    , c3.get_blue()
+	    , alpha
+	) ;
+
+	cairo->set_source( gradient ) ;
 
 	RoundedRectangle(
 	      cairo
@@ -420,11 +426,10 @@ namespace MPX
 	    , corners
 	) ;
 
-        cairo->fill_preserve(); 
-
-	Gdk::Cairo::set_source_rgba( cairo, Util::make_rgba(c3,alpha)) ;
-        cairo->set_line_width( 0.5 ) ; 
-        cairo->stroke () ;
+	cairo->fill_preserve(); 
+	Gdk::Cairo::set_source_rgba( cairo, Util::make_rgba(c2,0.3)) ;
+	cairo->set_line_width( 0.5 ) ; 
+	cairo->stroke () ;
 
 	cairo->restore() ;
     }

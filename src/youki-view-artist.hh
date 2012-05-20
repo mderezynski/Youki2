@@ -258,6 +258,13 @@ namespace Artist
                 Pango::Alignment		    m_alignment ;
 
                 Cairo::RefPtr<Cairo::ImageSurface>  m_image_disc ;
+                Cairo::RefPtr<Cairo::ImageSurface>  m_rect_shadow ;
+
+		Cairo::RefPtr<Cairo::ImageSurface>
+		render_rect_shadow(	
+		      guint w
+		    , guint h
+		) ; 
 
             public:
 
@@ -286,6 +293,15 @@ namespace Artist
                 Pango::Alignment
                 get_alignment(
                 ) ;
+
+		void
+		render_header(
+		      const Cairo::RefPtr<Cairo::Context>&  cairo
+		    , Gtk::Widget&			    widget
+		    , int				    xpos
+		    , int				    ypos
+		    , const ThemeColor&			    color
+		) ;
 
                 void
                 render(
@@ -317,6 +333,7 @@ namespace Artist
 		PropScrollPolicy		    property_vsp_ , property_hsp_ ;
 
                 guint                               m_height__row ;
+                guint                               m_height__headers ;
                 guint                               m_height__current_viewport ;
 
 		Interval<guint>			    ModelExtents ;
@@ -400,6 +417,15 @@ namespace Artist
                 on_configure_event(
                     GdkEventConfigure* event
                 ) ;
+
+		void
+		render_header_background(
+		      const Cairo::RefPtr<Cairo::Context>&  cairo
+		    , guint mw
+		    , guint mh
+		    , const Gdk::RGBA& c_base
+		    , const Gdk::RGBA& c_treelines
+		) ;
 
                 bool
                 on_draw(

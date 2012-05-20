@@ -30,7 +30,6 @@
 #include "mpx/algorithm/vector_compare.hh"
 #include "mpx/algorithm/adder.hh"
 
-#include "mpx/com/indexed-list.hh"
 #include "mpx/aux/glibaddons.hh"
 
 #include "mpx/widgets/cairo-extensions.hh"
@@ -1513,10 +1512,12 @@ namespace Tracks
 		    layout->set_width((m_width - 12) * PANGO_SCALE ) ;
 		    layout->set_alignment( m_alignment ) ;
 
+/*
 		    if( selected )
 		    {
 			Util::render_text_shadow( layout, xpos+6,ypos+2, cairo, 2, 0.55 ) ;
 		    }
+*/
 
 		    cairo->move_to(
 			    xpos + 6
@@ -2210,9 +2211,9 @@ namespace Tracks
 		    Cairo::RefPtr<Cairo::LinearGradient> gr =
 			Cairo::LinearGradient::create( mw/2., 0, mw/2., mh ) ;
 
-		    gr->add_color_stop_rgba( 0., c1.get_red(), c1.get_green(), c1.get_blue(), 1. ) ;
-		    gr->add_color_stop_rgba( .35, c1.get_red(), c1.get_green(), c1.get_blue(), 1. ) ;
-		    gr->add_color_stop_rgba( 1., c2.get_red(), c2.get_green(), c2.get_blue(), 1. ) ;
+		    gr->add_color_stop_rgba( 0., c2.get_red(), c2.get_green(), c2.get_blue(), 1. ) ;
+		    gr->add_color_stop_rgba( .65, c1.get_red(), c1.get_green(), c1.get_blue(), 1. ) ;
+		    gr->add_color_stop_rgba( 1., c1.get_red(), c1.get_green(), c1.get_blue(), 1. ) ;
 
 		    cairo->set_source( gr ) ;
 		    cairo->fill() ;
@@ -2288,10 +2289,10 @@ namespace Tracks
 		void
 		render_treelines(
 		      const Cairo::RefPtr<Cairo::Context>& cairo
-		    , const Gdk::RGBA& c_treelines
+		    , const Gdk::RGBA& c
 		)
 		{
-		    const std::vector<double> dashes { 1., 2. } ; 
+		    const std::vector<double> dashes { 2, 2 } ;
 
 		    Columns::iterator i2 = m_columns.end() ;
 		    std::advance( i2, -1 ) ;	
@@ -2305,59 +2306,39 @@ namespace Tracks
 			xpos_v.push_back( xpos ) ; 
 		    }
 
-		    std::vector<guint>::iterator ix = xpos_v.end() ;
-		    std::advance( ix, -1 ) ;
-
 		    cairo->save() ;
-
 		    cairo->set_antialias( Cairo::ANTIALIAS_NONE ) ;
-
 		    cairo->set_line_width(
 			  1. 
 		    ) ;
 
-		    cairo->set_source_rgba(
-			  c_treelines.get_red()
-			, c_treelines.get_green()
-			, c_treelines.get_blue()
-			, c_treelines.get_alpha() * 0.8
-		    ) ;
-
-		    for( std::vector<guint>::iterator i = xpos_v.begin() ; i != xpos_v.end() ; ++i ) 
+		    for( auto& xpos : xpos_v ) 
 		    {
-			guint xpos = *i ; 
-
-			cairo->set_dash(
-			      dashes
-			    , 0
-			) ;
 			cairo->move_to(
 			      xpos
-			    , m_height__headers + 1 
+			    , 0
+			) ;
+			cairo->line_to(
+			      xpos
+			    , m_height__headers
+			) ;
+			Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(c,0.35)) ;
+			cairo->stroke() ;
+
+			cairo->set_dash( dashes, 0 ) ;
+			cairo->move_to(
+			      xpos
+			    , m_height__headers
 			) ; 
 			cairo->line_to(
 			      xpos
-			    , get_allocated_height() + m_height__headers
+			    , get_allocated_height()
 			) ;
+			Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(c,0.35)) ;
 			cairo->stroke() ;
-
 			cairo->unset_dash() ;
-			cairo->move_to(
-			      xpos
-			    , 0
-			) ;
-			cairo->line_to(
-			      xpos
-			    , m_height__headers - 1
-			) ;
-			cairo->set_source_rgba(
-			      c_treelines.get_red()
-			    , c_treelines.get_green()
-			    , c_treelines.get_blue()
-			    , 0.55
-			) ;
-			cairo->stroke() ;
 		    }
+		    cairo->restore() ;
 		}
 
                 bool
@@ -2369,7 +2350,7 @@ namespace Tracks
                     const ThemeColor& c_text_sel    = m_theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
                     const ThemeColor& c_rules_hint  = m_theme->get_color( THEME_COLOR_BASE_ALTERNATE ) ;
 		    const ThemeColor& c_treelines   = m_theme->get_color( THEME_COLOR_TREELINES ) ;
-		    const ThemeColor& c_base	    = m_theme->get_color( THEME_COLOR_BASE ) ;
+		    const ThemeColor& c_bg	    = m_theme->get_color( THEME_COLOR_BACKGROUND ) ;
 
                     guint d       = get_upper_row() ;
                     guint d_max   = std::min<guint>( m_model->size(), get_page_size()+1 ) ;
@@ -2386,7 +2367,7 @@ namespace Tracks
 			  cairo
 			, get_allocated_width()
 			, m_height__headers
-			, c_base
+			, c_bg
 			, c_treelines
 		    ) ;
     
@@ -2526,7 +2507,7 @@ namespace Tracks
 				clear_selection() ;
 		    }
 
-		    queue_draw() ;
+		    queue_resize() ;
                 }
 
                 bool

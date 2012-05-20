@@ -807,10 +807,11 @@ namespace Albums
 		      sx 
 		    , sy 
 		) ;
-		Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(c1,0.75)) ;
+		Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(color,0.95)) ;
 		pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj()) ;
 		sy += height + 2 ;
 
+#if 0
 		/* s_time */
 		layout[L3]->set_markup( s_time ) ;
 		layout[L3]->get_pixel_size( width, height ) ;
@@ -824,9 +825,10 @@ namespace Albums
 		      sx 
 		    , sy 
 		) ;
-		Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(c1,0.75)) ;
+		Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(color,0.95)) ;
 		pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj()) ;
 		sy += height + 2 ;
+#endif
 
 		/* s_discs */
 		if( !s_discs.empty() )
@@ -843,7 +845,7 @@ namespace Albums
 			  sx 
 			, sy 
 		    ) ;
-		    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(c1,0.75)) ;
+		    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(color,0.95)) ;
 		    pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj()) ;
 		    sy += height + 2 ;
 		}
@@ -863,7 +865,7 @@ namespace Albums
 			  sx 
 			, sy 
 		    ) ;
-		    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(c1,0.75)) ;
+		    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(color,0.95)) ;
 		    pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj()) ;
 		    sy += height + 2 ;
 		}
@@ -883,7 +885,7 @@ namespace Albums
 			  sx 
 			, sy 
 		    ) ;
-		    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(c1,0.75)) ;
+		    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(color,0.95)) ;
 		    pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj()) ;
 		    sy += height + 2 ;
 		}
@@ -1353,6 +1355,7 @@ namespace Albums
 
 	    const ThemeColor& c_text     = m_theme->get_color( THEME_COLOR_TEXT ) ;
 	    const ThemeColor& c_text_sel = m_theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
+	    const ThemeColor& c_rules_h  = m_theme->get_color( THEME_COLOR_BASE_ALTERNATE ) ;
 
 	    const std::vector<double> dashes { 1., 2. } ; 
 
@@ -1415,6 +1418,19 @@ namespace Albums
 			, MPX::CairoCorners::CORNERS(0)
 		    ) ;
 		}
+		else
+		if(d_cur%2)
+		{
+		    rr.y = ypos ;
+		    cairo->rectangle(
+			  rr.x
+			, rr.y
+			, rr.width
+			, rr.height
+		    ) ;
+		    Gdk::Cairo::set_source_rgba( cairo, c_rules_h ) ;
+		    cairo->fill() ;
+		}
 
 		m_columns[0]->render(
 		      cairo
@@ -1445,6 +1461,7 @@ namespace Albums
 
 	    cairo->restore() ;
 
+/*
 	    if( has_focus() )
 	    {
 		GdkRectangle r ;
@@ -1462,6 +1479,7 @@ namespace Albums
 		    , MPX::CairoCorners::CORNERS(0)
 		) ;
 	    }
+*/
 
 	    return true;
 	}
@@ -1517,7 +1535,7 @@ namespace Albums
 		scroll_to_index( d ) ;
 	    }
 
-	    queue_draw() ;
+	    queue_resize() ;
 	}
 
 	void

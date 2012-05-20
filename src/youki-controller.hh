@@ -20,6 +20,8 @@
 #include "youki-spectrum-titleinfo.hh"
 #include "mpx-mlibman-dbus-proxy-actual.hh"
 
+#include "ld-find-nearest.hh"
+
 #include <sigx/sigx.h>
 
 namespace MPX
@@ -248,17 +250,19 @@ namespace MPX
             Gtk::HBox                       * m_HBox_Controls ;
 
             Gtk::Label                      * m_Label_Search ;
-	    Gtk::Label			    * m_Label_Error ;
+	    Gtk::Label			    * m_Label_Nearest ;
 
             Gtk::VBox                       * m_VBox ;
-
             Gtk::Notebook                   * m_NotebookPlugins ;
-
 	    Gtk::Image			    * m_AQUE_Spinner ;
+	    Gtk::EventBox		    * m_EventBox_Nearest ;
 
             Covers                          * m_covers ;
             MPX::Play                       * m_play ;
             Library                         * m_library ;
+	    LDFindNearest		      m_find_nearest_artist ;
+	    LDFindNearest		      m_find_nearest_albums ;
+	    std::string			      m_nearest ;
     
             Track_sp                          m_track_current ;          
             Track_sp                          m_track_previous ;          
@@ -300,6 +304,28 @@ namespace MPX
 
 	    void
 	    handle_play_track_on_single_tap() ;
+
+	    void
+	    handle_nearest_clicked() ;	
+
+            void
+            handle_search_entry_changed(
+            ) ;
+
+            bool
+            handle_search_entry_key_press_event(
+                GdkEventKey*
+            ) ;
+
+            void
+            handle_search_entry_clear_clicked(
+		  Gtk::EntryIconPosition = Gtk::ENTRY_ICON_SECONDARY
+		, const GdkEventButton* = 0
+            ) ;
+
+            void
+            handle_search_entry_activated(
+            ) ;
 
         protected:
 
@@ -395,26 +421,7 @@ namespace MPX
             ) ;
 
             void
-            on_entry_changed(
-            ) ;
-
-            void
             on_advanced_changed(
-            ) ;
-
-            bool
-            on_entry_key_press_event(
-                GdkEventKey*
-            ) ;
-
-            void
-            on_entry_clear_clicked(
-		  Gtk::EntryIconPosition = Gtk::ENTRY_ICON_SECONDARY
-		, const GdkEventButton* = 0
-            ) ;
-
-            void
-            on_entry_activated(
             ) ;
 
             void
@@ -536,9 +543,6 @@ namespace MPX
 
             boost::shared_ptr<MPX::View::Albums::Album>
             get_album_from_id( guint ) ;
-
-	    void
-	    on_rt_viewmode_change() ;
 
             void
 	    history_save() ;

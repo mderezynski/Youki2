@@ -65,13 +65,6 @@ ENDIF()
 # pkg-config
 FIND_PACKAGE(PkgConfig REQUIRED)
 
-# C++ TR1 extensions
-OPTION(ENABLE_TR1 "Make use of C++ TR1 extensions" yes)
-IF(ENABLE_TR1)
-  FIND_PACKAGE(CxxTR1 REQUIRED)
-  SET(HAVE_TR1 ${CxxTR1_FOUND})
-ENDIF()
-
 # Boost
 FIND_PACKAGE(Boost 1.33.1 COMPONENTS filesystem regex iostreams python REQUIRED)
 
@@ -226,7 +219,7 @@ SET(COMMON_FLAGS "-Wall -D_FORTIFY_SOURCE=2")
 IF(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
   SET(COMPILER_FLAGS "-pipe -fno-strict-aliasing -fmessage-length=0")
   SET(C_LANG_FLAGS   "-std=c99 -pedantic")
-  SET(CXX_LANG_FLAGS "-std=gnu++0x")
+  SET(CXX_LANG_FLAGS "-std=gnu++0x -fpermissive")
 ELSEIF(CMAKE_C_COMPILER_ID STREQUAL "Clang")
   SET(COMPILER_FLAGS "-Wno-mismatched-tags")
   SET(C_LANG_FLAGS   "-pedantic") # Clang defaults to C99

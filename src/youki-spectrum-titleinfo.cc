@@ -134,7 +134,7 @@ namespace MPX
 
 		if( m_audio_bitrate ) 
 		{
-		    audioinfo += (boost::format("Bitrate: <b>%u kbps</b>") % m_audio_bitrate.get()).str() ;
+		    audioinfo += (boost::format("Bitrate <b>%u kbps</b>") % m_audio_bitrate.get()).str() ;
 		}
 
 		if( m_audio_codec )
@@ -148,7 +148,7 @@ namespace MPX
 		    else
 			    transformed = m_audio_codec.get() ;
 
-		    audioinfo += (boost::format(" Codec: <b>%s</b>") % transformed).str() ;
+		    audioinfo += (boost::format(" Codec <b>%s</b>") % transformed).str() ;
 		}
 
 		layout->set_markup(audioinfo) ;

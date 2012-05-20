@@ -66,6 +66,7 @@ SET(youki_bin_SOURCES
   youki-view-albums.cc
   youki-view-artist.hh
   youki-view-artist.cc
+  ld-find-nearest.hh
   library.cc
   library.hh
   mpx-mlibman-dbus-proxy-actual.hh

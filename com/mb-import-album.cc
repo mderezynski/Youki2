@@ -272,7 +272,7 @@ namespace MPX
         void
                 MB_ImportAlbum::on_button_add_files ()
                 {
-                    Gtk::FileChooserDialog dialog (_("AudioSource: Select Album Tracks to Import")); 
+                    Gtk::FileChooserDialog dialog (_("Youki :: Select Album Tracks to Import")); 
                     dialog.add_button( Gtk::Stock::CANCEL, Gtk::RESPONSE_CANCEL );
                     dialog.add_button( Gtk::Stock::ADD, Gtk::RESPONSE_OK );
                     dialog.set_action(Gtk::FILE_CHOOSER_ACTION_OPEN);
