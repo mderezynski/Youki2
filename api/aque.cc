@@ -1,4 +1,6 @@
 #include <vector>
+#include <future>
+#include <ratio>
 #include <glibmm.h>
 #include <gtkmm.h>
 #include <boost/algorithm/string.hpp>
@@ -323,33 +325,13 @@ namespace AQE
         ;
     }
 
-    struct WorkerGlib
-    {
-	Constraint_t& c ;
-	Glib::Threads::Mutex mut ;
-	bool data_ready ;
-
-	WorkerGlib( Constraint_t& c_ ) : c(c_), data_ready(false) {}
-
-	void process() 
-	{
-	    c.TargetValue = c.GetValue( c.SourceValue ) ;
-	    mut.lock() ;
-	    data_ready=true ;
-	    mut.unlock() ;
-	    Glib::Threads::Thread::self()->yield() ;
-	}
-    } ;
-
     void
     process_constraints(
 	  Constraints_t&	    constraints
     )
     {
-	for( Constraints_t::iterator i = constraints.begin() ; i != constraints.end() ; ++i )
+	for( auto& c : constraints ) 
 	{
-	    Constraint_t& c = *i ;
-
 	    if( c.Processing == CONSTRAINT_PROCESSING_ASYNC )
 	    {
 		if( !c.GetValue )
@@ -358,27 +340,16 @@ namespace AQE
 		    continue ;
 		}
 
-		WorkerGlib * W = new WorkerGlib( c ) ;
-		Glib::Threads::Thread * wrk = Glib::Threads::Thread::create( sigc::mem_fun( *W, &WorkerGlib::process )) ;
+		auto handle = std::async(
+		      std::launch::async
+		    , [](Constraint_t& c){ c.TargetValue = c.GetValue(c.SourceValue); }
+		    , boost::ref(c)
+		) ;
 
-		while(true)
+		while(!handle.wait_for(std::chrono::duration<int, std::milli>(50)))
 		{
-		    W->mut.lock() ;
-		    if( !W->data_ready )
-		    {
-			while(gtk_events_pending()) gtk_main_iteration() ;
-			g_usleep(100) ;
-		    }
-		    else
-		    { 
-			W->mut.unlock() ;
-			wrk->join() ;
-			break ;
-		    }
-		    W->mut.unlock() ;
+		    while(gtk_events_pending()) gtk_main_iteration() ;
 		}
-
-		delete W ;
 	    } 
 	}	
     }

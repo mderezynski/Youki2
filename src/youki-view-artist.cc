@@ -38,7 +38,7 @@ namespace Artist
 		;
 
 		icon->saturate_and_pixelate(icon_desaturated_1, 0.0, false) ;
-		icon->saturate_and_pixelate(icon_desaturated_2, 0.4, false) ;
+		icon->saturate_and_pixelate(icon_desaturated_2, 0.2, false) ;
 
 		s1 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_1) ;
 		s2 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_2) ;
@@ -127,7 +127,7 @@ namespace Artist
 		Glib::RefPtr<Gdk::Pixbuf> icon_desaturated_2 = icon->copy() ;
 
 		icon->saturate_and_pixelate(icon_desaturated_1, 0.0, false) ;
-		icon->saturate_and_pixelate(icon_desaturated_2, 0.4, false) ;
+		icon->saturate_and_pixelate(icon_desaturated_2, 0.2, false) ;
 
 		s1 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_1) ;
 		s2 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_2) ;
@@ -555,25 +555,27 @@ namespace Artist
 
 	    if(!surface)
 		surface = m_image_disc ;
-	    else
-		Util::draw_cairo_image( cairo, m_rect_shadow, x+1, y+1, 1., 0 ) ;
+//	    else
+//		Util::draw_cairo_image( cairo, m_rect_shadow, x+1, y+1, 1., 0 ) ;
 
 	    if(surface)
 	    {
 		cairo->save() ;
 		cairo->translate( x, y ) ;
-		RoundedRectangle( cairo, 0, 0, 80, 80, 1 ) ;
+		RoundedRectangle( cairo, 0, 0, 80, 80, 3.5 ) ;
 		cairo->set_source( surface, 0, 0 ) ;
-		cairo->fill_preserve() ;
-		cairo->set_line_width( 1 ) ;	
-		Gdk::Cairo::set_source_rgba( cairo, Util::make_rgba(color,0.6)) ;
-		cairo->stroke() ;
+		cairo->fill() ;
+
+//		cairo->set_line_width( 1 ) ;	
+//		Gdk::Cairo::set_source_rgba( cairo, Util::make_rgba(color,0.6)) ;
+//		cairo->stroke() ;
+
 		cairo->restore() ;
 	    }
 
 	    /* Label */
 	    cairo->save() ;
-	    cairo->translate( xpos+(m_width-width)/2., ypos+/*76*/96 ) ;
+	    cairo->translate( xpos+(m_width-width)/2., ypos+/*76*/98 ) ;
 
 	    if( selected )
 	    {
@@ -595,8 +597,8 @@ namespace Artist
 
 	    Cairo::RefPtr<Cairo::LinearGradient> gr = Cairo::LinearGradient::create( width/2, 0, width/2, height ) ;
 	    set_color_stop_rgba( selected?color:c3, 0, 1, gr ) ;
-	    set_color_stop_rgba( Util::color_shade(selected?color:c3, 0.8), 0.7, 1, gr ) ;
-	    set_color_stop_rgba( Util::color_shade(selected?color:c3, 0.7), 1.0, 1, gr ) ;
+	    set_color_stop_rgba( Util::color_shade(selected?color:c3, 0.9), 0.7, 1, gr ) ;
+	    set_color_stop_rgba( Util::color_shade(selected?color:c3, 0.8), 1.0, 1, gr ) ;
 	    cairo->set_source( gr ) ;
 	    cairo->move_to(0.0, 0.0) ;
 	    pango_cairo_show_layout(
@@ -620,7 +622,7 @@ namespace Artist
 					    , context->get_language()
 	    ) ;
 
-	    m_height__row = 118 ;
+	    m_height__row = 120 ;
 
 	    const int header_pad = 5 ;
 
