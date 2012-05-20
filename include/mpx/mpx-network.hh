@@ -29,50 +29,26 @@
 #include <config.h>
 #endif // HAVE_CONFIG_H
 
-#include <dbus/dbus.h>
-#include <glibmm.h>
-
-#ifdef HAVE_NM
 #include <NetworkManager.h>
-#endif // HAVE_NM
+#include <nm-client.h>
 
 namespace MPX
 {
-  class NM
-  {
-    public:
-        NM ();
-        ~NM ();
+    class NM
+    {
+	public:
 
-        bool
-        Check_Status (bool ForcedCheck = false);
+	    NM() ;
+	    virtual ~NM() ;
 
-        void
-        Disable ();
+	    bool
+	    is_connected(
+	    ) ; 
 
-    private:
+	private:
 
-        bool m_Attempted;
-        bool m_CachedState;
-
-        bool
-        Check_Host (std::string const& hostname,
-                    guint16     port,
-                    bool        write = false,
-                    guint       n_tries = 4,
-                    gdouble     initial_timeout = 2.0,
-                    gdouble     timeout_step = 0.5);
-
-        bool
-        Check_Manually ();
-
-#ifdef HAVE_NM
-        bool
-        Check_NM ();
-
-        DBusConnection* m_DbusConnection;
-#endif // HAVE_NM
-  };
+	    NMClient *	m_NM_Client ; 
+    } ;
 }
 
 #endif // MPX_NETWORK_HH

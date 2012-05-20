@@ -745,19 +745,21 @@ namespace Albums
 		if( album_constraints )
 		{
 		    tm = ((*album_constraints)[album->album_id.get()]).Time ;
-
-		    guint min = tm / 60 ;
+    
+		    guint hrs = tm / 3600 ;
+		    guint min = (tm-hrs*3600) / 60 ;
 		    guint sec = tm % 60 ;
 
 		    guint totaltracks = ((*album_constraints)[album->album_id.get()]).Count ;
 
-		    guint min_total = album->total_time / 60 ;
+		    guint hrs_total = album->total_time / 3600 ;
+		    guint min_total = (album->total_time-hrs_total*3600) / 60 ;
 		    guint sec_total = album->total_time % 60 ;
 
 		    if( album->total_time != tm )
-			s_time = ((boost::format("<b>%02u:%02u</b>/<b>%02u:%02u</b>") % min % sec % min_total % sec_total).str()) ;
+			s_time = ((boost::format("<b>%02u:%02u:%02u</b>/<b>%02u:%02u:%02u</b>") % hrs % min % sec % hrs_total % min_total % sec_total).str()) ;
 		    else
-			s_time = ((boost::format("<b>%02u:%02u</b>") % min % sec).str()) ;
+			s_time = ((boost::format("<b>%02u:%02u:%02u</b>") % hrs % min % sec).str()) ;
 
 		    if( totaltracks != album->track_count )
 			s_tracks = ((boost::format("<b>%u</b>/<b>%u</b>") % totaltracks % album->track_count).str()) ;
@@ -768,12 +770,13 @@ namespace Albums
 		{
 		    tm = album->total_time ;
 
-		    guint min = tm / 60 ;
+		    guint hrs = tm / 3600 ;
+		    guint min = (tm-hrs*3600) / 60 ;
 		    guint sec = tm % 60 ;
 
 		    guint totaltracks = album->track_count ;
 
-		    s_time = ((boost::format("<b>%02u:%02u</b>") % min % sec).str()) ;
+		    s_time = ((boost::format("<b>%02u:%02u:%02u</b>") % hrs % min % sec).str()) ;
 		    s_tracks = ((boost::format("<b>%u</b> %s") % totaltracks % ((totaltracks>1) ? "Tracks" : "Track")).str()) ;
 		}
 
@@ -811,7 +814,6 @@ namespace Albums
 		pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj()) ;
 		sy += height + 2 ;
 
-#if 0
 		/* s_time */
 		layout[L3]->set_markup( s_time ) ;
 		layout[L3]->get_pixel_size( width, height ) ;
@@ -828,7 +830,6 @@ namespace Albums
 		Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(color,0.95)) ;
 		pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj()) ;
 		sy += height + 2 ;
-#endif
 
 		/* s_discs */
 		if( !s_discs.empty() )
@@ -1853,7 +1854,7 @@ namespace Albums
 	{
 	    if( m_selection ) 
 	    {
-		set_has_tooltip(false) ;
+		//set_has_tooltip(false) ;
 		while(gtk_events_pending()) gtk_main_iteration() ;
 
 		Album_sp& album = *(boost::get<Selection::ITERATOR>(m_selection.get())) ;
@@ -1878,7 +1879,7 @@ namespace Albums
 	    if(m_caching.empty())
 	    {
 		m_redraw_spinner_conn.disconnect() ;
-		set_has_tooltip(true) ;
+		//set_has_tooltip(true) ;
 	    }
 
 	    return !m_caching.empty() ;
@@ -2020,13 +2021,15 @@ namespace Albums
 	    m_SearchWindow->add( *m_SearchEntry ) ;
 	    m_SearchEntry->show() ;
 
+/*
 	    signal_query_tooltip().connect(
 		sigc::mem_fun(
 		      *this
 		    , &Class::query_tooltip
 	    )) ;
+*/
 
-	    set_has_tooltip(true) ;
+	    //set_has_tooltip(true) ;
 
 	    m_refActionGroup = Gtk::ActionGroup::create() ;
 	    m_refActionGroup->add( Gtk::Action::create("ContextMenu", "Context Menu")) ;

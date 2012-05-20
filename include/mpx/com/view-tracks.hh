@@ -11,20 +11,20 @@
 #include <boost/unordered_set.hpp>
 #include <boost/lexical_cast.hpp>
 
+#include <sigx/sigx.h>
+
 #include <cmath>
 #include <deque>
 #include <algorithm>
-#include <sigx/sigx.h>
 
 #include "mpx/util-string.hh"
 #include "mpx/util-graphics.hh"
 
 #include "mpx/mpx-types.hh"
 #include "mpx/mpx-main.hh"
-#include "mpx/mpx-covers.hh"
+#include "mpx/mpx-network.hh"
 
 #include "mpx/algorithm/aque.hh"
-#include "mpx/algorithm/ntree.hh"
 #include "mpx/algorithm/interval.hh"
 #include "mpx/algorithm/limiter.hh"
 #include "mpx/algorithm/vector_compare.hh"
@@ -460,6 +460,8 @@ namespace Tracks
 		Signal0			    m_SIGNAL__process_begin ;
 		Signal0			    m_SIGNAL__process_end ;
 
+		MPX::NM			    m_NM ;
+
                 Signal0&
                 signal_process_begin()
                 {
@@ -757,17 +759,14 @@ namespace Tracks
                     m_constraints_aqe.clear() ;
                     m_frags.clear() ;
 
+		    bool have_internet = m_NM.is_connected() ;
+
                     bool async = AQE::parse_advanced_query( m_constraints_aqe, text, m_frags ) ;
 
-		    if( async )    
+		    if( async && have_internet )    
 		    {
 			m_SIGNAL__process_begin.emit() ;
-		    }
-
-		    AQE::process_constraints( m_constraints_aqe ) ;
-
-		    if( async )    
-		    {
+			AQE::process_constraints( m_constraints_aqe ) ;
 			m_SIGNAL__process_end.emit() ;
 		    }
 
@@ -1543,8 +1542,7 @@ namespace Tracks
         {
             public:
 
-                DataModelFilter_sp                m_model ;
-		std::deque<std::pair<guint,guint> > m_motion_queue ;
+                DataModelFilter_sp                  m_model ;
 
             private:
 
@@ -2053,6 +2051,7 @@ namespace Tracks
 		void
 		process_motion_queue()
 		{
+/*
 		    guint last ;
 
 		    while( !m_motion_queue.empty())
@@ -2065,6 +2064,7 @@ namespace Tracks
 		    }
 
 		    select_index( last ) ; 
+*/
 		}
 
                 void
@@ -2078,8 +2078,8 @@ namespace Tracks
                     {
                         property_vadjustment().get_value()->set_upper( upper ) ; 
                         property_vadjustment().get_value()->set_page_size( page_size ) ; 
-                        property_vadjustment().get_value()->set_step_increment( step_increment ) ; 
-                        property_vadjustment().get_value()->set_page_increment( step_increment*4 ) ;
+                        property_vadjustment().get_value()->set_step_increment(1) ; 
+                        property_vadjustment().get_value()->set_page_increment(1) ;
                     }
                 }
 

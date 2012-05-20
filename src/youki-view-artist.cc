@@ -43,7 +43,7 @@ namespace Artist
 		s1 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_1) ;
 		s2 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_2) ;
 
-		Util::cairo_image_surface_blur( s1, 3. ) ;
+		Util::cairo_image_surface_blur( s1, 0.5 ) ;
 
 		boost::get<3>(*(i1->second)) = std::move(s1) ; 
 		boost::get<4>(*(i1->second)) = std::move(s2) ; 
@@ -132,7 +132,7 @@ namespace Artist
 		s1 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_1) ;
 		s2 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_2) ;
 
-		Util::cairo_image_surface_blur( s1, 3. ) ;
+		Util::cairo_image_surface_blur( s1, 0.5 ) ;
 	    }
 
 	    Row_t r (
@@ -181,7 +181,7 @@ namespace Artist
 		s1 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_1) ;
 		s2 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_2) ;
 
-		Util::cairo_image_surface_blur( s1, 3. ) ;
+		Util::cairo_image_surface_blur( s1, 0.5 ) ;
 	    }
 
 	    Row_t r (
@@ -456,9 +456,9 @@ namespace Artist
 		    , 0 
 		    , 0.35 
 	    ) ;
-	    c2->rectangle(0, 0, w, h) ;
+	    RoundedRectangle( c2, 0, 0, w, h, 4. ) ;
 	    c2->fill() ;
-	    Util::cairo_image_surface_blur( s, 2.5 ) ;
+	    Util::cairo_image_surface_blur( s, 1.5 ) ;
 	    return s ;
 	}
 
@@ -555,21 +555,19 @@ namespace Artist
 
 	    if(!surface)
 		surface = m_image_disc ;
-//	    else
-//		Util::draw_cairo_image( cairo, m_rect_shadow, x+1, y+1, 1., 0 ) ;
+	    else
+		Util::draw_cairo_image( cairo, m_rect_shadow, x+2, y+2, 1., 0 ) ;
 
 	    if(surface)
 	    {
 		cairo->save() ;
 		cairo->translate( x, y ) ;
-		RoundedRectangle( cairo, 0, 0, 80, 80, 3.5 ) ;
+		RoundedRectangle( cairo, 0, 0, 80, 80, 4 ) ;
 		cairo->set_source( surface, 0, 0 ) ;
-		cairo->fill() ;
-
-//		cairo->set_line_width( 1 ) ;	
-//		Gdk::Cairo::set_source_rgba( cairo, Util::make_rgba(color,0.6)) ;
-//		cairo->stroke() ;
-
+		cairo->fill_preserve() ;
+		cairo->set_line_width( 0.5 ) ;	
+		Gdk::Cairo::set_source_rgba( cairo, Util::make_rgba(color,0.4)) ;
+		cairo->stroke() ;
 		cairo->restore() ;
 	    }
 
@@ -1668,13 +1666,16 @@ namespace Artist
 
 	    ModelCount = Minus<int>( -1 ) ;
 
+/*
 	    signal_query_tooltip().connect(
 		sigc::mem_fun(
 		      *this
 		    , &Class::query_tooltip
 	    )) ;
+*/
 
-	    set_has_tooltip(true) ;
+	    //set_has_tooltip(true) ;
+
 	    set_can_focus (true);
 
 	    add_events(Gdk::EventMask(GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_EXPOSURE_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_LEAVE_NOTIFY_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_MOTION_MASK | GDK_SCROLL_MASK ));

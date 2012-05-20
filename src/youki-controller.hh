@@ -13,6 +13,8 @@
 #include "mpx/mpx-services.hh"
 #include "mpx/mpx-types.hh"
 
+#include "mpx/util-string.hh"
+
 #include "kobo-main.hh"
 #include "kobo-position.hh"
 #include "kobo-volume.hh"
@@ -261,8 +263,17 @@ namespace MPX
             MPX::Play                       * m_play ;
             Library                         * m_library ;
 	    LDFindNearest		      m_find_nearest_artist ;
-	    LDFindNearest		      m_find_nearest_albums ;
+	    LDFindNearest		      m_find_nearest_artist_full ;
 	    std::string			      m_nearest ;
+	    StrV			      m_nearest__artists ;
+
+	    typedef boost::shared_ptr<LDFindNearest> LDFN_p ;
+	    typedef std::map<std::string, LDFN_p>    StrLDFN_map_t ;
+	    typedef std::set<std::string>	     StrSet_t ;
+	    typedef std::map<std::string, StrSet_t>  StrSet_map_t ;
+
+	    StrSet_map_t		      m_ssmap ;
+	    StrLDFN_map_t		      m_ldmap ; 
     
             Track_sp                          m_track_current ;          
             Track_sp                          m_track_previous ;          
@@ -469,6 +480,11 @@ namespace MPX
     
 	    void
 	    preload__tracks() ;
+
+	    std::string
+	    trie_find_ldmatch(
+		const std::string&
+	    ) ;
 
 	    void
 	    update_entry_placeholder_text() ;

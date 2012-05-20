@@ -1,18 +1,24 @@
+#include "config.h"
+
 #include <vector>
 #include <future>
 #include <ratio>
-#include <glibmm.h>
-#include <gtkmm.h>
-#include <boost/algorithm/string.hpp>
-#include <boost/algorithm/string/join.hpp>
+
+#include <glibmm/ustring.h>
+#include <gtk/gtk.h>
+
 #include <boost/lexical_cast.hpp>
 #include <boost/format.hpp>
 #include <boost/ref.hpp>
-#include "mpx/mpx-types.hh"
-#include "mpx/util-string.hh"
-#include "mpx/algorithm/aque.hh"
-#include "mpx/mpx-uri.hh"
+
 #include <sigx/sigx.h>
+
+#include "mpx/mpx-types.hh"
+#include "mpx/mpx-uri.hh"
+
+#include "mpx/util-string.hh"
+
+#include "mpx/algorithm/aque.hh"
 
 #include "mpx/xml/xmltoc++.hh"
 

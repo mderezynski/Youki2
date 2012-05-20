@@ -42,6 +42,9 @@
 #include "mpx/i-youki-theme-engine.hh"
 
 using boost::get ;
+using boost::algorithm::split ;
+using boost::algorithm::is_any_of ;
+using boost::algorithm::find_first ;
 
 namespace
 {
@@ -916,10 +919,6 @@ namespace MPX
 		break;
 	}
 
-        using boost::algorithm::split;
-        using boost::algorithm::is_any_of;
-        using boost::algorithm::find_first;
-
 	const std::string& s = boost::get<std::string>(v[0]["s"]) ;
 
         StrV m;
@@ -954,8 +953,26 @@ namespace MPX
 
 	for( auto& r : v ) 
 	{
+	    StrV m;
+
 	    auto&& s = Util::row_get_album_artist_name(r) ;
-	    v_.push_back(s) ;
+
+	    split( m, s, is_any_of(" ")) ;
+
+	    if( m.size() >= 2 )
+	    {
+		std::string&& key = Glib::ustring(m[0]).lowercase() ;
+		std::string&& val = Glib::ustring(m[1]).lowercase();
+
+		m_ssmap[key].insert(val) ;
+	    }
+    
+	    for( auto& f : m )
+	    {
+		v_.push_back(f) ;
+	    }
+
+	    m_nearest__artists.push_back(s) ;
 
 	    private_->FilterModelArtist->append_artist(
 		  s  
@@ -965,6 +982,23 @@ namespace MPX
 	}
 
 	m_find_nearest_artist.load_dictionary(v_) ;
+	m_find_nearest_artist_full.load_dictionary(m_nearest__artists) ;
+
+	for( auto& p : m_ssmap )
+	{
+	    LDFN_p ldfn (new LDFindNearest ) ;
+
+	    StrV v2_ ;
+
+	    for( auto& s : p.second )
+	    {
+		v2_.push_back(s) ;
+	    }
+
+	    ldfn->load_dictionary(v2_) ;
+
+	    m_ldmap.insert(std::make_pair(p.first,ldfn)) ;
+	}
 
         private_->FilterModelArtist->regen_mapping() ;
     }
@@ -988,14 +1022,8 @@ namespace MPX
 	    handle_sql_error( cxe ) ;
 	}
 
-	std::vector<std::string> v_ ;
-	v_.reserve(v.size()) ;
-
 	for( auto& r : v ) 
 	{
-	    auto& s = boost::get<std::string>(r["album"]) ;
-	    v_.push_back(s) ;
-
 	    try{
 		private_->FilterModelAlbums->append_album( get_album_from_id( get<guint>(r["id"]))) ;
 	    } catch( std::logic_error& cxe )
@@ -1003,8 +1031,6 @@ namespace MPX
 		g_message("%s: Error while appending album to model: %s", G_STRLOC, cxe.what()) ;
 	    }
 	}
-
-	m_find_nearest_albums.load_dictionary(v_) ;
 
         private_->FilterModelAlbums->regen_mapping() ;
     }
@@ -1028,9 +1054,6 @@ namespace MPX
 
 	for( auto& r : v ) 
 	{
-//	    auto& s = boost::get<std::string>(r["title"]) ;
-//	    m_nearest_dict.push_back(s) ;
-
 	    try{
 		private_->FilterModelTracks->append_track(r, m_library->sqlToTrack(r, true, false )) ;
 	    } catch( Library::FileQualificationError )
@@ -2249,6 +2272,59 @@ namespace MPX
 	history_save() ;
     }
 
+    std::string
+    YoukiController::trie_find_ldmatch(
+	const std::string& text_std
+    )
+    {
+	std::string r_ ;
+
+	StrV m ;
+	split( m, text_std, is_any_of(" ")) ;
+   
+	if( m.size() >= 2 ) 
+	{
+	    std::string&& s1 = Glib::ustring(m[0]).lowercase() ;
+	    std::string&& s2 = Glib::ustring(m[1]).lowercase() ;
+
+	    std::string match1 = m_find_nearest_artist.find_nearest_match(3,s1) ;
+	    std::string match2 ;
+
+	    if(!match1.empty())
+	    {
+		StrLDFN_map_t::iterator i = m_ldmap.find(Glib::ustring(match1).lowercase()) ;
+
+		if(i != m_ldmap.end())
+		{
+		    LDFN_p p = i->second ;
+		    match2 = p->find_nearest_match(3, s2) ;
+
+		    if(!match2.empty())	
+		    {
+			std::string joined = match1 ;
+			joined += " " ;
+			joined += match2 ;
+
+			joined = Glib::ustring(joined).lowercase() ;
+
+			for( auto& s : m_nearest__artists )
+			{
+			    std::string s_lc = Glib::ustring(s).lowercase() ;
+
+			    if( s_lc.substr(0,joined.length()) == joined ) 
+			    {
+				r_ = s ;
+				break ;
+			    }
+			}
+		    }
+		}
+	    }
+	}
+
+	return r_ ;
+    }
+
     void
     YoukiController::handle_search_entry_changed(
     )
@@ -2291,18 +2367,25 @@ namespace MPX
 	m_conn2.unblock() ;
 
 	if( private_->FilterModelTracks->m_mapping->empty()) {
+
 	    m_Entry->override_color(Util::make_rgba(1.,0.,0.,1.)) ;
 
-	    std::string m = m_find_nearest_artist.find_nearest_match(3, m_Entry->get_text()) ;
+	    m_nearest = m_find_nearest_artist_full.find_nearest_match(3,m_Entry->get_text()) ;
 
-	    if( m.empty() )
-	    {
-		m = m_find_nearest_albums.find_nearest_match(3, m_Entry->get_text()) ;
+	    if(m_nearest.empty()) {
+		m_nearest = trie_find_ldmatch(m_Entry->get_text()) ;
 	    }
 
-	    m_nearest = m ;
+	    if( m_nearest.empty())
+	    {
+		std::string text_std = m_Entry->get_text() ;
+		StrV m ;
+		split( m, text_std, is_any_of(" ")) ;
+		std::string joined = boost::algorithm::join( m, "" ) ;
+		m_nearest = m_find_nearest_artist_full.find_nearest_match(3,m_Entry->get_text()) ;
+	    }
 
-	    if( m_nearest.empty() )
+	    if( m_nearest.empty())
 		m_Label_Nearest->set_text("") ;
 	    else
 		m_Label_Nearest->set_markup((boost::format("%s <b>%s</b>?") % _("Did you mean") % m_nearest).str()) ;

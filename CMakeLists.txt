@@ -97,11 +97,7 @@ FIND_PACKAGE(PythonLibs REQUIRED)
 #ENDIF()
 
 # Network Manager
-OPTION(ENABLE_NM "With GNOME NetworkManager" no)
-IF(ENABLE_NM)
-  PKG_CHECK_MODULES(NM REQUIRED NetworkManager>=0.6.0)
-  SET(HAVE_NM ${NM_FOUND})
-ENDIF()
+PKG_CHECK_MODULES(NM REQUIRED libnm-glib>=0.9.4.0)
 
 # Xerces C
 FIND_PACKAGE(XercesC REQUIRED)
