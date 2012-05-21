@@ -443,7 +443,7 @@ namespace Artist
 	    , guint h
 	)
 	{
-	    Cairo::RefPtr<Cairo::ImageSurface> s = Cairo::ImageSurface::create( Cairo::FORMAT_ARGB32, w+2, h+2 ) ;
+	    Cairo::RefPtr<Cairo::ImageSurface> s = Cairo::ImageSurface::create( Cairo::FORMAT_ARGB32, w+4, h+4 ) ;
 	    Cairo::RefPtr<Cairo::Context> c2 = Cairo::Context::create(s) ;
 
 	    c2->set_operator( Cairo::OPERATOR_CLEAR ) ;
@@ -456,7 +456,7 @@ namespace Artist
 		    , 0 
 		    , 0.35 
 	    ) ;
-	    RoundedRectangle( c2, 0, 0, w, h, 4. ) ;
+	    RoundedRectangle( c2, 2, 2, w, h, 5. ) ;
 	    c2->fill() ;
 	    Util::cairo_image_surface_blur( s, 1.5 ) ;
 	    return s ;
@@ -556,7 +556,7 @@ namespace Artist
 	    if(!surface)
 		surface = m_image_disc ;
 	    else
-		Util::draw_cairo_image( cairo, m_rect_shadow, x+2, y+2, 1., 0 ) ;
+		Util::draw_cairo_image( cairo, m_rect_shadow, x, y, 0.5, 0 ) ;
 
 	    if(surface)
 	    {

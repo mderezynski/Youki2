@@ -10,6 +10,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/format.hpp>
 #include <boost/ref.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include <sigx/sigx.h>
 
@@ -228,7 +229,30 @@ namespace
             if( attribute == "time" )
             {
                 try{
-                        c.TargetValue = (unsigned int)(boost::lexical_cast<int>(value)) ;
+			StrV m ;
+			boost::algorithm::split( m, value, boost::algorithm::is_any_of(":")) ;
+
+			guint h = 0, m = 0, s = 0 ;
+
+			if( m.size() == 3 )
+			{
+			    h = (unsigned int)(boost::lexical_cast<int>(m[0])) ;
+			    m = (unsigned int)(boost::lexical_cast<int>(m[1])) ;
+			    s = (unsigned int)(boost::lexical_cast<int>(m[2])) ;
+			}
+			else
+			if( m.size() == 2 )
+			{
+			    m = (unsigned int)(boost::lexical_cast<int>(m[0])) ;
+			    s = (unsigned int)(boost::lexical_cast<int>(m[1])) ;
+			}
+			else
+			if( m.size() == 1 )
+			{
+			    s = (unsigned int)(boost::lexical_cast<int>(m[0])) ;
+			}
+
+                        c.TargetValue = (h*3600) + (m*60) + s ; 
                         c.TargetAttr = ATTRIBUTE_TIME ;
 
                         constraints.push_back(c) ;

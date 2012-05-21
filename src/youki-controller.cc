@@ -981,6 +981,35 @@ namespace MPX
 	    ) ;
 	}
 
+	v.clear() ;
+	m_library->getSQL(v, (boost::format("SELECT * FROM artist")).str()) ; 
+
+	v_.clear() ;
+
+	for( auto& r : v ) 
+	{
+	    StrV m;
+
+	    auto& s = boost::get<std::string>(r["artist"]) ; 
+
+	    split( m, s, is_any_of(" ")) ;
+
+	    if( m.size() >= 2 )
+	    {
+		std::string&& key = Glib::ustring(m[0]).lowercase() ;
+		std::string&& val = Glib::ustring(m[1]).lowercase();
+
+		m_ssmap[key].insert(val) ;
+	    }
+    
+	    for( auto& f : m )
+	    {
+		v_.push_back(f) ;
+	    }
+
+	    m_nearest__artists.push_back(s) ;
+	}
+
 	m_find_nearest_artist.load_dictionary(v_) ;
 	m_find_nearest_artist_full.load_dictionary(m_nearest__artists) ;
 
@@ -2287,7 +2316,7 @@ namespace MPX
 	    std::string&& s1 = Glib::ustring(m[0]).lowercase() ;
 	    std::string&& s2 = Glib::ustring(m[1]).lowercase() ;
 
-	    std::string match1 = m_find_nearest_artist.find_nearest_match(3,s1) ;
+	    std::string match1 = m_find_nearest_artist.find_nearest_match_leven(3,s1) ;
 	    std::string match2 ;
 
 	    if(!match1.empty())
@@ -2297,7 +2326,7 @@ namespace MPX
 		if(i != m_ldmap.end())
 		{
 		    LDFN_p p = i->second ;
-		    match2 = p->find_nearest_match(3, s2) ;
+		    match2 = p->find_nearest_match_leven(3, s2) ;
 
 		    if(!match2.empty())	
 		    {
@@ -2370,7 +2399,7 @@ namespace MPX
 
 	    m_Entry->override_color(Util::make_rgba(1.,0.,0.,1.)) ;
 
-	    m_nearest = m_find_nearest_artist_full.find_nearest_match(3,m_Entry->get_text()) ;
+	    m_nearest = m_find_nearest_artist_full.find_nearest_match_leven(3,m_Entry->get_text()) ;
 
 	    if(m_nearest.empty()) {
 		m_nearest = trie_find_ldmatch(m_Entry->get_text()) ;
@@ -2382,7 +2411,11 @@ namespace MPX
 		StrV m ;
 		split( m, text_std, is_any_of(" ")) ;
 		std::string joined = boost::algorithm::join( m, "" ) ;
-		m_nearest = m_find_nearest_artist_full.find_nearest_match(3,m_Entry->get_text()) ;
+		m_nearest = m_find_nearest_artist_full.find_nearest_match_leven(3,m_Entry->get_text()) ;
+	    }
+
+	    if( m_nearest.empty()) {
+		m_nearest = m_find_nearest_artist.find_nearest_match_leven(3,m_Entry->get_text()) ;
 	    }
 
 	    if( m_nearest.empty())

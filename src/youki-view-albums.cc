@@ -66,7 +66,7 @@ namespace View
 {
 namespace Albums
 {
-        const double rounding = 1. ;
+        const double rounding = 2. ;
 
 	bool operator==( const Album_sp& a, const Album_sp& b )
 	{
@@ -534,7 +534,7 @@ namespace Albums
 		    , 0 
 		    , 0.35 
 	    ) ;
-	    c2->rectangle(0, 0, w, h) ;
+	    RoundedRectangle( c2, 0, 0, w, h, rounding+1 ) ;
 	    c2->fill() ;
 	    Util::cairo_image_surface_blur( s, 2.5 ) ;
 	    return s ;
@@ -592,11 +592,11 @@ namespace Albums
 
 		if( album->coverart )
 		{
-		    Util::draw_cairo_image( cairo, m_rect_shadow, 12+2, r.y+4, 1., 0 ) ;
+		    Util::draw_cairo_image( cairo, m_rect_shadow, 12+2, r.y+4, 1., rounding ) ;
 		}
 
 		/* The actual coverart surface cache */
-		Util::draw_cairo_image( cairo, album->surface_cache, 10, r.y, 1., 0 ) ;
+		Util::draw_cairo_image( cairo, album->surface_cache, 10, r.y, 1., rounding ) ;
 
 		if( album->coverart )
 		{

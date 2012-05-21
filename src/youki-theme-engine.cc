@@ -451,18 +451,13 @@ namespace MPX
         cgdk.set_rgba( c.get_red(), c.get_green(), c.get_blue() ) ;
 
         Util::color_to_hsb( cgdk, h, s, b ) ;
-        b *= 0.70 ; 
-        s *= 0.50 ; 
+        b *= 0.90 ; 
+        s *= 0.80 ; 
         Gdk::RGBA c1 = Util::color_from_hsb( h, s, b ) ;
 
         cairo->save() ;
         cairo->set_operator( Cairo::OPERATOR_OVER ) ;
-        cairo->set_source_rgba(
-              c1.get_red() 
-            , c1.get_green()
-            , c1.get_blue()
-            , 1. 
-        ) ;
+	Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(c1,0.4)) ;
         RoundedRectangle(
               cairo
             , r.x
@@ -472,15 +467,9 @@ namespace MPX
             , rounding
 	    , corners
         ) ;
-
-        std::valarray<double> dashes ( 2 ) ;
-        dashes[0] = 1. ;
-        dashes[1] = 1. ;
-
-        cairo->set_dash( dashes, 0 ) ;
-        cairo->set_line_width( 1 ) ; 
-	cairo->set_antialias( Cairo::ANTIALIAS_NONE );
-        cairo->stroke () ;
+        cairo->fill_preserve() ;
+	Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(c1,0.8)) ;
+	cairo->stroke() ;
         cairo->restore() ;
     }
 }
