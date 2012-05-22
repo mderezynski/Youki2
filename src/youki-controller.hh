@@ -340,6 +340,10 @@ namespace MPX
 	    handle_use_history_toggled(
 	    ) ;
 
+	    void
+	    handle_shuffle_toggled(
+	    ) ;
+
         protected:
 
 	    void
@@ -414,10 +418,6 @@ namespace MPX
             on_list_view_ab_start_playback(
             ) ;
 
-	    void
-	    on_shuffle_toggled(
-	    ) ;
-
             void
             on_info_area_clicked(
 		int area
@@ -470,6 +470,7 @@ namespace MPX
             void
             play_track (
                   const MPX::Track_sp&
+		, bool /*register_in_history*/ = true
             ) ;
 
         protected:

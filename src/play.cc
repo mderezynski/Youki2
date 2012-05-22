@@ -301,6 +301,7 @@ namespace MPX
 			g_message("%s: state change failure", G_STRLOC) ;
 
                     stop_stream()  ;
+		    reset() ;
                 }
 
         void

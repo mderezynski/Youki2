@@ -14,7 +14,6 @@ namespace Artist
     {
 	m_ArtistImages = new ArtistImages ;
 	m_ArtistImages->run() ;
-	m_ArtistImages->recache_images() ;
 	m_ArtistImages->signal_got_artist_image().connect( sigc::mem_fun( *this, &DataModel::handle_got_artist_image )) ;
     }
 

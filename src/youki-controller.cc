@@ -33,6 +33,7 @@
 
 #include "mpx/widgets/cairo-extensions.hh"
 #include "mpx/widgets/percentual-distribution-hbox.hh"
+#include "mpx/widgets/percentual-distribution-hbuttonbox.hh"
 
 #include "library.hh"
 #include "plugin-manager-gui.hh"
@@ -448,15 +449,12 @@ namespace MPX
 	m_BTN_HISTORY_FFWD->set_sensitive( false ) ;
 
 	Gtk::Alignment * ButtonsAlign = Gtk::manage( new Gtk::Alignment ) ;
-	ButtonsAlign->property_xalign() = 1. ;
-	ButtonsAlign->property_xscale() = 0. ;
-
 	Gtk::HButtonBox * Box_Buttons = Gtk::manage( new Gtk::HButtonBox ) ;
 
 	Gtk::Image * ishuf = Gtk::manage( new Gtk::Image( Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "media-shuffle.png" ))) ;
 	m_BTN_SHUFFLE = Gtk::manage( new Gtk::ToggleButton ) ;
 	m_BTN_SHUFFLE->add( *ishuf ) ;
-	m_BTN_SHUFFLE->signal_toggled().connect( sigc::mem_fun( *this, &YoukiController::on_shuffle_toggled )) ;
+	m_BTN_SHUFFLE->signal_toggled().connect( sigc::mem_fun( *this, &YoukiController::handle_shuffle_toggled )) ;
 	m_BTN_SHUFFLE->set_can_focus(false) ;
 
 	Gtk::Image * irept = Gtk::manage( new Gtk::Image( Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "media-repeat.png" ))) ;
@@ -1727,6 +1725,7 @@ namespace MPX
     void
     YoukiController::play_track(
           const MPX::Track_sp& t
+	, bool		       register_in_history
     )
     {
 	bool history = Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("PlaybackControlActionUseHistory"))->get_active() ;
@@ -1735,7 +1734,7 @@ namespace MPX
                 m_play->request_status( PLAYSTATUS_WAITING ) ;
                 m_track_current = t ; 
 
-		if( history && !m_play_history.has_ffwd() )
+		if( history && !m_play_history.has_ffwd() && register_in_history )
 		{
 		    guint id = boost::get<guint>((*m_track_current)[ATTRIBUTE_MPX_TRACK_ID].get()) ;
 		    m_play_history.append(id) ;
@@ -2540,9 +2539,10 @@ namespace MPX
     }
 
     void
-    YoukiController::on_shuffle_toggled()
+    YoukiController::handle_shuffle_toggled()
     {
 	m_play_queue.clear() ; 
+	m_play_history.clear() ;
 
 	if(m_BTN_SHUFFLE->get_active())
 	{
@@ -2927,7 +2927,7 @@ void
 		    d = std::max<int>( 0, idx.get() - 1 ) ;
 		}
 
-		play_track( private_->FilterModelTracks->row( d )->TrackSp ) ;
+		play_track( private_->FilterModelTracks->row( d )->TrackSp, (idx.get()-1) != d ) ;
 	    }
 	}
 	else
@@ -2935,9 +2935,10 @@ void
 	    if( private_->FilterModelTracks->size() )
 	    {
 		OptUInt idx = private_->FilterModelTracks->get_active_track() ; 
+
 		if( idx ) 
 		{
-		    play_track( private_->FilterModelTracks->row( idx.get() )->TrackSp ) ;
+		    play_track( private_->FilterModelTracks->row(idx.get())->TrackSp, false ) ;
 		}
 	    }
 	}
