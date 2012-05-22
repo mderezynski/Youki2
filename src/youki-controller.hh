@@ -23,6 +23,7 @@
 #include "mpx-mlibman-dbus-proxy-actual.hh"
 
 #include "ld-find-nearest.hh"
+#include "id-history.hh"
 
 #include <sigx/sigx.h>
 
@@ -266,6 +267,7 @@ namespace MPX
 	    LDFindNearest		      m_find_nearest_artist_full ;
 	    std::string			      m_nearest ;
 	    StrV			      m_nearest__artists ;
+	    StrV			      m_nearest__artists_popular ;
 
 	    typedef boost::shared_ptr<LDFindNearest> LDFN_p ;
 	    typedef std::map<std::string, LDFN_p>    StrLDFN_map_t ;
@@ -281,7 +283,7 @@ namespace MPX
             bool                              m_follow_track ;
 
             std::deque<guint>                 m_play_queue ;
-	    std::deque<guint>		      m_play_history ;
+	    IdHistory			      m_play_history ;
 
             info::backtrace::Youki::MLibMan_proxy_actual * m_mlibman_dbus_proxy ;
 
@@ -305,9 +307,6 @@ namespace MPX
 	    Glib::RefPtr<Gtk::ActionGroup>    m_UI_Actions_Main ;
 
 	    bool
-	    handle_search_entry_focus_out( GdkEventFocus* ) ;
-
-	    bool
 	    handle_keytimer() ;
 
 	    void
@@ -319,24 +318,27 @@ namespace MPX
 	    void
 	    handle_nearest_clicked() ;	
 
-            void
-            handle_search_entry_changed(
-            ) ;
+	    bool
+	    handle_search_entry_focus_out( GdkEventFocus* ) ;
 
             bool
-            handle_search_entry_key_press_event(
-                GdkEventKey*
-            ) ;
+            handle_search_entry_key_press_event( GdkEventKey* ) ;
+
+            void
+            handle_search_entry_changed() ;
+
+            void
+            handle_search_entry_activated() ;
 
             void
             handle_search_entry_clear_clicked(
-		  Gtk::EntryIconPosition = Gtk::ENTRY_ICON_SECONDARY
-		, const GdkEventButton* = 0
+		  Gtk::EntryIconPosition    = Gtk::ENTRY_ICON_SECONDARY
+		, const GdkEventButton*	    = 0
             ) ;
 
-            void
-            handle_search_entry_activated(
-            ) ;
+	    void
+	    handle_use_history_toggled(
+	    ) ;
 
         protected:
 
@@ -574,6 +576,7 @@ namespace MPX
 
 	    History_t m_HISTORY ;
             HistoryPosition_t m_HISTORY_POSITION ;	   
+	    bool m_view_changed ;
 
 	    Gtk::Button* m_BTN_HISTORY_PREV ;
 	    Gtk::Button* m_BTN_HISTORY_FFWD ;

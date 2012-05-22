@@ -298,6 +298,7 @@ namespace Albums
                 guint	    m_width ;
                 guint	    m_column ;
 		bool	    m_show_additional_info ;
+		double	    m_rounding ;
 
                 Cairo::RefPtr<Cairo::ImageSurface>  m_image_disc ;
                 Cairo::RefPtr<Cairo::ImageSurface>  m_image_new ;
@@ -324,6 +325,12 @@ namespace Albums
 
                 guint
                 get_column() ;
+
+		void
+		set_rounding(double) ;
+
+		double	
+		get_rounding() ;
 
 	    protected:
 
@@ -596,9 +603,6 @@ namespace Albums
                 clear_selection_quiet(
                 ) ;
 
-		void
-		set_show_additional_info( bool show ) ;
-
                 void
                 select_id(
 		      boost::optional<guint> id
@@ -624,8 +628,14 @@ namespace Albums
                 boost::optional<guint>
                 get_selected() ;
 
+		void
+		set_show_additional_info(bool) ;
+
                 void
-                set_model(DataModelFilter_sp model) ;
+                set_model(DataModelFilter_sp) ;
+
+		void
+		set_rounding(double) ;
 
                 void
                 append_column(

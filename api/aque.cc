@@ -229,27 +229,27 @@ namespace
             if( attribute == "time" )
             {
                 try{
-			StrV m ;
-			boost::algorithm::split( m, value, boost::algorithm::is_any_of(":")) ;
+			StrV v ;
+			boost::algorithm::split( v, value, boost::algorithm::is_any_of(":")) ;
 
 			guint h = 0, m = 0, s = 0 ;
 
-			if( m.size() == 3 )
+			if( v.size() == 3 )
 			{
-			    h = (unsigned int)(boost::lexical_cast<int>(m[0])) ;
-			    m = (unsigned int)(boost::lexical_cast<int>(m[1])) ;
-			    s = (unsigned int)(boost::lexical_cast<int>(m[2])) ;
+			    h = (unsigned int)(boost::lexical_cast<int>(v[0])) ;
+			    m = (unsigned int)(boost::lexical_cast<int>(v[1])) ;
+			    s = (unsigned int)(boost::lexical_cast<int>(v[2])) ;
 			}
 			else
-			if( m.size() == 2 )
+			if( v.size() == 2 )
 			{
-			    m = (unsigned int)(boost::lexical_cast<int>(m[0])) ;
-			    s = (unsigned int)(boost::lexical_cast<int>(m[1])) ;
+			    m = (unsigned int)(boost::lexical_cast<int>(v[0])) ;
+			    s = (unsigned int)(boost::lexical_cast<int>(v[1])) ;
 			}
 			else
-			if( m.size() == 1 )
+			if( v.size() == 1 )
 			{
-			    s = (unsigned int)(boost::lexical_cast<int>(m[0])) ;
+			    s = (unsigned int)(boost::lexical_cast<int>(v[0])) ;
 			}
 
                         c.TargetValue = (h*3600) + (m*60) + s ; 

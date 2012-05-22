@@ -71,9 +71,7 @@ namespace
     "	    <menuitem action='PlaybackControlActionPlayTrackOnSingleTap'/>"
     "	    <separator/>"
     "	    <menuitem action='PlaybackControlActionStartAlbumAtFavorite'/>"
-    "	    <separator/>"
-    "	    <menuitem action='PlaybackControlActionClearHistory'/>"
-    "	    <menuitem action='PlaybackControlActionClearQueue'/>"
+    "	    <menuitem action='PlaybackControlActionUseHistory'/>"
     "	</menu>"
     "</menubar>"
     ""
@@ -133,18 +131,33 @@ namespace
 
 	d.set_program_name("Youki") ;
 	d.set_version("0.10") ;
-	d.set_copyright("(C) 2006-2012 Milosz Derezynki, Chong Kaixiong") ;
+	d.set_copyright("(C) 2006-2012 Milosz Derezynki, Chong Kaixiong and others") ;
 	d.set_license("GPL v3 or later") ;
 	d.set_license_type(Gtk::LICENSE_GPL_3_0) ;
 
 	std::vector<Glib::ustring> authors;
-	authors.push_back ("Milosz Derezynski");
+	authors.push_back ("Milosz Derezynski <mderezynski@gmail.com>");
 	authors.push_back ("Chong Kai Xiong");
 	authors.push_back ("David Le Brun");
+	authors.push_back ("Lawrence Gold") ;
+	authors.push_back ("Barbara Haupt") ;
+	authors.push_back ("Robert Kruus") ;
+	authors.push_back ("Boris Peterbarg <boris-p@zahav.net.il>") ;
+	authors.push_back ("Roman Bogorodskiy <novel@freebsd.org>") ;
+	authors.push_back ("pwned") ;
+	authors.push_back ("Edward Brocklesby <ejb@goth.net>") ;
+	authors.push_back ("Martin Schlemmer <azarah@gentoo.org>") ;
+	authors.push_back ("Saleem Abdulrasool <compnerd@compnerd.org>") ;
+	authors.push_back ("Kenneth 'Langly' Ostby <langly@langly.org>") ;
+	authors.push_back ("Mart Raudsepp <leio@users.berlios.de>") ;
+	authors.push_back ("Olivier Blin <oblin@mandriva.com>") ;
+	authors.push_back ("Shlomi Fish <shlomi@iglu.org.il>") ; 
+	authors.push_back ("") ;
+	authors.push_back ("MP4 Taglib Plugin: Lukáš Lalinský") ;
 	d.set_authors( authors ) ;
 
 	std::vector<Glib::ustring> artists;
-    artists.push_back ("Milosz Derezynski");
+	artists.push_back ("Milosz Derezynski") ;
 	d.set_artists( artists ) ;
 
 	Glib::RefPtr<Gdk::Pixbuf> p_logo = Gdk::Pixbuf::create_from_file( Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "youki256x256.png" )) ;
@@ -170,7 +183,7 @@ namespace
     void
     clear_deque(
 	  Glib::RefPtr<Gtk::Action> a
-	, std::deque<guint>&	    q
+	, MPX::IdHistory&	    q 
     )
     {
 	q.clear() ;
@@ -194,6 +207,7 @@ namespace MPX
     , Service::Base("mpx-service-controller")
     , private_( new Private )
     , m_main_window(0)
+    , m_view_changed( false )
     , m_history_ignore_save( false )
     {
 	IndicateServer* is = indicate_server_ref_default() ;
@@ -398,7 +412,7 @@ namespace MPX
 	m_VBox->set_border_width(0) ;
 
         m_HBox_Main = Gtk::manage( new PercentualDistributionHBox ) ;
-        m_HBox_Main->set_spacing( 6 ) ; 
+        m_HBox_Main->set_spacing( 4 ) ; 
 
         m_HBox_Entry = Gtk::manage( new Gtk::HBox ) ;
         m_HBox_Entry->set_spacing( 4 ) ;
@@ -437,7 +451,7 @@ namespace MPX
 	ButtonsAlign->property_xalign() = 1. ;
 	ButtonsAlign->property_xscale() = 0. ;
 
-	Gtk::HBox * Box_Buttons = Gtk::manage( new Gtk::HBox ) ;
+	Gtk::HButtonBox * Box_Buttons = Gtk::manage( new Gtk::HButtonBox ) ;
 
 	Gtk::Image * ishuf = Gtk::manage( new Gtk::Image( Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "media-shuffle.png" ))) ;
 	m_BTN_SHUFFLE = Gtk::manage( new Gtk::ToggleButton ) ;
@@ -445,15 +459,24 @@ namespace MPX
 	m_BTN_SHUFFLE->signal_toggled().connect( sigc::mem_fun( *this, &YoukiController::on_shuffle_toggled )) ;
 	m_BTN_SHUFFLE->set_can_focus(false) ;
 
+	Gtk::Image * irept = Gtk::manage( new Gtk::Image( Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "media-repeat.png" ))) ;
+	Gtk::Button * brept = Gtk::manage( new Gtk::ToggleButton ) ;
+	brept->add( *irept ) ;
+	brept->set_can_focus(false) ;
+
 	Gtk::Image * ialbm = Gtk::manage( new Gtk::Image( Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "disc-small.png" ))) ;
 	Gtk::Button * balbm = Gtk::manage( new Gtk::ToggleButton ) ;
 	balbm->add( *ialbm ) ;
 	balbm->set_can_focus(false) ;
 	
-	Gtk::Image * irept = Gtk::manage( new Gtk::Image( Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "media-repeat.png" ))) ;
-	Gtk::Button * brept = Gtk::manage( new Gtk::ToggleButton ) ;
-	brept->add( *irept ) ;
-	brept->set_can_focus(false) ;
+	auto sc = m_BTN_SHUFFLE->get_style_context() ;
+	sc->set_junction_sides( Gtk::JUNCTION_RIGHT ) ;
+
+	sc = brept->get_style_context() ;
+	sc->set_junction_sides( Gtk::JUNCTION_RIGHT | Gtk::JUNCTION_LEFT ) ;
+
+	sc = balbm->get_style_context() ;
+	sc->set_junction_sides( Gtk::JUNCTION_LEFT ) ;
 
 	Box_Buttons->pack_start( *m_BTN_SHUFFLE, false, false, 0 ) ;
 	Box_Buttons->pack_start( *brept, false, false, 0 ) ;
@@ -461,8 +484,9 @@ namespace MPX
 
 	ButtonsAlign->add( *Box_Buttons ) ;
 
-        HBox_Navi->pack_start( *m_BTN_HISTORY_PREV, false, false, 0 ) ;
-        HBox_Navi->pack_start( *m_BTN_HISTORY_FFWD, false, false, 0 ) ;
+//        HBox_Navi->pack_start( *m_BTN_HISTORY_PREV, false, false, 0 ) ;
+//        HBox_Navi->pack_start( *m_BTN_HISTORY_FFWD, false, false, 0 ) ;
+//        m_HBox_Entry->pack_start( *HBox_Navi, false, false, 0 ) ;
 
 	m_AQUE_Spinner = Gtk::manage( new Gtk::Image ) ;
 	Glib::RefPtr<Gdk::PixbufAnimation> anim = Gdk::PixbufAnimation::create_from_file(
@@ -470,7 +494,6 @@ namespace MPX
 	m_AQUE_Spinner->set( anim ) ;
 	Glib::signal_timeout().connect( sigc::bind_return(sigc::mem_fun( *m_AQUE_Spinner, &Gtk::Widget::queue_draw), true), 100) ;
 
-        m_HBox_Entry->pack_start( *HBox_Navi, false, false, 0 ) ;
         m_HBox_Entry->pack_start( *m_Label_Search, false, false, 0 ) ;
         m_HBox_Entry->pack_start( *m_Entry, false, false, 0 ) ;
         m_HBox_Entry->pack_start( *m_AQUE_Spinner, false, false, 0 ) ;
@@ -479,7 +502,7 @@ namespace MPX
 
         Gtk::Alignment* Entry_Align = Gtk::manage( new Gtk::Alignment ) ;
         Entry_Align->add( *m_HBox_Entry ) ;
-	Entry_Align->set_padding( 2, 2, 2, 4 ) ;
+	Entry_Align->set_padding( 2, 4, 0, 4 ) ;
 	Entry_Align->property_xalign() = 0. ;
 	Entry_Align->property_xscale() = 1. ; 
 
@@ -495,11 +518,11 @@ namespace MPX
 
 	Gtk::VBox* VBox2 = Gtk::manage( new Gtk::VBox ) ;
 	VBox2->set_border_width(0) ;
-	VBox2->set_spacing(2) ;
+	VBox2->set_spacing(0) ;
 
 	Gtk::Alignment * Main_Align = Gtk::manage( new Gtk::Alignment ) ;
 	Main_Align->add( *VBox2 ) ;
-	Main_Align->set_padding( 0, 0, 4, 2 ) ;
+	Main_Align->set_padding( 0, 0, 4, 0 ) ;
 
 	Gtk::Alignment * HBox_Main_Align = Gtk::manage( new Gtk::Alignment ) ;
 	HBox_Main_Align->add( *m_HBox_Main ) ;
@@ -515,16 +538,25 @@ namespace MPX
         m_main_window = new MainWindow ;
         m_main_window->set_icon_list( pixvector ) ; 
 
-	/* Main view widgets */
-        m_ListViewTracks    = Gtk::manage( new View::Tracks::Class ) ;
-        m_ListViewArtist    = Gtk::manage( new View::Artist::Class ) ;
-        m_ListViewAlbums    = Gtk::manage( new View::Albums::Class ) ;
-
+	// MAIN VIEW WIDGETS	
         m_ScrolledWinArtist = Gtk::manage( new Gtk::ScrolledWindow ) ;
         m_ScrolledWinAlbums = Gtk::manage( new Gtk::ScrolledWindow ) ;
         m_ScrolledWinTracks = Gtk::manage( new Gtk::ScrolledWindow ) ;
 
-	/* Menus */
+	sc = m_ScrolledWinArtist->get_style_context() ;
+	sc->set_junction_sides( Gtk::JUNCTION_RIGHT | Gtk::JUNCTION_BOTTOM ) ;
+
+	sc = m_ScrolledWinTracks->get_style_context() ;
+	sc->set_junction_sides( Gtk::JUNCTION_RIGHT | Gtk::JUNCTION_LEFT | Gtk::JUNCTION_BOTTOM ) ;
+
+	sc = m_ScrolledWinAlbums->get_style_context() ;
+	sc->set_junction_sides( Gtk::JUNCTION_LEFT | Gtk::JUNCTION_BOTTOM ) ;
+
+        m_ListViewTracks = Gtk::manage( new View::Tracks::Class ) ;
+        m_ListViewArtist = Gtk::manage( new View::Artist::Class ) ;
+        m_ListViewAlbums = Gtk::manage( new View::Albums::Class ) ;
+
+	// MENUS	
 	m_UI_Manager = Gtk::UIManager::create() ;
 	m_UI_Actions_Main = Gtk::ActionGroup::create("ActionsMain") ;
 
@@ -540,14 +572,7 @@ namespace MPX
 
 	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "ViewActionUnderlineMatches", "Underline Search Matches" ), sigc::mem_fun( *this, &YoukiController::handle_action_underline_matches)) ; 
 	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "PlaybackControlActionStartAlbumAtFavorite", "Start Albums at Favorite Track")) ; 
-	auto action_CPH = Gtk::Action::create( "PlaybackControlActionClearHistory", "Clear Playback History") ; 
-	auto action_CPQ = Gtk::Action::create( "PlaybackControlActionClearQueue", "Clear Playback Queue") ; 
-
-	m_UI_Actions_Main->add( action_CPH, sigc::bind(std::ptr_fun(&clear_deque), action_CPH, boost::ref(m_play_history))) ;
-	m_UI_Actions_Main->add( action_CPQ, sigc::bind(std::ptr_fun(&clear_deque), action_CPQ, boost::ref(m_play_queue))) ;
-
-	action_CPH->set_sensitive(false) ;
-	action_CPQ->set_sensitive(false) ;
+	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "PlaybackControlActionUseHistory", "Use Playback History"), sigc::mem_fun( *this, &YoukiController::handle_use_history_toggled )) ; 
 
 	Glib::RefPtr<Gtk::ToggleAction> action_CCA = Gtk::ToggleAction::create( "PlaybackControlActionContinueCurrentAlbum", "Always Continue Playing Current Album" ) ; 
 	m_UI_Actions_Main->add( action_CCA ); 
@@ -657,8 +682,7 @@ namespace MPX
         m_ScrolledWinTracks->set_policy( Gtk::POLICY_NEVER, Gtk::POLICY_ALWAYS ) ; 
 
         {
-	    /* Tracks */
-
+	    // TRACKS
 	    View::Tracks::DataModel_sp m ( new View::Tracks::DataModel ) ;
 	    private_->FilterModelTracks = View::Tracks::DataModelFilter_sp (new View::Tracks::DataModelFilter( m )) ;
 
@@ -719,8 +743,7 @@ namespace MPX
         }
 
         {
-	    /* Album Artists */
-
+	    // ARTISTS 
 	    View::Artist::DataModel_sp m (new View::Artist::DataModel) ;
 	    private_->FilterModelArtist = View::Artist::DataModelFilter_sp (new View::Artist::DataModelFilter( m )) ;
 
@@ -738,7 +761,7 @@ namespace MPX
         }
 
         {
-	    /* Albums */
+	    // ALBUMS
 
 	    View::Albums::DataModel_sp m ( new View::Albums::DataModel ) ;
 	    private_->FilterModelAlbums = View::Albums::DataModelFilter_sp (new View::Albums::DataModelFilter( m )) ;
@@ -946,7 +969,7 @@ namespace MPX
     {
 	SQL::RowV v ;
 	m_library->getSQL(v, (boost::format("SELECT * FROM album_artist")).str()) ; 
-	std::stable_sort( v.begin(), v.end(), CompareAlbumArtists ) ;
+	std::stable_sort(v.begin(), v.end(), CompareAlbumArtists) ;
 
 	std::vector<std::string> v_ ;
 	v_.reserve(v.size()) ;
@@ -984,8 +1007,6 @@ namespace MPX
 	v.clear() ;
 	m_library->getSQL(v, (boost::format("SELECT * FROM artist")).str()) ; 
 
-	v_.clear() ;
-
 	for( auto& r : v ) 
 	{
 	    StrV m;
@@ -1010,9 +1031,6 @@ namespace MPX
 	    m_nearest__artists.push_back(s) ;
 	}
 
-	m_find_nearest_artist.load_dictionary(v_) ;
-	m_find_nearest_artist_full.load_dictionary(m_nearest__artists) ;
-
 	for( auto& p : m_ssmap )
 	{
 	    LDFN_p ldfn (new LDFindNearest ) ;
@@ -1028,6 +1046,17 @@ namespace MPX
 
 	    m_ldmap.insert(std::make_pair(p.first,ldfn)) ;
 	}
+
+	v.clear() ;
+	m_library->getSQL(v, (boost::format("SELECT artist,pcount FROM artist WHERE pcount IS NOT NULL ORDER BY pcount DESC")).str()) ; 
+
+	for( auto& r : v ) 
+	{
+	    m_nearest__artists_popular.push_back(boost::get<std::string>(r["artist"])) ; 
+	}
+
+	m_find_nearest_artist.load_dictionary(v_) ;
+	m_find_nearest_artist_full.load_dictionary(m_nearest__artists) ;
 
         private_->FilterModelArtist->regen_mapping() ;
     }
@@ -1131,8 +1160,17 @@ namespace MPX
     void
     YoukiController::history_go_back()
     {
+	HistoryPosition_t iter_last = m_HISTORY.end() ;
+	iter_last-- ;
+
 	if( m_HISTORY_POSITION != m_HISTORY.begin() && m_HISTORY.size() > 0 )
 	{
+	    if( m_HISTORY_POSITION == iter_last && m_view_changed ) 
+	    {
+		history_save() ;	
+		m_HISTORY_POSITION-- ;
+	    }
+
 	    m_HISTORY_POSITION-- ;
 
 	    m_history_ignore_save = true ;
@@ -1157,6 +1195,11 @@ namespace MPX
 	    m_history_ignore_save = true ;
 	    history_load_current_iter() ;
 	    m_history_ignore_save = false ;
+	}
+
+	if( m_HISTORY_POSITION == iter_last ) 
+	{
+	    m_view_changed = false ;
 	}
 
 	iter_last = m_HISTORY.end() ;
@@ -1203,6 +1246,11 @@ namespace MPX
 	m_Entry->set_text( m_nearest ) ;
     } 
 
+    void
+    YoukiController::handle_use_history_toggled()
+    {
+    }
+	
     void
     YoukiController::handle_action_underline_matches()
     {
@@ -1363,6 +1411,10 @@ namespace MPX
         push_new_tracks() ;
         private_->FilterModelTracks->enable_fragment_cache() ;
 	tracklist_regen_mapping() ;
+
+	private_->FilterModelArtist->set_constraints_artist( private_->FilterModelTracks->m_constraints_artist ) ;
+	private_->FilterModelAlbums->set_constraints_albums( private_->FilterModelTracks->m_constraints_albums ) ;
+
         private_->FilterModelArtist->regen_mapping() ;
         private_->FilterModelAlbums->regen_mapping() ;
     }
@@ -1403,7 +1455,7 @@ namespace MPX
             , id 
         ) ; 
 
-	private_->FilterModelArtist->regen_mapping() ; 
+//	private_->FilterModelArtist->regen_mapping() ; 
     }
 
     struct YoukiController::NewAlbumFetchStruct
@@ -1429,7 +1481,7 @@ namespace MPX
             private_->FilterModelTracks->set_sizes( max_artist, max_albums ) ;
 
             private_->FilterModelAlbums->insert_album( a_sp ) ; 
-	    private_->FilterModelAlbums->regen_mapping() ;
+//	    private_->FilterModelAlbums->regen_mapping() ;
 
         } catch( std::logic_error ) 
         {
@@ -1677,9 +1729,18 @@ namespace MPX
           const MPX::Track_sp& t
     )
     {
+	bool history = Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("PlaybackControlActionUseHistory"))->get_active() ;
+
         try{
                 m_play->request_status( PLAYSTATUS_WAITING ) ;
                 m_track_current = t ; 
+
+		if( history && !m_play_history.has_ffwd() )
+		{
+		    guint id = boost::get<guint>((*m_track_current)[ATTRIBUTE_MPX_TRACK_ID].get()) ;
+		    m_play_history.append(id) ;
+		}
+
                 m_play->switch_stream( m_library->trackGetLocation( t ) ) ;
 		assign_metadata_to_DBus_property() ;
 
@@ -1725,6 +1786,8 @@ namespace MPX
     YoukiController::on_play_eos ()
     {
 	bool repeat = Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("PlaybackControlActionRepeat"))->get_active() ;
+	bool history = Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("PlaybackControlActionUseHistory"))->get_active() ;
+
 	bool end = false ;
 
 	time_t t = time(NULL) ;
@@ -1735,14 +1798,18 @@ namespace MPX
 	m_track_previous = m_track_current ;
 	m_track_current.reset() ;
 
+	if( history && m_play_history.has_ffwd())
+	{
+	    Track_sp p = m_library->getTrackById( m_play_history.go_ffwd() ) ;
+	    play_track( p ) ;
+	    goto x1 ;
+	}	
+	else
 	if(!m_play_queue.empty()) /* tracks in the play queue? */
 	{
 	    /* ... so get next track from the play queue! */
-
 	    Track_sp p = m_library->getTrackById( m_play_queue.front() ) ;
 	    m_play_queue.pop_front() ;
-	    m_UI_Actions_Main->get_action("PlaybackControlActionClearQueue")->set_sensitive(!m_play_queue.empty()) ;
-
 	    play_track( p ) ;
 	    goto x1 ;
 	}
@@ -1755,7 +1822,7 @@ namespace MPX
 		const MPX::Track& track = *m_track_previous ;
 	
 		guint album_id = boost::get<guint>(track[ATTRIBUTE_MPX_ALBUM_ID].get()) ;
-		const char * album_top_f = "SELECT id FROM track WHERE album_j = '%u' ORDER BY track ASC" ;
+		const char* album_top_f = "SELECT id FROM track WHERE album_j = '%u' ORDER BY track ASC" ;
 
 		SQL::RowV v ;
 		m_library->getSQL( v, mprintf( album_top_f, album_id )) ; 
@@ -1815,9 +1882,6 @@ namespace MPX
 	x1:
 	if( m_track_previous )
 	{
-	    guint id = boost::get<guint>((*m_track_previous)[ATTRIBUTE_MPX_TRACK_ID].get()) ;
-	    m_play_history.push_back(id) ;
-	    m_UI_Actions_Main->get_action("PlaybackControlActionClearHistory")->set_sensitive(true) ;
             m_library->trackPlayed( m_track_previous, t ) ;
 	}
 
@@ -1825,12 +1889,17 @@ namespace MPX
 	{
 	    if( repeat && !m_play_history.empty())
 	    {
-		m_play_queue = m_play_history ;
-
-		Track_sp p = m_library->getTrackById( m_play_queue.front() ) ;
-		m_play_queue.pop_front() ;
-		m_UI_Actions_Main->get_action("PlaybackControlActionClearQueue")->set_sensitive(!m_play_queue.empty()) ;
-		play_track( p ) ;
+		if( history )
+		{
+		    m_play_history.rewind() ;
+		    Track_sp p = m_library->getTrackById( m_play_history.current() ) ;
+		    play_track( p ) ;
+		}
+		else
+		if( private_->FilterModelTracks->size() )
+		{	
+		    play_track( private_->FilterModelTracks->row(0)->TrackSp ) ;
+		}
 	    }
 	    else
 	    {
@@ -1892,9 +1961,6 @@ namespace MPX
     
 		m_play_history.clear() ;
 		m_play_queue.clear() ;
-
-		m_UI_Actions_Main->get_action("PlaybackControlActionClearHistory")->set_sensitive(false) ;
-		m_UI_Actions_Main->get_action("PlaybackControlActionClearQueue")->set_sensitive(false) ;
 
                 m_track_current.reset() ;
                 m_seek_position.reset() ; 
@@ -2026,19 +2092,11 @@ namespace MPX
 
         if( play )
         {
-	    if( m_track_current )
-	    {
-		guint id = boost::get<guint>((*m_track_current)[ATTRIBUTE_MPX_TRACK_ID].get()) ;
-		m_play_history.push_back(id) ;
-		m_UI_Actions_Main->get_action("PlaybackControlActionClearHistory")->set_sensitive(!m_play_history.empty()) ;
-	    }
-
             play_track( t ) ;
         }
         else
         {
             m_play_queue.push_back( boost::get<guint>(track[ATTRIBUTE_MPX_TRACK_ID].get()) ) ;
-	    m_UI_Actions_Main->get_action("PlaybackControlActionClearQueue")->set_sensitive(!m_play_queue.empty()) ;
         }
     }
 
@@ -2081,7 +2139,11 @@ namespace MPX
 	private_->FilterModelAlbums->set_constraints_artist( private_->FilterModelTracks->m_constraints_artist ) ;
         private_->FilterModelAlbums->regen_mapping() ;
 
-	history_save() ;
+	if( !m_history_ignore_save )
+	{
+	    m_view_changed = true ;
+	    m_BTN_HISTORY_PREV->set_sensitive(true) ;
+	}
     }
 
     void
@@ -2122,7 +2184,11 @@ namespace MPX
 
 	private_->FilterModelTracks->regen_mapping_iterative() ;
     
-	history_save() ;
+	if( !m_history_ignore_save )
+	{
+	    m_view_changed = true ;
+	    m_BTN_HISTORY_PREV->set_sensitive(true) ;
+	}
     }
 
     void
@@ -2399,14 +2465,34 @@ namespace MPX
 
 	    m_Entry->override_color(Util::make_rgba(1.,0.,0.,1.)) ;
 
-	    m_nearest = m_find_nearest_artist_full.find_nearest_match_leven(3,m_Entry->get_text()) ;
+	    RankedStringSet_t&& r1 = m_find_nearest_artist_full.find_nearest_match_leven_set(3,m_Entry->get_text()) ;
+	    RankedStringSet_t r2 ;
+
+	    for(auto& rs : r1) {
+
+		guint d = 0 ;
+
+		for(auto& s : m_nearest__artists_popular) {
+
+		    if( s == rs.Value ) {
+
+			r2.push_back(RankedString(s,d)) ;
+			break ;
+		    }
+		    ++d ;
+		}
+	    }
+
+	    if(!r2.empty()) {
+		std::sort(r2.begin(), r2.end()) ;
+		m_nearest = ((RankedString&)(*(r2.begin()))).Value ;
+	    }
 
 	    if(m_nearest.empty()) {
 		m_nearest = trie_find_ldmatch(m_Entry->get_text()) ;
 	    }
 
-	    if( m_nearest.empty())
-	    {
+	    if( m_nearest.empty()) {
 		std::string text_std = m_Entry->get_text() ;
 		StrV m ;
 		split( m, text_std, is_any_of(" ")) ;
@@ -2418,10 +2504,11 @@ namespace MPX
 		m_nearest = m_find_nearest_artist.find_nearest_match_leven(3,m_Entry->get_text()) ;
 	    }
 
-	    if( m_nearest.empty())
+	    if( m_nearest.empty()) {
 		m_Label_Nearest->set_text("") ;
-	    else
+	    } else {
 		m_Label_Nearest->set_markup((boost::format("%s <b>%s</b>?") % _("Did you mean") % m_nearest).str()) ;
+	    }
 	}
 	else {
 	    m_Label_Nearest->set_text("") ;
@@ -2487,8 +2574,6 @@ namespace MPX
 		}
 	    }
 	}
-
-	m_UI_Actions_Main->get_action("PlaybackControlActionClearQueue")->set_sensitive(!m_play_queue.empty()) ;
     }
 
     void
@@ -2506,9 +2591,6 @@ namespace MPX
 
 		    Track_sp p = m_library->getTrackById( m_play_queue.front() ) ;
 		    m_play_queue.pop_front() ;
-
-		    m_UI_Actions_Main->get_action("PlaybackControlActionClearQueue")->set_sensitive(!m_play_queue.empty()) ;
-
 		    play_track( p ) ;
 		}
 		else
@@ -2747,7 +2829,6 @@ void
     )
     {
         m_play_queue.push_back( id ) ;
-	m_UI_Actions_Main->get_action("PlaybackControlActionClearQueue")->set_sensitive(!m_play_queue.empty()) ;
     }
 
     std::vector<guint>
@@ -2823,15 +2904,15 @@ void
     YoukiController::API_prev(
     )
     {
+	bool history = Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("PlaybackControlActionUseHistory"))->get_active() ;
 	bool rwnd = (m_play->property_position().get_value() > 5)?0:1 ;
 
 	//FIXME: This doesn't work at all with flow plugins, of course we also don't have any yet
 	if(rwnd)
 	{
-	    if(!m_play_history.empty())
+	    if( history && m_play_history.has_prev())
 	    {
-		guint id = m_play_history.back() ;
-		m_play_history.pop_back() ;
+		guint id = m_play_history.go_back() ;
 		play_track( m_library->getTrackById( id )) ;		    
 	    }
 	    else

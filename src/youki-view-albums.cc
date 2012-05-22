@@ -66,8 +66,6 @@ namespace View
 {
 namespace Albums
 {
-        const double rounding = 2. ;
-
 	bool operator==( const Album_sp& a, const Album_sp& b )
 	{
 	    return a->album_id == b->album_id ;
@@ -436,6 +434,7 @@ namespace Albums
 	: m_width(0)
 	, m_column(0)
 	, m_show_additional_info( false )
+	, m_rounding(0)
 	{
 	    m_image_disc = Util::cairo_image_surface_from_pixbuf(
 				    Gdk::Pixbuf::create_from_file(
@@ -452,6 +451,20 @@ namespace Albums
 	    m_image_album_loading_iter = m_image_album_loading->get_iter( NULL ) ;
 
 	    m_rect_shadow = render_rect_shadow( 90, 90 ) ;
+	}
+
+	void
+	Column::set_rounding(
+	    double r
+	)
+	{
+	    m_rounding = r ;
+	}
+
+	double
+	Column::get_rounding()
+	{
+	    return m_rounding ;
 	}
 
 	void
@@ -508,7 +521,7 @@ namespace Albums
 		, 2
 		, 90
 		, 90
-		, rounding 
+		, m_rounding 
 	    ) ;
 	    cairo->fill() ;
 
@@ -534,7 +547,7 @@ namespace Albums
 		    , 0 
 		    , 0.35 
 	    ) ;
-	    RoundedRectangle( c2, 0, 0, w, h, rounding+1 ) ;
+	    RoundedRectangle( c2, 0, 0, w, h, m_rounding+1 ) ;
 	    c2->fill() ;
 	    Util::cairo_image_surface_blur( s, 2.5 ) ;
 	    return s ;
@@ -592,11 +605,11 @@ namespace Albums
 
 		if( album->coverart )
 		{
-		    Util::draw_cairo_image( cairo, m_rect_shadow, 12+2, r.y+4, 1., rounding ) ;
+		    Util::draw_cairo_image( cairo, m_rect_shadow, 12+2, r.y+4, 1., m_rounding ) ;
 		}
 
 		/* The actual coverart surface cache */
-		Util::draw_cairo_image( cairo, album->surface_cache, 10, r.y, 1., rounding ) ;
+		Util::draw_cairo_image( cairo, album->surface_cache, 10, r.y, 1., m_rounding ) ;
 
 		if( album->coverart )
 		{
@@ -608,7 +621,7 @@ namespace Albums
 			, 0 
 			, 90
 			, 90
-			, rounding 
+			, m_rounding 
 		    ) ;
 		    cairo->set_line_width( 1.5 ) ; 
 		    Gdk::Cairo::set_source_rgba(cairo, c2) ;
@@ -619,7 +632,7 @@ namespace Albums
 		/* 'new' */
 		if( WithinPastDay( album->insert_date ))
 		{
-		    int x = 3 ; 
+		    int x = 8 ; 
 		    int y = r.y + 10 ; 
 		    Util::draw_cairo_image( cairo, m_image_new, x, y, 1., 0 ) ;
 		}
@@ -634,7 +647,7 @@ namespace Albums
 		    , 0 
 		    , 90
 		    , 90
-		    , rounding 
+		    , m_rounding 
 		) ;
 		cairo->set_line_width( 1.5 ) ; 
 		Gdk::Cairo::set_source_rgba(cairo, c2) ;
@@ -735,7 +748,7 @@ namespace Albums
 		font_desc[L3].set_weight( Pango::WEIGHT_NORMAL ) ;
 		layout[L3]->set_font_description( font_desc[L3] ) ;
 
-		layout[L3]->set_width(m_width*PANGO_SCALE) ; 
+		layout[L3]->set_width((m_width-120)*PANGO_SCALE) ; 
 		layout[L3]->set_ellipsize( Pango::ELLIPSIZE_END ) ;
 
 		guint tm = 0 ;
@@ -757,9 +770,9 @@ namespace Albums
 		    guint sec_total = album->total_time % 60 ;
 
 		    if( album->total_time != tm )
-			s_time = ((boost::format("<b>%02u:%02u:%02u</b>/<b>%02u:%02u:%02u</b>") % hrs % min % sec % hrs_total % min_total % sec_total).str()) ;
+			s_time = ((boost::format("%02u:%02u:%02u / %02u:%02u:%02u") % hrs % min % sec % hrs_total % min_total % sec_total).str()) ;
 		    else
-			s_time = ((boost::format("<b>%02u:%02u:%02u</b>") % hrs % min % sec).str()) ;
+			s_time = ((boost::format("%02u:%02u:%02u") % hrs % min % sec).str()) ;
 
 		    if( totaltracks != album->track_count )
 			s_tracks = ((boost::format("<b>%u</b>/<b>%u</b>") % totaltracks % album->track_count).str()) ;
@@ -776,7 +789,7 @@ namespace Albums
 
 		    guint totaltracks = album->track_count ;
 
-		    s_time = ((boost::format("<b>%02u:%02u:%02u</b>") % hrs % min % sec).str()) ;
+		    s_time = ((boost::format("%02u:%02u:%02u") % hrs % min % sec).str()) ;
 		    s_tracks = ((boost::format("<b>%u</b> %s") % totaltracks % ((totaltracks>1) ? "Tracks" : "Track")).str()) ;
 		}
 
@@ -814,23 +827,6 @@ namespace Albums
 		pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj()) ;
 		sy += height + 2 ;
 
-		/* s_time */
-		layout[L3]->set_markup( s_time ) ;
-		layout[L3]->get_pixel_size( width, height ) ;
-
-		if( selected )
-		{
-		    Util::render_text_shadow( layout[L3], sx, sy, cairo ) ; 
-		}
-
-		cairo->move_to(
-		      sx 
-		    , sy 
-		) ;
-		Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(color,0.95)) ;
-		pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj()) ;
-		sy += height + 2 ;
-
 		/* s_discs */
 		if( !s_discs.empty() )
 		{
@@ -850,6 +846,23 @@ namespace Albums
 		    pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj()) ;
 		    sy += height + 2 ;
 		}
+
+		/* s_time */
+		layout[L3]->set_markup( s_time ) ;
+		layout[L3]->get_pixel_size( width, height ) ;
+
+		if( selected )
+		{
+		    Util::render_text_shadow( layout[L3], sx, sy, cairo ) ; 
+		}
+
+		cairo->move_to(
+		      sx 
+		    , sy 
+		) ;
+		Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(color,0.95)) ;
+		pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj()) ;
+		sy += height + 2 ;
 
 		/* s_rt */
 		if( !s_rt.empty() )
@@ -871,10 +884,30 @@ namespace Albums
 		    sy += height + 2 ;
 		}
 
-		/* s_rt */
+		/* year */ 
 		if( !album->year.empty() )
 		{
 		    layout[L3]->set_markup( album->year.substr(0,4)) ;
+		    layout[L3]->get_pixel_size( width, height ) ;
+
+		    if( selected )
+		    {
+			Util::render_text_shadow( layout[L3], sx, sy, cairo ) ; 
+		    }
+
+		    cairo->move_to(
+			  sx 
+			, sy 
+		    ) ;
+		    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(color,0.95)) ;
+		    pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj()) ;
+		    sy += height + 2 ;
+		}
+
+		/* label */ 
+		if( !album->label.empty() )
+		{
+		    layout[L3]->set_markup( album->label ) ;
 		    layout[L3]->get_pixel_size( width, height ) ;
 
 		    if( selected )
@@ -1164,7 +1197,8 @@ namespace Albums
 
 		if( d == ViewMetrics.ViewPort.upper()) 
 		{
-		    vadj_value_set( std::max<int>(0, ViewMetrics.ViewPortPx.upper() - ymod )) ;
+		    scroll_to_index(d) ;
+		    //vadj_value_set( std::max<int>(0, ViewMetrics.ViewPortPx.upper() - ymod )) ;
 		}
 		else
 		if( (!ymod && d == ViewMetrics.ViewPort.lower()))
@@ -1907,6 +1941,23 @@ namespace Albums
 	{
 	    Gtk::DrawingArea::on_realize() ;
 	    initialize_metrics();
+
+	    Glib::RefPtr<Gtk::StyleContext> sc = get_parent()->get_style_context() ;
+	    sc->context_save() ;
+	    sc->add_class("frame") ;
+	    GValue v = G_VALUE_INIT ;
+	    gtk_style_context_get_property(
+		  GTK_STYLE_CONTEXT(sc->gobj())
+		, "border-radius"
+		, GTK_STATE_FLAG_NORMAL
+		, &v
+	    ) ; 
+	    int radius = g_value_get_int(&v) ;
+	    sc->context_restore() ;
+
+	    g_message("radius: %d", radius) ;
+
+	    set_rounding(radius) ;
 	    queue_resize();
 	}
 
@@ -1959,6 +2010,13 @@ namespace Albums
 	    m_selection.reset() ;
 	}
 
+	void
+	Class::set_rounding(double r)
+	{
+	    m_columns[0]->set_rounding(r) ;
+	    queue_draw() ;
+	}
+
 	Class::Class()
 
 	    : ObjectBase( "YoukiViewAlbums" )
@@ -1976,14 +2034,11 @@ namespace Albums
 
 	    property_vadjustment().signal_changed().connect( sigc::mem_fun( *this, &Class::on_vadj_prop_changed )) ;
 
-	    set_double_buffered(true) ;
 	    set_can_focus(true);
 
 	    ModelCount = Minus<int>( 1 ) ;
 
 	    m_theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;
-	    //const ThemeColor& c = m_theme->get_color(THEME_COLOR_BASE) ;
-	    //override_background_color(c, Gtk::STATE_FLAG_NORMAL) ;
 
 	    add_events(Gdk::EventMask(GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_SCROLL_MASK ));
 

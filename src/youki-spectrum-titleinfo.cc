@@ -161,7 +161,7 @@ namespace MPX
 		    , width + 7
 		    , height + 4 
 		    , rounding
-		    , MPX::CairoCorners::CORNERS(6)
+		    , MPX::CairoCorners::CORNERS(4)
 		) ;
 
 		Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create(
@@ -307,7 +307,7 @@ namespace MPX
             , r.width 
             , r.height 
             , rounding 
-	    , MPX::CairoCorners::CORNERS(3)
+	    , MPX::CairoCorners::CORNERS(0)
         ) ;
 
 	cairo->fill(); 
@@ -414,7 +414,7 @@ namespace MPX
 	    , r.width 
 	    , r.height 
 	    , rounding 
-	    , MPX::CairoCorners::CORNERS(1)
+	    , MPX::CairoCorners::CORNERS(0)
 	) ;
 
 	cairo->set_operator( Cairo::OPERATOR_ATOP ) ;

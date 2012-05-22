@@ -338,7 +338,7 @@ namespace MPX
                         if( m_Flags & F_USING_HAL )
                         {
                                 try{
-                                        const guint&      id          = get<guint>(track[ATTRIBUTE_MPX_DEVICE_ID].get()) ;
+                                        const guint&	   id          = get<guint>(track[ATTRIBUTE_MPX_DEVICE_ID].get()) ;
                                         const std::string& path        = get<std::string>(track[ATTRIBUTE_VOLUME_RELATIVE_PATH].get()) ;
                                         const std::string& mount_point = m_HAL->get_mount_point_for_id( id ) ;
 

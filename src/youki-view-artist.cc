@@ -14,6 +14,7 @@ namespace Artist
     {
 	m_ArtistImages = new ArtistImages ;
 	m_ArtistImages->run() ;
+	m_ArtistImages->recache_images() ;
 	m_ArtistImages->signal_got_artist_image().connect( sigc::mem_fun( *this, &DataModel::handle_got_artist_image )) ;
     }
 
@@ -398,6 +399,18 @@ namespace Artist
 	}
 
 	void
+	Column::set_rounding(double r)
+	{
+	    m_rounding = r ;
+	}
+
+	double
+	Column::get_rounding()
+	{
+	    return m_rounding ;
+	}
+
+	void
 	Column::set_width(guint width)
 	{
 	    m_width = width ;
@@ -456,7 +469,7 @@ namespace Artist
 		    , 0 
 		    , 0.35 
 	    ) ;
-	    RoundedRectangle( c2, 2, 2, w, h, 5. ) ;
+	    RoundedRectangle( c2, 2, 2, w, h, m_rounding ) ;
 	    c2->fill() ;
 	    Util::cairo_image_surface_blur( s, 1.5 ) ;
 	    return s ;
@@ -471,15 +484,20 @@ namespace Artist
 	    , const ThemeColor&			    color
 	)
 	{
+	    Glib::RefPtr<Pango::Layout> layout = widget.create_pango_layout(_("Artists")) ;
+
+	    layout->set_ellipsize(Pango::ELLIPSIZE_END) ;
+	    layout->set_width((m_width-8)*PANGO_SCALE) ;
+	    layout->set_alignment(Pango::ALIGN_LEFT) ;
+
+	    int width, height ;
+	    layout->get_pixel_size( width, height ) ;
+
 	    cairo->move_to(
-		  xpos + 6
+		  xpos + (m_width-width)/2. 
 		, ypos + 4
 	    ) ;
 
-	    Glib::RefPtr<Pango::Layout> layout = widget.create_pango_layout(_("Artists")) ;
-	    layout->set_ellipsize(Pango::ELLIPSIZE_END) ;
-	    layout->set_width( (m_width-12)*PANGO_SCALE ) ;
-	    layout->set_alignment( m_alignment ) ;
 	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(color,0.8));
 	    layout->show_in_cairo_context( cairo ) ;
 	}
@@ -562,7 +580,7 @@ namespace Artist
 	    {
 		cairo->save() ;
 		cairo->translate( x, y ) ;
-		RoundedRectangle( cairo, 0, 0, 80, 80, 4 ) ;
+		RoundedRectangle( cairo, 0, 0, 80, 80, m_rounding ) ;
 		cairo->set_source( surface, 0, 0 ) ;
 		cairo->fill_preserve() ;
 		cairo->set_line_width( 0.5 ) ;	
@@ -620,7 +638,7 @@ namespace Artist
 					    , context->get_language()
 	    ) ;
 
-	    m_height__row = 120 ;
+	    m_height__row = 123 ;
 
 	    const int header_pad = 5 ;
 
@@ -1119,7 +1137,6 @@ namespace Artist
 
 	    const ThemeColor& c_text       = theme->get_color( THEME_COLOR_TEXT ) ;
 	    const ThemeColor& c_text_sel   = theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
-	    const ThemeColor& c_rules_hint = theme->get_color( THEME_COLOR_BASE_ALTERNATE ) ;
 	    const ThemeColor& c_bg	   = theme->get_color( THEME_COLOR_BACKGROUND ) ;
 	    const ThemeColor& c_treelines  = theme->get_color( THEME_COLOR_TREELINES ) ;
 
@@ -1404,6 +1421,13 @@ namespace Artist
 	    m_SIGNAL_selection_changed.emit() ;
 	    queue_draw() ;
 	}
+	
+	void
+	Class::set_rounding(double r)
+	{
+	    m_columns[0]->set_rounding(r) ;
+	    queue_draw() ;
+	}
 
 	void
 	Class::set_model(
@@ -1616,6 +1640,21 @@ namespace Artist
 	{
 	    Gtk::DrawingArea::on_realize() ;
 	    initialize_metrics();
+
+	    Glib::RefPtr<Gtk::StyleContext> sc = get_parent()->get_style_context() ;
+	    sc->context_save() ;
+	    sc->add_class("frame") ;
+	    GValue v = G_VALUE_INIT ;
+	    gtk_style_context_get_property(
+		  GTK_STYLE_CONTEXT(sc->gobj())
+		, "border-radius"
+		, GTK_STATE_FLAG_NORMAL
+		, &v
+	    ) ; 
+	    int radius = g_value_get_int(&v) ;
+	    sc->context_restore() ;
+
+	    set_rounding(radius) ;
 	    queue_resize();
 	}
 

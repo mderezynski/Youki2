@@ -256,6 +256,7 @@ namespace Artist
                 guint				    m_width ;
                 guint				    m_column ;
                 Pango::Alignment		    m_alignment ;
+		double				    m_rounding ;
 
                 Cairo::RefPtr<Cairo::ImageSurface>  m_image_disc ;
                 Cairo::RefPtr<Cairo::ImageSurface>  m_rect_shadow ;
@@ -272,6 +273,12 @@ namespace Artist
 
 		virtual ~Column()
                 {}
+
+                void
+                set_rounding(double) ;
+
+                double
+                get_rounding() ;
 
                 void
                 set_width(guint) ;
@@ -498,6 +505,11 @@ namespace Artist
                 set_model(
                       DataModelFilter_sp
                 ) ;
+
+		void
+		set_rounding(
+		      double
+		) ;
 
                 void
                 append_column(

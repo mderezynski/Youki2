@@ -158,7 +158,7 @@ namespace MPX
             , cgdk.get_red()
             , cgdk.get_green()
             , cgdk.get_blue()
-            , 0.28
+            , 0.21
         ) ;
 
         position_bar_back_gradient->add_color_stop_rgba(
@@ -166,7 +166,7 @@ namespace MPX
             , cgdk.get_red()
             , cgdk.get_green()
             , cgdk.get_blue()
-            , 0.28
+            , 0.21
         ) ;
         
         position_bar_back_gradient->add_color_stop_rgba(
