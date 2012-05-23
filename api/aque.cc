@@ -608,45 +608,43 @@ namespace AQE
         , const MPX::Track_sp&  t
     )
     {
-        const MPX::Track& track = *(t.get()) ;
+        const MPX::Track& track = *t ;
 
         g_return_val_if_fail(track.has(c.TargetAttr), false) ;
 
         bool truthvalue = false ;
 
-        try{
-          switch( c.MatchType )
-          {
-              case MT_EQUAL:
-                  truthvalue = boost::get<T>(track[c.TargetAttr].get()) == boost::get<T>(c.TargetValue.get()) ;
-                  break  ;
+        try {
+	    switch( c.MatchType ) {
+		case MT_EQUAL:
+		    truthvalue = boost::get<T>(track[c.TargetAttr].get()) == boost::get<T>(c.TargetValue.get()) ;
+		    break  ;
 
-              case MT_NOT_EQUAL:
-                  truthvalue = boost::get<T>(track[c.TargetAttr].get()) != boost::get<T>(c.TargetValue.get()) ;
-                  break  ;
+		case MT_NOT_EQUAL:
+		    truthvalue = boost::get<T>(track[c.TargetAttr].get()) != boost::get<T>(c.TargetValue.get()) ;
+		    break  ;
 
-              case MT_GREATER_THAN:
-                  truthvalue = boost::get<T>(track[c.TargetAttr].get())  > boost::get<T>(c.TargetValue.get()) ;
-                  break  ;
+		case MT_GREATER_THAN:
+		    truthvalue = boost::get<T>(track[c.TargetAttr].get())  > boost::get<T>(c.TargetValue.get()) ;
+		    break  ;
 
-              case MT_LESSER_THAN:
-                  truthvalue = boost::get<T>(track[c.TargetAttr].get())  < boost::get<T>(c.TargetValue.get()) ;
-                  break  ;
+		case MT_LESSER_THAN:
+		    truthvalue = boost::get<T>(track[c.TargetAttr].get())  < boost::get<T>(c.TargetValue.get()) ;
+		    break  ;
 
-              case MT_GREATER_THAN_OR_EQUAL:
-                  truthvalue = boost::get<T>(track[c.TargetAttr].get()) >= boost::get<T>(c.TargetValue.get()) ;
-                  break  ;
+		case MT_GREATER_THAN_OR_EQUAL:
+		    truthvalue = boost::get<T>(track[c.TargetAttr].get()) >= boost::get<T>(c.TargetValue.get()) ;
+		    break  ;
 
-              case MT_LESSER_THAN_OR_EQUAL:
-                  truthvalue = boost::get<T>(track[c.TargetAttr].get()) <= boost::get<T>(c.TargetValue.get()) ;
-                  break  ;
+		case MT_LESSER_THAN_OR_EQUAL:
+		    truthvalue = boost::get<T>(track[c.TargetAttr].get()) <= boost::get<T>(c.TargetValue.get()) ;
+		    break  ;
 
-              default:
-                  truthvalue = false  ;
-                  break  ;
-          }
-        } catch( boost::bad_get& cxe )
-        {
+		default:
+		    truthvalue = false  ;
+		    break  ;
+	    }
+        } catch( boost::bad_get& cxe ) {
             g_message("%s: boost::bad_get encountered! %s", G_STRLOC, cxe.what() ) ;
         }
 
@@ -746,8 +744,7 @@ namespace AQE
               default:
                   break  ;
           }
-        } catch( boost::bad_get& cxe )
-        {
+        } catch( boost::bad_get& cxe ) {
             g_message("%s: boost::bad_get encountered! %s", G_STRLOC, cxe.what() ) ;
         }
 
@@ -756,44 +753,38 @@ namespace AQE
 
     bool
     match_track(
-          const Constraints_t&  c
+          const Constraints_t&  constraints
         , const MPX::Track_sp&  t
     )
     {
-        const MPX::Track& track = *(t.get()) ;
+        const MPX::Track& track = *t ;
 
-        for( Constraints_t::const_iterator i = c.begin(); i != c.end(); ++i )
+	bool truthvalue = false ; 
+
+        for( const auto& c : constraints ) 
         {
-            const Constraint_t& c = *i ;
-
-            if( !track.has( c.TargetAttr ))
-            {
+            if( !track.has( c.TargetAttr )) {
                 return false ;
             }
-        
-            bool truthvalue = false ; 
 
-            if( c.TargetValue.get().which() == VT_STRSET )
-            {
-                truthvalue = determine_match<StrS>( c, t ) ;
-            }
-            else
-            if( c.TargetAttr >= ATTRIBUTE_TRACK )
-            {
-                truthvalue = determine_match<unsigned int>( c, t ) ;
-            }
-            else
-            {
-                truthvalue = determine_match<std::string>( c, t ) ;
-            }
+	    if( !c.TargetValue ) {
+		return false ; 
+	    }
 
-            if( !truthvalue )
-            {
-                return false ;
-            }
+	    try{
+		if( c.TargetValue.get().which() == VT_STRSET ) {
+		    truthvalue = determine_match<StrS>( c, t ) ;
+		} else if( c.TargetAttr >= ATTRIBUTE_TRACK ) {
+		    truthvalue = determine_match<guint>( c, t ) ;
+		} else {
+		    truthvalue = determine_match<std::string>( c, t ) ;
+		}
+	    } catch( boost::bad_get& cxe ) {
+		g_message("%s: boost::bad_get encountered! %s", G_STRLOC, cxe.what() ) ;
+	    }
         }
 
-        return true ;
+        return truthvalue ;
     }
 }
 }

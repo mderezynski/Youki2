@@ -749,7 +749,8 @@ namespace Tracks
  
                 virtual SearchController::FilterMode 
                 process_filter(
-                    const std::string& text
+                     const std::string& text
+		   , std::string&	text_noaque
                 )
                 { 
 		    const std::string m_old_filter = m_current_filter ;
@@ -774,6 +775,8 @@ namespace Tracks
 
 		    m_current_filter_noaque = Util::stdstrjoin( m_frags, " " ) ;
 		    m_current_filter = text ;
+
+		    text_noaque = m_current_filter_noaque ;
  
                     if( !aqe_diff && m_current_filter_noaque.empty() && (m_current_filter == m_old_filter)) 
 		    {

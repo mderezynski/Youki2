@@ -3,7 +3,6 @@
 #endif 
 
 #include "youki-controller.hh"
-
 #include "youki-view-albums.hh"
 #include "youki-view-artist.hh"
 #include "mpx/com/view-tracks.hh"
@@ -448,8 +447,11 @@ namespace MPX
 	m_BTN_HISTORY_FFWD->signal_clicked().connect( sigc::mem_fun( *this, &YoukiController::history_go_ffwd)) ;
 	m_BTN_HISTORY_FFWD->set_sensitive( false ) ;
 
-	Gtk::Alignment * ButtonsAlign = Gtk::manage( new Gtk::Alignment ) ;
-	Gtk::HButtonBox * Box_Buttons = Gtk::manage( new Gtk::HButtonBox ) ;
+	Gtk::Alignment * Buttons_Align = Gtk::manage( new Gtk::Alignment ) ;
+	Gtk::HBox * Buttons_Box = Gtk::manage( new Gtk::HBox ) ;
+	Buttons_Box->set_spacing(-1) ;
+	Buttons_Align->property_xscale().set_value(0) ;
+	Buttons_Align->property_xalign().set_value(1) ;
 
 	Gtk::Image * ishuf = Gtk::manage( new Gtk::Image( Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "media-shuffle.png" ))) ;
 	m_BTN_SHUFFLE = Gtk::manage( new Gtk::ToggleButton ) ;
@@ -476,11 +478,11 @@ namespace MPX
 	sc = balbm->get_style_context() ;
 	sc->set_junction_sides( Gtk::JUNCTION_LEFT ) ;
 
-	Box_Buttons->pack_start( *m_BTN_SHUFFLE, false, false, 0 ) ;
-	Box_Buttons->pack_start( *brept, false, false, 0 ) ;
-	Box_Buttons->pack_start( *balbm, false, false, 0 ) ;
+	Buttons_Box->pack_start( *m_BTN_SHUFFLE, false, false, 0 ) ;
+	Buttons_Box->pack_start( *brept, false, false, 0 ) ;
+	Buttons_Box->pack_start( *balbm, false, false, 0 ) ;
 
-	ButtonsAlign->add( *Box_Buttons ) ;
+	Buttons_Align->add( *Buttons_Box ) ;
 
 //        HBox_Navi->pack_start( *m_BTN_HISTORY_PREV, false, false, 0 ) ;
 //        HBox_Navi->pack_start( *m_BTN_HISTORY_FFWD, false, false, 0 ) ;
@@ -496,11 +498,11 @@ namespace MPX
         m_HBox_Entry->pack_start( *m_Entry, false, false, 0 ) ;
         m_HBox_Entry->pack_start( *m_AQUE_Spinner, false, false, 0 ) ;
         m_HBox_Entry->pack_start( *m_EventBox_Nearest, false, false, 0 ) ;
-        m_HBox_Entry->pack_start( *ButtonsAlign, true, true, 0 ) ;
+        m_HBox_Entry->pack_start( *Buttons_Align, true, true, 0 ) ;
 
         Gtk::Alignment* Entry_Align = Gtk::manage( new Gtk::Alignment ) ;
         Entry_Align->add( *m_HBox_Entry ) ;
-	Entry_Align->set_padding( 2, 4, 0, 4 ) ;
+	Entry_Align->set_padding( 2, 4, 4, 4 ) ;
 	Entry_Align->property_xalign() = 0. ;
 	Entry_Align->property_xscale() = 1. ; 
 
@@ -976,7 +978,7 @@ namespace MPX
 	{
 	    StrV m;
 
-	    auto&& s = Util::row_get_album_artist_name(r) ;
+	    std::string s = std::move(Util::row_get_album_artist_name(r)) ;
 
 	    split( m, s, is_any_of(" ")) ;
 
@@ -988,9 +990,9 @@ namespace MPX
 		m_ssmap[key].insert(val) ;
 	    }
     
-	    for( auto& f : m )
+	    for( auto& artist : m )
 	    {
-		v_.push_back(f) ;
+		v_.push_back(artist) ;
 	    }
 
 	    m_nearest__artists.push_back(s) ;
@@ -1021,9 +1023,9 @@ namespace MPX
 		m_ssmap[key].insert(val) ;
 	    }
     
-	    for( auto& f : m )
+	    for( auto& artist : m )
 	    {
-		v_.push_back(f) ;
+		v_.push_back(artist) ;
 	    }
 
 	    m_nearest__artists.push_back(s) ;
@@ -2430,8 +2432,10 @@ namespace MPX
         m_conn1.block() ;
         m_conn2.block() ;
 
+	std::string text_noaque ;
+
 	private_->FilterModelTracks->clear_synthetic_constraints_quiet() ;
-	FilterMode mode = private_->FilterModelTracks->process_filter( m_Entry->get_text() ) ;
+	FilterMode mode = private_->FilterModelTracks->process_filter( m_Entry->get_text(), text_noaque ) ;
 
 	if( mode != FilterMode::NONE ) {
 
@@ -2460,12 +2464,13 @@ namespace MPX
 	m_conn1.unblock() ;
 	m_conn2.unblock() ;
 
-	if( private_->FilterModelTracks->m_mapping->empty()) {
+	if(private_->FilterModelTracks->m_mapping->empty()) {
 
 	    m_Entry->override_color(Util::make_rgba(1.,0.,0.,1.)) ;
 
-	    RankedStringSet_t&& r1 = m_find_nearest_artist_full.find_nearest_match_leven_set(3,m_Entry->get_text()) ;
-	    RankedStringSet_t r2 ;
+/*
+	    RankedStringSet_t&& r1 = m_find_nearest_artist_full.find_nearest_match_leven_set(2,text_noaque) ;
+	    RankedStringSet_t   r2 ;
 
 	    for(auto& rs : r1) {
 
@@ -2474,7 +2479,6 @@ namespace MPX
 		for(auto& s : m_nearest__artists_popular) {
 
 		    if( s == rs.Value ) {
-
 			r2.push_back(RankedString(s,d)) ;
 			break ;
 		    }
@@ -2486,21 +2490,23 @@ namespace MPX
 		std::sort(r2.begin(), r2.end()) ;
 		m_nearest = ((RankedString&)(*(r2.begin()))).Value ;
 	    }
+*/
+
+	    m_nearest = m_find_nearest_artist_full.find_nearest_match_leven(2,text_noaque) ;
 
 	    if(m_nearest.empty()) {
-		m_nearest = trie_find_ldmatch(m_Entry->get_text()) ;
+		m_nearest = trie_find_ldmatch(text_noaque) ;
 	    }
 
 	    if( m_nearest.empty()) {
-		std::string text_std = m_Entry->get_text() ;
 		StrV m ;
-		split( m, text_std, is_any_of(" ")) ;
+		split( m, text_noaque, is_any_of(" ")) ;
 		std::string joined = boost::algorithm::join( m, "" ) ;
-		m_nearest = m_find_nearest_artist_full.find_nearest_match_leven(3,m_Entry->get_text()) ;
+		m_nearest = m_find_nearest_artist_full.find_nearest_match_leven(3,text_noaque) ;
 	    }
 
 	    if( m_nearest.empty()) {
-		m_nearest = m_find_nearest_artist.find_nearest_match_leven(3,m_Entry->get_text()) ;
+		m_nearest = m_find_nearest_artist.find_nearest_match_leven(3,text_noaque) ;
 	    }
 
 	    if( m_nearest.empty()) {
