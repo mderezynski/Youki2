@@ -2445,8 +2445,18 @@ namespace MPX
 
 	std::string text_noaque ;
 
+	boost::optional<guint> id ;
+
+        if( m_track_current && 
+	    Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("ViewActionFollowPlayingTrack"))->get_active())
+        {
+            const MPX::Track& track = *m_track_current ;
+            id = boost::get<guint>(track[ATTRIBUTE_MPX_TRACK_ID].get()) ;
+        }
+
 	private_->FilterModelTracks->clear_synthetic_constraints_quiet() ;
-	FilterMode mode = private_->FilterModelTracks->process_filter( m_Entry->get_text(), text_noaque ) ;
+
+	FilterMode mode = private_->FilterModelTracks->process_filter( m_Entry->get_text(), id, text_noaque ) ;
 
 	if( mode != FilterMode::NONE ) {
 

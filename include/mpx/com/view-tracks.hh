@@ -749,8 +749,9 @@ namespace Tracks
  
                 virtual SearchController::FilterMode 
                 process_filter(
-                     const std::string& text
-		   , std::string&	text_noaque
+                     const std::string&		text
+		   , boost::optional<guint>	id
+		   , std::string&		text_noaque
                 )
                 { 
 		    const std::string m_old_filter = m_current_filter ;
@@ -784,12 +785,12 @@ namespace Tracks
 		    }
                     if( !aqe_diff && !m_current_filter_noaque.empty() && (text.substr(0, text.size()-1) == m_old_filter))
                     {
-			regen_mapping_iterative() ;
+			regen_mapping_iterative( id ) ;
 			return SearchController::FilterMode::ITERATIVE ;
                     }
                     else
                     {
-                        regen_mapping() ;
+                        regen_mapping( id ) ;
 			return SearchController::FilterMode::NONITERATIVE ;
                     }
                 }

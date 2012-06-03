@@ -632,7 +632,7 @@ namespace Albums
 
 		if( WithinPastDay( album->insert_date ))
 		{
-		    Util::draw_cairo_image( cairo, m_image_new, -8, 7 );
+		    Util::draw_cairo_image( cairo, m_image_new, -8, 5 );
 		}
 		cairo->restore() ;
 	    }
