@@ -1,5 +1,4 @@
 api/hal.cc
-api/libcontainer_pls.cc
 api/minisoup.cc
 api/util-ui.cc
 api/xml.cc
@@ -19,8 +18,6 @@ ui/cppmod-scrobbler.ui
 ui/mlibmanager.ui
 ui/pluginmanager.ui
 ui/preferences.ui
-include/mpx/com/view-album-artist.hh
-include/mpx/com/view-album.hh
 mpxlib/library-mlibman.cc
 mpxlib/library-scanner-thread-mlibman.cc
 mpxlib/main.cc

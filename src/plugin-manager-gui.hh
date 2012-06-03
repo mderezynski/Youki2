@@ -28,7 +28,6 @@
 #include <config.h>
 #endif
 
-#include <boost/python.hpp>
 
 #include "mpx/widgets/widgetloader.hh"
 #include "mpx/mpx-services.hh"

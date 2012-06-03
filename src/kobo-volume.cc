@@ -92,57 +92,60 @@ namespace MPX
 	GdkRectangle r ;
 	double h, s, b ;
 
-        Gdk::RGBA cgdk, c1, c2 ;
+        Gdk::RGBA cgdk ;
 
-	cgdk.set_rgba( 0.55, 0.55, 0.55 ) ;
+	cgdk.set_rgba( 0.25, 0.25, 0.25 ) ;
 	
-	Util::color_to_hsb( cgdk, h, s, b ) ;
-	cgdk = Util::color_from_hsb( h, s, b ) ;
+        Util::color_to_hsb( cgdk, h, s, b ) ;
+        b *= 0.84 ; 
+        s *= 0.92 ;
+        Gdk::RGBA c1 = Util::color_from_hsb( h, s, b ) ;
 
-	Util::color_to_hsb( cgdk, h, s, b ) ;
-	b *= 0.95 ;
-	c1 = Util::color_from_hsb( h, s, b ) ;
+        Util::color_to_hsb( cgdk, h, s, b ) ;
+	b *= 0.9 ;
+        s *= 0.92 ; 
+        Gdk::RGBA c2 = Util::color_from_hsb( h, s, b ) ;
 
-	Util::color_to_hsb( cgdk, h, s, b ) ;
-	b *= 0.45 ;
-	c2 = Util::color_from_hsb( h, s, b ) ;
+        Util::color_to_hsb( cgdk, h, s, b ) ;
+        b *= 1 ;
+        s *= 0.92 ; 
+        Gdk::RGBA c3 = Util::color_from_hsb( h, s, b ) ;
 
 	ColorFade F( c1, c2 ) ;
 
 	Gdk::RGBA c_gradient = F( percent ) ; 
 
-        Cairo::RefPtr<Cairo::LinearGradient> position_bar_back_gradient = Cairo::LinearGradient::create(
+        Cairo::RefPtr<Cairo::LinearGradient> volume_bar_back_gradient = Cairo::LinearGradient::create(
               a.get_width() / 2 
             , 1 
             , a.get_width() / 2 
             , 19
         ) ;
 
-        position_bar_back_gradient->add_color_stop_rgba(
+	Cairo::RefPtr<Cairo::LinearGradient> volume_bar_gradient = Cairo::LinearGradient::create(
+                  r.x + r.width / 2
+                , r.y  
+                , r.x + r.width / 2
+                , r.y + r.height
+	) ;
+
+        volume_bar_back_gradient->add_color_stop_rgba(
               0. 
+            , cgdk.get_red()
+            , cgdk.get_green()
+            , cgdk.get_blue()
+            , 0.22
+        ) ;
+
+        volume_bar_back_gradient->add_color_stop_rgba(
+              .5
             , cgdk.get_red()
             , cgdk.get_green()
             , cgdk.get_blue()
             , 0.3
         ) ;
 
-        position_bar_back_gradient->add_color_stop_rgba(
-              .4
-            , cgdk.get_red()
-            , cgdk.get_green()
-            , cgdk.get_blue()
-            , 0.22
-        ) ;
-
-        position_bar_back_gradient->add_color_stop_rgba(
-              .6
-            , cgdk.get_red()
-            , cgdk.get_green()
-            , cgdk.get_blue()
-            , 0.22
-        ) ;
-        
-        position_bar_back_gradient->add_color_stop_rgba(
+        volume_bar_back_gradient->add_color_stop_rgba(
               1. 
             , cgdk.get_red()
             , cgdk.get_green()
@@ -150,7 +153,7 @@ namespace MPX
             , 0.3
         ) ;
 
-        cairo->set_source( position_bar_back_gradient ) ;
+        cairo->set_source( volume_bar_back_gradient ) ;
         RoundedRectangle(
               cairo
             , 1 
@@ -160,31 +163,48 @@ namespace MPX
             , rounding 
 	    , MPX::CairoCorners::CORNERS(8)
         ) ;
-        cairo->fill_preserve () ;
-        cairo->clip() ;
+        cairo->fill() ;
 
-	// VOLUME
-	r.x         = 1 ; 
-	r.y         = 1 ; 
-	r.width     = fmax( 0, (a.get_width()-2) * double(percent)) ;
-	r.height    = 19 ; 
+	r.x      = 1 ; 
+	r.y      = 1 ; 
+	r.width  = fmax( 0, (a.get_width()-2) * double(percent)) ;
+	r.height = 19 ; 
 
 	cairo->save() ;
-	cairo->set_source_rgba(
-	      c_gradient.get_red()
-	    , c_gradient.get_green()
-	    , c_gradient.get_blue()
-	    , 1. 
+	volume_bar_gradient->add_color_stop_rgba(
+	      0. 
+	    , c3.get_red()
+	    , c3.get_green()
+	    , c3.get_blue()
+	    , 1 // factor 
 	) ;
-	cairo->set_operator(
-	      Cairo::OPERATOR_ATOP
+
+	volume_bar_gradient->add_color_stop_rgba(
+	      .6
+	    , c2.get_red()
+	    , c2.get_green()
+	    , c2.get_blue()
+	    , 1 // factor
 	) ;
-	cairo->rectangle(
-	      r.x 
-	    , r.y
-	    , r.width 
-	    , r.height
+	
+	volume_bar_gradient->add_color_stop_rgba(
+	      1. 
+	    , c1.get_red()
+	    , c1.get_green()
+	    , c1.get_blue()
+	    , 1 // factor
 	) ;
+
+        RoundedRectangle(
+              cairo
+            , r.x 
+            , r.y 
+            , r.width
+            , r.height
+            , rounding 
+	    , MPX::CairoCorners::CORNERS(8)
+        ) ;
+
 	cairo->fill (); 
 	cairo->restore () ;
 

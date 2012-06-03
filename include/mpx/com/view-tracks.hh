@@ -930,8 +930,8 @@ namespace Tracks
                         m_constraints_artist = IdVector_sp( new IdVector_t ) ; 
                         m_constraints_artist->resize( m_max_size_constraints_artist + 1 ) ;
 
-                        TCVector_t& constraints_albums = *(m_constraints_albums.get()) ;
-                        IdVector_t& constraints_artist = *(m_constraints_artist.get()) ;
+                        TCVector_t& constraints_albums = *m_constraints_albums ;
+                        IdVector_t& constraints_artist = *m_constraints_artist ;
 
                         new_mapping->reserve( m_realmodel->size() ) ;
                         new_mapping_unfiltered->reserve( m_realmodel->size() ) ;
@@ -939,7 +939,7 @@ namespace Tracks
                         for( Model_t::iterator i = m_realmodel->begin() ; i != m_realmodel->end() ; ++i ) 
                         {
                             const MPX::Track_sp& t = (*i)->TrackSp ; 
-                            const MPX::Track& track = *(t.get()) ;
+                            const MPX::Track& track = *t ;
 
                             if( !m_constraints_aqe.empty() && !AQE::match_track( m_constraints_aqe, t ))
                             {
@@ -1514,12 +1514,10 @@ namespace Tracks
 		    layout->set_width((m_width - 12) * PANGO_SCALE ) ;
 		    layout->set_alignment( m_alignment ) ;
 
-/*
 		    if( selected )
 		    {
 			Util::render_text_shadow( layout, xpos+6,ypos+2, cairo, 2, 0.55 ) ;
 		    }
-*/
 
 		    cairo->move_to(
 			    xpos + 6
@@ -1552,12 +1550,12 @@ namespace Tracks
 		PropAdjustment			    property_vadj_, property_hadj_ ;
 		PropScrollPolicy		    property_vsp_ , property_hsp_ ;
 
-                int                                 m_height__row ;
-                int                                 m_height__headers ;
-                int                                 m_height__current_viewport ;
+                guint                               m_height__row ;
+                guint                               m_height__headers ;
+                guint                               m_height__current_viewport ;
 
                 Interval<guint>			    ModelExtents ;
-		Interval<guint>			    m_Current_Viewport_I ;
+		Interval<guint>			    ViewPort ;
 
                 Columns                             m_columns ;
 
@@ -1621,7 +1619,7 @@ namespace Tracks
                 {
                     if( m_model->size() )
                     {
-			m_Current_Viewport_I = Interval<guint> (
+			ViewPort = Interval<guint> (
 			      Interval<guint>::IN_EX
 			    , get_upper_row()
 			    , get_upper_row() + get_page_size()
@@ -1635,6 +1633,24 @@ namespace Tracks
 
             protected:
 
+		virtual void
+		on_size_allocate( Gtk::Allocation& a )
+		{
+		    int x = a.get_x() ;
+		    int y = a.get_y() ;
+
+		    int height = get_parent()->get_allocation().get_height() ; 
+		    y = 0 ;
+		    x = 0 ;
+
+		    a.set_x(x) ;
+		    a.set_y(y) ;
+		    a.set_height(height) ;
+
+		    Gtk::DrawingArea::on_size_allocate(a) ;
+		    queue_draw() ;
+		}
+
                 virtual bool
                 on_focus_in_event(GdkEventFocus* G_GNUC_UNUSED)
                 {
@@ -1642,7 +1658,7 @@ namespace Tracks
 		    {
 			guint idx = boost::get<S_INDEX>(m_selection.get()) ;
 
-			if( m_Current_Viewport_I( idx ))
+			if( ViewPort( idx ))
 			    return true ;
 		    }
 
@@ -1762,7 +1778,7 @@ namespace Tracks
                         {
                             if( event->keyval == GDK_KEY_Page_Up )
                             {
-                                step = get_page_size() ;
+                                step = get_page_size()/2 ;
                             }
                             else
                             {
@@ -1791,9 +1807,9 @@ namespace Tracks
                                 if( d < get_upper_row() ) 
                                 {
 				    if( step == 1 )
-					scroll_to_index( get_upper_row() - 1 ) ;
+					scroll_to_index( get_upper_row()-1 ) ;
 				    else
-					scroll_to_index( d ) ;
+					scroll_to_index( std::max<int>(0, d-get_page_size()/2)) ;
                                 }
     
                                 select_index( d ) ;
@@ -1824,7 +1840,7 @@ namespace Tracks
                         {
                             if( event->keyval == GDK_KEY_Page_Down )
                             {
-                                step = get_page_size() ; 
+                                step = get_page_size()/2 ; 
                             }
                             else
                             {
@@ -1853,9 +1869,9 @@ namespace Tracks
                                 if( d >= get_lower_row())
                                 {
 				    if( step == 1 )
-                                        scroll_to_index( get_upper_row() + 1 ) ;
+                                        scroll_to_index( get_upper_row()+1 ) ;
 				    else
-					scroll_to_index( d ) ;
+					scroll_to_index( std::max<int>(0, d-get_page_size()/2)) ;
                                 }
 
                                 select_index(d) ;
@@ -1913,15 +1929,6 @@ namespace Tracks
                     //gdk_event_free( event ) ;
                 }
 
-		void
-		on_size_allocate( Gtk::Allocation& a )
-		{
-		    a.set_x(0) ;
-		    a.set_y(0) ;
-		    Gtk::DrawingArea::on_size_allocate( a ) ;
-		    queue_draw() ;
-		}
-
                 bool
                 on_button_press_event(
 		    GdkEventButton* event
@@ -1967,7 +1974,17 @@ namespace Tracks
 			else
 			if( m_play_on_single_tap )
 			{	
-			    goto play_single_tap ;
+			    Interval<guint> I (
+				  Interval<guint>::IN_EX
+				, 0
+				, m_model->size()
+			    ) ;
+
+			    if(I( d )) 
+			    {
+				MPX::Track_sp track = m_model->row(d)->TrackSp ;
+				m_SIGNAL_track_activated.emit( track, true ) ;
+			    }
 			}
                     }
 		    else
@@ -1975,15 +1992,13 @@ namespace Tracks
                     {
                         if( event->y > m_height__headers )
 			{
-			    play_single_tap:
-
 			    Interval<guint> I (
 				  Interval<guint>::IN_EX
 				, 0
 				, m_model->size()
 			    ) ;
 
-			    if( I( d )) 
+			    if(I( d ) && !m_play_on_single_tap) 
 			    {
 				MPX::Track_sp track = m_model->row(d)->TrackSp ;
 				m_SIGNAL_track_activated.emit( track, true ) ;
@@ -2072,18 +2087,20 @@ namespace Tracks
 
                 void
                 configure_vadj(
-                      guint   upper
-                    , guint   page_size
-                    , guint   step_increment
+                      double upper
+                    , double page_size
                 )
                 {
                     if( property_vadjustment().get_value() ) 
                     {
-                        property_vadjustment().get_value()->set_upper( upper ) ; 
-                        property_vadjustment().get_value()->set_page_size( page_size ) ; 
-                        property_vadjustment().get_value()->set_step_increment(1) ; 
-                        property_vadjustment().get_value()->set_page_increment(1) ;
-                    }
+			if( m_height__current_viewport && m_height__row)
+			{
+			    page_size = (double(m_height__current_viewport)/double(m_height__row)) ;
+			}
+	
+                        property_vadjustment().get_value()->set_upper( (upper<page_size)?page_size:upper ) ; 
+		        property_vadjustment().get_value()->set_page_size( page_size ) ; 
+		    }
                 }
 
                 bool
@@ -2091,11 +2108,13 @@ namespace Tracks
                     GdkEventConfigure* event
                 )        
                 {
+		    Gtk::DrawingArea::on_configure_event(event) ;
+
                     const double column_width_collapsed = 40. ;
 
                     m_height__current_viewport = event->height - m_height__headers ;
 
-		    m_Current_Viewport_I = Interval<guint> (
+		    ViewPort = Interval<guint> (
 			  Interval<guint>::IN_EX
 			, get_upper_row()
 			, get_upper_row() + get_page_size()
@@ -2104,7 +2123,6 @@ namespace Tracks
                     configure_vadj(
                           m_model->size()
                         , get_page_size()
-                        , 8 
                     ) ;
 
                     int width = event->width ;
@@ -2130,7 +2148,7 @@ namespace Tracks
                         }
                     }
 
-                    return false;
+                    return true ;
                 }
 
                 inline bool
@@ -2243,6 +2261,8 @@ namespace Tracks
 		    , guint d_max
 		)
 		{
+		    cairo->save() ;
+
 		    Gdk::Cairo::set_source_rgba(cairo, c_rules_hint);
 
 		    for( guint n = 0 ; n < d_max ; ++n ) 
@@ -2257,10 +2277,10 @@ namespace Tracks
 				, rr.width
 				, rr.height
 			    ) ;
-
 			    cairo->fill() ;
 			}
 		    }
+		    cairo->restore() ;
 		}
 
 		void
@@ -2295,7 +2315,7 @@ namespace Tracks
 		    , const Gdk::RGBA& c
 		)
 		{
-		    const std::vector<double> dashes { 2, 2 } ;
+		    const std::vector<double> dashes { 1, 1 } ;
 
 		    Columns::iterator i2 = m_columns.end() ;
 		    std::advance( i2, -1 ) ;	
@@ -2384,7 +2404,7 @@ namespace Tracks
 		    boost::optional<guint> d_sel = m_selection ? get<S_INDEX>(m_selection.get()) : boost::optional<guint>() ; 
 
 		    /* Render Selection Rectangle */
-		    if( d_sel && m_Current_Viewport_I(d_sel.get()))
+		    if( d_sel && ViewPort(d_sel.get()))
 		    {
 			rr.y = m_height__headers + ((d_sel.get() - d)*m_height__row) ;
 
@@ -2442,8 +2462,6 @@ namespace Tracks
 			cairo->fill() ;
 		    }
 
-		    get_window()->process_all_updates() ;
-
                     return true;
                 }
 
@@ -2489,7 +2507,6 @@ namespace Tracks
                         configure_vadj(
                               m_model->size()
                             , get_page_size()
-                            , 8
                         ) ;
                     }
 
@@ -3040,7 +3057,6 @@ namespace Tracks
                     configure_vadj(
                           m_model->size()
                         , get_page_size()
-                        , 8
                     ) ;
 		}
 
@@ -3068,6 +3084,9 @@ namespace Tracks
 			, property_vsp_(*this, "vscroll-policy", Gtk::SCROLL_NATURAL )
 			, property_hsp_(*this, "hscroll-policy", Gtk::SCROLL_NATURAL )
 
+			, m_height__row(0)
+			, m_height__headers(0)
+			, m_height__current_viewport(0)
                         , m_columns__fixed_total_width(0)
                         , m_search_active(false)
                         , m_highlight_matches(false)

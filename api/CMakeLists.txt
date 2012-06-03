@@ -29,7 +29,6 @@ INCLUDE_DIRECTORIES(
   ${PYTHON_INCLUDE_DIRS}
   ${RSVG_INCLUDE_DIRS}
   ${SEXYMM_INCLUDE_DIRS}
-  ${SIGX_INCLUDE_DIRS}
   ${SOUP_INCLUDE_DIRS}
   ${SQLITE_INCLUDE_DIRS}
   ${STARTUP_NOTIFY_INCLUDE_DIRS}
@@ -64,6 +63,24 @@ SET(mpx_api_SOURCES
   util-ui.cc
   xml.cc
   xpath.cc
+  tunnel_context_base.cpp
+  tunnel_validity_tracker.cpp
+  bad_sync_call.cpp
+  connection_handler.cpp
+  connection_wrapper.cpp
+  dispatchables.cpp
+  dispatcher.cpp
+  glib_dispatcher.cpp
+  glib_threadable.cpp
+  operator_new.cpp
+  SConscript
+  signal_f_base.cpp
+  signal_wrapper_base.cpp
+  __sigx_pch__.cpp
+  __sigx_pchfence__.h
+  tunnel_base.cpp
+  bad_caller.cpp
+  bad_dispatcher.cpp
   ${mpx_api_ADD_SOURCES}
 )
 
@@ -79,8 +96,6 @@ TARGET_LINK_LIBRARIES(mpx-api
   ${ALSA_LIBRARIES}
   ${Boost_REGEX_LIBRARY}
   ${Boost_FILESYSTEM_LIBRARY}
-  ${Boost_IOSTREAMS_LIBRARY}
-  ${Boost_PYTHON_LIBRARY}
   ${CAIROMM_LIBRARIES}
   ${CDIO_LIBRARIES}
   ${CDPARANOIA_LIBRARY}
@@ -99,7 +114,6 @@ TARGET_LINK_LIBRARIES(mpx-api
   ${PYTHON_LIBRARIES}
   ${RSVG_LIBRARIES}
   ${SEXYMM_LIBRARIES}
-  ${SIGX_LIBRARIES}
   ${SM_LIBRARIES}
   ${SOUP_LIBRARIES}
   ${SQLITE_LIBRARIES}

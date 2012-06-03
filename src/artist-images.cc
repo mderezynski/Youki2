@@ -48,6 +48,13 @@ MPX::ArtistImages::ArtistImages(
             )
   )
 
+, recache_single_image(
+            sigc::mem_fun(
+                *this,
+                &ArtistImages::on_recache_single_image
+            )
+  )
+
 , m_SQL(new SQL::SQLDB(*(services->get<Library>("mpx-service-library")->get_sql_db())))
 
 {
@@ -106,6 +113,42 @@ MPX::ArtistImages::get_image_by_mbid(
 
     return artist_image ;
 }
+
+void
+MPX::ArtistImages::on_recache_single_image(
+      std::string name
+    , std::string mbid
+)
+{
+    ThreadData * pthreaddata = m_ThreadData.get();
+
+    std::string thumb_path = std::move(build_filename( m_base_path, mbid + std::string(".png" ))) ;
+
+    if( !file_test( thumb_path, FILE_TEST_EXISTS )) 
+    {
+	    Glib::RefPtr<Gdk::Pixbuf> artist_image = get_image_by_mbid( mbid, name );
+
+	    if( artist_image )
+	    {
+		try{
+		    artist_image->save( thumb_path, "png" );
+		}catch(Glib::FileError&){}
+		m_pixbuf_cache.insert( std::make_pair( mbid, artist_image ));
+		pthreaddata->GotArtistImage.emit( mbid, artist_image );
+	    }
+    }
+    else
+    {
+	const std::string& thumb_path = build_filename( m_base_path, mbid + std::string(".png" ));
+	Glib::RefPtr<Gdk::Pixbuf> artist_image = Gdk::Pixbuf::create_from_file( thumb_path ); 
+	if( artist_image )
+	{
+	    m_pixbuf_cache.insert( std::make_pair( mbid, artist_image ));
+	    pthreaddata->GotArtistImage.emit( mbid, artist_image );
+	}
+    }
+}
+
 
 void
 MPX::ArtistImages::on_recache_images()

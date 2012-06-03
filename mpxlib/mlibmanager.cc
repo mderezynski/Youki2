@@ -1309,6 +1309,7 @@ namespace MPX
                 std::string FullPath_Sub = FullPath.substr(volume.mount_point.length()) ;
 
                 services->get<Library_MLibMan>("mpx-service-library")->deletePath( volume.device_udi, volume.volume_udi, FullPath_Sub.substr( 0, FullPath_Sub.size() - 1 ) );
+                services->get<Library_MLibMan>("mpx-service-library")->scanner()->update_statistics();
 
                 m_ManagedPaths.erase( FullPath );
                 recreate_path_frags();

@@ -43,7 +43,7 @@ namespace Artist
 		s1 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_1) ;
 		s2 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_2) ;
 
-		Util::cairo_image_surface_blur( s1, 0.5 ) ;
+		Util::cairo_image_surface_blur( s1, 2 ) ;
 
 		boost::get<3>(*(i1->second)) = std::move(s1) ; 
 		boost::get<4>(*(i1->second)) = std::move(s2) ; 
@@ -58,6 +58,7 @@ namespace Artist
     {
 	m_ArtistImages = new ArtistImages ;
 	m_ArtistImages->run() ;
+	m_ArtistImages->signal_got_artist_image().connect( sigc::mem_fun( *this, &DataModel::handle_got_artist_image )) ;
     }
 
     void
@@ -132,7 +133,7 @@ namespace Artist
 		s1 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_1) ;
 		s2 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_2) ;
 
-		Util::cairo_image_surface_blur( s1, 0.5 ) ;
+		Util::cairo_image_surface_blur( s1, 2 ) ;
 	    }
 
 	    Row_t r (
@@ -152,6 +153,8 @@ namespace Artist
 		m_iter_map.insert(std::make_pair(artist_id.get(), i));
 		m_mbid_map.insert(std::make_pair(artist_mbid, i)) ;
 	    }
+
+//	    m_ArtistImages->recache_single_image(artist,artist_mbid) ;
 	}
 
 	void
@@ -181,7 +184,7 @@ namespace Artist
 		s1 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_1) ;
 		s2 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_2) ;
 
-		Util::cairo_image_surface_blur( s1, 0.5 ) ;
+		Util::cairo_image_surface_blur( s1, 2 ) ;
 	    }
 
 	    Row_t r (
@@ -207,6 +210,8 @@ namespace Artist
 		m_iter_map.insert( std::make_pair( artist_id.get(), i ));
 		m_mbid_map.insert(std::make_pair(artist_mbid, i)) ;
 	    }
+
+//	    m_ArtistImages->recache_single_image(artist,artist_mbid) ;
 	}
 
 //////////////////////////

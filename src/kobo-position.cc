@@ -107,36 +107,19 @@ namespace MPX
 	c_text_dark = Util::color_from_hsb( h, s, b ) ;
 
         Util::color_to_hsb( cgdk, h, s, b ) ;
-        b *= 0.8 ; 
-        s *= 0.80 ;
+        b *= 0.84 ; 
+        s *= 0.92 ;
         Gdk::RGBA c1 = Util::color_from_hsb( h, s, b ) ;
 
         Util::color_to_hsb( cgdk, h, s, b ) ;
 	b *= 0.9 ;
-        s *= 0.80 ; 
+        s *= 0.92 ; 
         Gdk::RGBA c2 = Util::color_from_hsb( h, s, b ) ;
 
         Util::color_to_hsb( cgdk, h, s, b ) ;
         b *= 1 ;
-        s *= 0.80 ; 
+        s *= 0.92 ; 
         Gdk::RGBA c3 = Util::color_from_hsb( h, s, b ) ;
-
-/*
-	Util::color_to_hsb( cgdk, h, s, b ) ;
-	b *= 0.70 ; 
-	s *= 1 ;
-	c1 = Util::color_from_hsb( h, s, b ) ;
-
-	Util::color_to_hsb( cgdk, h, s, b ) ;
-	b *= 0.80 ; 
-	s *= 0.90 ;
-	c2 = Util::color_from_hsb( h, s, b ) ;
-
-	Util::color_to_hsb( cgdk, h, s, b ) ;
-	b *= 0.97 ; 
-	s *= 0.80 ;
-	c3 = Util::color_from_hsb( h, s, b ) ;
-*/
 
         Cairo::RefPtr<Cairo::LinearGradient> position_bar_back_gradient = Cairo::LinearGradient::create(
               a.get_width() / 2 
@@ -150,31 +133,23 @@ namespace MPX
             , cgdk.get_red()
             , cgdk.get_green()
             , cgdk.get_blue()
-            , 0.3
+            , 0.31
         ) ;
 
         position_bar_back_gradient->add_color_stop_rgba(
-              .46
+              .6
             , cgdk.get_red()
             , cgdk.get_green()
             , cgdk.get_blue()
-            , 0.21
+            , 0.36
         ) ;
 
-        position_bar_back_gradient->add_color_stop_rgba(
-              .54
-            , cgdk.get_red()
-            , cgdk.get_green()
-            , cgdk.get_blue()
-            , 0.21
-        ) ;
-        
         position_bar_back_gradient->add_color_stop_rgba(
               1. 
             , cgdk.get_red()
             , cgdk.get_green()
             , cgdk.get_blue()
-            , 0.3
+            , 0.40
         ) ;
 
         cairo->set_source( position_bar_back_gradient ) ;
@@ -220,14 +195,14 @@ namespace MPX
 
             position_bar_gradient->add_color_stop_rgba(
                   0. 
-                , c1.get_red()
-                , c1.get_green()
-                , c1.get_blue()
+                , c3.get_red()
+                , c3.get_green()
+                , c3.get_blue()
                 , 1 // factor 
             ) ;
 
             position_bar_gradient->add_color_stop_rgba(
-                  .4
+                  .6
                 , c2.get_red()
                 , c2.get_green()
                 , c2.get_blue()
@@ -236,9 +211,9 @@ namespace MPX
             
             position_bar_gradient->add_color_stop_rgba(
                   1. 
-                , c3.get_red()
-                , c3.get_green()
-                , c3.get_blue()
+                , c1.get_red()
+                , c1.get_green()
+                , c1.get_blue()
                 , 1 // factor
             ) ;
 

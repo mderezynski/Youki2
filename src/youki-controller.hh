@@ -6,6 +6,7 @@
 
 #include <gtkmm.h>
 #include <deque>
+#include <unordered_map>
 
 #include <boost/optional.hpp>
 #include <boost/shared_ptr.hpp>
@@ -265,6 +266,7 @@ namespace MPX
             Library                         * m_library ;
 	    LDFindNearest		      m_find_nearest_artist ;
 	    LDFindNearest		      m_find_nearest_artist_full ;
+	    LDFindNearest		      m_find_nearest_artist_full_lc ;
 	    std::string			      m_nearest ;
 	    StrV			      m_nearest__artists ;
 	    StrV			      m_nearest__artists_popular ;

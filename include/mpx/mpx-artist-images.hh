@@ -48,7 +48,6 @@
 namespace MPX
 {
     typedef std::map <std::string, Glib::RefPtr<Gdk::Pixbuf> >                      PixbufCache_t ;
-
     typedef sigc::signal<void, const std::string&, Glib::RefPtr<Gdk::Pixbuf> >      SignalGotArtistImage_t ; 
     typedef sigx::signal_f<SignalGotArtistImage_t>                                  SignalGotArtistImage_x ;
 
@@ -66,6 +65,9 @@ namespace MPX
             sigx::request_f<>
             recache_images ;
 
+	    sigx::request_f<std::string, std::string>
+	    recache_single_image ;	    
+
 	    Glib::RefPtr<Gdk::Pixbuf>
             get_image(
 		const std::string&
@@ -79,15 +81,21 @@ namespace MPX
             // auto_threadable
 
             virtual void
-            on_startup () ;
+            on_startup() ;
 
             virtual void
-            on_cleanup () ;
+            on_cleanup() ;
 
             // requests
 
             void
-            on_recache_images () ;
+            on_recache_images() ;
+
+            void
+            on_recache_single_image(
+		  std::string
+		, std::string
+	    ) ;
 
 	    Glib::RefPtr<Gdk::Pixbuf>
             on_get_image(

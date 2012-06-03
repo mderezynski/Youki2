@@ -9,12 +9,6 @@
 
 #include <tr1/random>
 
-#include <libindicate/indicator-messages.h>
-#include <libindicate/indicator.h>
-#include <libindicate/interests.h>
-#include <libindicate/listener.h>
-#include <libindicate/server.h>
-
 #include <glibmm/i18n.h>
 #include <gdk/gdkkeysyms.h>
 
@@ -210,11 +204,6 @@ namespace MPX
     , m_view_changed( false )
     , m_history_ignore_save( false )
     {
-	IndicateServer* is = indicate_server_ref_default() ;
-	indicate_server_set_type( is, "music.youki" ) ;
-	indicate_server_set_desktop_file( is, "/usr/share/applications/youki.desktop") ;
-	indicate_server_show( is ) ;
-
         m_C_SIG_ID_track_new =
             g_signal_new(
                   "track-new"
@@ -917,51 +906,55 @@ namespace MPX
 	const guint MAX_TRIES = 20 ;
 
 	SQL::RowV v ;
-	guint tries = 0 ;
 
 	std::tr1::mt19937 eng;
 	eng.seed(time(NULL)) ;
 	std::tr1::uniform_int<unsigned int> uni(0,2) ;
+    
+	std::string s ;
 
-	retry_update_placeholder:
-
-	guint r = uni(eng) ; 
-
-	switch(r)
+	for( guint n = 0 ; n < MAX_TRIES ; ++n )
 	{
-	    case 0:
-		m_library->getSQL(v, "SELECT artist AS s FROM artist ORDER BY random() LIMIT 1") ;
-		break;
+	    s.clear() ;
 
-	    case 1:
-		m_library->getSQL(v, "SELECT album AS s FROM album ORDER BY random() LIMIT 1") ;
-		break;
+	    guint r = uni(eng) ; 
 
-	    case 2:
-		m_library->getSQL(v, "SELECT title AS s FROM track WHERE pcount IS NOT NULL ORDER BY random() LIMIT 1") ;
-		break;
+	    switch(r)
+	    {
+		case 0:
+		    m_library->getSQL(v, "SELECT artist AS s FROM artist ORDER BY random() LIMIT 1") ;
+		    break;
+
+		case 1:
+		    m_library->getSQL(v, "SELECT album AS s FROM album ORDER BY random() LIMIT 1") ;
+		    break;
+
+		case 2:
+		    m_library->getSQL(v, "SELECT title AS s FROM track WHERE pcount IS NOT NULL ORDER BY random() LIMIT 1") ;
+		    break;
+	    }
+
+	    if(!v.empty())
+	    {
+		s = std::move(boost::get<std::string>(v[0]["s"])) ;
+		break ;
+	    }
 	}
 
-	const std::string& s = boost::get<std::string>(v[0]["s"]) ;
-
-        StrV m;
-        split( m, s, is_any_of(" "));
-
-	if( m.size() > MAX_WORDS && tries < MAX_TRIES )
+	if(!s.empty())
 	{
-	    ++tries ;
-	    v.clear() ;
-	    goto retry_update_placeholder ;
-	}
-	else
-	if( m.size() > MAX_WORDS && tries == MAX_TRIES )
-	{
-	    m_Entry->set_placeholder_text(_("Search Your Music here...")) ;
-	}
-	else
-	{
-	    m_Entry->set_placeholder_text((boost::format("%s \"%s\"") % _("Search Your Music... for example:") % s).str()) ;
-	}
+	    StrV m;
+	    split( m, s, is_any_of(" "));
+	    if( m.size() > MAX_WORDS )
+	    {
+		m_Entry->set_placeholder_text(_("Search Your Music here...")) ;
+	    }
+	    else
+	    {
+		m_Entry->set_placeholder_text((boost::format("%s '%s'") % _("Type to search... for example") % s).str()) ;
+	    }
+	}	
+	// else we keep the current text
     }
 
     void
@@ -971,8 +964,8 @@ namespace MPX
 	m_library->getSQL(v, (boost::format("SELECT * FROM album_artist")).str()) ; 
 	std::stable_sort(v.begin(), v.end(), CompareAlbumArtists) ;
 
-	std::vector<std::string> v_ ;
-	v_.reserve(v.size()) ;
+	StrV v_ ;
+	StrV artists_lc ;
 
 	for( auto& r : v ) 
 	{
@@ -996,6 +989,7 @@ namespace MPX
 	    }
 
 	    m_nearest__artists.push_back(s) ;
+	    artists_lc.push_back(Glib::ustring(s).lowercase()) ;
 
 	    private_->FilterModelArtist->append_artist(
 		  s  
@@ -1029,6 +1023,7 @@ namespace MPX
 	    }
 
 	    m_nearest__artists.push_back(s) ;
+	    artists_lc.push_back(Glib::ustring(s).lowercase()) ;
 	}
 
 	for( auto& p : m_ssmap )
@@ -1048,7 +1043,7 @@ namespace MPX
 	}
 
 	v.clear() ;
-	m_library->getSQL(v, (boost::format("SELECT artist,pcount FROM artist WHERE pcount IS NOT NULL ORDER BY pcount DESC")).str()) ; 
+	m_library->getSQL(v, (boost::format("SELECT artist,pcount FROM artist ORDER BY pcount DESC")).str()) ; 
 
 	for( auto& r : v ) 
 	{
@@ -1057,6 +1052,7 @@ namespace MPX
 
 	m_find_nearest_artist.load_dictionary(v_) ;
 	m_find_nearest_artist_full.load_dictionary(m_nearest__artists) ;
+	m_find_nearest_artist_full_lc.load_dictionary(artists_lc) ;
 
         private_->FilterModelArtist->regen_mapping() ;
     }
@@ -1244,6 +1240,7 @@ namespace MPX
     YoukiController::handle_nearest_clicked()
     {
 	m_Entry->set_text( m_nearest ) ;
+	m_Entry->select_region(0,-1) ;
     } 
 
     void
@@ -1412,10 +1409,12 @@ namespace MPX
         private_->FilterModelTracks->enable_fragment_cache() ;
 	tracklist_regen_mapping() ;
 
+/*
 	private_->FilterModelArtist->set_constraints_artist( private_->FilterModelTracks->m_constraints_artist ) ;
 	private_->FilterModelAlbums->set_constraints_albums( private_->FilterModelTracks->m_constraints_albums ) ;
+*/
 
-        private_->FilterModelArtist->regen_mapping() ;
+//        private_->FilterModelArtist->regen_mapping() ;
         private_->FilterModelAlbums->regen_mapping() ;
     }
 
@@ -2183,7 +2182,7 @@ namespace MPX
 	}
  */
 
-	private_->FilterModelTracks->regen_mapping_iterative() ;
+	tracklist_regen_mapping_iterative() ;
     
 	if( !m_history_ignore_save )
 	{
@@ -2266,6 +2265,18 @@ namespace MPX
                 if( event->state & GDK_CONTROL_MASK )
                 {
                     handle_search_entry_clear_clicked() ;
+                    return true ;
+                }
+
+                break ;
+            }
+
+            case GDK_KEY_s:
+            case GDK_KEY_S:
+            {
+                if( event->state & GDK_CONTROL_MASK )
+                {
+		    handle_nearest_clicked() ;
                     return true ;
                 }
 
@@ -2453,7 +2464,7 @@ namespace MPX
 		if( artist_view_has_selection )
 		    private_->FilterModelAlbums->regen_mapping() ;
 		else
-		    private_->FilterModelAlbums->regen_mapping_iterative() ;
+		    private_->FilterModelAlbums->regen_mapping() ;
 	    }
 	    else {
 		private_->FilterModelArtist->regen_mapping() ;
@@ -2469,7 +2480,7 @@ namespace MPX
 	    m_Entry->override_color(Util::make_rgba(1.,0.,0.,1.)) ;
 
 /*
-	    RankedStringSet_t&& r1 = m_find_nearest_artist_full.find_nearest_match_leven_set(2,text_noaque) ;
+	    RankedStringSet_t&& r1 = m_find_nearest_artist_full_lc.find_nearest_match_leven_set(3,Glib::ustring(text_noaque).lowercase()) ;
 	    RankedStringSet_t   r2 ;
 
 	    for(auto& rs : r1) {
@@ -2478,7 +2489,7 @@ namespace MPX
 
 		for(auto& s : m_nearest__artists_popular) {
 
-		    if( s == rs.Value ) {
+		    if( Glib::ustring(s).lowercase() == rs.Value ) {
 			r2.push_back(RankedString(s,d)) ;
 			break ;
 		    }
@@ -2491,25 +2502,36 @@ namespace MPX
 		m_nearest = ((RankedString&)(*(r2.begin()))).Value ;
 	    }
 */
+	    m_nearest = m_find_nearest_artist_full_lc.find_nearest_match_leven(3,Glib::ustring(text_noaque).lowercase()) ;
 
-	    m_nearest = m_find_nearest_artist_full.find_nearest_match_leven(2,text_noaque) ;
+	    if(!m_nearest.empty())
+	    {
+		for( auto& s : m_nearest__artists )
+		{
+		    if( Glib::ustring(s).lowercase() == m_nearest )
+		    {
+			m_nearest = s ;
+			break ;
+		    }
+		}
+	    }
 
 	    if(m_nearest.empty()) {
 		m_nearest = trie_find_ldmatch(text_noaque) ;
 	    }
 
-	    if( m_nearest.empty()) {
+	    if(m_nearest.empty()) {
 		StrV m ;
 		split( m, text_noaque, is_any_of(" ")) ;
 		std::string joined = boost::algorithm::join( m, "" ) ;
 		m_nearest = m_find_nearest_artist_full.find_nearest_match_leven(3,text_noaque) ;
 	    }
 
-	    if( m_nearest.empty()) {
+	    if(m_nearest.empty()) {
 		m_nearest = m_find_nearest_artist.find_nearest_match_leven(3,text_noaque) ;
 	    }
 
-	    if( m_nearest.empty()) {
+	    if(m_nearest.empty()) {
 		m_Label_Nearest->set_text("") ;
 	    } else {
 		m_Label_Nearest->set_markup((boost::format("%s <b>%s</b>?") % _("Did you mean") % m_nearest).str()) ;

@@ -157,7 +157,7 @@ namespace MPX
 		RoundedRectangle(
 		      cairo
 		    , a.get_width() - 2 - width - 4 - 4
-		    , 4 
+		    , 3 
 		    , width + 7
 		    , height + 4 
 		    , rounding
@@ -176,10 +176,10 @@ namespace MPX
 		    , 1. 
 		    , 1. 
 		    , 1. 
-		    , 0.65 
+		    , 0.82 
 		) ;
 		gradient->add_color_stop_rgba(
-		      .9
+		      .2
 		    , 1. 
 		    , 1. 
 		    , 1. 
@@ -190,7 +190,7 @@ namespace MPX
 		    , 1. 
 		    , 1. 
 		    , 1. 
-		    , 0.82 
+		    , 0.65 
 		) ;
 
 		cairo->set_source( gradient ) ;
@@ -204,8 +204,8 @@ namespace MPX
 		) ; 
 
 		cairo->move_to(
-		      a.get_width() - 2 - width - 5
-		    , 6
+		      a.get_width() - 2 - width - 4
+		    , 5
 		) ;
 
 		pango_cairo_show_layout( cairo->cobj(), layout->gobj() ) ;
@@ -303,9 +303,9 @@ namespace MPX
         RoundedRectangle(
               cairo
             , r.x 
-            , r.y 
+            , r.y - 1 
             , r.width 
-            , r.height 
+            , r.height + 2 
             , rounding 
 	    , MPX::CairoCorners::CORNERS(0)
         ) ;
@@ -345,7 +345,7 @@ namespace MPX
         layout->get_pixel_size( width, height ) ;
 
         cairo->move_to(
-              m_cover ? 112 : 12
+              m_cover ? 112 : 8
             , 9
         ) ;
 
@@ -356,7 +356,7 @@ namespace MPX
         layout->get_pixel_size( width, height ) ;
 
         cairo->move_to(
-              m_cover ? 112 : 12
+              m_cover ? 112 : 8
             , 9 + height
         ) ;
         cairo->set_source_rgba(c_text.get_red(), c_text.get_green(), c_text.get_blue(), 0.60);
@@ -373,7 +373,7 @@ namespace MPX
         layout->get_pixel_size( width, height ) ;
 
         cairo->move_to(
-              m_cover ? 112 : 12
+              m_cover ? 112 : 8
             , 112 - height - 9 
         ) ;
 
