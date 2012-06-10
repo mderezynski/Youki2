@@ -73,7 +73,6 @@ SET(mpx_api_SOURCES
   glib_dispatcher.cpp
   glib_threadable.cpp
   operator_new.cpp
-  SConscript
   signal_f_base.cpp
   signal_wrapper_base.cpp
   __sigx_pch__.cpp

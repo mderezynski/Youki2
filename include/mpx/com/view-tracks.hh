@@ -453,7 +453,7 @@ namespace Tracks
 		boost::optional<guint>	    m_constraint_single_album ;
                 boost::optional<guint>      m_id_currently_playing ;
                 boost::optional<guint>      m_row_currently_playing_in_mapping ;
-                IdVector_sp                 m_constraints_artist ;
+                TCVector_sp                 m_constraints_artist ;
                 TCVector_sp                 m_constraints_albums ;
                 bool                        m_cache_enabled ;
 
@@ -928,11 +928,11 @@ namespace Tracks
                         m_constraints_albums = TCVector_sp( new TCVector_t ) ; 
                         m_constraints_albums->resize( m_max_size_constraints_albums + 1 ) ;
 
-                        m_constraints_artist = IdVector_sp( new IdVector_t ) ; 
+                        m_constraints_artist = TCVector_sp( new TCVector_t ) ; 
                         m_constraints_artist->resize( m_max_size_constraints_artist + 1 ) ;
 
                         TCVector_t& constraints_albums = *m_constraints_albums ;
-                        IdVector_t& constraints_artist = *m_constraints_artist ;
+                        TCVector_t& constraints_artist = *m_constraints_artist ;
 
                         new_mapping->reserve( m_realmodel->size() ) ;
                         new_mapping_unfiltered->reserve( m_realmodel->size() ) ;
@@ -955,13 +955,14 @@ namespace Tracks
                             }
 
                             guint id_album  = get<guint>(track[ATTRIBUTE_MPX_ALBUM_ID].get()) ;
-
-			    TracksConstraint& tc = constraints_albums[id_album] ;
-                            tc.Count ++ ; 
-			    tc.Time += get<guint>(track[ATTRIBUTE_TIME].get()) ;
+			    TracksConstraint& tc_alb = constraints_albums[id_album] ;
+                            tc_alb.Count ++ ; 
+			    tc_alb.Time += get<guint>(track[ATTRIBUTE_TIME].get()) ;
 
                             guint id_artist = get<guint>(track[ATTRIBUTE_MPX_ALBUM_ARTIST_ID].get()) ;
-                            constraints_artist[id_artist] = constraints_artist[id_artist] + 1 ;
+			    TracksConstraint& tc_art = constraints_artist[id_artist] ;
+                            tc_art.Count ++ ; 
+			    tc_art.Time += get<guint>(track[ATTRIBUTE_TIME].get()) ;
 
                             new_mapping->push_back( i ) ; 
                         }
@@ -1054,16 +1055,16 @@ namespace Tracks
                         m_constraints_albums = TCVector_sp( new TCVector_t ) ; 
                         m_constraints_albums->resize( m_max_size_constraints_albums + 1 ) ;
 
-                        m_constraints_artist = IdVector_sp( new IdVector_t ) ; 
+                        m_constraints_artist = TCVector_sp( new TCVector_t ) ; 
                         m_constraints_artist->resize( m_max_size_constraints_artist + 1 ) ;
 
-                        TCVector_t& constraints_albums = *(m_constraints_albums.get()) ;
-                        IdVector_t& constraints_artist = *(m_constraints_artist.get()) ;
+                        TCVector_t& constraints_albums = *m_constraints_albums ;
+                        TCVector_t& constraints_artist = *m_constraints_artist ;
 
                         for( auto& i : *output ) 
                         {
                             const MPX::Track_sp& t = (*i)->TrackSp ; 
-                            const MPX::Track& track = *(t.get()) ;
+                            const MPX::Track& track = *t ;
 
                             if( !m_constraints_aqe.empty() && !AQE::match_track( m_constraints_aqe, t ))
                             {
@@ -1078,12 +1079,14 @@ namespace Tracks
                             }
 
                             guint id_album  = get<guint>(track[ATTRIBUTE_MPX_ALBUM_ID].get()) ;
-			    TracksConstraint& tc = constraints_albums[id_album] ;
-                            tc.Count ++ ; 
-			    tc.Time += get<guint>(track[ATTRIBUTE_TIME].get()) ;
+			    TracksConstraint& tc_alb = constraints_albums[id_album] ;
+                            tc_alb.Count ++ ; 
+			    tc_alb.Time += get<guint>(track[ATTRIBUTE_TIME].get()) ;
 
                             guint id_artist = get<guint>(track[ATTRIBUTE_MPX_ALBUM_ARTIST_ID].get()) ;
-                            constraints_artist[id_artist] = constraints_artist[id_artist] + 1 ;
+			    TracksConstraint& tc_art = constraints_artist[id_artist] ;
+                            tc_art.Count ++ ; 
+			    tc_art.Time += get<guint>(track[ATTRIBUTE_TIME].get()) ;
 
                             new_mapping->push_back( i ) ;
                         }
@@ -1166,11 +1169,11 @@ namespace Tracks
                         m_constraints_albums = TCVector_sp( new TCVector_t ) ; 
                         m_constraints_albums->resize( m_max_size_constraints_albums + 1 ) ;
 
-                        m_constraints_artist = IdVector_sp( new IdVector_t ) ; 
+                        m_constraints_artist = TCVector_sp( new TCVector_t ) ; 
                         m_constraints_artist->resize( m_max_size_constraints_artist + 1 ) ;
 
-                        IdVector_t& constraints_artist = *(m_constraints_artist.get()) ;
-                        TCVector_t& constraints_albums = *(m_constraints_albums.get()) ;
+                        TCVector_t& constraints_albums = *m_constraints_albums ;
+                        TCVector_t& constraints_artist = *m_constraints_artist ;
 
                         new_mapping->reserve( m_mapping_unfiltered->size() ) ;
                         new_mapping_unfiltered->reserve( m_mapping_unfiltered->size() ) ;
@@ -1193,12 +1196,14 @@ namespace Tracks
                             }
 
                             guint id_album  = get<guint>(track[ATTRIBUTE_MPX_ALBUM_ID].get()) ;
-			    TracksConstraint& tc = constraints_albums[id_album] ;
-                            tc.Count ++ ; 
-			    tc.Time += get<guint>(track[ATTRIBUTE_TIME].get()) ;
+			    TracksConstraint& tc_alb = constraints_albums[id_album] ;
+                            tc_alb.Count ++ ; 
+			    tc_alb.Time += get<guint>(track[ATTRIBUTE_TIME].get()) ;
 
                             guint id_artist = get<guint>(track[ATTRIBUTE_MPX_ALBUM_ARTIST_ID].get()) ;
-                            constraints_artist[id_artist] = constraints_artist[id_artist] + 1 ;
+			    TracksConstraint& tc_art = constraints_artist[id_artist] ;
+                            tc_art.Count ++ ; 
+			    tc_art.Time += get<guint>(track[ATTRIBUTE_TIME].get()) ;
 
                             new_mapping->push_back( i ) ; 
                         }
@@ -1306,16 +1311,16 @@ namespace Tracks
                         m_constraints_albums = TCVector_sp( new TCVector_t ) ; 
                         m_constraints_albums->resize( m_max_size_constraints_albums + 1 ) ;
 
-                        m_constraints_artist = IdVector_sp( new IdVector_t ) ; 
+                        m_constraints_artist = TCVector_sp( new TCVector_t ) ; 
                         m_constraints_artist->resize( m_max_size_constraints_artist + 1 ) ;
 
-                        IdVector_t& constraints_artist = *(m_constraints_artist.get()) ;
-                        TCVector_t& constraints_albums = *(m_constraints_albums.get()) ;
+                        TCVector_t& constraints_albums = *m_constraints_albums ;
+                        TCVector_t& constraints_artist = *m_constraints_artist ;
 
                         for( ModelIteratorSet_t::iterator i = output->begin() ; i != output->end(); ++i )
                         {
                             const MPX::Track_sp& t = (**i)->TrackSp ; 
-                            const MPX::Track& track = *(t.get()) ;
+                            const MPX::Track& track = *t ;
 
                             if( !m_constraints_aqe.empty() && !AQE::match_track( m_constraints_aqe, t ))
                             {
@@ -1330,13 +1335,14 @@ namespace Tracks
                             }
 
                             guint id_album  = get<guint>(track[ATTRIBUTE_MPX_ALBUM_ID].get()) ;
-
-			    TracksConstraint& tc = constraints_albums[id_album] ;
-                            tc.Count ++ ; 
-			    tc.Time += get<guint>(track[ATTRIBUTE_TIME].get()) ;
+			    TracksConstraint& tc_alb = constraints_albums[id_album] ;
+                            tc_alb.Count ++ ; 
+			    tc_alb.Time += get<guint>(track[ATTRIBUTE_TIME].get()) ;
 
                             guint id_artist = get<guint>(track[ATTRIBUTE_MPX_ALBUM_ARTIST_ID].get()) ;
-                            constraints_artist[id_artist] = constraints_artist[id_artist] + 1 ;
+			    TracksConstraint& tc_art = constraints_artist[id_artist] ;
+                            tc_art.Count ++ ; 
+			    tc_art.Time += get<guint>(track[ATTRIBUTE_TIME].get()) ;
 
                             new_mapping->push_back( *i ) ;
                         }
@@ -2098,9 +2104,11 @@ namespace Tracks
 			{
 			    page_size = (double(m_height__current_viewport)/double(m_height__row)) ;
 			}
-	
+
+			property_vadjustment().get_value()->freeze_notify() ;	
                         property_vadjustment().get_value()->set_upper( (upper<page_size)?page_size:upper ) ; 
 		        property_vadjustment().get_value()->set_page_size( page_size ) ; 
+			property_vadjustment().get_value()->thaw_notify() ;
 		    }
                 }
 
@@ -2122,7 +2130,7 @@ namespace Tracks
 		    ) ;
 
                     configure_vadj(
-                          m_model->size()
+                          m_model->size()+1
                         , get_page_size()
                     ) ;
 
@@ -2506,7 +2514,7 @@ namespace Tracks
                         ) ;
 
                         configure_vadj(
-                              m_model->size()
+                              m_model->size()+1
                             , get_page_size()
                         ) ;
                     }
@@ -3056,7 +3064,7 @@ namespace Tracks
 		    ));
 
                     configure_vadj(
-                          m_model->size()
+                          m_model->size()+1
                         , get_page_size()
                     ) ;
 		}

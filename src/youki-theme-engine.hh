@@ -50,6 +50,12 @@ namespace MPX
             YoukiThemeEngine () ; 
             virtual ~YoukiThemeEngine () ; 
 
+	    void
+	    set_select_color() ;
+
+	    void
+	    set_select_color(Gdk::RGBA) ;
+
             //// DRAWING FUNCTIONS
 
             void

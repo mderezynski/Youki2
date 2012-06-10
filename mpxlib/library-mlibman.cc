@@ -506,6 +506,7 @@ namespace MPX
                                 ", album.album_rating AS album_rating"
                                 ", album.album_disctotal AS album_disctotal"
 				", album.album_is_cpl AS album_is_cpl"
+				", album.album_genre AS album_genre"
                                 ", artist.id AS mpx_artist_id "
                                 ", album_artist.id AS mpx_album_artist_id "
                                 "  FROM track "
@@ -598,7 +599,7 @@ namespace MPX
                                 g_assert( t->has(ATTRIBUTE_LOCATION) );
                                 g_assert( (*i).count("id") );
 
-                                const guint&      device_id   = get<guint>((*i)["device_id"]) ;
+                                const guint&       device_id   = get<guint>((*i)["device_id"]) ;
                                 const std::string& insert_path = Util::normalize_path(get<std::string>((*i)["insert_path"]));
                                 const std::string& mount_point = m_HAL->get_mount_point_for_id( device_id ) ;
 

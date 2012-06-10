@@ -21,7 +21,7 @@ namespace
 
 namespace MPX
 {
-    inline double
+    double
     KoboPosition::cos_smooth (double x)
     {
         return (2.0 - std::cos (x * G_PI)) / 2.0;
@@ -107,18 +107,18 @@ namespace MPX
 	c_text_dark = Util::color_from_hsb( h, s, b ) ;
 
         Util::color_to_hsb( cgdk, h, s, b ) ;
-        b *= 0.84 ; 
-        s *= 0.92 ;
+        b *= 0.60 ; 
+        s *= 0.60 ;
         Gdk::RGBA c1 = Util::color_from_hsb( h, s, b ) ;
 
         Util::color_to_hsb( cgdk, h, s, b ) ;
-	b *= 0.9 ;
-        s *= 0.92 ; 
+	b *= 0.75 ;
+        s *= 0.70 ; 
         Gdk::RGBA c2 = Util::color_from_hsb( h, s, b ) ;
 
         Util::color_to_hsb( cgdk, h, s, b ) ;
-        b *= 1 ;
-        s *= 0.92 ; 
+        b *= 0.85 ;
+        s *= 0.80 ; 
         Gdk::RGBA c3 = Util::color_from_hsb( h, s, b ) ;
 
         Cairo::RefPtr<Cairo::LinearGradient> position_bar_back_gradient = Cairo::LinearGradient::create(

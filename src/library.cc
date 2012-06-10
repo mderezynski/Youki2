@@ -628,9 +628,10 @@ namespace MPX
 
                                     if( row.count("hal_vrp") )
                                             (*track.get())[ATTRIBUTE_VOLUME_RELATIVE_PATH] = get<std::string>(row["hal_vrp"]);
-
+#if 0
                                     (*track.get())[ATTRIBUTE_LOCATION] = trackGetLocation( track ); 
                                     g_assert( (*track.get()).has(ATTRIBUTE_LOCATION) );
+#endif
                                 }
                                 else
 #endif
@@ -665,8 +666,8 @@ namespace MPX
                                 if( row.count("title") )
                                         (*track.get())[ATTRIBUTE_TITLE] = get<std::string>(row["title"]);
 
-                                if( row.count("genre") )
-                                        (*track.get())[ATTRIBUTE_GENRE] = get<std::string>(row["genre"]);
+                                if( row.count("album_genre") )
+                                        (*track.get())[ATTRIBUTE_GENRE] = get<std::string>(row["album_genre"]);
 
                                 if( row.count("label") )
                                         (*track.get())[ATTRIBUTE_LABEL] = get<std::string>(row["label"]);

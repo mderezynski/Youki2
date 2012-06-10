@@ -101,6 +101,9 @@ namespace MPX
             IYoukiThemeEngine () {}
             virtual ~IYoukiThemeEngine () {}
 
+	    virtual void set_select_color() = 0 ;
+	    virtual void set_select_color(Gdk::RGBA) = 0 ;
+
             virtual void
             draw_selection_rectangle(
                   const Cairo::RefPtr<Cairo::Context>&          /*cairo ctx*/

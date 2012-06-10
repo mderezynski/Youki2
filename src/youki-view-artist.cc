@@ -1,5 +1,5 @@
 #include "youki-view-artist.hh"
-
+#include "mpx/widgets/cairo-blur.hh"
 #include <glibmm/i18n.h>
 
 namespace MPX
@@ -27,7 +27,7 @@ namespace Artist
 
 	    if( i1 != m_mbid_map.end() )
 	    {
-		icon = icon->scale_simple( 80, 80, Gdk::INTERP_BILINEAR ) ; 
+		icon = icon->scale_simple( 96, 96, Gdk::INTERP_BILINEAR ) ; 
 		
 		Glib::RefPtr<Gdk::Pixbuf> icon_desaturated_1 = icon->copy() ; 
 		Glib::RefPtr<Gdk::Pixbuf> icon_desaturated_2 = icon->copy() ;
@@ -36,9 +36,6 @@ namespace Artist
 		      s1
 		    , s2
 		;
-
-		icon->saturate_and_pixelate(icon_desaturated_1, 0.0, false) ;
-		icon->saturate_and_pixelate(icon_desaturated_2, 0.2, false) ;
 
 		s1 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_1) ;
 		s2 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_2) ;
@@ -102,7 +99,7 @@ namespace Artist
 
 	    if( icon )
 	    { 
-		return icon->scale_simple(80, 80, Gdk::INTERP_BILINEAR) ;
+		return icon->scale_simple(96, 96, Gdk::INTERP_BILINEAR) ;
 	    }
 
 	    return Glib::RefPtr<Gdk::Pixbuf>(0) ; 
@@ -112,6 +109,8 @@ namespace Artist
 	DataModel::append_artist(
 	      const std::string&	    artist
 	    , const std::string&	    artist_mbid
+	    , guint			    tracks
+	    , guint			    totaltime
 	    , const boost::optional<guint>& artist_id
 	)
 	{
@@ -127,8 +126,10 @@ namespace Artist
 		Glib::RefPtr<Gdk::Pixbuf> icon_desaturated_1 = icon->copy() ; 
 		Glib::RefPtr<Gdk::Pixbuf> icon_desaturated_2 = icon->copy() ;
 
+#if 0
 		icon->saturate_and_pixelate(icon_desaturated_1, 0.0, false) ;
 		icon->saturate_and_pixelate(icon_desaturated_2, 0.2, false) ;
+#endif
 
 		s1 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_1) ;
 		s2 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_2) ;
@@ -142,6 +143,8 @@ namespace Artist
 		, artist_mbid
 		, s1 
 		, s2 
+		, tracks
+		, totaltime
 	    ) ;
 
 	    m_datamodel->push_back(r);
@@ -153,14 +156,14 @@ namespace Artist
 		m_iter_map.insert(std::make_pair(artist_id.get(), i));
 		m_mbid_map.insert(std::make_pair(artist_mbid, i)) ;
 	    }
-
-//	    m_ArtistImages->recache_single_image(artist,artist_mbid) ;
 	}
 
 	void
 	DataModel::insert_artist(
 	      const std::string&	    artist
 	    , const std::string&	    artist_mbid
+	    , guint			    tracks
+	    , guint			    totaltime
 	    , const boost::optional<guint>& artist_id
 	)
 	{
@@ -178,8 +181,10 @@ namespace Artist
 		Glib::RefPtr<Gdk::Pixbuf> icon_desaturated_1 = icon->copy() ; 
 		Glib::RefPtr<Gdk::Pixbuf> icon_desaturated_2 = icon->copy() ;
 
+#if 0
 		icon->saturate_and_pixelate(icon_desaturated_1, 0.0, false) ;
 		icon->saturate_and_pixelate(icon_desaturated_2, 0.2, false) ;
+#endif
 
 		s1 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_1) ;
 		s2 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_2) ;
@@ -193,6 +198,8 @@ namespace Artist
 		, artist_mbid
 		, s1 
 		, s2 
+		, tracks
+		, totaltime
 	    ) ;
 
 	    Model_t::iterator i = m_datamodel->insert(
@@ -211,7 +218,7 @@ namespace Artist
 		m_mbid_map.insert(std::make_pair(artist_mbid, i)) ;
 	    }
 
-//	    m_ArtistImages->recache_single_image(artist,artist_mbid) ;
+	    m_ArtistImages->recache_single_image(artist,artist_mbid) ;
 	}
 
 //////////////////////////
@@ -226,7 +233,7 @@ namespace Artist
 
 	void
 	DataModelFilter::set_constraints_artist(
-	    const IdVector_sp& constraint
+	    const TCVector_sp& constraint
 	)
 	{
 	    m_constraints_artist = constraint ;
@@ -274,12 +281,16 @@ namespace Artist
 	DataModelFilter::append_artist(
 	      const std::string&	    artist_name
 	    , const std::string&	    artist_mbid
+	    , guint			    tracks
+	    , guint			    totaltime
 	    , const boost::optional<guint>& artist_id
 	)
 	{
 	    DataModel::append_artist(
 		  artist_name
 		, artist_mbid
+		, tracks
+		, totaltime
 		, artist_id 
 	    ) ;
 	}
@@ -288,12 +299,16 @@ namespace Artist
 	DataModelFilter::insert_artist(
 	      const std::string&	    artist_name
 	    , const std::string&	    artist_mbid
+	    , guint			    tracks
+	    , guint			    totaltime
 	    , const boost::optional<guint>& artist_id
 	)
 	{
 	    DataModel::insert_artist(
 		  artist_name
 		, artist_mbid
+		, tracks
+		, totaltime
 		, artist_id
 	    ) ;
 	}
@@ -331,7 +346,7 @@ namespace Artist
 	    {
 		boost::optional<guint> id = get<1>(*i) ;
 
-		if(!m_constraints_artist || (*m_constraints_artist)[id.get()])
+		if(!m_constraints_artist || (*m_constraints_artist)[id.get()].Count)
 		{
 		    new_mapping.push_back( i ) ;
 		}
@@ -358,7 +373,7 @@ namespace Artist
 	    {
 		boost::optional<guint> id = get<1>(*i) ;
 
-		if(!m_constraints_artist || (*m_constraints_artist)[id.get()])
+		if(!m_constraints_artist || (*m_constraints_artist)[id.get()].Count)
 		{
 		    new_mapping.push_back( i ) ;
 		}
@@ -394,18 +409,21 @@ namespace Artist
 	    , m_alignment( Pango::ALIGN_LEFT )
 
 	{
+	    m_rect_shadow = Util::cairo_image_surface_from_pixbuf(
+				    Gdk::Pixbuf::create_from_file(
+					    Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "lensflare-vflipped.png" )
+	    )) ;
+
 	    m_image_disc = Util::cairo_image_surface_from_pixbuf(
 				    Gdk::Pixbuf::create_from_file(
 					    Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "artist.png" )
-	    )->scale_simple(80, 80, Gdk::INTERP_BILINEAR)) ;
-
-	    m_rect_shadow = render_rect_shadow( 80, 80 ) ;
+	    )->scale_simple(96, 96, Gdk::INTERP_BILINEAR)) ;
 	}
 
 	void
 	Column::set_rounding(double r)
 	{
-	    m_rounding = r ;
+	    m_rounding = 5 ; // r ;
 	}
 
 	double
@@ -509,7 +527,7 @@ namespace Artist
 	void
 	Column::render(
 	      const Cairo::RefPtr<Cairo::Context>&  cairo
-	    , const Row_t&			    r
+	    , Row_t&				    r
 	    , Gtk::Widget&			    widget
 	    , int				    d
 	    , int				    xpos
@@ -517,117 +535,179 @@ namespace Artist
 	    , int				    row_height
 	    , bool				    selected
 	    , const ThemeColor&			    color
+	    , const ThemeColor&			    color_sel
+	    , const TCVector_sp&		    constraints
 	)
 	{
-	    using boost::get;
-
-	    cairo->save() ;
-
-	    const int text_size_px = 15 ;
-	    const int text_size_pt = static_cast<int>((text_size_px* 72)
-					/ Util::screen_get_y_resolution(Gdk::Screen::get_default())) ;
-
-	    Pango::FontDescription font_desc ;
-	    font_desc = widget.get_style_context()->get_font() ;
-	    font_desc.set_size( text_size_pt * PANGO_SCALE ) ;
-//	    font_desc.set_weight( Pango::WEIGHT_BOLD ) ; 
-	
-	    Glib::RefPtr<Pango::Layout> L = widget.create_pango_layout(get<0>(r)) ;
-
-	    L->set_font_description( font_desc ) ;
-
-	    L->set_ellipsize(
-		  Pango::ELLIPSIZE_END
-	    ) ;
-
-	    L->set_width(
-		  (m_width-8) * PANGO_SCALE
-	    ) ;
-
-	    L->set_alignment( Pango::ALIGN_LEFT ) ;
+	    using boost::get ;
 
 	    int width, height ;
-	    L->get_pixel_size( width, height ) ;
 
-	    double h,s,b ;
+	    const int text_size_px_s = 12 ;
+	    const int text_size_pt_s = static_cast<int>((text_size_px_s * 72)/ Util::screen_get_y_resolution(Gdk::Screen::get_default())) ;
+	    Glib::RefPtr<Pango::Layout> layout_s = Glib::wrap( pango_cairo_create_layout(cairo->cobj())) ;
+	    Pango::FontDescription font_desc_s ;
+	    font_desc_s = widget.get_style_context()->get_font();
+	    font_desc_s.set_size(text_size_pt_s*PANGO_SCALE );
+	    font_desc_s.set_weight(Pango::WEIGHT_NORMAL);
+	    layout_s->set_font_description(font_desc_s);
+	    layout_s->set_width((m_width-8)*PANGO_SCALE); 
+	    layout_s->set_ellipsize(Pango::ELLIPSIZE_END);
 
-	    Gdk::RGBA c3 = color ;
-	    c3.set_alpha( 0.7 ) ;
-	    Util::color_to_hsb( color, h, s, b ) ;
-	    s *= 0.25 ;
-	    b *= 1.80 ;
-	    c3 = Util::color_from_hsb( h, s, b ) ;
-	    c3.set_alpha( 1. ) ;
+	    const int text_size_px = 12 ;
+	    const int text_size_pt = static_cast<int>((text_size_px*72)/ Util::screen_get_y_resolution(Gdk::Screen::get_default())) ;
+	    Glib::RefPtr<Pango::Layout> layout = widget.create_pango_layout("") ;
+	    Pango::FontDescription font_desc ;
+	    font_desc = widget.get_style_context()->get_font() ;
+	    font_desc.set_size(text_size_pt * PANGO_SCALE) ;
+	    font_desc.set_weight(Pango::WEIGHT_BOLD) ;
+	    layout->set_font_description(font_desc) ;
+	    layout->set_width(86*PANGO_SCALE) ;
+	    layout->set_wrap(Pango::WRAP_WORD_CHAR) ;
+	    layout->set_text(get<0>(r)) ;
+	    layout->get_pixel_size( width, height ) ;
 
-	    Util::color_to_hsb( color, h, s, b ) ;
-	    s *= 0.95 ;
-	    Gdk::RGBA c2 = Util::color_from_hsb( h, s, b ) ;
-	    c2.set_alpha( 1. ) ;
+	    //////////
 
-	    /* Icon */
-	    Cairo::RefPtr<Cairo::ImageSurface> surface ; 
-	
-	    if(selected)
-		surface = boost::get<4>(r) ;
-	    else
-		surface = boost::get<3>(r) ;
+	    Cairo::RefPtr<Cairo::ImageSurface>
+	    surface = boost::get<4>(r) ;
 
-	    int x = xpos+(m_width-80)/2. ;
-	    int y = ypos+12 ;
+	    //////////
 
 	    if(!surface)
-		surface = m_image_disc ;
-	    else
-		Util::draw_cairo_image( cairo, m_rect_shadow, x, y, 0.5, 0 ) ;
-
-	    if(surface)
 	    {
-		cairo->save() ;
-		cairo->translate( x, y ) ;
-		RoundedRectangle( cairo, 0, 0, 80, 80, m_rounding ) ;
-		cairo->set_source( surface, 0, 0 ) ;
-		cairo->fill_preserve() ;
-		cairo->set_line_width( 0.5 ) ;	
-		Gdk::Cairo::set_source_rgba( cairo, Util::make_rgba(color,0.4)) ;
-		cairo->stroke() ;
-		cairo->restore() ;
+		surface = m_image_disc ;
 	    }
 
-	    /* Label */
+	    //////////
+
+	    double x = (m_width-96)/2. ; 
+	    double y = ypos+8 ; 
+
 	    cairo->save() ;
-	    cairo->translate( xpos+(m_width-width)/2., ypos+/*76*/98 ) ;
+	    cairo->translate( x, y ) ;
+
+	    RoundedRectangle(cairo, 0, 0, 96, 96, 5.) ;
+	    cairo->set_source(surface, 0, 0) ;
+	    cairo->fill_preserve() ;
+
+	    Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create( 48, 0, 48, 96 ) ;
+	    gradient->add_color_stop_rgba(
+		  0
+		, 0
+		, 0
+		, 0
+		, 0.40
+	    ) ;
+	    gradient->add_color_stop_rgba(
+		  0.66
+		, 0
+		, 0
+		, 0
+		, 0.2
+	    ) ;
+	    gradient->add_color_stop_rgba(
+		  1
+		, 0
+		, 0
+		, 0
+		, 0
+	    ) ;
+	    cairo->set_source( gradient ) ;
+	    cairo->fill() ;
 
 	    if( selected )
 	    {
-		Util::render_text_shadow( L, 0.0, 0.0, cairo ) ;
+		RoundedRectangle(cairo, 0, 4, 96, 96, 5.) ;
+		cairo->set_source(m_rect_shadow, -90, 4) ;
+		cairo->fill() ;
 	    }
 
-	    auto set_color_stop_rgba = 
+	    boost::optional<Gdk::RGBA>& c = boost::get<7>(r) ; 
 
-	    [](Gdk::RGBA c, double p, double alpha, Cairo::RefPtr<Cairo::LinearGradient> gr)
+	    if(!c)
 	    {
-		gr->add_color_stop_rgba(
-		      p
-		    , c.get_red()
-		    , c.get_green()
-		    , c.get_blue()
-		    , alpha
-		) ;
-	    } ;
+		Glib::RefPtr<Gdk::Pixbuf> pb = Util::cairo_image_surface_to_pixbuf(surface) ;
+		c = Util::pick_color_for_pixbuf(pb) ;
+	    }
 
-	    Cairo::RefPtr<Cairo::LinearGradient> gr = Cairo::LinearGradient::create( width/2, 0, width/2, height ) ;
-	    set_color_stop_rgba( selected?color:c3, 0, 1, gr ) ;
-	    set_color_stop_rgba( Util::color_shade(selected?color:c3, 0.9), 0.7, 1, gr ) ;
-	    set_color_stop_rgba( Util::color_shade(selected?color:c3, 0.8), 1.0, 1, gr ) ;
-	    cairo->set_source( gr ) ;
-	    cairo->move_to(0.0, 0.0) ;
-	    pango_cairo_show_layout(
-		  cairo->cobj()
-		, L->gobj()
-	    ) ;
+	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(c.get(),1)) ;
+	    RoundedRectangle(cairo, 0, 0, 96, 96, 5.) ;
+	    cairo->set_line_width(3) ;
+	    cairo->stroke() ;
 	    cairo->restore() ;
 
+	    //////////
+
+	    cairo->save() ;
+	    cairo->translate((m_width-96)/2.,ypos+8) ;
+	    cairo->move_to(
+		  6 
+		, 6 
+	    );
+	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(1,1,1,0.85)) ; 
+	    pango_cairo_show_layout(cairo->cobj(), layout->gobj());
 	    cairo->restore() ;
+
+	    //////////
+
+	    std::string s_artist_tracks, s_artist_time ;
+
+	    guint tracks = 0 ;
+	    guint artist_time = 0 ;
+
+	    if( constraints )
+	    {
+		const TCVector_t& c = (*constraints) ;
+
+		tracks = (c[boost::get<1>(r).get()]).Count ;
+		artist_time = (c[boost::get<1>(r).get()]).Time ;
+	    }
+	    else
+	    {
+		tracks = boost::get<5>(r) ;
+		artist_time = boost::get<6>(r) ;
+	    }
+
+	    guint hrs = artist_time / 3600;
+	    guint min = (artist_time-hrs*3600) / 60;
+	    guint sec = artist_time % 60;
+
+	    if( hrs )
+		s_artist_time = ((boost::format("<b>%u:%02u:%02u</b>") % hrs % min % sec).str()) ;
+	    else
+		s_artist_time = ((boost::format("<b>%u:%02u</b>") % min % sec).str()) ;
+
+	    s_artist_tracks = ((boost::format("<b>%u</b> %s") % tracks % ((tracks>1)?"Tracks":"Track")).str()) ;
+
+	    if( constraints ) 
+	    {
+		layout_s->set_markup( s_artist_tracks );
+		layout_s->get_pixel_size( width, height );
+
+		cairo->save() ;
+		cairo->translate((m_width-96)/2.,ypos+4+96+8) ;
+		cairo->move_to(
+		      0 
+		    , 0 
+		);
+		Gdk::Cairo::set_source_rgba(cairo, color) ; 
+		pango_cairo_show_layout(cairo->cobj(), layout_s->gobj());
+		cairo->restore() ;
+
+		layout_s->set_markup( s_artist_time );
+		layout_s->get_pixel_size( width, height );
+
+		cairo->save() ;
+		cairo->translate((m_width-96)/2.,ypos+4+96+8+12+2) ;
+		cairo->move_to(
+		      0 
+		    , 0 
+		);
+		Gdk::Cairo::set_source_rgba(cairo, color) ; 
+		pango_cairo_show_layout(cairo->cobj(), layout_s->gobj());
+		cairo->restore() ;
+	    }
 	}
 
 //////////////////////////
@@ -642,12 +722,16 @@ namespace Artist
 					    , context->get_language()
 	    ) ;
 
-	    m_height__row = 123 ;
+	    m_height__row = 112 ;
 
 	    const int header_pad = 5 ;
 
+	    m_height__headers = 0 ;
+
+#if 0
 	    m_height__headers = (metrics.get_ascent()/PANGO_SCALE) +
 			        (metrics.get_descent()/PANGO_SCALE) + 5 + header_pad ;
+#endif
 	}
 
 	void
@@ -769,6 +853,10 @@ namespace Artist
 
 	    switch( event->keyval )
 	    {
+		case GDK_KEY_Escape:
+		    clear_selection() ;
+		    return true ;
+
 		case GDK_KEY_Up:
 		case GDK_KEY_KP_Up:
 		case GDK_KEY_Page_Up:
@@ -1020,10 +1108,11 @@ namespace Artist
 	{
 	    if( property_vadjustment().get_value() )
 	    {
+		property_vadjustment().get_value()->freeze_notify() ;
 		property_vadjustment().get_value()->set_upper( upper ) ;
 		property_vadjustment().get_value()->set_page_size( page_size ) ;
-		property_vadjustment().get_value()->set_step_increment( step_increment ) ;
-		property_vadjustment().get_value()->set_page_increment( step_increment ) ;
+		property_vadjustment().get_value()->set_step_increment( m_height__row ) ;
+		property_vadjustment().get_value()->thaw_notify() ;
 	    }
 	}
 
@@ -1141,8 +1230,9 @@ namespace Artist
 
 	    const ThemeColor& c_text       = theme->get_color( THEME_COLOR_TEXT ) ;
 	    const ThemeColor& c_text_sel   = theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
-	    const ThemeColor& c_bg	   = theme->get_color( THEME_COLOR_BACKGROUND ) ;
+	    const ThemeColor& c_rules_hint = theme->get_color( THEME_COLOR_BASE_ALTERNATE ) ;
 	    const ThemeColor& c_treelines  = theme->get_color( THEME_COLOR_TREELINES ) ;
+	    const ThemeColor& c_bg	   = theme->get_color( THEME_COLOR_BACKGROUND ) ;
 
 	    guint d	= get_upper_row() ;
 	    guint d_max = Limiter<guint>(
@@ -1165,6 +1255,7 @@ namespace Artist
 	    rr.width = get_allocated_width() ;
 	    rr.height = m_height__row ;
 
+#if 0
 	    render_header_background( cairo, get_allocated_width(), m_height__headers, c_bg, c_treelines ) ;
 
 	    for( auto& c : m_columns )
@@ -1179,9 +1270,10 @@ namespace Artist
 
 		xpos += c->get_width();
 	    }
+#endif
 
-	    cairo->rectangle( 0, m_height__headers, get_allocated_width(), get_allocated_height() - m_height__headers ) ;
-	    cairo->clip() ;
+	    //cairo->rectangle( 0, m_height__headers, get_allocated_width(), get_allocated_height() - m_height__headers ) ;
+	    //cairo->clip() ;
 
 	    while( n < d_max && ModelExtents(d_cur)) 
 	    {
@@ -1189,6 +1281,7 @@ namespace Artist
 
 		int is_selected = (m_selection && get<S_ID>(m_selection.get()) == get<S_ID>(**iter)) ;
 
+#if 0
 		if( is_selected )
 		{
 		    rr.y = ypos ;
@@ -1201,6 +1294,8 @@ namespace Artist
 			, MPX::CairoCorners::CORNERS(0)
 		    ) ;
 		}
+#endif
+
 #if 0
 		else
 		if(d_cur%2)
@@ -1219,6 +1314,7 @@ namespace Artist
 #endif
 
 		xpos = 0 ;
+
 		for( auto& c : m_columns )
 		{
 		    c->render(
@@ -1231,6 +1327,8 @@ namespace Artist
 			, m_height__row
 			, is_selected
 			, is_selected ? c_text_sel : c_text
+			, is_selected ? c_text : c_text_sel
+			, m_model->m_constraints_artist
 		    ) ;
 
 		    xpos += c->get_width();
@@ -1306,6 +1404,15 @@ namespace Artist
 	    guint index
 	)
 	{
+	    if( m_model->m_constraints_artist )
+	    {
+		m_height__row = 112 + 4 + 2 + 12 + 2 + 12 ;
+	    }
+	    else
+	    {
+		m_height__row = 112 ;
+	    }
+
 	    configure_vadj(
 		 (m_model->size() * m_height__row)
 	       , m_height__current_viewport
@@ -1319,7 +1426,8 @@ namespace Artist
 	    ) ;
 
 	    scroll_to_index( index ) ;
-	    queue_resize() ;
+
+	    queue_draw() ;
 	}
 
 	void

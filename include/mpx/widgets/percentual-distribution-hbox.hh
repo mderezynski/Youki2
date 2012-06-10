@@ -57,7 +57,12 @@ namespace MPX
                 double overall_alloc_width = alloc.get_width() ;
                 overall_alloc_width -= get_spacing() * (children.size()-1) ;
 
-                for( unsigned int n = 0 ; n < children.size () ; n++ )
+		alloc_child.set_width( 180 ) ;
+		children[0]->size_allocate( alloc_child ) ;
+                alloc_child.set_x( alloc_child.get_x() + 180 + get_spacing() ) ;
+		overall_alloc_width -= 180 ;
+
+                for( unsigned int n = 1 ; n < children.size () ; n++ )
                 {
                     double width_t = overall_alloc_width * m_widths[n] ;
 

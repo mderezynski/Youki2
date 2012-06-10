@@ -773,7 +773,7 @@ namespace AQE
         
             bool truthvalue = false ; 
 
-            if( c.TargetValue.get().which() == VT_STRSET )
+            if( c.TargetValue && c.TargetValue.get().which() == VT_STRSET )
             {
                 truthvalue = determine_match<StrS>( c, t ) ;
             }

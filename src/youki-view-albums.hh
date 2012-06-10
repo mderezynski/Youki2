@@ -39,6 +39,7 @@ namespace Albums
         {
             Cairo::RefPtr<Cairo::ImageSurface>      coverart ;
             Cairo::RefPtr<Cairo::ImageSurface>      surface_cache ;
+	    boost::optional<Gdk::RGBA>		    rgba ;
             boost::optional<guint>		    album_id ;
             guint                                   artist_id ;
             std::string                             album ;
@@ -90,9 +91,6 @@ namespace Albums
 
 	typedef sigc::signal<void>		    Signal_0 ;
 	typedef sigc::signal<void, guint>	    Signal_1 ;
-
-	typedef std::vector<guint>                  IdVector_t ;
-	typedef boost::shared_ptr<IdVector_t>       IdVector_sp ;
 
         struct OrderFunc
         : public std::binary_function<Album_sp, Album_sp, bool>
@@ -199,7 +197,7 @@ namespace Albums
 
                 RowRowMapping_t   m_mapping ;
                 TCVector_sp       m_constraints_albums ;
-                IdVector_sp       m_constraints_artist ;
+                TCVector_sp       m_constraints_artist ;
 
             public:
 
@@ -221,7 +219,7 @@ namespace Albums
 
                 virtual void
                 set_constraints_artist(
-                    IdVector_sp&
+                    TCVector_sp&
                 ) ;
 
                 virtual void
@@ -357,6 +355,8 @@ namespace Albums
                     , int                                   ypos
                     , guint				    row_height
                     , const ThemeColor&			    color
+                    , const ThemeColor&			    color_sel
+                    , const ThemeColor&			    color_bg
                     , guint				    model_mapping_size
 		    , guint				    model_size
 		    , bool				    selected
@@ -367,7 +367,8 @@ namespace Albums
         typedef boost::shared_ptr<Column>     Column_sp ;
         typedef std::vector<Column_sp>        Column_sp_vector_t ;
 
-        class Class
+        
+class Class
         : public Gtk::DrawingArea
 	, public Gtk::Scrollable
 	, public sigx::glib_auto_dispatchable

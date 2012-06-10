@@ -8,6 +8,8 @@ INSTALL(
         emblem-soundtrack.png
         jewelcase_bot.png
         jewelcase_top.png
+	lensflare.png
+	lensflare-vflipped.png
 	media-repeat.png
 	media-shuffle.png
 	mute-small-14x14px.png

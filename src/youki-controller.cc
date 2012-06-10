@@ -400,7 +400,7 @@ namespace MPX
         m_VBox->set_spacing( 2 ) ;
 	m_VBox->set_border_width(0) ;
 
-        m_HBox_Main = Gtk::manage( new PercentualDistributionHBox ) ;
+        m_HBox_Main = Gtk::manage( new Gtk::HBox ) ;
         m_HBox_Main->set_spacing( 4 ) ; 
 
         m_HBox_Entry = Gtk::manage( new Gtk::HBox ) ;
@@ -845,13 +845,12 @@ namespace MPX
                 , &YoukiController::on_list_view_ab_start_playback
         )) ;
 
-        m_HBox_Main->add_percentage( 0.15 ) ;
-        m_HBox_Main->add_percentage( 0.65 ) ;
-        m_HBox_Main->add_percentage( 0.20 ) ;
+	m_ListViewArtist->set_size_request( 120, -1 ) ;
+	m_ListViewAlbums->set_size_request( 204, -1 ) ;
 
-        m_HBox_Main->pack_start( *m_ScrolledWinArtist, true, true, 0 ) ;
+        m_HBox_Main->pack_start( *m_ScrolledWinArtist, false, true, 0 ) ;
+        m_HBox_Main->pack_start( *m_ScrolledWinAlbums, false, true, 0 ) ;
         m_HBox_Main->pack_start( *m_ScrolledWinTracks, true, true, 0 ) ;
-        m_HBox_Main->pack_start( *m_ScrolledWinAlbums, true, true, 0 ) ;
 
         std::vector<Gtk::Widget*> widget_v( 4 ) ; /* NEEDS TO BE CHANGED IF WIDGETS ARE RE-ADDED */
         widget_v[0] = m_Entry ;
@@ -991,9 +990,17 @@ namespace MPX
 	    m_nearest__artists.push_back(s) ;
 	    artists_lc.push_back(Glib::ustring(s).lowercase()) ;
 
+	    SQL::RowV v2 ;
+	    m_library->getSQL(v2, (boost::format("SELECT count(*) AS cnt FROM track_view WHERE mpx_album_artist_id = '%u'") % boost::get<guint>(r["id"])).str()) ; 
+
+	    SQL::RowV v3 ;
+	    m_library->getSQL( v3, (boost::format("SELECT sum(time) AS total FROM track_view WHERE mpx_album_artist_id = %u") % boost::get<guint>(r["id"])).str() ) ;
+
 	    private_->FilterModelArtist->append_artist(
 		  s  
 		, boost::get<std::string>(r["mb_album_artist_id"])
+		, boost::get<guint>(v2[0]["cnt"])
+		, boost::get<guint>(v3[0]["total"])
 		, boost::get<guint>(r["id"])
 	    ) ;
 	}
@@ -1335,7 +1342,7 @@ namespace MPX
         m_covers->fetch(
               get<std::string>(r["mb_album_id"])
             , cover_pb
-            , 90
+            , 192
         ) ;
 
         if( cover_pb ) 
@@ -1448,9 +1455,14 @@ namespace MPX
         v.clear();
         m_library->getSQL( v, (boost::format( "SELECT * FROM album_artist WHERE id = '%u'" ) % id ).str() ) ; 
 
+	SQL::RowV v2 ;
+	m_library->getSQL(v2, (boost::format("SELECT count(*) AS cnt FROM track_view WHERE mpx_album_artist_id = '%u'") % id).str()) ; 
+
         private_->FilterModelArtist->insert_artist(
               boost::get<std::string>(v[0]["album_artist"])
             , boost::get<std::string>(v[0]["mb_album_artist_id"])
+	    , boost::get<guint>(v2[0]["cnt"])
+	    , 0 // FIXME FIXME FIXME
             , id 
         ) ; 
 
@@ -1633,8 +1645,9 @@ namespace MPX
 			, cover
 		    ))
 		    {
-			m_main_info->set_cover( cover ) ;
 			Gdk::RGBA c = Util::pick_color_for_pixbuf(cover) ;
+
+			m_main_info->set_cover( cover ) ;
 			m_main_info->set_color(c) ;
 			m_main_position->set_color(c) ;
 		    }
@@ -1711,7 +1724,7 @@ namespace MPX
                 continue ;
             }
 
-            private_->FilterModelTracks->insert_track( v[0], m_library->sqlToTrack( v[0], true, false ) ) ;
+            private_->FilterModelTracks->insert_track( v[0], m_library->sqlToTrack( v[0], true, false )) ;
         }
 
         m_new_tracks.clear() ;
@@ -1973,12 +1986,10 @@ namespace MPX
 		m_main_position->unpause() ;
                 m_main_position->set_position( 0, 0 ) ;
 
-		m_main_window->set_title("Youki") ;
-
                 private_->FilterModelTracks->clear_active_track() ;
 
-                if( m_main_window )
-                    m_main_window->queue_draw () ;    
+		m_main_window->set_title("Youki") ;
+                m_main_window->queue_draw () ;    
 
                 break ;
 
@@ -1988,11 +1999,7 @@ namespace MPX
 		m_main_position->unpause() ;
                 m_seek_position.reset() ; 
                 m_main_info->clear() ;
-
-                if( m_main_window )
-		{
-                    m_main_window->queue_draw () ;    
-		}
+                m_main_window->queue_draw () ;    
 
                 break ;
 
@@ -2037,6 +2044,8 @@ namespace MPX
         info.push_back( boost::get<std::string>(track[ATTRIBUTE_TITLE].get()) ) ;
 	m_main_info->set_info( info ) ;
 
+	boost::shared_ptr<IYoukiThemeEngine> theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;
+
         if( track.has( ATTRIBUTE_MB_ALBUM_ID ) )
         {
                 Glib::RefPtr<Gdk::Pixbuf> cover ;
@@ -2046,16 +2055,20 @@ namespace MPX
                     , cover
                 ))
                 {
-                    m_main_info->set_cover( cover ) ;
 		    Gdk::RGBA c = Util::pick_color_for_pixbuf(cover) ;
+
+                    m_main_info->set_cover( cover ) ;
 		    m_main_info->set_color(c) ;
+
 		    m_main_position->set_color(c) ;
+
 		    goto skip1 ;
                 }
         }
 
 	m_main_info->set_cover( Glib::RefPtr<Gdk::Pixbuf>(0) ) ;
 	m_main_info->set_color() ;
+
 	m_main_position->set_color() ;
 	
 	skip1:
@@ -2335,33 +2348,41 @@ namespace MPX
 	if( p != Gtk::ENTRY_ICON_SECONDARY )
 	    return ;
 
+        m_conn1.block() ;
+        m_conn2.block() ;
+        m_conn4.block() ;
+
         private_->FilterModelAlbums->clear_constraints_artist() ;
         private_->FilterModelAlbums->clear_constraints_albums() ;
         private_->FilterModelAlbums->clear_all_constraints_quiet() ;
         private_->FilterModelArtist->clear_constraints_artist() ;
         private_->FilterModelTracks->clear_synthetic_constraints_quiet() ;
 
-        m_Entry->set_text( "" ) ;
+        m_ListViewArtist->clear_selection() ;
+        m_ListViewAlbums->clear_selection() ;
 
-        m_conn1.block() ;
-        m_conn2.block() ;
-        m_conn4.block() ;
+	bool was_empty = m_Entry->get_text().empty() ;
+
+        m_Entry->set_text("") ;
+
+	std::string text_noaque ;
+
+	boost::optional<guint> id ;
 
         if( m_track_current && 
 	    Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("ViewActionFollowPlayingTrack"))->get_active())
         {
-            const MPX::Track& track = *m_track_current ;
-
-            guint id_track = boost::get<guint>(track[ATTRIBUTE_MPX_TRACK_ID].get()) ;
-	    m_ListViewTracks->scroll_to_id( id_track ) ;
+            id = boost::get<guint>((*m_track_current)[ATTRIBUTE_MPX_TRACK_ID].get()) ;
         }
+
+	if( was_empty )
+	{
+	    private_->FilterModelTracks->regen_mapping(id) ;
+	}
 	else
 	{
-	    m_ListViewTracks->scroll_to_index(0) ;
+	    private_->FilterModelTracks->process_filter("",id,text_noaque) ;
 	}
-
-        m_ListViewArtist->clear_selection() ;
-        m_ListViewAlbums->clear_selection() ;
 
         private_->FilterModelArtist->regen_mapping() ;
         m_ListViewArtist->scroll_to_index(0) ;
@@ -2369,13 +2390,12 @@ namespace MPX
         private_->FilterModelAlbums->regen_mapping() ;
         m_ListViewAlbums->scroll_to_index(0) ;
 
-	private_->FilterModelTracks->regen_mapping() ;
-
         m_conn1.unblock() ;
         m_conn2.unblock() ;
         m_conn4.unblock() ;
 
-	m_ListViewArtist->grab_focus() ;
+	m_Entry->grab_focus() ;
+
 	history_save() ;
     }
 

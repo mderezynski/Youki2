@@ -510,7 +510,7 @@ namespace MPX
 
                     if( i_begin.size() == 1 && (*(i_begin.begin())).first == 0 && (*(i_end.begin())).first == text.size() )    
                     {
-                        output += "<span underline_color='#a0a0a0' underline='low'>" + Glib::Markup::escape_text(text).raw() + "</span>";
+                        output += "<span weight='bold'>" + Glib::Markup::escape_text(text).raw() + "</span>";
                     }
                     else
                     {
@@ -536,7 +536,7 @@ namespace MPX
                                     {
                                         output += Glib::Markup::escape_text( chunk ).raw();
                                         chunk.clear();
-                                        output += "<span underline_color='#a0a0a0' underline='low'>";
+                                        output += "<span weight='bold'>";
                                     }
                                 }
                                 else

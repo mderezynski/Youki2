@@ -157,16 +157,16 @@ namespace MPX
 		RoundedRectangle(
 		      cairo
 		    , a.get_width() - 2 - width - 4 - 4
-		    , 3 
-		    , width + 7
-		    , height + 4 
+		    , 111 - 12 - (height+4) 
+		    , width+7
+		    , height+4 
 		    , rounding
-		    , MPX::CairoCorners::CORNERS(4)
+		    , MPX::CairoCorners::CORNERS(5)
 		) ;
 
 		Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create(
 		      a.get_width() - 10 + width/2 
-		    , 4 
+		    , 16 
 		    , a.get_width() - 10 + width/2 
 		    , height+4 
 		) ;
@@ -176,14 +176,14 @@ namespace MPX
 		    , 1. 
 		    , 1. 
 		    , 1. 
-		    , 0.82 
+		    , 0.69 
 		) ;
 		gradient->add_color_stop_rgba(
-		      .2
+		      .1
 		    , 1. 
 		    , 1. 
 		    , 1. 
-		    , 0.80 
+		    , 0.67 
 		) ;
 		gradient->add_color_stop_rgba(
 		      1. 
@@ -205,7 +205,7 @@ namespace MPX
 
 		cairo->move_to(
 		      a.get_width() - 2 - width - 4
-		    , 5
+		    , 111 - 12 - (height+2) 
 		) ;
 
 		pango_cairo_show_layout( cairo->cobj(), layout->gobj() ) ;

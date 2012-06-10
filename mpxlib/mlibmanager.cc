@@ -503,9 +503,13 @@ namespace MPX
 
 	for(SQL::RowV::iterator i = v.begin(); i != v.end(); ++i)
 	{
-	    std::string path = boost::get<std::string>((*i)["insert_path"]) ;
-            std::string mntp = m_HAL->get_mount_point_for_id(boost::get<guint>((*i)["device_id"])) ;
-	    m_ManagedPaths.insert( Glib::build_filename( mntp, path+"/" ));
+	    try{
+		std::string path = boost::get<std::string>((*i)["insert_path"]) ;
+		std::string mntp = m_HAL->get_mount_point_for_id(boost::get<guint>((*i)["device_id"])) ;
+		m_ManagedPaths.insert( Glib::build_filename( mntp, path+"/" ));
+	    } catch(std::runtime_error)
+	    {
+	    }
 	}
 
 	build_fstree("/") ;

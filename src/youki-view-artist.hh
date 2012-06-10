@@ -51,7 +51,7 @@ namespace View
 {
 namespace Artist
 {
-        typedef boost::tuple<std::string, boost::optional<guint>, std::string, Cairo::RefPtr<Cairo::ImageSurface>, Cairo::RefPtr<Cairo::ImageSurface>> Row_t ;
+        typedef boost::tuple<std::string, boost::optional<guint>, std::string, Cairo::RefPtr<Cairo::ImageSurface>, Cairo::RefPtr<Cairo::ImageSurface>, guint, guint, boost::optional<Gdk::RGBA>> Row_t ;
 
 	enum class RowDatum : unsigned int
 	{
@@ -60,6 +60,7 @@ namespace Artist
 	    , R_MBID
 	    , R_ICON
 	    , R_ICON_DESATURATED
+	    , R_TRACKS
 	} ;
 
         typedef boost::container::stable_vector<Row_t>Model_t ;
@@ -160,6 +161,8 @@ namespace Artist
                 append_artist(
                       const std::string&	    artist
 		    , const std::string&	    artist_mbid
+		    , guint			    tracks
+		    , guint			    totaltime
                     , const boost::optional<guint>& artist_id = boost::optional<guint>()
                 ) ;
 
@@ -167,6 +170,8 @@ namespace Artist
                 insert_artist(
                       const std::string&	    artist
 		    , const std::string&	    artist_mbid
+		    , guint			    tracks
+		    , guint			    totaltime
                     , const boost::optional<guint>& artist_id = boost::optional<guint>()
                 ) ;
         } ;
@@ -179,11 +184,8 @@ namespace Artist
 
 	    protected:
 
-                typedef std::vector<guint>              IdVector_t ;
-                typedef boost::shared_ptr<IdVector_t>   IdVector_sp ;
-
                 RowRowMapping_t        m_mapping ;
-                IdVector_sp            m_constraints_artist ;
+                TCVector_sp            m_constraints_artist ;
 
 	    public:
 
@@ -197,7 +199,7 @@ namespace Artist
 
                 virtual void
                 set_constraints_artist(
-                    const IdVector_sp& constraint
+                    const TCVector_sp& constraint
                 ) ;
 
                 virtual void
@@ -219,6 +221,8 @@ namespace Artist
                 append_artist(
                       const std::string&	    artist
 		    , const std::string&	    artist_mbid
+		    , guint			    tracks
+		    , guint			    totaltime
                     , const boost::optional<guint>& artist_id = boost::optional<guint>()
                 ) ;
 
@@ -226,6 +230,8 @@ namespace Artist
                 insert_artist(
                       const std::string&	    artist
 		    , const std::string&	    artist_mbid
+		    , guint			    tracks
+		    , guint			    totaltime
                     , const boost::optional<guint>& artist_id = boost::optional<guint>()
                 ) ;
 
@@ -313,7 +319,7 @@ namespace Artist
                 void
                 render(
                       const Cairo::RefPtr<Cairo::Context>&  cairo
-                    , const Row_t&			    r
+                    , Row_t&				    r
                     , Gtk::Widget&			    widget
                     , int				    d
                     , int				    xpos
@@ -321,6 +327,8 @@ namespace Artist
                     , int				    row_height
                     , bool				    selected
                     , const ThemeColor&			    color
+                    , const ThemeColor&			    color_sel
+		    , const TCVector_sp&		    constraints
                 ) ; 
         } ;
 

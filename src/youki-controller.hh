@@ -242,7 +242,7 @@ namespace MPX
             Gtk::HPaned                     * m_Paned1 ;
             Gtk::HPaned                     * m_Paned2 ;
 
-            PercentualDistributionHBox      * m_HBox_Main ;
+            Gtk::HBox			    * m_HBox_Main ;
             Gtk::HBox                       * m_HBox_Bottom ;
             Gtk::VBox                       * m_VBox_Bottom ;
             
