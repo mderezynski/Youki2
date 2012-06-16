@@ -406,6 +406,11 @@ namespace Artist
 
             protected:
 
+		bool
+		on_focus_in_event(
+		    GdkEventFocus*
+		) ;
+
                 bool
                 on_key_press_event(
 		    GdkEventKey*

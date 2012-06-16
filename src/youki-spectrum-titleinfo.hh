@@ -130,13 +130,24 @@ namespace MPX
 	  boost::optional<unsigned int> m_audio_bitrate ;
 	  boost::optional<std::string>  m_audio_codec ;
 
+	  boost::optional<guint>        m_total_time ;
+
       public:
 
 	  void 
-	  set_bitrate( boost::optional<unsigned int> b) { m_audio_bitrate = b; queue_draw() ; }
+	  set_bitrate(
+		boost::optional<guint> b
+	    ) { m_audio_bitrate = b; queue_draw() ; }
 
 	  void
-	  set_codec( boost::optional<std::string> c) { m_audio_codec = c; queue_draw() ; }
+	  set_codec(
+		boost::optional<std::string> c
+	    ) { m_audio_codec = c; queue_draw() ; }
+
+	  void
+	  set_playlist_total(
+		guint total
+	    ) {m_total_time = total; queue_draw(); }
    };
 }
 

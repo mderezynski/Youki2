@@ -245,8 +245,11 @@ namespace MPX
             Gtk::HBox			    * m_HBox_Main ;
             Gtk::HBox                       * m_HBox_Bottom ;
             Gtk::VBox                       * m_VBox_Bottom ;
-            
+	    Gtk::VBox			    * m_VBox_TL ;
+	    Gtk::Label			    * m_Label_TL ;
+
             Gtk::Entry                      * m_Entry ;
+
 
             Gtk::Alignment                  * m_Alignment_Entry ;
             Gtk::HBox                       * m_HBox_Entry ;
@@ -307,6 +310,12 @@ namespace MPX
 
 	    Glib::RefPtr<Gtk::UIManager>      m_UI_Manager ;
 	    Glib::RefPtr<Gtk::ActionGroup>    m_UI_Actions_Main ;
+
+	    void
+	    handle_follow_playing_track_toggled() ;
+
+	    void
+	    handle_model_changed(guint,bool) ;
 
 	    bool
 	    handle_keytimer() ;

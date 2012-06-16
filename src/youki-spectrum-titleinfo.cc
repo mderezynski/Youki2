@@ -14,7 +14,7 @@
 
 namespace
 {
-    const double rounding = 2.5 ; 
+    const double rounding = 4 ; 
 }
 
 namespace MPX
@@ -115,6 +115,93 @@ namespace MPX
 
 	const Gtk::Allocation& a = get_allocation() ;
 
+	if( m_total_time ) 
+	{
+		cairo->save() ;
+		cairo->set_operator( Cairo::OPERATOR_OVER ) ;
+
+		int text_size_pt = static_cast<int>((14 * 72) / Util::screen_get_y_resolution( Gdk::Screen::get_default())) ;
+
+		Pango::FontDescription font_desc = get_style_context()->get_font() ;
+		font_desc.set_size( text_size_pt * PANGO_SCALE ) ;
+
+		Glib::RefPtr<Pango::Layout> layout = Glib::wrap( pango_cairo_create_layout( cairo->cobj() )) ;
+		layout->set_font_description( font_desc ) ;
+
+		int width, height;
+
+		guint hrs = m_total_time.get() / 3600 ;
+		guint min = (m_total_time.get()-hrs*3600) / 60 ;
+		guint sec = m_total_time.get() % 60 ;
+
+		std::string s ;
+
+		if( hrs )
+		    s = (boost::format("<b>%u</b>h <b>%u</b>m <b>%u</b>s") % hrs % min % sec).str() ;
+		else
+		    s = (boost::format("<b>%u</b>m <b>%u</b>s") % min % sec).str() ;
+
+		layout->set_markup( s ) ;
+		layout->get_pixel_size( width, height ) ;
+
+		RoundedRectangle(
+		      cairo
+		    , a.get_width() - 2 - width - 4 - 4
+		    , 111 - 12 - (height+4) - 24 
+		    , width+7
+		    , height+4 
+		    , rounding
+		    , MPX::CairoCorners::CORNERS(5)
+		) ;
+
+		Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create(
+		      a.get_width() - 10 + width/2 
+		    , 111 - 12 - (height+4) - 24 
+		    , a.get_width() - 10 + width/2 
+		    , 111 - 12 - (height+4) - 24 + height 
+		) ;
+
+		gradient->add_color_stop_rgba(
+		      0
+		    , 1. 
+		    , 1. 
+		    , 1. 
+		    , 0.69 
+		) ;
+		gradient->add_color_stop_rgba(
+		      .1
+		    , 1. 
+		    , 1. 
+		    , 1. 
+		    , 0.67 
+		) ;
+		gradient->add_color_stop_rgba(
+		      1. 
+		    , 1. 
+		    , 1. 
+		    , 1. 
+		    , 0.65 
+		) ;
+
+		cairo->set_source( gradient ) ;
+		cairo->fill() ;
+
+		cairo->set_source_rgba(
+		      0.25 
+		    , 0.25 
+		    , 0.25 
+		    , 1.
+		) ; 
+
+		cairo->move_to(
+		      a.get_width() - 2 - width - 4
+		    , 111 - 12 - (height+2) - 24
+		) ;
+
+		pango_cairo_show_layout( cairo->cobj(), layout->gobj() ) ;
+		cairo->restore() ;
+	}	
+
 	if( m_audio_bitrate || m_audio_codec )
 	{
 		std::string audioinfo ;
@@ -134,7 +221,7 @@ namespace MPX
 
 		if( m_audio_bitrate ) 
 		{
-		    audioinfo += (boost::format("Bitrate <b>%u kbps</b>") % m_audio_bitrate.get()).str() ;
+		    audioinfo += (boost::format("<b>%u kbps</b>") % m_audio_bitrate.get()).str() ;
 		}
 
 		if( m_audio_codec )
@@ -148,7 +235,7 @@ namespace MPX
 		    else
 			    transformed = m_audio_codec.get() ;
 
-		    audioinfo += (boost::format(" Codec <b>%s</b>") % transformed).str() ;
+		    audioinfo += (boost::format(" – <b>%s</b>") % transformed).str() ;
 		}
 
 		layout->set_markup(audioinfo) ;
@@ -234,25 +321,14 @@ namespace MPX
 
         if( m_cover )
         {
-            cairo->rectangle( 8, r.y, r.width + 2, r.height ) ;
+            RoundedRectangle( cairo, 8, r.y, r.width+2, r.height, rounding, MPX::CairoCorners::CORNERS(3)) ;
             cairo->clip() ;
         }
 
         Gdk::RGBA cgdk ;
         double h, s, b ;
 
-/*	
-	if(m_color)
-	{
-	    cgdk = m_color.get() ;
-	    Util::color_to_hsb( cgdk, h,s,b ) ;
-	    s *= 0.55 ;
-	    b *= 0.38 ;
-	    cgdk = Util::color_from_hsb( h,s,b ) ;
-	}
-	else
-*/
-	    cgdk.set_rgba( 0.25, 0.25, 0.25, 1.0 ) ;
+	cgdk.set_rgba( 0.25, 0.25, 0.25, 1.0 ) ;
 
         Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create(
               r.x + r.width / 2
@@ -307,7 +383,7 @@ namespace MPX
             , r.width 
             , r.height + 2 
             , rounding 
-	    , MPX::CairoCorners::CORNERS(0)
+	    , MPX::CairoCorners::CORNERS(3)
         ) ;
 
 	cairo->fill(); 
@@ -414,7 +490,7 @@ namespace MPX
 	    , r.width 
 	    , r.height 
 	    , rounding 
-	    , MPX::CairoCorners::CORNERS(0)
+	    , MPX::CairoCorners::CORNERS(1)
 	) ;
 
 	cairo->set_operator( Cairo::OPERATOR_ATOP ) ;

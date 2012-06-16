@@ -455,6 +455,7 @@ namespace Tracks
                 boost::optional<guint>      m_row_currently_playing_in_mapping ;
                 TCVector_sp                 m_constraints_artist ;
                 TCVector_sp                 m_constraints_albums ;
+		guint			    m_total_time ;
                 bool                        m_cache_enabled ;
 
 		Signal0			    m_SIGNAL__process_begin ;
@@ -1361,6 +1362,21 @@ namespace Tracks
 			m_SIGNAL__changed.emit( m_upper_bound, true ) ; 
 		    }
                 }
+
+		guint
+		get_total_time()
+		{
+		    guint total = 0 ;
+
+		    for( RowRowMapping_t::iterator i = (*m_mapping).begin() ; i != (*m_mapping).end() ; ++i ) 
+		    {
+			const MPX::Track_sp& t = (**i)->TrackSp ; 
+			const MPX::Track& track = *t ;
+			total += get<guint>(track[ATTRIBUTE_TIME].get()) ;
+		    }
+
+		    return total ;
+		}
         };
 
         typedef boost::shared_ptr<DataModelFilter> DataModelFilter_sp;
@@ -2190,11 +2206,12 @@ namespace Tracks
 				y = m_height__headers + n*m_height__row ;
 
 		    cairo->save() ;
+		    cairo->translate(x,y) ;
 		    cairo->set_line_join( Cairo::LINE_JOIN_ROUND ) ;
 		    cairo->set_line_cap( Cairo::LINE_CAP_ROUND ) ;
-		    cairo->move_to( x+4, y+5 ) ; 
-		    cairo->line_to( x+13, y+11 ) ; 
-		    cairo->line_to( x+4, y+17 ) ;
+		    cairo->move_to( 4, 4) ; 
+		    cairo->line_to( 16, m_height__row/2. ) ; 
+		    cairo->line_to( 4, m_height__row-4 ) ;
 		    cairo->close_path() ;
 
 		    if( selected )  

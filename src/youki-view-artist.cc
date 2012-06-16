@@ -562,7 +562,8 @@ namespace Artist
 	    font_desc.set_size(text_size_pt * PANGO_SCALE) ;
 	    font_desc.set_weight(Pango::WEIGHT_BOLD) ;
 	    layout->set_font_description(font_desc) ;
-	    layout->set_width(86*PANGO_SCALE) ;
+	    layout->set_alignment(Pango::ALIGN_CENTER) ;
+	    layout->set_width(84*PANGO_SCALE) ;
 	    layout->set_wrap(Pango::WRAP_WORD_CHAR) ;
 	    layout->set_text(get<0>(r)) ;
 	    layout->get_pixel_size( width, height ) ;
@@ -616,13 +617,6 @@ namespace Artist
 	    cairo->set_source( gradient ) ;
 	    cairo->fill() ;
 
-	    if( selected )
-	    {
-		RoundedRectangle(cairo, 0, 4, 96, 96, 5.) ;
-		cairo->set_source(m_rect_shadow, -90, 4) ;
-		cairo->fill() ;
-	    }
-
 	    boost::optional<Gdk::RGBA>& c = boost::get<7>(r) ; 
 
 	    if(!c)
@@ -632,15 +626,15 @@ namespace Artist
 	    }
 
 	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(c.get(),1)) ;
-	    RoundedRectangle(cairo, 0, 0, 96, 96, 5.) ;
-	    cairo->set_line_width(3) ;
+	    RoundedRectangle(cairo, 1.5, 1.5, 93, 93, 4.) ;
+	    cairo->set_line_width(3.5) ;
 	    cairo->stroke() ;
 	    cairo->restore() ;
 
 	    //////////
 
 	    cairo->save() ;
-	    cairo->translate((m_width-96)/2.,ypos+8) ;
+	    cairo->translate((m_width-96)/2.,ypos+4+(96-height)/2.) ;
 	    cairo->move_to(
 		  6 
 		, 6 
@@ -648,6 +642,16 @@ namespace Artist
 	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(1,1,1,0.85)) ; 
 	    pango_cairo_show_layout(cairo->cobj(), layout->gobj());
 	    cairo->restore() ;
+
+	    if( selected )
+	    {
+		cairo->save() ;
+		cairo->translate(x,y) ;
+		RoundedRectangle(cairo, 0, 0, 96, 96, 5.) ;
+		cairo->set_source(m_rect_shadow, 0, 0) ;
+		cairo->fill() ;
+		cairo->restore() ;
+	    }
 
 	    //////////
 
@@ -786,6 +790,24 @@ namespace Artist
 		return property_vadjustment().get_value()->get_value() / m_height__row ;
 
 	    return 0 ;
+	}
+
+	bool
+	Class::on_focus_in_event(
+	    GdkEventFocus* G_GNUC_UNUSED
+	)
+	{
+	    if( m_selection )
+	    { 
+		guint d = boost::get<2>(m_selection.get()) ;
+
+		if(( d <= get_upper_row())||(d > (get_upper_row()+get_page_size())))
+		{
+		    scroll_to_index(d) ;
+		}
+	    }
+
+	    return false ;
 	}
 
 	bool
@@ -1228,11 +1250,9 @@ namespace Artist
 
 	    boost::shared_ptr<IYoukiThemeEngine> theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;
 
-	    const ThemeColor& c_text       = theme->get_color( THEME_COLOR_TEXT ) ;
-	    const ThemeColor& c_text_sel   = theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
-	    const ThemeColor& c_rules_hint = theme->get_color( THEME_COLOR_BASE_ALTERNATE ) ;
-	    const ThemeColor& c_treelines  = theme->get_color( THEME_COLOR_TREELINES ) ;
-	    const ThemeColor& c_bg	   = theme->get_color( THEME_COLOR_BACKGROUND ) ;
+	    const ThemeColor& c_text     = theme->get_color( THEME_COLOR_TEXT ) ;
+	    const ThemeColor& c_text_sel = theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
+	    const ThemeColor& c_sel      = theme->get_color( THEME_COLOR_SELECT ) ;
 
 	    guint d	= get_upper_row() ;
 	    guint d_max = Limiter<guint>(
@@ -1250,12 +1270,31 @@ namespace Artist
 	    guint n = 0 ;
 	    Algorithm::Adder<guint> d_cur( d, n ) ;
 
+	    if( has_focus() )
+	    {
+		GdkRectangle r ;
+
+		r.x = 0 ;
+		r.y = 0 ;
+		r.width = get_allocated_width() ;
+		r.height = get_allocated_height() ;
+    
+		Gdk::Cairo::set_source_rgba(cairo,Util::make_rgba(c_sel,0.2)) ;
+		cairo->rectangle(
+		      r.x
+		    , r.y
+		    , r.width
+		    , r.height
+		) ;
+		cairo->fill() ;
+	    }
+
+#if 0
 	    GdkRectangle rr ;
 	    rr.x = 0 ;
 	    rr.width = get_allocated_width() ;
 	    rr.height = m_height__row ;
 
-#if 0
 	    render_header_background( cairo, get_allocated_width(), m_height__headers, c_bg, c_treelines ) ;
 
 	    for( auto& c : m_columns )
@@ -1348,29 +1387,6 @@ namespace Artist
 	    }
 
 	    cairo->restore() ;
-
-/*
-	    if( has_focus() )
-	    {
-		GdkRectangle r ;
-
-		r.x = 1 ;
-		r.y = 1 ;
-		r.width = get_allocated_width() - 1 ;
-		r.height = get_allocated_height() - 1 ;
-
-		theme->draw_focus(
-		      cairo
-		    , r
-		    , has_focus()
-		    , 0
-		    , MPX::CairoCorners::CORNERS(0)
-		) ;
-	    }
-*/
-
-	    get_window()->process_all_updates() ;
-
 	    return true;
 	}
 

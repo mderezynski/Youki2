@@ -276,6 +276,8 @@ namespace MPX
         void
                 Play::play_stream ()
                 {
+		    static int count = 0 ;
+
                     GstStateChangeReturn statechange = gst_element_set_state( control_pipe (), GST_STATE_PLAYING )  ;
 
                     if( statechange != GST_STATE_CHANGE_FAILURE )
@@ -298,8 +300,15 @@ namespace MPX
 			    g_message("%s: state is not playing", G_STRLOC) ;
                     }
 		    else
+		    if( count == 0 )
+		    {
 			g_message("%s: state change failure", G_STRLOC) ;
+			++count ;
+			reset() ;
+			play_stream() ;
+		    }
 
+		    count = 0 ;
                     stop_stream()  ;
 		    reset() ;
                 }

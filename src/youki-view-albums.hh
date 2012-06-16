@@ -375,14 +375,14 @@ class Class
         {
             public:
 
-                DataModelFilter_sp                m_model ;
+                DataModelFilter_sp          m_model ;
 
             private:
 
                 boost::optional<boost::tuple<Model_t::iterator, boost::optional<guint>, guint> >  m_selection ;
 
-		PropAdjustment	    property_vadj_, property_hadj_ ;
-		PropScrollPolicy    property_vsp_ , property_hsp_ ;
+		PropAdjustment	    property_vadj, property_hadj ;
+		PropScrollPolicy    property_vsp , property_hsp ;
 
 		struct Selection
 		{
@@ -410,6 +410,9 @@ class Class
 
                 sigc::connection                    m_search_changed_conn ;
                 bool                                m_search_active ;
+	
+		bool				    m_button_depressed ;
+		double				    m_y_old ;
 
 		std::set<guint>			    m_caching ;
 		sigc::connection		    m_redraw_spinner_conn ;
@@ -454,9 +457,24 @@ class Class
 
 	    protected:    
 
+		virtual bool
+		on_motion_notify_event(
+		      GdkEventMotion*
+		) ;
+
+		virtual bool
+		on_focus_in_event(
+		    GdkEventFocus*
+		) ;
+
                 virtual bool
                 on_key_press_event(
 		    GdkEventKey*
+		) ;
+
+                virtual bool
+                on_button_release_event(
+		    GdkEventButton*
 		) ;
 
                 virtual bool
@@ -467,11 +485,6 @@ class Class
 		virtual void
 		on_size_allocate(
 		    Gtk::Allocation&
-		) ;
-
-		virtual bool
-		on_focus_in_event(
-		    GdkEventFocus* G_GNUC_UNUSED
 		) ;
 
                 virtual bool
