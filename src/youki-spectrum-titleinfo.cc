@@ -14,7 +14,7 @@
 
 namespace
 {
-    const double rounding = 4 ; 
+    const double rounding = 5 ; 
 }
 
 namespace MPX
@@ -150,7 +150,7 @@ namespace MPX
 		    , 111 - 12 - (height+4) - 24 
 		    , width+7
 		    , height+4 
-		    , rounding
+		    , 2
 		    , MPX::CairoCorners::CORNERS(5)
 		) ;
 
@@ -202,7 +202,8 @@ namespace MPX
 		cairo->restore() ;
 	}	
 
-	if( m_audio_bitrate || m_audio_codec )
+	if(0)
+	//if( m_audio_bitrate || m_audio_codec )
 	{
 		std::string audioinfo ;
 
@@ -221,7 +222,7 @@ namespace MPX
 
 		if( m_audio_bitrate ) 
 		{
-		    audioinfo += (boost::format("<b>%u kbps</b>") % m_audio_bitrate.get()).str() ;
+		    audioinfo += (boost::format("Bitrate <b>%u kbps</b>") % m_audio_bitrate.get()).str() ;
 		}
 
 		if( m_audio_codec )
@@ -235,7 +236,7 @@ namespace MPX
 		    else
 			    transformed = m_audio_codec.get() ;
 
-		    audioinfo += (boost::format(" – <b>%s</b>") % transformed).str() ;
+		    audioinfo += (boost::format(" Codec <b>%s</b>") % transformed).str() ;
 		}
 
 		layout->set_markup(audioinfo) ;
@@ -247,7 +248,7 @@ namespace MPX
 		    , 111 - 12 - (height+4) 
 		    , width+7
 		    , height+4 
-		    , rounding
+		    , 2
 		    , MPX::CairoCorners::CORNERS(5)
 		) ;
 
@@ -321,7 +322,7 @@ namespace MPX
 
         if( m_cover )
         {
-            RoundedRectangle( cairo, 8, r.y, r.width+2, r.height, rounding, MPX::CairoCorners::CORNERS(3)) ;
+            RoundedRectangle( cairo, 8, r.y, r.width+2, r.height, rounding) ;
             cairo->clip() ;
         }
 
@@ -383,7 +384,6 @@ namespace MPX
             , r.width 
             , r.height + 2 
             , rounding 
-	    , MPX::CairoCorners::CORNERS(3)
         ) ;
 
 	cairo->fill(); 
@@ -469,6 +469,8 @@ namespace MPX
 
         cairo->save() ;
 
+	cairo->set_operator( Cairo::OPERATOR_OVER ) ;
+
 	GdkRectangle r ;
 
 	r.x = 1 ; 
@@ -482,7 +484,6 @@ namespace MPX
 	    , r.x
 	    , r.y
 	) ;
-
 	RoundedRectangle(
 	      cairo
 	    , r.x 
@@ -490,10 +491,48 @@ namespace MPX
 	    , r.width 
 	    , r.height 
 	    , rounding 
-	    , MPX::CairoCorners::CORNERS(1)
+	    , MPX::CairoCorners::CORNERS(5)
+	) ;
+	cairo->fill() ;
+
+	RoundedRectangle(
+	      cairo
+	    , r.x 
+	    , r.y
+	    , r.width
+	    , r.height/1.8 
+	    , rounding
+	    , MPX::CairoCorners::CORNERS(5)
+	) ;
+	Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create(
+	      r.x + r.width/2.
+	    , r.y 
+	    , r.x + r.width/2. 
+	    , r.y + r.height/1.8
 	) ;
 
-	cairo->set_operator( Cairo::OPERATOR_ATOP ) ;
+	gradient->add_color_stop_rgba(
+	      0
+	    , 1. 
+	    , 1. 
+	    , 1. 
+	    , 0.35 
+	) ;
+	gradient->add_color_stop_rgba(
+	      .9 
+	    , 1. 
+	    , 1. 
+	    , 1. 
+	    , 0.05 
+	) ;
+	gradient->add_color_stop_rgba(
+	      1. 
+	    , 1. 
+	    , 1. 
+	    , 1. 
+	    , 0 
+	) ;
+	cairo->set_source(gradient) ;
 	cairo->fill() ;
         cairo->restore() ;
     }

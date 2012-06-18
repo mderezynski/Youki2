@@ -117,6 +117,8 @@ namespace Tracks
 	    std::string	    ReleaseDate ;
 	    guint	    Track ;	
 	    guint	    Time ;
+
+	    boost::optional<guint> queuepos ;
 	} ;
 
 	typedef boost::shared_ptr<NewRow_t> NewRow_sp ;
@@ -234,6 +236,26 @@ namespace Tracks
             }
         } ;
 
+        struct OrderFuncQueue
+        : public std::binary_function<Model_t::const_iterator, Model_t::const_iterator, bool>
+        {
+            bool operator() (
+                  const Model_t::const_iterator& a
+                , const Model_t::const_iterator& b
+            )
+            {
+		return (*a)->queuepos < (*b)->queuepos ;
+            }
+
+            bool operator() (
+                  Model_t::const_iterator& a
+                , Model_t::const_iterator& b
+            )
+            {
+		return (*a)->queuepos < (*b)->queuepos ;
+            }
+        } ;
+
         struct OrderFunc
         : public std::binary_function<NewRow_sp, NewRow_sp, bool>
         {
@@ -313,8 +335,9 @@ namespace Tracks
 
                 Model_sp		m_realmodel;
                 guint			m_upper_bound ;
-                Signal2			m_SIGNAL__changed;
 		AlbumTrackMapping_t	m_album_track_mapping ;
+
+                Signal2			m_SIGNAL__changed;
 
                 DataModel()
                 : m_upper_bound( 0 )
@@ -389,14 +412,6 @@ namespace Tracks
 		    nr->Track = r.count("track") ? get<guint>(r["track"]) : 0 ;
 
                     m_realmodel->push_back(NewRow_sp(nr)) ;
-
-/*
-                    Model_t::iterator i = m_realmodel->end() ;
-                    std::advance( i, -1 ) ;
-		    guint album_id = get<guint>(r["mpx_album_id"]) ;
-		    ModelIdxVec_t& vy = m_album_track_mapping[album_id] ;
-		    vy.push_back( m_realmodel->size() - 1 ) ; 
-*/
                 }
 
                 void
@@ -457,6 +472,7 @@ namespace Tracks
                 TCVector_sp                 m_constraints_albums ;
 		guint			    m_total_time ;
                 bool                        m_cache_enabled ;
+		bool			    m_obey_queue ;
 
 		Signal0			    m_SIGNAL__process_begin ;
 		Signal0			    m_SIGNAL__process_end ;
@@ -481,6 +497,7 @@ namespace Tracks
                     , m_max_size_constraints_artist( 0 )
                     , m_max_size_constraints_albums( 0 )
                     , m_cache_enabled(true)
+		    , m_obey_queue(false)
 
                 {
                     regen_mapping() ;
@@ -489,6 +506,12 @@ namespace Tracks
                 virtual ~DataModelFilter()
                 {
                 }
+
+		void
+		set_obey_queue(bool q)
+		{
+		    m_obey_queue = q ;
+		}
 
 		void
 		shuffle()
@@ -863,6 +886,60 @@ namespace Tracks
                 }
 
                 virtual void
+                regen_mapping_queue(
+                )
+                {
+                    using boost::get;
+                    using boost::algorithm::split;
+                    using boost::algorithm::is_any_of;
+                    using boost::algorithm::find_first;
+	
+                    RowRowMapping_sp new_mapping( new RowRowMapping_t ), new_mapping_unfiltered( new RowRowMapping_t ) ;
+
+                    m_upper_bound = 0 ;
+
+		    m_constraints_albums = TCVector_sp( new TCVector_t ) ; 
+		    m_constraints_albums->resize( m_max_size_constraints_albums + 1 ) ;
+
+		    m_constraints_artist = TCVector_sp( new TCVector_t ) ; 
+		    m_constraints_artist->resize( m_max_size_constraints_artist + 1 ) ;
+
+		    TCVector_t& constraints_albums = *m_constraints_albums ;
+		    TCVector_t& constraints_artist = *m_constraints_artist ;
+
+		    new_mapping->reserve( m_realmodel->size() ) ;
+		    new_mapping_unfiltered->reserve( m_realmodel->size() ) ;
+
+		    for( Model_t::iterator i = m_realmodel->begin() ; i != m_realmodel->end() ; ++i ) 
+		    {
+			const MPX::Track_sp& t = (*i)->TrackSp ; 
+			const MPX::Track& track = *t ;
+
+			if( bool((*i)->queuepos))
+			{
+			    guint id_album  = get<guint>(track[ATTRIBUTE_MPX_ALBUM_ID].get()) ;
+			    TracksConstraint& tc_alb = constraints_albums[id_album] ;
+			    tc_alb.Count ++ ; 
+			    tc_alb.Time += get<guint>(track[ATTRIBUTE_TIME].get()) ;
+
+			    guint id_artist = get<guint>(track[ATTRIBUTE_MPX_ALBUM_ARTIST_ID].get()) ;
+			    TracksConstraint& tc_art = constraints_artist[id_artist] ;
+			    tc_art.Count ++ ; 
+			    tc_art.Time += get<guint>(track[ATTRIBUTE_TIME].get()) ;
+
+			    new_mapping->push_back( i ) ; 
+			}
+		    }
+
+		    std::sort(new_mapping->begin(),new_mapping->end(),OrderFuncQueue()) ;
+		    std::sort(new_mapping_unfiltered->begin(),new_mapping_unfiltered->end(),OrderFuncQueue()) ;
+    
+		    m_mapping = new_mapping ;
+		    m_mapping_unfiltered = new_mapping_unfiltered ;
+		    m_SIGNAL__changed.emit( m_upper_bound, true ) ; 
+                }
+
+                virtual void
                 regen_mapping(
 		    boost::optional<guint> scroll_id = boost::optional<guint>()
                 )
@@ -888,25 +965,7 @@ namespace Tracks
 
                     m_upper_bound = 0 ;
 
-		    if( m_constraint_single_album )
-		    {
-			AlbumTrackMapping_t::size_type n = m_constraint_single_album.get() ; 
-			const ModelIdxVec_t& v = m_album_track_mapping[n] ;
-
-                        new_mapping->reserve( m_realmodel->size() ) ;
-                        new_mapping_unfiltered->reserve( m_realmodel->size() ) ;
-
-			for( ModelIdxVec_t::const_iterator i = v.begin() ; i != v.end() ; ++i )
-			{
-			    Model_t::iterator i2 = m_realmodel->begin() ;
-			    std::advance( i2, *i ) ;
-
-			    new_mapping->push_back( i2 ) ; 
-			    new_mapping_unfiltered->push_back( i2 ) ; 
-			}
-		    }
-		    else
-                    if( m_frags.empty() && (m_constraints_ext.empty() && m_constraints_aqe.empty()) )
+                    if( m_frags.empty() && (m_constraints_ext.empty() && m_constraints_aqe.empty()))
                     {
                         m_constraints_albums.reset() ;
                         m_constraints_artist.reset() ;
@@ -943,29 +1002,29 @@ namespace Tracks
                             const MPX::Track_sp& t = (*i)->TrackSp ; 
                             const MPX::Track& track = *t ;
 
-                            if( !m_constraints_aqe.empty() && !AQE::match_track( m_constraints_aqe, t ))
-                            {
-                                continue ;
-                            }
+			    if( !m_constraints_aqe.empty() && !AQE::match_track( m_constraints_aqe, t ))
+			    {
+				continue ;
+			    }
 
-                            new_mapping_unfiltered->push_back( i ) ;
+			    new_mapping_unfiltered->push_back( i ) ;
 
-                            if( !m_constraints_ext.empty() && !AQE::match_track( m_constraints_ext, t ))
-                            {                            
-                                continue ;
-                            }
+			    if( !m_constraints_ext.empty() && !AQE::match_track( m_constraints_ext, t ))
+			    {                            
+				continue ;
+			    }
 
-                            guint id_album  = get<guint>(track[ATTRIBUTE_MPX_ALBUM_ID].get()) ;
+			    guint id_album  = get<guint>(track[ATTRIBUTE_MPX_ALBUM_ID].get()) ;
 			    TracksConstraint& tc_alb = constraints_albums[id_album] ;
-                            tc_alb.Count ++ ; 
+			    tc_alb.Count ++ ; 
 			    tc_alb.Time += get<guint>(track[ATTRIBUTE_TIME].get()) ;
 
-                            guint id_artist = get<guint>(track[ATTRIBUTE_MPX_ALBUM_ARTIST_ID].get()) ;
+			    guint id_artist = get<guint>(track[ATTRIBUTE_MPX_ALBUM_ARTIST_ID].get()) ;
 			    TracksConstraint& tc_art = constraints_artist[id_artist] ;
-                            tc_art.Count ++ ; 
+			    tc_art.Count ++ ; 
 			    tc_art.Time += get<guint>(track[ATTRIBUTE_TIME].get()) ;
 
-                            new_mapping->push_back( i ) ; 
+			    new_mapping->push_back( i ) ; 
                         }
                     }
                     else
@@ -1048,7 +1107,7 @@ namespace Tracks
 
                                 output = intersect_out ;
                             }
-                        }
+			}
 
                         new_mapping->reserve( output->size() ) ;
                         new_mapping_unfiltered->reserve( output->size() ) ;
@@ -1067,29 +1126,29 @@ namespace Tracks
                             const MPX::Track_sp& t = (*i)->TrackSp ; 
                             const MPX::Track& track = *t ;
 
-                            if( !m_constraints_aqe.empty() && !AQE::match_track( m_constraints_aqe, t ))
-                            {
-                                continue ;
-                            }
+			    if( !m_constraints_aqe.empty() && !AQE::match_track( m_constraints_aqe, t ))
+			    {
+				continue ;
+			    }
 
-                            new_mapping_unfiltered->push_back( i ) ;
+			    new_mapping_unfiltered->push_back( i ) ;
 
-                            if( !m_constraints_ext.empty() && !AQE::match_track( m_constraints_ext, t ))
-                            {
-                                continue ;
-                            }
+			    if( !m_constraints_ext.empty() && !AQE::match_track( m_constraints_ext, t ))
+			    {
+				continue ;
+			    }
 
-                            guint id_album  = get<guint>(track[ATTRIBUTE_MPX_ALBUM_ID].get()) ;
+			    guint id_album  = get<guint>(track[ATTRIBUTE_MPX_ALBUM_ID].get()) ;
 			    TracksConstraint& tc_alb = constraints_albums[id_album] ;
-                            tc_alb.Count ++ ; 
+			    tc_alb.Count ++ ; 
 			    tc_alb.Time += get<guint>(track[ATTRIBUTE_TIME].get()) ;
 
-                            guint id_artist = get<guint>(track[ATTRIBUTE_MPX_ALBUM_ARTIST_ID].get()) ;
+			    guint id_artist = get<guint>(track[ATTRIBUTE_MPX_ALBUM_ARTIST_ID].get()) ;
 			    TracksConstraint& tc_art = constraints_artist[id_artist] ;
-                            tc_art.Count ++ ; 
+			    tc_art.Count ++ ; 
 			    tc_art.Time += get<guint>(track[ATTRIBUTE_TIME].get()) ;
 
-                            new_mapping->push_back( i ) ;
+			    new_mapping->push_back(i) ;
                         }
                     }
 
@@ -1534,13 +1593,15 @@ namespace Tracks
 		    }
 
 		    layout->set_ellipsize( Pango::ELLIPSIZE_END ) ;
-		    layout->set_width((m_width - 12) * PANGO_SCALE ) ;
+		    layout->set_width((m_width - ((m_column==0)?48:12)) * PANGO_SCALE ) ;
 		    layout->set_alignment( m_alignment ) ;
 
+#if 0
 		    if( selected )
 		    {
 			Util::render_text_shadow( layout, xpos+6,ypos+2, cairo, 2, 0.55 ) ;
 		    }
+#endif
 
 		    cairo->move_to(
 			    xpos + 6
@@ -1549,6 +1610,50 @@ namespace Tracks
 
 		    Gdk::Cairo::set_source_rgba( cairo, color ) ;
 		    layout->show_in_cairo_context( cairo ) ;
+
+		    //////////
+		    
+		    if( m_column == 0 && (*r).queuepos )
+		    {
+			const int text_size_px_s = 12 ;
+			const int text_size_pt_s = static_cast<int>((text_size_px_s * 72)/ Util::screen_get_y_resolution(Gdk::Screen::get_default())) ;
+			Glib::RefPtr<Pango::Layout> layout_s = Glib::wrap( pango_cairo_create_layout(cairo->cobj())) ;
+
+			Pango::FontDescription font_desc_s ;
+			font_desc_s = widget.get_style_context()->get_font();
+			font_desc_s.set_size(text_size_pt_s*PANGO_SCALE );
+			font_desc_s.set_weight(Pango::WEIGHT_NORMAL);
+			layout_s->set_font_description(font_desc_s);
+			layout_s->set_width(30*PANGO_SCALE);
+			layout_s->set_ellipsize(Pango::ELLIPSIZE_END);
+
+			RoundedRectangle( 
+			      cairo
+			    , m_width+24
+			    , ypos+3
+			    , 30
+			    , rowheight-6
+			    , 4.
+			) ;
+
+			Gdk::Cairo::set_source_rgba(
+			      cairo
+			    , (selected ? Util::make_rgba(1,1,1,.8) : Util::make_rgba(0,0,0,.8))
+			) ;
+			cairo->fill() ;
+
+			int width, height ;
+
+			layout_s->set_text((boost::format("%u") % (*r).queuepos.get()).str()) ;
+			layout_s->get_pixel_size(width,height) ;
+
+			cairo->move_to( m_width + 24 + (30-width)/2., (ypos)+(rowheight-height)/2.) ; 
+			Gdk::Cairo::set_source_rgba(
+			      cairo
+			    , (selected ? Util::make_rgba(0,0,0,.8) : Util::make_rgba(1,1,1,.8))
+			) ;
+			layout_s->show_in_cairo_context(cairo) ;
+		    }
 		}
         };
 
@@ -1560,6 +1665,8 @@ namespace Tracks
         typedef sigc::signal<void>                      SignalFindAccepted ;
         typedef sigc::signal<void, const std::string&>  SignalFindPropagate ;
 	typedef sigc::signal<void, const std::string&>	SignalMBID ;
+	typedef sigc::signal<void, guint>		SignalRemoveTrackFromQueue ;
+	typedef sigc::signal<void>			SignalClearQueue ;
 
         class Class
         : public Gtk::DrawingArea, public Gtk::Scrollable
@@ -1617,11 +1724,15 @@ namespace Tracks
 
                 SignalMBID _signal_0 ; 
                 SignalMBID _signal_1 ; 
+                SignalMBID _signal_2 ; 
 
                 SignalTrackActivated                m_SIGNAL_track_activated ;
                 SignalVAdjChanged                   m_SIGNAL_vadj_changed ;
                 SignalFindAccepted                  m_SIGNAL_find_accepted ;
                 SignalFindPropagate                 m_SIGNAL_find_propagate ;
+
+                SignalRemoveTrackFromQueue          m_SIGNAL_remove_track_from_queue ;
+		SignalClearQueue		    m_SIGNAL_clear_queue ;
 
                 void
                 initialize_metrics ()
@@ -1781,15 +1892,8 @@ namespace Tracks
                             if( m_selection )
                             {
                                 using boost::get;
-
                                 MPX::Track_sp track = (*(get<0>(m_selection.get())))->TrackSp ;
-
                                 m_SIGNAL_track_activated.emit( track, !(event->state & GDK_CONTROL_MASK) ) ;
-
-                                if( event->state & GDK_CONTROL_MASK )
-                                {
-                                    clear_selection() ;
-                                }
                             }
 
                             return true;
@@ -2031,6 +2135,8 @@ namespace Tracks
 		    else 
                     if(event->type == GDK_BUTTON_PRESS && event->button == 3)
                     {
+			m_refActionGroup->get_action("ContextRemoveFromQueue")->set_sensitive(m_model->row(d)->queuepos);
+			m_refActionGroup->get_action("ContextAddToQueue")->set_sensitive(!m_model->row(d)->queuepos);
 			m_row__button_press.reset() ;
                         m_pMenuPopup->popup(event->button, event->time) ;                            
                     }
@@ -2689,6 +2795,18 @@ namespace Tracks
                     return m_SIGNAL_find_propagate ;
                 }
 
+                SignalRemoveTrackFromQueue&
+                signal_remove_track_from_queue()
+                {
+                    return m_SIGNAL_remove_track_from_queue ;
+                }
+
+                SignalClearQueue&
+                signal_clear_queue()
+                {
+                    return m_SIGNAL_clear_queue ;
+                }
+
                 void
                 column_set_collapsed(
                       int       column
@@ -2741,6 +2859,24 @@ namespace Tracks
 
                     return idx ; 
                 }
+
+                void
+                id_set_queuepos(
+		      guint		     id
+		    , boost::optional<guint> qpos = boost::optional<guint>()
+                )
+                {
+                    for( DataModelFilter::RowRowMapping_t::iterator i = m_model->m_mapping->begin() ; i != m_model->m_mapping->end() ; ++i )
+                    {
+                        if( (**i)->ID == id )
+                        {
+			    (**i)->queuepos = qpos ;
+			    queue_draw() ;
+                            break ;
+                        }
+                    } 
+                }
+
 
                 void
                 scroll_to_id(
@@ -3009,7 +3145,8 @@ namespace Tracks
                         const MPX::Track_sp& t = r->TrackSp ; 
                         const MPX::Track& track = *(t.get()) ;
 
-                        _signal_0.emit( get<std::string>(track[ATTRIBUTE_MB_ALBUM_ID].get()));
+			if( track.has(ATTRIBUTE_MB_ALBUM_ID))
+			    _signal_0.emit( get<std::string>(track[ATTRIBUTE_MB_ALBUM_ID].get()));
                     }
                 }
 
@@ -3022,7 +3159,22 @@ namespace Tracks
                         const MPX::Track_sp& t = r->TrackSp ; 
                         const MPX::Track& track = *(t.get()) ;
 
-                        _signal_1.emit( get<std::string>(track[ATTRIBUTE_MB_ALBUM_ARTIST_ID].get()));
+			if( track.has(ATTRIBUTE_MB_ALBUM_ARTIST_ID))
+			    _signal_1.emit( get<std::string>(track[ATTRIBUTE_MB_ALBUM_ARTIST_ID].get()));
+                    }
+                }
+
+                void
+                on_show_similar_artists() 
+                {
+                    if( m_selection )
+                    {
+                        const NewRow_sp& r = *(boost::get<0>(m_selection.get())) ;
+                        const MPX::Track_sp& t = r->TrackSp ; 
+                        const MPX::Track& track = *(t.get()) ;
+
+			if( track.has(ATTRIBUTE_MB_ALBUM_ARTIST_ID))
+			    _signal_2.emit( get<std::string>(track[ATTRIBUTE_MB_ALBUM_ARTIST_ID].get()));
                     }
                 }
 
@@ -3033,6 +3185,33 @@ namespace Tracks
 		    {
 			MPX::Track_sp track = (*(get<S_ITERATOR>(m_selection.get())))->TrackSp ;
 			m_SIGNAL_track_activated.emit( track, false ) ;
+		    }
+		}
+
+		void
+		on_clear_queue()
+		{
+		    m_SIGNAL_clear_queue.emit() ;
+		}
+
+		void
+		on_remove_track_from_queue()
+		{	
+		    if( m_selection )
+		    {
+			NewRow_sp sp = m_model->row(boost::get<S_INDEX>(m_selection.get())) ;
+
+			if( sp->queuepos )
+			{
+			    m_SIGNAL_remove_track_from_queue.emit(sp->ID) ; 
+
+			    sp->queuepos.reset() ;
+
+			    if( m_model->m_obey_queue )
+			    {
+				m_model->regen_mapping_queue() ;
+			    }
+			}
 		    }
 		}
 
@@ -3100,6 +3279,12 @@ namespace Tracks
                     return _signal_1 ;
                 }
 
+                SignalMBID&
+                signal_similar_artists_mbid()
+                {
+                    return _signal_2 ;
+                }
+ 
                 Class()
 
                         : ObjectBase( "YoukiClassTracks" )
@@ -3197,14 +3382,20 @@ namespace Tracks
                     m_refActionGroup = Gtk::ActionGroup::create() ;
                     m_refActionGroup->add( Gtk::Action::create("ContextMenu", "Context Menu")) ;
 
-                    m_refActionGroup->add( Gtk::Action::create("ContextShowAlbum", "Show this Album"),
+                    m_refActionGroup->add( Gtk::Action::create("ContextShowAlbum", "Filter by this Album"),
                         sigc::mem_fun(*this, &Class::on_show_only_this_album)) ;
-                    m_refActionGroup->add( Gtk::Action::create("ContextShowArtist", "Show this Artist"),
+                    m_refActionGroup->add( Gtk::Action::create("ContextShowArtist", "Filter by this Album Artist"),
                         sigc::mem_fun(*this, &Class::on_show_only_this_artist)) ;
+                    m_refActionGroup->add( Gtk::Action::create("ContextShowArtistSimilar", Gtk::StockID("mpx-stock-lastfm"), "Similar Artists",""),
+                        sigc::mem_fun(*this, &Class::on_show_similar_artists)) ;
                     m_refActionGroup->add( Gtk::Action::create("ContextRandomShuffle", "Shuffle Tracklist"),
                         sigc::mem_fun(*this, &Class::on_shuffle_tracklist)) ;
-                    m_refActionGroup->add( Gtk::Action::create("ContextAddToQueue", "Add to Queue"),
+                    m_refActionGroup->add( Gtk::Action::create("ContextAddToQueue", "Enqueue"),
                         sigc::mem_fun(*this, &Class::on_add_track_to_queue)) ;
+                    m_refActionGroup->add( Gtk::Action::create("ContextRemoveFromQueue", "Remove from Queue"),
+                        sigc::mem_fun(*this, &Class::on_remove_track_from_queue)) ;
+                    m_refActionGroup->add( Gtk::Action::create("ContextClearQueue", "Clear Queue"),
+                        sigc::mem_fun(*this, &Class::on_clear_queue)) ;
  
                     m_refUIManager = Gtk::UIManager::create() ;
                     m_refUIManager->insert_action_group(m_refActionGroup) ;
@@ -3213,11 +3404,13 @@ namespace Tracks
                     "<ui>"
                     "   <popup name='PopupMenu'>"
                     "       <menuitem action='ContextAddToQueue'/>"
+                    "       <menuitem action='ContextRemoveFromQueue'/>"
+                    "       <menuitem action='ContextClearQueue'/>"
                     "       <separator/>"
                     "       <menuitem action='ContextShowAlbum'/>"
                     "       <menuitem action='ContextShowArtist'/>"
                     "       <separator/>"
-                    "       <menuitem action='ContextRandomShuffle'/>"
+                    "       <menuitem action='ContextShowArtistSimilar'/>"
                     "   </popup>"
                     "</ui>" ;
 

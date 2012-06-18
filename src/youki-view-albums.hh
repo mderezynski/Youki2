@@ -549,6 +549,9 @@ class Class
                 void
                 on_refetch_album_cover() ;
 
+		void
+		on_jump_to_selected() ;
+
 		bool
 		handle_redraw() ;
 

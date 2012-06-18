@@ -119,7 +119,8 @@ namespace MPX
 		{
                         Track_sp t = sqlToTrack( r, false, false );
 
-                        std::string location = get<std::string>((*(t.get()))[ATTRIBUTE_LOCATION].get()) ;
+                        std::string location = trackGetLocation(t) ;
+
                         std::string mb_album_id;
                         std::string amazon_asin;
                         std::string album_artist;

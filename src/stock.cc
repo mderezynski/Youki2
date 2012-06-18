@@ -76,6 +76,7 @@ namespace MPX
         v.push_back(StockIconSpec( "icon-plugins.png",             MPX_STOCK_PLUGIN            ));
         v.push_back(StockIconSpec( "icon-preferences.png",         "mpx-stock-preferences"     ));
         v.push_back(StockIconSpec( "icon-musiclibrary.png",        "mpx-stock-musiclibrary"    ));
+        v.push_back(StockIconSpec( "lastfm.png",		   "mpx-stock-lastfm"	       ));
         register_stock_icons (v, 24, default_stock_path("24x24")); 
 
         v.clear();

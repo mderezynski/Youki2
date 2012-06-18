@@ -366,26 +366,47 @@ namespace Albums
 	    RowRowMapping_t new_mapping;
 	    new_mapping.reserve( m_realmodel->size() );
 
-	    m_upper_bound = 0;
+	    boost::optional<guint> upper_bound_prev_id ;
+    
+	    if( !m_mapping.empty() )
+	    {
+		upper_bound_prev_id = row(m_upper_bound)->album_id.get() ;
+	    }
+
+	    m_upper_bound = 0 ;
+
+	    guint c = 0 ;
 
 	    if( (!m_constraints_albums || m_constraints_albums->empty())) 
 	    {
 		for( auto i = m_realmodel->begin(); i != m_realmodel->end(); ++i )
 		{
+		    if( upper_bound_prev_id && ((*i)->album_id.get() == upper_bound_prev_id))
+		    {
+			m_upper_bound = c ; 
+		    }
+
 		    new_mapping.push_back( i );
+		    ++c ;
 		}
 	    }
 	    else
 	    {
-		    const TCVector_t& constraints_ = *m_constraints_albums;
-
-		    for( auto i = m_realmodel->begin(); i != m_realmodel->end(); ++i )
+		const TCVector_t& constraints_ = *m_constraints_albums;
+	
+		for( auto i = m_realmodel->begin(); i != m_realmodel->end(); ++i )
+		{
+		    if( constraints_[(*i)->album_id.get()].Count ) 
 		    {
-			if( constraints_[(*i)->album_id.get()].Count ) 
+			if( upper_bound_prev_id && ((*i)->album_id.get() == upper_bound_prev_id ))
 			{
-			    new_mapping.push_back( i );
+			    m_upper_bound = c ; 
 			}
+
+			new_mapping.push_back( i );
+			++c ;
 		    }
+		}
 	    }
 
 	    if( !vector_compare( m_mapping, new_mapping ))
@@ -408,7 +429,17 @@ namespace Albums
 
 	    RowRowMapping_t new_mapping;
 	    new_mapping.reserve( m_mapping.size() ); // why? because it's only going to be at max. as large as the current mapping
-	    m_upper_bound = 0;
+
+	    boost::optional<guint> upper_bound_prev_id ;
+    
+	    if( !m_mapping.empty() )
+	    {
+		upper_bound_prev_id = row(m_upper_bound)->album_id.get() ;
+	    }
+
+	    m_upper_bound = 0 ;
+
+	    guint c = 0 ;
 
 	    const TCVector_t& constraints_ = *m_constraints_albums;
 
@@ -416,7 +447,13 @@ namespace Albums
 	    {
 		if( constraints_[(**i)->album_id.get()].Count ) 
 		{
+		    if( upper_bound_prev_id && ((**i)->album_id.get() == upper_bound_prev_id ))
+		    {
+			m_upper_bound = c ; 
+		    }
+
 		    new_mapping.push_back( *i );
+		    ++c ;
 		}
 	    }
 
@@ -463,7 +500,7 @@ namespace Albums
 	    double r
 	)
 	{
-	    m_rounding = 5 ; // r;
+	    m_rounding = 3 ; // r;
 	}
 
 	double
@@ -612,30 +649,55 @@ namespace Albums
 
 		//////////
 
+		if(!album->rgba)
+		{
+		    Glib::RefPtr<Gdk::Pixbuf> pb = Util::cairo_image_surface_to_pixbuf(album->surface_cache) ;
+		    album->rgba = Util::pick_color_for_pixbuf(pb) ;
+		    album->rgba->set_alpha(1);
+		}
+
+		//////////
+
+		Util::color_to_hsb( color, h, s, b );
+		s = fmin(1,s*1.3) ; 
+		b = fmin(1,b*1.3) ; 
+		Gdk::RGBA c4 = Util::make_rgba(Util::color_from_hsb( h, s, b ),1.) ;
+
+		Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create( 96, 2, 96, 86 ) ;
+		gradient->add_color_stop_rgba(
+		      0 
+		    , album->rgba->get_red() 
+		    , album->rgba->get_green() 
+		    , album->rgba->get_blue() 
+		    , selected ? 0.80 : 0.65
+		) ;
+		gradient->add_color_stop_rgba(
+		      1
+		    , album->rgba->get_red() 
+		    , album->rgba->get_green() 
+		    , album->rgba->get_blue() 
+		    , 0.4 
+		) ;
+		cairo->set_source(gradient) ;
+		cairo->set_line_width(2) ;
 		RoundedRectangle(
 		      cairo
 		    , 4 
 		    , 2 
 		    , 184
 		    , 86
-		    , 4.
+		    , m_rounding 
 		);
+		cairo->stroke_preserve() ;
+
+		//////////
+
 		cairo->set_source(album->surface_cache,0,0) ;
 		cairo->fill_preserve() ;
 
 		//////////
 
-		if(!album->rgba)
-		{
-		    Glib::RefPtr<Gdk::Pixbuf> pb = Util::cairo_image_surface_to_pixbuf(album->surface_cache) ;
-		    album->rgba = Util::pick_color_for_pixbuf(pb) ;
-		    album->rgba->set_alpha(0.95);
-		}
-
-		//////////
-
-		Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create( 96, 2, 96, 86 ) ;
-
+		gradient = Cairo::LinearGradient::create( 96, 2, 96, 86 ) ;
 		gradient->add_color_stop_rgba(
 		      0
 		    , 0 
@@ -643,7 +705,6 @@ namespace Albums
 		    , 0
 		    , selected ? 0.60 : 0.40 
 		) ;
-
 		gradient->add_color_stop_rgba(
 		      0.66
 		    , 0
@@ -651,7 +712,6 @@ namespace Albums
 		    , 0
 		    , selected ? 0.25 : 0.15
 		) ;
-
 		gradient->add_color_stop_rgba(
 		      1 
 		    , 0
@@ -724,31 +784,31 @@ namespace Albums
 
 	    layout[L2]->set_text( album->album ) ;
 	    layout[L2]->get_pixel_size( width, height );
+	    Util::render_text_shadow( layout[L2], 12, 27, cairo, 1, 0.3 ) ;
 	    cairo->move_to(
 		  12 
-		, 10 
+		, 27 
 	    );
 	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(1,1,1)) ; 
 	    pango_cairo_show_layout(cairo->cobj(), layout[L2]->gobj()) ;
 
 	    //////////
 
-	    if( album->album_artist != album->album )
-	    {
-		layout[L1]->set_text( album->album_artist );
-		layout[L1]->get_pixel_size( width, height );
-		cairo->move_to(
-		      12 
-		    , 27 
-		);
-		Gdk::Cairo::set_source_rgba(cairo, c3);
-		pango_cairo_show_layout(cairo->cobj(), layout[L1]->gobj()) ;
-	    }
+	    layout[L1]->set_text( album->album_artist );
+	    layout[L1]->get_pixel_size( width, height );
+	    Util::render_text_shadow( layout[L1], 12, 10, cairo, 1, 0.3 ) ;
+	    cairo->move_to(
+		  12 
+		, 10 
+	    );
+	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(.9,.9,.9)) ; 
+	    pango_cairo_show_layout(cairo->cobj(), layout[L1]->gobj()) ;
 
 	    if( !album->year.empty() )
 	    {
 		layout[L3]->set_text(album->year.substr(0,4)) ;
 		layout[L3]->get_pixel_size( width, height );
+		Util::render_text_shadow( layout[L3], 182-width, 84-height, cairo, 1, 0.3 ) ;
 		cairo->move_to(
 		      182 - width
 		    ,  84 - height 
@@ -821,49 +881,15 @@ namespace Albums
 		    , 2 
 		    , 184
 		    , 86
-		    , 4.
+		    , m_rounding 
 		);
 		cairo->set_source(m_rect_shadow,4,2) ;
 		cairo->fill() ;
 	    }
 
-#if 0
-	    Util::color_to_hsb( color, h, s, b );
-	    s = fmin(1,s*1.3) ; 
-	    b = fmin(1,b*1.3) ; 
-	    Gdk::RGBA c4 = Util::make_rgba(Util::color_from_hsb( h, s, b ),1.) ;
-
-	    Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create( 96, 2, 96, 86 ) ;
-	    gradient->add_color_stop_rgba(
-		  0 
-		, album->rgba->get_red() 
-		, album->rgba->get_green() 
-		, album->rgba->get_blue() 
-		, selected ? 0.80 : 0.65
-	    ) ;
-	    gradient->add_color_stop_rgba(
-		  1
-		, album->rgba->get_red() 
-		, album->rgba->get_green() 
-		, album->rgba->get_blue() 
-		, selected ? 0.75 : 0.60 
-	    ) ;
-	    cairo->set_source(gradient) ;
-	    cairo->set_line_width(4.5) ;
-	    RoundedRectangle(
-		  cairo
-		, 4 
-		, 2 
-		, 184
-		, 86
-		, 4.
-	    );
-	    cairo->stroke() ;
-#endif
-
 	    if(WithinPast3Days( album->insert_date ))
 	    {
-		Util::draw_cairo_image( cairo, m_image_new, 160, -2 );
+		Util::draw_cairo_image( cairo, m_image_new, 162, 10 );
 	    }
 
 	    cairo->restore() ;
@@ -1254,7 +1280,7 @@ namespace Albums
 		vadj_value_set( std::min<int>(vadj_upper(), ViewMetrics.ViewPortPx.upper() + ViewMetrics.RowHeight + (ViewMetrics.RowHeight - ymod) - ViewMetrics.Excess ));
 	    }
 
-	    if( !m_selection || (get<Selection::INDEX>(m_selection.get()) != d))
+	    if( event->button == 1 && (!m_selection || (get<Selection::INDEX>(m_selection.get()) != d)))
 	    {
 		if( ModelExtents( d ))
 		{
@@ -1262,7 +1288,7 @@ namespace Albums
 		}
 	    }
 	    else
-	    if( event->button == 1 && m_selection && (get<Selection::INDEX>(m_selection.get()) == d))
+	    if( event->button == 1 && (m_selection && (get<Selection::INDEX>(m_selection.get()) == d)))
 	    {
 		if( has_focus() )
 		{
@@ -1274,6 +1300,7 @@ namespace Albums
 
 	    if( event->button == 3 )
 	    {
+		m_refActionGroup->get_action("ContextJumpToSelected")->set_sensitive(bool(m_selection)) ;
 		m_pMenuPopup->popup(event->button, event->time);
 	    }
 	    else
@@ -1353,7 +1380,6 @@ namespace Albums
 	    const ThemeColor& c_text     = m_theme->get_color( THEME_COLOR_TEXT );
 	    const ThemeColor& c_text_sel = m_theme->get_color( THEME_COLOR_TEXT_SELECTED );
 	    const ThemeColor& c_base     = m_theme->get_color( THEME_COLOR_BASE );
-	    const ThemeColor& c_sel      = m_theme->get_color( THEME_COLOR_SELECT );
 
 	    guint d       = ViewMetrics.ViewPort.upper(); 
 	    guint d_max   = std::min<guint>( m_model->size(), ViewMetrics.ViewPort.size() + 1 );
@@ -1366,6 +1392,7 @@ namespace Albums
 		d_max += 1;
 	    }
 
+#if 0
 	    /* Let's see if we can save some rendering */	
 	    double clip_x1, clip_y1, clip_x2, clip_y2;
 	
@@ -1384,28 +1411,10 @@ namespace Albums
 		guint d_clip = clip_y2 / ViewMetrics.RowHeight;
 		d_max = d_clip+1 ;
 	    }
+#endif
 
 	    guint n = 0;
 	    Algorithm::Adder<guint> d_cur( d, n );
-
-	    if( has_focus() )
-	    {
-		GdkRectangle r ;
-
-		r.x = 0 ;
-		r.y = 0 ;
-		r.width = get_allocated_width() ;
-		r.height = get_allocated_height() ;
-    
-		Gdk::Cairo::set_source_rgba(cairo,Util::make_rgba(c_sel,0.2)) ;
-		cairo->rectangle(
-		      r.x
-		    , r.y
-		    , r.width
-		    , r.height
-		) ;
-		cairo->fill() ;
-	    }
 
 	    RowRowMapping_t::const_iterator i = m_model->iter( d_cur );
 
@@ -1782,9 +1791,14 @@ namespace Albums
 	void
 	Class::on_show_only_this_album()
 	{
-	    if( m_selection )
+	    int x, y ;
+	    Gdk::ModifierType mod ;
+	    get_window()->get_pointer(x,y,mod) ;
+	    guint d = (vadj_value() + y) / ViewMetrics.RowHeight;
+
+	    if( ModelExtents(d))
 	    {
-		Album_sp album = *(boost::get<Selection::ITERATOR>(m_selection.get()));
+		const Album_sp& album = m_model->row(d) ;
 		_signal_0.emit( album->mbid );
 	    }
 	}
@@ -1792,26 +1806,44 @@ namespace Albums
 	void
 	Class::on_show_only_this_artist()
 	{
-	    if( m_selection )
+	    int x, y ;
+	    Gdk::ModifierType mod ;
+	    get_window()->get_pointer(x,y,mod) ;
+	    guint d = (vadj_value() + y) / ViewMetrics.RowHeight;
+
+
+	    if( ModelExtents(d)) 
 	    {
-		Album_sp album = *(boost::get<Selection::ITERATOR>(m_selection.get()));
+		const Album_sp& album = m_model->row(d) ;
 		_signal_1.emit( album->mbid_artist );
+	    }
+	}
+
+	void
+	Class::on_jump_to_selected()
+	{
+	    if(m_selection)
+	    {
+		guint index = boost::get<2>(m_selection.get()) ;
+		scroll_to_index(index) ;
 	    }
 	}
 
 	void
 	Class::on_refetch_album_cover()
 	{
-	    if( m_selection ) 
-	    {
-		//set_has_tooltip(false);
-		while(gtk_events_pending()) gtk_main_iteration();
+	    int x, y ;
+	    Gdk::ModifierType mod ;
+	    get_window()->get_pointer(x,y,mod) ;
+	    guint d = (vadj_value() + y) / ViewMetrics.RowHeight;
 
-		Album_sp& album = *(boost::get<Selection::ITERATOR>(m_selection.get()));
+	    if( ModelExtents(d)) 
+	    {
+		const Album_sp& album = m_model->row(d) ; 
+
 		album->caching = true;
 		m_caching.insert( album->album_id.get());
 		_signal_2.emit( album->album_id.get());
-		queue_draw();
 
 		m_redraw_spinner_conn.disconnect();
 		m_redraw_spinner_conn = Glib::signal_timeout().connect( sigc::mem_fun( *this, &Class::handle_redraw ), 100 );
@@ -1823,13 +1855,11 @@ namespace Albums
 	{
 	    m_columns[0]->m_image_album_loading_iter->advance();
 	    queue_draw();
-
 	    while(gtk_events_pending()) gtk_main_iteration();
 
 	    if(m_caching.empty())
 	    {
 		m_redraw_spinner_conn.disconnect();
-		//set_has_tooltip(true);
 	    }
 
 	    return !m_caching.empty();
@@ -1943,11 +1973,6 @@ namespace Albums
 	    , m_button_depressed( false )
 
 	{
-	    m_background = Util::cairo_image_surface_from_pixbuf(
-				    Gdk::Pixbuf::create_from_file(
-					    Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "album-background.png" )
-	    ));
-
 	    property_vadjustment().signal_changed().connect( sigc::mem_fun( *this, &Class::on_vadj_prop_changed ));
 
 	    set_can_focus(true);
@@ -2003,12 +2028,14 @@ namespace Albums
 	    m_refActionGroup = Gtk::ActionGroup::create();
 	    m_refActionGroup->add( Gtk::Action::create("ContextMenu", "Context Menu"));
 
-	    m_refActionGroup->add( Gtk::Action::create("ContextShowAlbum", "Show this Album"),
+	    m_refActionGroup->add( Gtk::Action::create("ContextShowAlbum", "Filter by this Album"),
 		sigc::mem_fun(*this, &Class::on_show_only_this_album));
-	    m_refActionGroup->add( Gtk::Action::create("ContextShowArtist", "Show this Artist"),
+	    m_refActionGroup->add( Gtk::Action::create("ContextShowArtist", "Filter by this Album Artist"),
 		sigc::mem_fun(*this, &Class::on_show_only_this_artist));
 	    m_refActionGroup->add( Gtk::Action::create("ContextFetchCover", "(Re-)fetch Album Cover"),
 		sigc::mem_fun(*this, &Class::on_refetch_album_cover));
+	    m_refActionGroup->add( Gtk::Action::create("ContextJumpToSelected", "Jump to Selected Album"),
+		sigc::mem_fun(*this, &Class::on_jump_to_selected));
 
 	    m_refUIManager = Gtk::UIManager::create();
 	    m_refUIManager->insert_action_group(m_refActionGroup);
@@ -2016,6 +2043,8 @@ namespace Albums
 	    std::string ui_info =
 	    "<ui>"
 	    "   <popup name='PopupMenu'>"
+	    "       <menuitem action='ContextJumpToSelected'/>"
+	    "	    <separator/>"
 	    "       <menuitem action='ContextShowAlbum'/>"
 	    "       <menuitem action='ContextShowArtist'/>"
 	    "	    <separator/>"

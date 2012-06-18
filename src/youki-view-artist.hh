@@ -380,7 +380,9 @@ namespace Artist
                 sigc::connection                    m_search_changed_conn ;
                 bool                                m_search_active ;
 
-		Cairo::RefPtr<Cairo::ImageSurface>  m_background ;
+                Glib::RefPtr<Gtk::UIManager>	    m_refUIManager ;
+                Glib::RefPtr<Gtk::ActionGroup>	    m_refActionGroup ;
+                Gtk::Menu*			    m_pMenuPopup ;
 
                 void
                 initialize_metrics() ;
@@ -543,6 +545,9 @@ namespace Artist
                 ) ; 
 
             protected:
+
+		void
+		on_jump_to_selected() ;
 
                 void
                 find_next_match() ;

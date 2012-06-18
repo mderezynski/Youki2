@@ -423,7 +423,7 @@ namespace Artist
 	void
 	Column::set_rounding(double r)
 	{
-	    m_rounding = 5 ; // r ;
+	    m_rounding = 3 ; // r ;
 	}
 
 	double
@@ -563,17 +563,14 @@ namespace Artist
 	    font_desc.set_weight(Pango::WEIGHT_BOLD) ;
 	    layout->set_font_description(font_desc) ;
 	    layout->set_alignment(Pango::ALIGN_CENTER) ;
-	    layout->set_width(84*PANGO_SCALE) ;
+	    layout->set_width(m_width*PANGO_SCALE) ;
 	    layout->set_wrap(Pango::WRAP_WORD_CHAR) ;
 	    layout->set_text(get<0>(r)) ;
 	    layout->get_pixel_size( width, height ) ;
 
 	    //////////
 
-	    Cairo::RefPtr<Cairo::ImageSurface>
-	    surface = boost::get<4>(r) ;
-
-	    //////////
+	    Cairo::RefPtr<Cairo::ImageSurface> surface = boost::get<4>(r) ;
 
 	    if(!surface)
 	    {
@@ -588,7 +585,19 @@ namespace Artist
 	    cairo->save() ;
 	    cairo->translate( x, y ) ;
 
-	    RoundedRectangle(cairo, 0, 0, 96, 96, 5.) ;
+	    boost::optional<Gdk::RGBA>& c = boost::get<7>(r) ; 
+
+	    if(!c)
+	    {
+		Glib::RefPtr<Gdk::Pixbuf> pb = Util::cairo_image_surface_to_pixbuf(surface) ;
+		c = Util::pick_color_for_pixbuf(pb) ;
+	    }
+
+	    RoundedRectangle(cairo, 0, 0, 96, 96, m_rounding ) ;
+	    cairo->set_line_width(2) ;
+	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(c.get(),1)) ;
+	    cairo->stroke_preserve() ;
+
 	    cairo->set_source(surface, 0, 0) ;
 	    cairo->fill_preserve() ;
 
@@ -617,29 +626,18 @@ namespace Artist
 	    cairo->set_source( gradient ) ;
 	    cairo->fill() ;
 
-	    boost::optional<Gdk::RGBA>& c = boost::get<7>(r) ; 
-
-	    if(!c)
-	    {
-		Glib::RefPtr<Gdk::Pixbuf> pb = Util::cairo_image_surface_to_pixbuf(surface) ;
-		c = Util::pick_color_for_pixbuf(pb) ;
-	    }
-
-	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(c.get(),1)) ;
-	    RoundedRectangle(cairo, 1.5, 1.5, 93, 93, 4.) ;
-	    cairo->set_line_width(3.5) ;
-	    cairo->stroke() ;
 	    cairo->restore() ;
 
 	    //////////
 
 	    cairo->save() ;
-	    cairo->translate((m_width-96)/2.,ypos+4+(96-height)/2.) ;
+	    cairo->translate(xpos,ypos+8) ;
+	    //Util::render_text_shadow( layout, 18, 13, cairo, 1, 0.5 ) ;
 	    cairo->move_to(
-		  6 
-		, 6 
+		  0 
+		, (96-height)/2. 
 	    );
-	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(1,1,1,0.85)) ; 
+	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(1,1,1,0.8)) ; 
 	    pango_cairo_show_layout(cairo->cobj(), layout->gobj());
 	    cairo->restore() ;
 
@@ -647,12 +645,13 @@ namespace Artist
 	    {
 		cairo->save() ;
 		cairo->translate(x,y) ;
-		RoundedRectangle(cairo, 0, 0, 96, 96, 5.) ;
+		RoundedRectangle(cairo, 0, 0, 96, 96, m_rounding) ;
 		cairo->set_source(m_rect_shadow, 0, 0) ;
 		cairo->fill() ;
 		cairo->restore() ;
 	    }
 
+#if 0
 	    //////////
 
 	    std::string s_artist_tracks, s_artist_time ;
@@ -682,7 +681,7 @@ namespace Artist
 	    else
 		s_artist_time = ((boost::format("<b>%u:%02u</b>") % min % sec).str()) ;
 
-	    s_artist_tracks = ((boost::format("<b>%u</b> %s") % tracks % ((tracks>1)?"Tracks":"Track")).str()) ;
+	    s_artist_tracks = ((boost::format("<b>%u</b> %s") % tracks % ((tracks>1)?"Songs":"Song")).str()) ;
 
 	    if( constraints ) 
 	    {
@@ -712,15 +711,27 @@ namespace Artist
 		pango_cairo_show_layout(cairo->cobj(), layout_s->gobj());
 		cairo->restore() ;
 	    }
+#endif
 	}
 
 //////////////////////////
 
 	void
+	Class::on_jump_to_selected()
+	{
+	    if(m_selection)
+	    {
+		guint index = boost::get<2>(m_selection.get()) ;
+		scroll_to_index(index) ;
+	    }
+	}
+
+	void
 	Class::initialize_metrics()
 	{
-	    Glib::RefPtr<Pango::Context> context = get_pango_context();
+	    //const int header_pad = 5 ;
 
+	    Glib::RefPtr<Pango::Context> context = get_pango_context();
 	    Pango::FontMetrics metrics = context->get_metrics(
 					      get_style_context()->get_font()
 					    , context->get_language()
@@ -728,10 +739,7 @@ namespace Artist
 
 	    m_height__row = 112 ;
 
-	    const int header_pad = 5 ;
-
 	    m_height__headers = 0 ;
-
 #if 0
 	    m_height__headers = (metrics.get_ascent()/PANGO_SCALE) +
 			        (metrics.get_descent()/PANGO_SCALE) + 5 + header_pad ;
@@ -1082,7 +1090,7 @@ namespace Artist
 	    double ymod = fmod( vadj_value(), m_height__row ) ;
 	    guint d = (vadj_value() + event->y - m_height__headers) / m_height__row ;
 
-	    if( !m_selection || (get<S_INDEX>(m_selection.get()) != d))
+	    if( event->button == 1 && (!m_selection || (get<S_INDEX>(m_selection.get()) != d)))
 	    {
 		if( ModelExtents( d ))
 		{
@@ -1111,13 +1119,17 @@ namespace Artist
 	    else
 	    if( event->button == 1 && m_selection && (get<S_INDEX>(m_selection.get()) == d))
 	    {
-		if( has_focus() )
-		{
-		    clear_selection() ;
-		}
+		clear_selection() ;
+	    }
+	    else
+	    if( event->button == 3)
+	    {
+		m_refActionGroup->get_action("ContextJumpToSelected")->set_sensitive(bool(m_selection)) ;
+		m_pMenuPopup->popup(event->button, event->time);
 	    }
 
 	    grab_focus() ;
+
 	    return true ;
 	}
 
@@ -1270,25 +1282,6 @@ namespace Artist
 	    guint n = 0 ;
 	    Algorithm::Adder<guint> d_cur( d, n ) ;
 
-	    if( has_focus() )
-	    {
-		GdkRectangle r ;
-
-		r.x = 0 ;
-		r.y = 0 ;
-		r.width = get_allocated_width() ;
-		r.height = get_allocated_height() ;
-    
-		Gdk::Cairo::set_source_rgba(cairo,Util::make_rgba(c_sel,0.2)) ;
-		cairo->rectangle(
-		      r.x
-		    , r.y
-		    , r.width
-		    , r.height
-		) ;
-		cairo->fill() ;
-	    }
-
 #if 0
 	    GdkRectangle rr ;
 	    rr.x = 0 ;
@@ -1420,6 +1413,7 @@ namespace Artist
 	    guint index
 	)
 	{
+/*
 	    if( m_model->m_constraints_artist )
 	    {
 		m_height__row = 112 + 4 + 2 + 12 + 2 + 12 ;
@@ -1428,6 +1422,7 @@ namespace Artist
 	    {
 		m_height__row = 112 ;
 	    }
+*/
 
 	    configure_vadj(
 		 (m_model->size() * m_height__row)
@@ -1824,11 +1819,6 @@ namespace Artist
 	    , m_search_active( false )
 
 	{
-	    m_background = Util::cairo_image_surface_from_pixbuf(
-				    Gdk::Pixbuf::create_from_file(
-					    Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "album-background.png" )
-	    )) ;
-
 	    property_vadjustment().signal_changed().connect( sigc::mem_fun( *this, &Class::on_vadj_prop_changed )) ;
 
 	    ModelCount = Minus<int>( -1 ) ;
@@ -1846,6 +1836,24 @@ namespace Artist
 	    set_can_focus (true);
 
 	    add_events(Gdk::EventMask(GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_EXPOSURE_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_LEAVE_NOTIFY_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_MOTION_MASK | GDK_SCROLL_MASK ));
+
+	    m_refActionGroup = Gtk::ActionGroup::create();
+	    m_refActionGroup->add( Gtk::Action::create("ContextMenu", "Context Menu"));
+	    m_refActionGroup->add( Gtk::Action::create("ContextJumpToSelected", "Jump to Selected Artist"),
+		sigc::mem_fun(*this, &Class::on_jump_to_selected));
+
+	    m_refUIManager = Gtk::UIManager::create();
+	    m_refUIManager->insert_action_group(m_refActionGroup);
+
+	    std::string ui_info =
+	    "<ui>"
+	    "   <popup name='PopupMenu'>"
+	    "       <menuitem action='ContextJumpToSelected'/>"
+	    "   </popup>"
+	    "</ui>";
+
+	    m_refUIManager->add_ui_from_string( ui_info );
+	    m_pMenuPopup = dynamic_cast<Gtk::Menu*>(m_refUIManager->get_widget("/PopupMenu"));
 
 	    m_SearchEntry = Gtk::manage( new Gtk::Entry ) ;
 	    m_SearchEntry->show() ;

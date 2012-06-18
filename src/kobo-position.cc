@@ -161,7 +161,6 @@ namespace MPX
             , w
             , 19
             , rounding 
-	    , MPX::CairoCorners::CORNERS(4)
         ) ;
 
         cairo->fill_preserve() ;
@@ -218,12 +217,13 @@ namespace MPX
             ) ;
 
             cairo->set_source( position_bar_gradient ) ;
-            cairo->rectangle(
+            /*cairo->rectangle(
                   r.x 
                 , r.y
                 , r.width 
                 , r.height
-            ) ;
+            ) ;*/
+	    RoundedRectangle( cairo, r.x, r.y, r.width, r.height, rounding) ;
             cairo->fill(); 
             cairo->restore() ;
         }

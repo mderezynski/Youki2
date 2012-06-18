@@ -161,7 +161,6 @@ namespace MPX
             , w
             , 19
             , rounding 
-	    , MPX::CairoCorners::CORNERS(8)
         ) ;
         cairo->fill() ;
 
@@ -202,7 +201,6 @@ namespace MPX
             , r.width
             , r.height
             , rounding 
-	    , MPX::CairoCorners::CORNERS(8)
         ) ;
 
 	cairo->fill (); 

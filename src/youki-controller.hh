@@ -5,7 +5,7 @@
 #include "mpx/i-youki-controller.hh"
 
 #include <gtkmm.h>
-#include <deque>
+#include <list>
 #include <unordered_map>
 
 #include <boost/optional.hpp>
@@ -250,6 +250,7 @@ namespace MPX
 
             Gtk::Entry                      * m_Entry ;
 
+	    Gtk::RadioButton		    * m_rb1, * m_rb2 ;
 
             Gtk::Alignment                  * m_Alignment_Entry ;
             Gtk::HBox                       * m_HBox_Entry ;
@@ -287,7 +288,7 @@ namespace MPX
             boost::optional<guint>            m_seek_position ;
             bool                              m_follow_track ;
 
-            std::deque<guint>                 m_play_queue ;
+            std::list<guint>                  m_play_queue ;
 	    IdHistory			      m_play_history ;
 
             info::backtrace::Youki::MLibMan_proxy_actual * m_mlibman_dbus_proxy ;
@@ -310,6 +311,15 @@ namespace MPX
 
 	    Glib::RefPtr<Gtk::UIManager>      m_UI_Manager ;
 	    Glib::RefPtr<Gtk::ActionGroup>    m_UI_Actions_Main ;
+
+	    void
+	    handle_show_queue_toggled() ;
+
+	    void
+	    handle_clear_queue() ;
+
+	    void
+	    handle_remove_track_from_queue(guint) ;
 
 	    void
 	    handle_follow_playing_track_toggled() ;
@@ -388,13 +398,13 @@ namespace MPX
             ) ;
 
             void
-            on_list_view_tr_track_activated(
+            handle_tracklist_track_activated(
                   MPX::Track_sp     /*track*/
                 , bool              /*play or not*/
             ) ;
 
             void
-            on_list_view_tr_find_propagate(
+            handle_tracklist_find_propagate(
                   const std::string&
             ) ;
 
@@ -403,30 +413,35 @@ namespace MPX
             ) ;
 
             void
-            on_list_view_ab_selection_changed(
+            handle_albumlist_selection_changed(
             ) ;
 
             void
-            on_list_view_ab_select_album(
+            handle_albumlist_select_album(
                 const std::string&
             ) ;
 
             void
-            on_list_view_ab_select_artist(
+            handle_albumlist_select_artist(
                 const std::string&
             ) ;
 
             void
-            on_list_view_ab_refetch_cover(
+            handle_albumlist_similar_artists(
+                const std::string&
+            ) ;
+ 
+            void
+            handle_albumlist_refetch_cover(
 		guint
             ) ;
 
             void
-            on_list_view_tr_vadj_changed(
+            handle_tracklist_vadj_changed(
             ) ;
 
             void
-            on_list_view_ab_start_playback(
+            handle_albumlist_start_playback(
             ) ;
 
             void
@@ -566,6 +581,9 @@ namespace MPX
                   guint
                 , int
             ) ;
+
+	    void
+	    play_next_queue_item() ;
 
             void
             push_new_tracks(
