@@ -126,10 +126,8 @@ namespace Artist
 		Glib::RefPtr<Gdk::Pixbuf> icon_desaturated_1 = icon->copy() ; 
 		Glib::RefPtr<Gdk::Pixbuf> icon_desaturated_2 = icon->copy() ;
 
-#if 0
 		icon->saturate_and_pixelate(icon_desaturated_1, 0.0, false) ;
 		icon->saturate_and_pixelate(icon_desaturated_2, 0.2, false) ;
-#endif
 
 		s1 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_1) ;
 		s2 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_2) ;
@@ -181,10 +179,8 @@ namespace Artist
 		Glib::RefPtr<Gdk::Pixbuf> icon_desaturated_1 = icon->copy() ; 
 		Glib::RefPtr<Gdk::Pixbuf> icon_desaturated_2 = icon->copy() ;
 
-#if 0
 		icon->saturate_and_pixelate(icon_desaturated_1, 0.0, false) ;
 		icon->saturate_and_pixelate(icon_desaturated_2, 0.2, false) ;
-#endif
 
 		s1 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_1) ;
 		s2 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_2) ;
@@ -632,7 +628,6 @@ namespace Artist
 
 	    cairo->save() ;
 	    cairo->translate(xpos,ypos+8) ;
-	    //Util::render_text_shadow( layout, 18, 13, cairo, 1, 0.5 ) ;
 	    cairo->move_to(
 		  0 
 		, (96-height)/2. 
@@ -1022,8 +1017,9 @@ namespace Artist
 		    return true ;
 		}
 
-		default:
+		default: break ;
 
+#if 0
 		    if( !m_search_active )
 		    {
 			int x, y ;
@@ -1047,6 +1043,7 @@ namespace Artist
 
 			return false ;
 		    }
+#endif
 	    }
 
 	    return false ;
@@ -1264,7 +1261,6 @@ namespace Artist
 
 	    const ThemeColor& c_text     = theme->get_color( THEME_COLOR_TEXT ) ;
 	    const ThemeColor& c_text_sel = theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
-	    const ThemeColor& c_sel      = theme->get_color( THEME_COLOR_SELECT ) ;
 
 	    guint d	= get_upper_row() ;
 	    guint d_max = Limiter<guint>(

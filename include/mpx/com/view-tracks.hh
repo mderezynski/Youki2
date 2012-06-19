@@ -2866,17 +2866,16 @@ namespace Tracks
 		    , boost::optional<guint> qpos = boost::optional<guint>()
                 )
                 {
-                    for( DataModelFilter::RowRowMapping_t::iterator i = m_model->m_mapping->begin() ; i != m_model->m_mapping->end() ; ++i )
+                    for( auto& r : *(m_model->m_realmodel) )
                     {
-                        if( (**i)->ID == id )
+                        if( r->ID == id )
                         {
-			    (**i)->queuepos = qpos ;
+			    r->queuepos = qpos ;
 			    queue_draw() ;
                             break ;
                         }
                     } 
                 }
-
 
                 void
                 scroll_to_id(

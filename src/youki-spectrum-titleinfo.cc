@@ -14,7 +14,7 @@
 
 namespace
 {
-    const double rounding = 5 ; 
+    const double rounding = 3 ; 
 }
 
 namespace MPX
@@ -109,98 +109,33 @@ namespace MPX
 	const Cairo::RefPtr<Cairo::Context>& cairo
     )
     {
+	const Gtk::Allocation& a = get_allocation() ;
+
         draw_background( cairo ) ;
         draw_titleinfo( cairo ) ;
         draw_cover( cairo ) ;
 
-	const Gtk::Allocation& a = get_allocation() ;
+        GdkRectangle r ;
+        r.x = 2 ;
+        r.y = 5 ;
+        r.width = a.get_width() - 6 ; 
+        r.height = a.get_height() - 8 ; 
 
-	if( m_total_time ) 
-	{
-		cairo->save() ;
-		cairo->set_operator( Cairo::OPERATOR_OVER ) ;
+	cairo->save() ;
 
-		int text_size_pt = static_cast<int>((14 * 72) / Util::screen_get_y_resolution( Gdk::Screen::get_default())) ;
+	RoundedRectangle(
+	      cairo
+	    , r.x
+	    , r.y
+	    , r.width
+	    , r.height
+	    , rounding
+	) ;
 
-		Pango::FontDescription font_desc = get_style_context()->get_font() ;
-		font_desc.set_size( text_size_pt * PANGO_SCALE ) ;
-
-		Glib::RefPtr<Pango::Layout> layout = Glib::wrap( pango_cairo_create_layout( cairo->cobj() )) ;
-		layout->set_font_description( font_desc ) ;
-
-		int width, height;
-
-		guint hrs = m_total_time.get() / 3600 ;
-		guint min = (m_total_time.get()-hrs*3600) / 60 ;
-		guint sec = m_total_time.get() % 60 ;
-
-		std::string s ;
-
-		if( hrs )
-		    s = (boost::format("<b>%u</b>h <b>%u</b>m <b>%u</b>s") % hrs % min % sec).str() ;
-		else
-		    s = (boost::format("<b>%u</b>m <b>%u</b>s") % min % sec).str() ;
-
-		layout->set_markup( s ) ;
-		layout->get_pixel_size( width, height ) ;
-
-		RoundedRectangle(
-		      cairo
-		    , a.get_width() - 2 - width - 4 - 4
-		    , 111 - 12 - (height+4) - 24 
-		    , width+7
-		    , height+4 
-		    , 2
-		    , MPX::CairoCorners::CORNERS(5)
-		) ;
-
-		Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create(
-		      a.get_width() - 10 + width/2 
-		    , 111 - 12 - (height+4) - 24 
-		    , a.get_width() - 10 + width/2 
-		    , 111 - 12 - (height+4) - 24 + height 
-		) ;
-
-		gradient->add_color_stop_rgba(
-		      0
-		    , 1. 
-		    , 1. 
-		    , 1. 
-		    , 0.69 
-		) ;
-		gradient->add_color_stop_rgba(
-		      .1
-		    , 1. 
-		    , 1. 
-		    , 1. 
-		    , 0.67 
-		) ;
-		gradient->add_color_stop_rgba(
-		      1. 
-		    , 1. 
-		    , 1. 
-		    , 1. 
-		    , 0.65 
-		) ;
-
-		cairo->set_source( gradient ) ;
-		cairo->fill() ;
-
-		cairo->set_source_rgba(
-		      0.25 
-		    , 0.25 
-		    , 0.25 
-		    , 1.
-		) ; 
-
-		cairo->move_to(
-		      a.get_width() - 2 - width - 4
-		    , 111 - 12 - (height+2) - 24
-		) ;
-
-		pango_cairo_show_layout( cairo->cobj(), layout->gobj() ) ;
-		cairo->restore() ;
-	}	
+	cairo->set_line_width(1) ;
+	cairo->set_source_rgba(.2,.2,.2, 0.8) ;
+	cairo->stroke() ;
+	cairo->restore() ;
 
 	if(0)
 	//if( m_audio_bitrate || m_audio_codec )
@@ -314,17 +249,11 @@ namespace MPX
 
         GdkRectangle r ;
         r.x = 1 ;
-        r.y = 4 ;
-        r.width = a.get_width() - 2 - 2 ;
-        r.height = a.get_height() - 6 ; 
+        r.y = 5 ;
+        r.width = a.get_width() - 5 ; 
+        r.height = a.get_height() - 8 ; 
 
         cairo->set_operator( Cairo::OPERATOR_OVER ) ;
-
-        if( m_cover )
-        {
-            RoundedRectangle( cairo, 8, r.y, r.width+2, r.height, rounding) ;
-            cairo->clip() ;
-        }
 
         Gdk::RGBA cgdk ;
         double h, s, b ;
@@ -387,12 +316,6 @@ namespace MPX
         ) ;
 
 	cairo->fill(); 
-
-	if( m_cover )
-	{
-	    cairo->reset_clip() ;
-	}
-
         cairo->restore() ;
     }
 
@@ -473,10 +396,10 @@ namespace MPX
 
 	GdkRectangle r ;
 
-	r.x = 1 ; 
-	r.y = 4 ;
-	r.width = 105 ; 
-	r.height = 105 ; 
+	r.x = 2 ; 
+	r.y = 5 ;
+	r.width = 103 ; 
+	r.height = 103 ; 
 
 	Gdk::Cairo::set_source_pixbuf(
 	      cairo
@@ -500,7 +423,7 @@ namespace MPX
 	    , r.x 
 	    , r.y
 	    , r.width
-	    , r.height/1.8 
+	    , r.height 
 	    , rounding
 	    , MPX::CairoCorners::CORNERS(5)
 	) ;
@@ -508,32 +431,39 @@ namespace MPX
 	      r.x + r.width/2.
 	    , r.y 
 	    , r.x + r.width/2. 
-	    , r.y + r.height/1.8
+	    , r.y + r.height 
 	) ;
-
 	gradient->add_color_stop_rgba(
 	      0
 	    , 1. 
 	    , 1. 
 	    , 1. 
-	    , 0.35 
+	    , 0.2
 	) ;
 	gradient->add_color_stop_rgba(
-	      .9 
+	      .6 
 	    , 1. 
 	    , 1. 
 	    , 1. 
-	    , 0.05 
+	    , 0.1 
+	) ;
+	gradient->add_color_stop_rgba(
+	      .88 
+	    , 1. 
+	    , 1. 
+	    , 1. 
+	    , 0.1 
 	) ;
 	gradient->add_color_stop_rgba(
 	      1. 
 	    , 1. 
 	    , 1. 
 	    , 1. 
-	    , 0 
+	    , 0.2 
 	) ;
 	cairo->set_source(gradient) ;
 	cairo->fill() ;
+
         cairo->restore() ;
     }
 }

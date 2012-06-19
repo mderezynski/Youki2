@@ -16,7 +16,7 @@
 
 namespace
 {
-    const double rounding = 3.5 ; 
+    const double rounding = 2.5 ; 
 }
 
 namespace MPX
@@ -217,14 +217,11 @@ namespace MPX
             ) ;
 
             cairo->set_source( position_bar_gradient ) ;
-            /*cairo->rectangle(
-                  r.x 
-                , r.y
-                , r.width 
-                , r.height
-            ) ;*/
 	    RoundedRectangle( cairo, r.x, r.y, r.width, r.height, rounding) ;
-            cairo->fill(); 
+            cairo->fill_preserve(); 
+	    Gdk::Cairo::set_source_rgba(cairo,Util::make_rgba(c1,.8)) ;
+	    cairo->set_line_width(1.5) ;
+	    cairo->stroke() ;
             cairo->restore() ;
         }
 

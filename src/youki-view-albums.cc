@@ -687,7 +687,7 @@ namespace Albums
 		    , 184
 		    , 86
 		    , m_rounding 
-		);
+		) ;
 		cairo->stroke_preserve() ;
 
 		//////////
@@ -755,12 +755,15 @@ namespace Albums
 	    font_desc[L1] = widget.get_style_context()->get_font();
 	    font_desc[L1].set_size( text_size_pt[L1] * PANGO_SCALE );
 	    font_desc[L1].set_stretch( Pango::STRETCH_EXTRA_CONDENSED );
-	    font_desc[L1].set_weight( Pango::WEIGHT_BOLD );
+	    //font_desc[L1].set_weight( Pango::WEIGHT_BOLD );
+	    font_desc[L1].set_variant( Pango::VARIANT_SMALL_CAPS ) ;
 
 	    font_desc[L2] = widget.get_style_context()->get_font();
 	    font_desc[L2].set_size( text_size_pt[L2] * PANGO_SCALE );
 	    font_desc[L2].set_stretch( Pango::STRETCH_EXTRA_CONDENSED );
 	    font_desc[L2].set_weight( Pango::WEIGHT_BOLD );
+	    //font_desc[L2].set_style( Pango::STYLE_OBLIQUE );
+	    font_desc[L2].set_variant( Pango::VARIANT_SMALL_CAPS ) ;
 
 	    font_desc[L3] = widget.get_style_context()->get_font();
 	    font_desc[L3].set_size( text_size_pt[L3] * PANGO_SCALE );
@@ -784,10 +787,10 @@ namespace Albums
 
 	    layout[L2]->set_text( album->album ) ;
 	    layout[L2]->get_pixel_size( width, height );
-	    Util::render_text_shadow( layout[L2], 12, 27, cairo, 1, 0.3 ) ;
+	    Util::render_text_shadow( layout[L2], 13, 46, cairo, 1, 0.85 ) ;
 	    cairo->move_to(
 		  12 
-		, 27 
+		, 45 
 	    );
 	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(1,1,1)) ; 
 	    pango_cairo_show_layout(cairo->cobj(), layout[L2]->gobj()) ;
@@ -796,10 +799,10 @@ namespace Albums
 
 	    layout[L1]->set_text( album->album_artist );
 	    layout[L1]->get_pixel_size( width, height );
-	    Util::render_text_shadow( layout[L1], 12, 10, cairo, 1, 0.3 ) ;
+	    Util::render_text_shadow( layout[L1], 13, 29, cairo, 1, 0.85 ) ;
 	    cairo->move_to(
 		  12 
-		, 10 
+		, 28 
 	    );
 	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(.9,.9,.9)) ; 
 	    pango_cairo_show_layout(cairo->cobj(), layout[L1]->gobj()) ;
@@ -808,10 +811,12 @@ namespace Albums
 	    {
 		layout[L3]->set_text(album->year.substr(0,4)) ;
 		layout[L3]->get_pixel_size( width, height );
-		Util::render_text_shadow( layout[L3], 182-width, 84-height, cairo, 1, 0.3 ) ;
+		int x = 182-width ;
+		int y = 70 ;
+		Util::render_text_shadow( layout[L3], x-1, y-1, cairo, 1, 0.85 ) ;
 		cairo->move_to(
-		      182 - width
-		    ,  84 - height 
+		      x 
+		    , y 
 		) ;
 		Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(1,1,1,0.90));
 		pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj());
@@ -1193,8 +1198,9 @@ namespace Albums
 
 		    return true;
 
-		default:
+		default: break;
 
+#if 0
 		    if( !m_search_active && event->keyval != GDK_KEY_Tab )
 		    {
 			int x, y;
@@ -1218,6 +1224,7 @@ namespace Albums
 
 			return false;
 		    }
+#endif
 	    }
 
 	    return false;
@@ -1981,7 +1988,7 @@ namespace Albums
 
 	    m_theme = services->get<IYoukiThemeEngine>("mpx-service-theme");
 
-	    add_events(Gdk::EventMask(GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK | GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_SCROLL_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK ));
+	    add_events(Gdk::EventMask(GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK | GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_SMOOTH_SCROLL_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK ));
 
 	    m_SearchEntry = Gtk::manage( new Gtk::Entry );
 	    m_SearchEntry->show();

@@ -610,7 +610,7 @@ namespace MPX
 
 	    Gtk::Button* m_BTN_HISTORY_PREV ;
 	    Gtk::Button* m_BTN_HISTORY_FFWD ;
-	    Gtk::ToggleButton* m_BTN_SHUFFLE ;
+	    Gtk::Button* m_BTN_SHUFFLE ;
 
 	    bool m_history_ignore_save ;
 	
