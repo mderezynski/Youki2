@@ -475,7 +475,7 @@ namespace Albums
 		, m_rounding(0)
 
 	{
-	    m_rect_shadow = Util::cairo_image_surface_from_pixbuf(
+	    m_image_lensflare = Util::cairo_image_surface_from_pixbuf(
 				    Gdk::Pixbuf::create_from_file(
 					    Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "lensflare.png" )
 	    )) ;
@@ -488,6 +488,10 @@ namespace Albums
 	    m_image_new = Util::cairo_image_surface_from_pixbuf(
 				    Gdk::Pixbuf::create_from_file(
 					    Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "new.png" ))) ;
+
+	    m_image_dotmask = Util::cairo_image_surface_from_pixbuf(
+				    Gdk::Pixbuf::create_from_file(
+					    Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "dotmask.png" ))) ;
 
 	    m_image_album_loading = Gdk::PixbufAnimation::create_from_file(
 					    Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "album-cover-loading.gif" )) ;
@@ -549,10 +553,11 @@ namespace Albums
 	    cairo->set_operator(Cairo::OPERATOR_CLEAR) ;
 	    cairo->paint() ;
 
-	    Glib::RefPtr<Gdk::Pixbuf> icon_desaturated_1 = Util::cairo_image_surface_to_pixbuf( album->coverart ? album->coverart : m_image_disc ) ; 
-	    Glib::RefPtr<Gdk::Pixbuf> icon = icon_desaturated_1->copy() ; 
+	    Glib::RefPtr<Gdk::Pixbuf> icon_desaturated_1 =
+		Util::cairo_image_surface_to_pixbuf( album->coverart ? album->coverart : m_image_disc ) ; 
 
-	    icon->saturate_and_pixelate(icon_desaturated_1, 0.85, false) ;
+	    Glib::RefPtr<Gdk::Pixbuf> icon = icon_desaturated_1->copy() ; 
+	    icon->saturate_and_pixelate(icon_desaturated_1, 0.80, false) ;
 
 	    cairo->set_operator(Cairo::OPERATOR_OVER) ;
 	    cairo->set_source(
@@ -679,7 +684,7 @@ namespace Albums
 		    , 0.4 
 		) ;
 		cairo->set_source(gradient) ;
-		cairo->set_line_width(2) ;
+		cairo->set_line_width(3) ;
 		RoundedRectangle(
 		      cairo
 		    , 4 
@@ -703,21 +708,21 @@ namespace Albums
 		    , 0 
 		    , 0 
 		    , 0
-		    , selected ? 0.60 : 0.40 
+		    , selected ? 0.70 : 0.35 
 		) ;
 		gradient->add_color_stop_rgba(
 		      0.66
 		    , 0
 		    , 0
 		    , 0
-		    , selected ? 0.25 : 0.15
+		    , selected ? 0.35 : 0.10
 		) ;
 		gradient->add_color_stop_rgba(
 		      1 
 		    , 0
 		    , 0
 		    , 0
-		    , selected ? 0.08 : 0.00 
+		    , 0 
 		) ;
 		cairo->set_source(gradient) ;
 		cairo->fill() ;
@@ -739,7 +744,7 @@ namespace Albums
 	    }
 
 	    enum { L1, L2, L3, N_LS } ;
-	    const int text_size_px[N_LS] = { 14, 14, 12 };
+	    const int text_size_px[N_LS] = { 15, 15, 12 };
 	    const int text_size_pt[N_LS] = {   static_cast<int> ((text_size_px[L1] * 72)
 						    / Util::screen_get_y_resolution(Gdk::Screen::get_default()))
 					     , static_cast<int> ((text_size_px[L2] * 72)
@@ -778,8 +783,8 @@ namespace Albums
 	    layout[L3]->set_font_description( font_desc[L3] );
 	    layout[L3]->set_ellipsize( Pango::ELLIPSIZE_END );
 
-	    layout[L1]->set_width(170 * PANGO_SCALE);
-	    layout[L2]->set_width(170 * PANGO_SCALE);
+	    layout[L1]->set_width(162 * PANGO_SCALE);
+	    layout[L2]->set_width(162 * PANGO_SCALE);
 
 	    int width, height;
 
@@ -787,9 +792,9 @@ namespace Albums
 
 	    layout[L2]->set_text( album->album ) ;
 	    layout[L2]->get_pixel_size( width, height );
-	    Util::render_text_shadow( layout[L2], 13, 46, cairo, 1, 0.85 ) ;
+	    Util::render_text_shadow( layout[L2], 17, 46, cairo, 1, 0.85 ) ;
 	    cairo->move_to(
-		  12 
+		  16 
 		, 45 
 	    );
 	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(1,1,1)) ; 
@@ -799,9 +804,9 @@ namespace Albums
 
 	    layout[L1]->set_text( album->album_artist );
 	    layout[L1]->get_pixel_size( width, height );
-	    Util::render_text_shadow( layout[L1], 13, 29, cairo, 1, 0.85 ) ;
+	    Util::render_text_shadow( layout[L1], 17, 29, cairo, 1, 0.85 ) ;
 	    cairo->move_to(
-		  12 
+		  16 
 		, 28 
 	    );
 	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(.9,.9,.9)) ; 
@@ -811,7 +816,7 @@ namespace Albums
 	    {
 		layout[L3]->set_text(album->year.substr(0,4)) ;
 		layout[L3]->get_pixel_size( width, height );
-		int x = 182-width ;
+		int x = 184-width ;
 		int y = 70 ;
 		Util::render_text_shadow( layout[L3], x-1, y-1, cairo, 1, 0.85 ) ;
 		cairo->move_to(
@@ -884,17 +889,17 @@ namespace Albums
 		      cairo
 		    , 4 
 		    , 2 
-		    , 184
+		    , 184 
 		    , 86
 		    , m_rounding 
 		);
-		cairo->set_source(m_rect_shadow,4,2) ;
+		cairo->set_source(m_image_lensflare,4,2) ;
 		cairo->fill() ;
 	    }
 
 	    if(WithinPast3Days( album->insert_date ))
 	    {
-		Util::draw_cairo_image( cairo, m_image_new, 162, 10 );
+		Util::draw_cairo_image( cairo, m_image_new, 164, 10 );
 	    }
 
 	    cairo->restore() ;

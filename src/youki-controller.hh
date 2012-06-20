@@ -62,18 +62,7 @@ namespace MPX
     {
         public: 
 
-            typedef sigc::signal<void>          Signal0_void ;
-
-	    struct HistoryItem
-	    {
-		boost::optional<std::string>	Searchtext ;
-
-		boost::optional<guint>		AlbumArtistId ;
-		boost::optional<guint>		AlbumId ;
-            } ;
-
-	    typedef std::list<HistoryItem>	History_t ;
-	    typedef History_t::iterator		HistoryPosition_t ;
+            typedef sigc::signal<void>  Signal0_void ;
 
         private:
 
@@ -239,6 +228,9 @@ namespace MPX
             Gtk::ScrolledWindow             * m_ScrolledWinAlbums ;
             Gtk::ScrolledWindow             * m_ScrolledWinTracks ;
 
+	    Gtk::Button			    * m_BTN_HISTORY_PREV ;
+	    Gtk::Button			    * m_BTN_HISTORY_FFWD ;
+
             Gtk::HPaned                     * m_Paned1 ;
             Gtk::HPaned                     * m_Paned2 ;
 
@@ -247,7 +239,6 @@ namespace MPX
             Gtk::VBox                       * m_VBox_Bottom ;
 	    Gtk::VBox			    * m_VBox_TL ;
 	    Gtk::Label			    * m_Label_TL ;
-
             Gtk::Entry                      * m_Entry ;
 
 	    Gtk::RadioButton		    * m_rb1, * m_rb2 ;
@@ -264,6 +255,9 @@ namespace MPX
             Gtk::Notebook                   * m_NotebookPlugins ;
 	    Gtk::Image			    * m_AQUE_Spinner ;
 	    Gtk::EventBox		    * m_EventBox_Nearest ;
+
+	    Gtk::InfoBar		    * m_InfoBar ;
+	    Gtk::Label			    * m_InfoLabel ; 
 
             Covers                          * m_covers ;
             MPX::Play                       * m_play ;
@@ -288,8 +282,8 @@ namespace MPX
             boost::optional<guint>            m_seek_position ;
             bool                              m_follow_track ;
 
-            std::list<guint>                  m_play_queue ;
-	    IdHistory			      m_play_history ;
+            std::vector<guint>	    m_play_queue ;
+	    IdHistory		    m_play_history ;
 
             info::backtrace::Youki::MLibMan_proxy_actual * m_mlibman_dbus_proxy ;
 
@@ -311,6 +305,24 @@ namespace MPX
 
 	    Glib::RefPtr<Gtk::UIManager>      m_UI_Manager ;
 	    Glib::RefPtr<Gtk::ActionGroup>    m_UI_Actions_Main ;
+
+	    void
+	    check_markov_queue_append() ;
+
+	    void
+	    check_markov_queue_append_real(MPX::Track_sp) ;
+
+	    void
+	    check_markov_queue_append_real(guint) ;
+
+	    void
+	    handle_info_bar_response(int) ;
+
+	    void
+	    handle_queue_op_artist(guint) ;
+
+	    void
+	    play_next_queue_item() ;
 
 	    void
 	    handle_show_queue_toggled() ;
@@ -401,6 +413,7 @@ namespace MPX
             handle_tracklist_track_activated(
                   MPX::Track_sp     /*track*/
                 , bool              /*play or not*/
+		, bool		    /*next or not? only useful when play==false*/
             ) ;
 
             void
@@ -582,9 +595,6 @@ namespace MPX
                 , int
             ) ;
 
-	    void
-	    play_next_queue_item() ;
-
             void
             push_new_tracks(
             ) ;
@@ -592,27 +602,7 @@ namespace MPX
             boost::shared_ptr<MPX::View::Albums::Album>
             get_album_from_id( guint ) ;
 
-            void
-	    history_save() ;
-
-	    void
-	    history_load_current_iter() ;
-
-	    void
-	    history_go_back() ;
-
-	    void
-	    history_go_ffwd() ;
-
-	    History_t m_HISTORY ;
-            HistoryPosition_t m_HISTORY_POSITION ;	   
-	    bool m_view_changed ;
-
-	    Gtk::Button* m_BTN_HISTORY_PREV ;
-	    Gtk::Button* m_BTN_HISTORY_FFWD ;
 	    Gtk::Button* m_BTN_SHUFFLE ;
-
-	    bool m_history_ignore_save ;
 	
 	    void
 	    register_played_track() ;

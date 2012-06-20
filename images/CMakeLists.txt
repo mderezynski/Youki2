@@ -4,6 +4,7 @@ INSTALL(
 	artist.png
         disc.png
 	disc-small.png
+	dotmask.png
         emblem-compilation.png
         emblem-soundtrack.png
         jewelcase_bot.png

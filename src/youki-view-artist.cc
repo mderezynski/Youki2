@@ -99,7 +99,7 @@ namespace Artist
 
 	    if( icon )
 	    { 
-		return icon->scale_simple(96, 96, Gdk::INTERP_BILINEAR) ;
+		return icon->scale_simple(120, 120, Gdk::INTERP_BILINEAR) ;
 	    }
 
 	    return Glib::RefPtr<Gdk::Pixbuf>(0) ; 
@@ -413,7 +413,7 @@ namespace Artist
 	    m_image_disc = Util::cairo_image_surface_from_pixbuf(
 				    Gdk::Pixbuf::create_from_file(
 					    Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "artist.png" )
-	    )->scale_simple(96, 96, Gdk::INTERP_BILINEAR)) ;
+	    )->scale_simple(120, 120, Gdk::INTERP_BILINEAR)) ;
 	}
 
 	void
@@ -558,9 +558,9 @@ namespace Artist
 	    font_desc.set_size(text_size_pt * PANGO_SCALE) ;
 	    font_desc.set_weight(Pango::WEIGHT_BOLD) ;
 	    layout->set_font_description(font_desc) ;
-	    layout->set_alignment(Pango::ALIGN_CENTER) ;
-	    layout->set_width(m_width*PANGO_SCALE) ;
-	    layout->set_wrap(Pango::WRAP_WORD_CHAR) ;
+	    layout->set_width(116*PANGO_SCALE) ;
+	    layout->set_ellipsize(Pango::ELLIPSIZE_END) ;
+
 	    layout->set_text(get<0>(r)) ;
 	    layout->get_pixel_size( width, height ) ;
 
@@ -575,7 +575,7 @@ namespace Artist
 
 	    //////////
 
-	    double x = (m_width-96)/2. ; 
+	    double x = (m_width-120)/2. ; 
 	    double y = ypos+8 ; 
 
 	    cairo->save() ;
@@ -589,35 +589,35 @@ namespace Artist
 		c = Util::pick_color_for_pixbuf(pb) ;
 	    }
 
-	    RoundedRectangle(cairo, 0, 0, 96, 96, m_rounding ) ;
-	    cairo->set_line_width(2) ;
+	    RoundedRectangle(cairo, 0, 0, 120, 64, m_rounding ) ;
+	    cairo->set_line_width(3) ;
 	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(c.get(),1)) ;
 	    cairo->stroke_preserve() ;
 
-	    cairo->set_source(surface, 0, 0) ;
+	    cairo->set_source(surface, 0, -12) ;
 	    cairo->fill_preserve() ;
 
-	    Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create( 48, 0, 48, 96 ) ;
+	    Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create( 60, 0, 60, 64 ) ;
 	    gradient->add_color_stop_rgba(
 		  0
 		, 0
 		, 0
 		, 0
-		, 0.40
+		, selected ? 0.70 : 0.50 
 	    ) ;
 	    gradient->add_color_stop_rgba(
 		  0.66
 		, 0
 		, 0
 		, 0
-		, 0.2
+		, selected ? 0.35 : 0.25 
 	    ) ;
 	    gradient->add_color_stop_rgba(
 		  1
 		, 0
 		, 0
 		, 0
-		, 0
+		, selected ? 0.10 : 0.05
 	    ) ;
 	    cairo->set_source( gradient ) ;
 	    cairo->fill() ;
@@ -628,11 +628,12 @@ namespace Artist
 
 	    cairo->save() ;
 	    cairo->translate(xpos,ypos+8) ;
+	    //Util::render_text_shadow(layout, (m_width-width)/2.+1,(96-height)/2.+1, cairo, 1, 1) ; 
 	    cairo->move_to(
-		  0 
-		, (96-height)/2. 
+		  (m_width-width)/2. 
+		, 4 
 	    );
-	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(1,1,1,0.8)) ; 
+	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(1,1,1,.8)) ; 
 	    pango_cairo_show_layout(cairo->cobj(), layout->gobj());
 	    cairo->restore() ;
 
@@ -640,7 +641,7 @@ namespace Artist
 	    {
 		cairo->save() ;
 		cairo->translate(x,y) ;
-		RoundedRectangle(cairo, 0, 0, 96, 96, m_rounding) ;
+		RoundedRectangle(cairo, 0, 0, 120, 64, m_rounding) ;
 		cairo->set_source(m_rect_shadow, 0, 0) ;
 		cairo->fill() ;
 		cairo->restore() ;
@@ -732,7 +733,7 @@ namespace Artist
 					    , context->get_language()
 	    ) ;
 
-	    m_height__row = 112 ;
+	    m_height__row = 77 ;
 
 	    m_height__headers = 0 ;
 #if 0

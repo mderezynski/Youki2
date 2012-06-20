@@ -300,7 +300,8 @@ namespace Albums
 
                 Cairo::RefPtr<Cairo::ImageSurface>  m_image_disc ;
                 Cairo::RefPtr<Cairo::ImageSurface>  m_image_new ;
-                Cairo::RefPtr<Cairo::ImageSurface>  m_rect_shadow ;
+                Cairo::RefPtr<Cairo::ImageSurface>  m_image_lensflare ;
+                Cairo::RefPtr<Cairo::ImageSurface>  m_image_dotmask ;
 
 		Glib::RefPtr<Gdk::PixbufAnimation>     m_image_album_loading ;
 		Glib::RefPtr<Gdk::PixbufAnimationIter> m_image_album_loading_iter ;

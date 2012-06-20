@@ -122,7 +122,13 @@ namespace MPX
         r.height = a.get_height() - 8 ; 
 
 	cairo->save() ;
-
+	cairo->rectangle(
+	      2
+	    , 4 
+	    , 103 
+	    , 105 
+	) ;
+	cairo->clip() ;
 	RoundedRectangle(
 	      cairo
 	    , r.x
@@ -131,14 +137,12 @@ namespace MPX
 	    , r.height
 	    , rounding
 	) ;
-
 	cairo->set_line_width(1) ;
-	cairo->set_source_rgba(.2,.2,.2, 0.8) ;
+	cairo->set_source_rgba(.45,.45,.45, 1) ;
 	cairo->stroke() ;
 	cairo->restore() ;
 
-	if(0)
-	//if( m_audio_bitrate || m_audio_codec )
+	if( m_audio_bitrate || m_audio_codec )
 	{
 		std::string audioinfo ;
 
@@ -176,59 +180,16 @@ namespace MPX
 
 		layout->set_markup(audioinfo) ;
 		layout->get_pixel_size( width, height ) ;
-
-		RoundedRectangle(
-		      cairo
-		    , a.get_width() - 2 - width - 4 - 4
-		    , 111 - 12 - (height+4) 
-		    , width+7
-		    , height+4 
-		    , 2
-		    , MPX::CairoCorners::CORNERS(5)
-		) ;
-
-		Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create(
-		      a.get_width() - 10 + width/2 
-		    , 16 
-		    , a.get_width() - 10 + width/2 
-		    , height+4 
-		) ;
-
-		gradient->add_color_stop_rgba(
-		      0
-		    , 1. 
-		    , 1. 
-		    , 1. 
-		    , 0.69 
-		) ;
-		gradient->add_color_stop_rgba(
-		      .1
-		    , 1. 
-		    , 1. 
-		    , 1. 
-		    , 0.67 
-		) ;
-		gradient->add_color_stop_rgba(
-		      1. 
-		    , 1. 
-		    , 1. 
-		    , 1. 
-		    , 0.65 
-		) ;
-
-		cairo->set_source( gradient ) ;
-		cairo->fill() ;
-
 		cairo->set_source_rgba(
-		      0.25 
-		    , 0.25 
-		    , 0.25 
+		      0.85 
+		    , 0.85 
+		    , 0.85 
 		    , 1.
 		) ; 
 
 		cairo->move_to(
-		      a.get_width() - 2 - width - 4
-		    , 111 - 12 - (height+2) 
+		      a.get_width() - width - 14
+		    , 10 
 		) ;
 
 		pango_cairo_show_layout( cairo->cobj(), layout->gobj() ) ;
@@ -331,7 +292,8 @@ namespace MPX
         cairo->set_operator( Cairo::OPERATOR_OVER ) ;
         const ThemeColor& c_text = m_theme->get_color( THEME_COLOR_TEXT_SELECTED ) ; 
 
-        int text_size_pt = static_cast<int>( (14 * 72) / Util::screen_get_y_resolution( Gdk::Screen::get_default() )) ;
+        int text_size_pt = static_cast<int>((15 * 72)/Util::screen_get_y_resolution( Gdk::Screen::get_default() )) ;
+        int width, height;
 
         Pango::FontDescription font_desc = get_style_context()->get_font() ;
         font_desc.set_size( text_size_pt * PANGO_SCALE ) ;
@@ -340,7 +302,6 @@ namespace MPX
         Glib::RefPtr<Pango::Layout> layout = Glib::wrap( pango_cairo_create_layout( cairo->cobj() )) ;
         layout->set_font_description( font_desc ) ;
         layout->set_text( m_info[0] ) ;
-        int width, height;
         layout->get_pixel_size( width, height ) ;
 
         cairo->move_to(
@@ -351,13 +312,14 @@ namespace MPX
         Gdk::Cairo::set_source_rgba(cairo, c_text);
         pango_cairo_show_layout( cairo->cobj(), layout->gobj() ) ;
 
+        cairo->move_to(
+              m_cover ? 112 : 8
+            , 9 + height + 1
+        ) ;
+
         layout->set_text( m_info[1] ) ;
         layout->get_pixel_size( width, height ) ;
 
-        cairo->move_to(
-              m_cover ? 112 : 8
-            , 9 + height
-        ) ;
         cairo->set_source_rgba(c_text.get_red(), c_text.get_green(), c_text.get_blue(), 0.60);
         pango_cairo_show_layout( cairo->cobj(), layout->gobj() ) ;
 

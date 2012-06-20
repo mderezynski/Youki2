@@ -704,6 +704,7 @@ namespace AQE
 
         bool truthvalue = false ;
 
+	if(c.TargetValue)
         try{
           switch( c.MatchType )
           {

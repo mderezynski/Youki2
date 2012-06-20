@@ -1660,13 +1660,14 @@ namespace Tracks
         typedef boost::shared_ptr<Column>               Column_sp ;
         typedef std::vector<Column_sp>			Columns ;
 
-        typedef sigc::signal<void, MPX::Track_sp, bool> SignalTrackActivated ;
-        typedef sigc::signal<void>                      SignalVAdjChanged ;
-        typedef sigc::signal<void>                      SignalFindAccepted ;
-        typedef sigc::signal<void, const std::string&>  SignalFindPropagate ;
-	typedef sigc::signal<void, const std::string&>	SignalMBID ;
-	typedef sigc::signal<void, guint>		SignalRemoveTrackFromQueue ;
-	typedef sigc::signal<void>			SignalClearQueue ;
+        typedef sigc::signal<void, MPX::Track_sp, bool, bool>	SignalTrackActivated ;
+        typedef sigc::signal<void>				SignalVAdjChanged ;
+        typedef sigc::signal<void>				SignalFindAccepted ;
+        typedef sigc::signal<void, const std::string&>		SignalFindPropagate ;
+	typedef sigc::signal<void, const std::string&>		SignalMBID ;
+	typedef sigc::signal<void, guint>			SignalRemoveTrackFromQueue ;
+	typedef sigc::signal<void>				SignalClearQueue ;
+	typedef sigc::signal<void, guint>			SignalQueueOpArtist ;
 
         class Class
         : public Gtk::DrawingArea, public Gtk::Scrollable
@@ -1731,8 +1732,9 @@ namespace Tracks
                 SignalFindAccepted                  m_SIGNAL_find_accepted ;
                 SignalFindPropagate                 m_SIGNAL_find_propagate ;
 
-                SignalRemoveTrackFromQueue          m_SIGNAL_remove_track_from_queue ;
-		SignalClearQueue		    m_SIGNAL_clear_queue ;
+                SignalRemoveTrackFromQueue          m_SIGNAL_queue_op_remove_track ;
+		SignalClearQueue		    m_SIGNAL_queue_op_clear ;
+		SignalQueueOpArtist		    m_SIGNAL_queue_op_artist ;
 
                 void
                 initialize_metrics ()
@@ -1893,7 +1895,7 @@ namespace Tracks
                             {
                                 using boost::get;
                                 MPX::Track_sp track = (*(get<0>(m_selection.get())))->TrackSp ;
-                                m_SIGNAL_track_activated.emit( track, !(event->state & GDK_CONTROL_MASK) ) ;
+                                m_SIGNAL_track_activated.emit( track, !(event->state & GDK_CONTROL_MASK), false ) ;
                             }
 
                             return true;
@@ -2110,7 +2112,7 @@ namespace Tracks
 			    if(I( d )) 
 			    {
 				MPX::Track_sp track = m_model->row(d)->TrackSp ;
-				m_SIGNAL_track_activated.emit( track, true ) ;
+				m_SIGNAL_track_activated.emit( track, true, false ) ;
 			    }
 			}
                     }
@@ -2128,7 +2130,7 @@ namespace Tracks
 			    if(I( d ) && !m_play_on_single_tap) 
 			    {
 				MPX::Track_sp track = m_model->row(d)->TrackSp ;
-				m_SIGNAL_track_activated.emit( track, true ) ;
+				m_SIGNAL_track_activated.emit( track, true, false ) ;
 			    }
 			}
                     }
@@ -2798,13 +2800,19 @@ namespace Tracks
                 SignalRemoveTrackFromQueue&
                 signal_remove_track_from_queue()
                 {
-                    return m_SIGNAL_remove_track_from_queue ;
+                    return m_SIGNAL_queue_op_remove_track ;
                 }
 
                 SignalClearQueue&
                 signal_clear_queue()
                 {
-                    return m_SIGNAL_clear_queue ;
+                    return m_SIGNAL_queue_op_clear ;
+                }
+
+                SignalQueueOpArtist&
+                signal_queue_op_artist()
+                {
+                    return m_SIGNAL_queue_op_artist ;
                 }
 
                 void
@@ -3178,19 +3186,32 @@ namespace Tracks
                 }
 
 		void
-		on_add_track_to_queue()
+		on_add_track_to_queue(
+		      int next
+		)
 		{	
 		    if( m_selection )
 		    {
 			MPX::Track_sp track = (*(get<S_ITERATOR>(m_selection.get())))->TrackSp ;
-			m_SIGNAL_track_activated.emit( track, false ) ;
+			m_SIGNAL_track_activated.emit( track, false, next ) ;
+		    }
+		}
+
+		void
+		on_enqueue_toptracks()
+		{
+		    if( m_selection )
+		    {
+			MPX::Track_sp track = (*(get<S_ITERATOR>(m_selection.get())))->TrackSp ;
+			guint id = boost::get<guint>((*track)[ATTRIBUTE_MPX_ALBUM_ARTIST_ID].get()) ;
+			m_SIGNAL_queue_op_artist.emit(id) ;
 		    }
 		}
 
 		void
 		on_clear_queue()
 		{
-		    m_SIGNAL_clear_queue.emit() ;
+		    m_SIGNAL_queue_op_clear.emit() ;
 		}
 
 		void
@@ -3202,7 +3223,7 @@ namespace Tracks
 
 			if( sp->queuepos )
 			{
-			    m_SIGNAL_remove_track_from_queue.emit(sp->ID) ; 
+			    m_SIGNAL_queue_op_remove_track.emit(sp->ID) ; 
 
 			    sp->queuepos.reset() ;
 
@@ -3390,11 +3411,15 @@ namespace Tracks
                     m_refActionGroup->add( Gtk::Action::create("ContextRandomShuffle", "Shuffle Tracklist"),
                         sigc::mem_fun(*this, &Class::on_shuffle_tracklist)) ;
                     m_refActionGroup->add( Gtk::Action::create("ContextAddToQueue", "Enqueue"),
-                        sigc::mem_fun(*this, &Class::on_add_track_to_queue)) ;
+                        sigc::bind(sigc::mem_fun(*this, &Class::on_add_track_to_queue),0)) ;
+                    m_refActionGroup->add( Gtk::Action::create("ContextAddToQueueNext", "Enqueue Next"),
+                        sigc::bind(sigc::mem_fun(*this, &Class::on_add_track_to_queue),1)) ;
                     m_refActionGroup->add( Gtk::Action::create("ContextRemoveFromQueue", "Remove from Queue"),
                         sigc::mem_fun(*this, &Class::on_remove_track_from_queue)) ;
                     m_refActionGroup->add( Gtk::Action::create("ContextClearQueue", "Clear Queue"),
                         sigc::mem_fun(*this, &Class::on_clear_queue)) ;
+                    m_refActionGroup->add( Gtk::Action::create("ContextQueueOpArtist", "Enqueue Artist's Top Tracks"),
+                        sigc::mem_fun(*this, &Class::on_enqueue_toptracks)) ;
  
                     m_refUIManager = Gtk::UIManager::create() ;
                     m_refUIManager->insert_action_group(m_refActionGroup) ;
@@ -3403,6 +3428,9 @@ namespace Tracks
                     "<ui>"
                     "   <popup name='PopupMenu'>"
                     "       <menuitem action='ContextAddToQueue'/>"
+                    "       <menuitem action='ContextAddToQueueNext'/>"
+                    "       <menuitem action='ContextQueueOpArtist'/>"
+                    "       <separator/>"
                     "       <menuitem action='ContextRemoveFromQueue'/>"
                     "       <menuitem action='ContextClearQueue'/>"
                     "       <separator/>"
