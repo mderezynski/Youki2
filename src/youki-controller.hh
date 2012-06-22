@@ -53,6 +53,16 @@ namespace MPX
         }
     }
 
+    struct ViewHistoryItem
+    {
+	    std::string			FilterText ;
+	    boost::optional<guint>	SelectionArtist ;
+	    boost::optional<guint>	SelectionAlbums ;
+    };
+
+    typedef std::list<ViewHistoryItem> ViewHistory ;
+    typedef ViewHistory::iterator      ViewHistoryIter ;
+
     class PercentualDistributionHBox ;
 
     class YoukiController
@@ -258,6 +268,7 @@ namespace MPX
 
 	    Gtk::InfoBar		    * m_InfoBar ;
 	    Gtk::Label			    * m_InfoLabel ; 
+	    Gtk::Button			    * m_BTN_SHUFFLE ;
 
             Covers                          * m_covers ;
             MPX::Play                       * m_play ;
@@ -284,7 +295,9 @@ namespace MPX
 
             std::vector<guint>	    m_play_queue ;
 	    IdHistory		    m_play_history ;
-
+	    ViewHistory		    m_view_history ;
+	    ViewHistoryIter	    m_view_history_pos ;
+	    
             info::backtrace::Youki::MLibMan_proxy_actual * m_mlibman_dbus_proxy ;
 
             sigc::connection                  m_conn1
@@ -305,6 +318,12 @@ namespace MPX
 
 	    Glib::RefPtr<Gtk::UIManager>      m_UI_Manager ;
 	    Glib::RefPtr<Gtk::ActionGroup>    m_UI_Actions_Main ;
+
+	    void
+	    history_save() ;
+
+	    void
+	    history_go_back() ;
 
 	    void
 	    check_markov_queue_append() ;
@@ -602,8 +621,6 @@ namespace MPX
             boost::shared_ptr<MPX::View::Albums::Album>
             get_album_from_id( guint ) ;
 
-	    Gtk::Button* m_BTN_SHUFFLE ;
-	
 	    void
 	    register_played_track() ;
 

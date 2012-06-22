@@ -1717,6 +1717,8 @@ namespace Tracks
 
 		int				    vadj_value_old ;
 
+		guint				    m_queue_size ;
+
                 Glib::RefPtr<Gtk::UIManager>	    m_refUIManager ;
                 Glib::RefPtr<Gtk::ActionGroup>	    m_refActionGroup ;
                 Gtk::Menu*			    m_pMenuPopup ;
@@ -2139,6 +2141,8 @@ namespace Tracks
                     {
 			m_refActionGroup->get_action("ContextRemoveFromQueue")->set_sensitive(m_model->row(d)->queuepos);
 			m_refActionGroup->get_action("ContextAddToQueue")->set_sensitive(!m_model->row(d)->queuepos);
+			m_refActionGroup->get_action("ContextAddToQueueNext")->set_sensitive(!m_model->row(d)->queuepos);
+			m_refActionGroup->get_action("ContextClearQueue")->set_sensitive(m_queue_size);
 			m_row__button_press.reset() ;
                         m_pMenuPopup->popup(event->button, event->time) ;                            
                     }
@@ -2878,6 +2882,11 @@ namespace Tracks
                     {
                         if( r->ID == id )
                         {
+			    if(qpos)
+				m_queue_size = m_queue_size + 1 ; 
+			    else
+				m_queue_size = std::max<int>(0, m_queue_size-1) ;	
+
 			    r->queuepos = qpos ;
 			    queue_draw() ;
                             break ;
@@ -3323,6 +3332,7 @@ namespace Tracks
                         , m_highlight_matches(false)
 			, m_play_on_single_tap(false)
 			, vadj_value_old(0)
+			, m_queue_size(0)
 
                 {
 		    property_vadjustment().signal_changed().connect( sigc::mem_fun( *this, &Class::on_vadj_prop_changed )) ;
@@ -3401,12 +3411,13 @@ namespace Tracks
 
                     m_refActionGroup = Gtk::ActionGroup::create() ;
                     m_refActionGroup->add( Gtk::Action::create("ContextMenu", "Context Menu")) ;
+                    m_refActionGroup->add( Gtk::Action::create("youkidj", "Youki DJ")) ;
 
                     m_refActionGroup->add( Gtk::Action::create("ContextShowAlbum", "Filter by this Album"),
                         sigc::mem_fun(*this, &Class::on_show_only_this_album)) ;
                     m_refActionGroup->add( Gtk::Action::create("ContextShowArtist", "Filter by this Album Artist"),
                         sigc::mem_fun(*this, &Class::on_show_only_this_artist)) ;
-                    m_refActionGroup->add( Gtk::Action::create("ContextShowArtistSimilar", Gtk::StockID("mpx-stock-lastfm"), "Similar Artists",""),
+                    m_refActionGroup->add( Gtk::Action::create("ContextShowArtistSimilar", Gtk::StockID("mpx-stock-lastfm"), "Artist: Similar Artists",""),
                         sigc::mem_fun(*this, &Class::on_show_similar_artists)) ;
                     m_refActionGroup->add( Gtk::Action::create("ContextRandomShuffle", "Shuffle Tracklist"),
                         sigc::mem_fun(*this, &Class::on_shuffle_tracklist)) ;
@@ -3418,7 +3429,7 @@ namespace Tracks
                         sigc::mem_fun(*this, &Class::on_remove_track_from_queue)) ;
                     m_refActionGroup->add( Gtk::Action::create("ContextClearQueue", "Clear Queue"),
                         sigc::mem_fun(*this, &Class::on_clear_queue)) ;
-                    m_refActionGroup->add( Gtk::Action::create("ContextQueueOpArtist", "Enqueue Artist's Top Tracks"),
+                    m_refActionGroup->add( Gtk::Action::create("ContextQueueOpArtist", "Artist: Top Tracks (local)"),
                         sigc::mem_fun(*this, &Class::on_enqueue_toptracks)) ;
  
                     m_refUIManager = Gtk::UIManager::create() ;
@@ -3429,7 +3440,6 @@ namespace Tracks
                     "   <popup name='PopupMenu'>"
                     "       <menuitem action='ContextAddToQueue'/>"
                     "       <menuitem action='ContextAddToQueueNext'/>"
-                    "       <menuitem action='ContextQueueOpArtist'/>"
                     "       <separator/>"
                     "       <menuitem action='ContextRemoveFromQueue'/>"
                     "       <menuitem action='ContextClearQueue'/>"
@@ -3437,12 +3447,39 @@ namespace Tracks
                     "       <menuitem action='ContextShowAlbum'/>"
                     "       <menuitem action='ContextShowArtist'/>"
                     "       <separator/>"
-                    "       <menuitem action='ContextShowArtistSimilar'/>"
+		    "	    <menu name='YoukiDJ' action='youkidj'>"
+                    "		<menuitem action='ContextQueueOpArtist'/>"
+                    "		<menuitem action='ContextShowArtistSimilar'/>"
+		    "	    </menu>" 
                     "   </popup>"
                     "</ui>" ;
 
                     m_refUIManager->add_ui_from_string( ui_info ) ;
                     m_pMenuPopup = dynamic_cast<Gtk::Menu*>(m_refUIManager->get_widget("/PopupMenu")) ;
+
+		    {
+			auto p = Gdk::Pixbuf::create_from_file(
+				    Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "turntable.png" )) ;
+
+			Gtk::Image* i = Gtk::manage( new Gtk::Image ) ;
+			i->set(p) ;
+
+			Gtk::ImageMenuItem * m = dynamic_cast<Gtk::ImageMenuItem*>(m_refUIManager->get_widget("/PopupMenu/YoukiDJ")) ;
+			m->set_always_show_image() ;
+			m->set_image(*i) ;
+		    }
+
+		    {
+			auto p = Gdk::Pixbuf::create_from_file(
+				    Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "lastfm.png" )) ;
+
+			Gtk::Image* i = Gtk::manage( new Gtk::Image ) ;
+			i->set(p) ;
+
+			Gtk::ImageMenuItem * m = dynamic_cast<Gtk::ImageMenuItem*>(m_refUIManager->get_widget("/PopupMenu/YoukiDJ/ContextShowArtistSimilar")) ;
+			m->set_always_show_image() ;
+			m->set_image(*i) ;
+		    }
                 }
 
                 virtual ~Class ()

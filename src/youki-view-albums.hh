@@ -39,6 +39,7 @@ namespace Albums
         {
             Cairo::RefPtr<Cairo::ImageSurface>      coverart ;
             Cairo::RefPtr<Cairo::ImageSurface>      surface_cache ;
+            Cairo::RefPtr<Cairo::ImageSurface>      surface_cache_blur ;
 	    boost::optional<Gdk::RGBA>		    rgba ;
             boost::optional<guint>		    album_id ;
             guint                                   artist_id ;
@@ -333,16 +334,14 @@ namespace Albums
 
 	    protected:
 
-		Cairo::RefPtr<Cairo::ImageSurface>
+		void	
 		render_icon(
-                      const Album_sp                        album
-		    , guint				    width 
+		    Album_sp
 		) ;
 
-		Cairo::RefPtr<Cairo::ImageSurface>	
-		render_rect_shadow(	
-		      guint w
-		    , guint h
+		void
+		render_rgba(
+		    Album_sp
 		) ;
 
 	    public:

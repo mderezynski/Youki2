@@ -60,8 +60,8 @@ namespace
     "	</menu>"
     "	<menu action='MenuPlaybackControl'>"
     "	    <menuitem action='PlaybackControlActionUseHistory'/>"
-    "	    <menuitem action='PlaybackControlActionContinueCurrentAlbum'/>"
     "	    <menuitem action='PlaybackControlActionMarkov'/>"
+    "	    <menuitem action='PlaybackControlActionContinueCurrentAlbum'/>"
     "	</menu>"
     "</menubar>"
     ""
@@ -448,6 +448,7 @@ namespace MPX
 	m_EventBox_Nearest->add( *m_Label_Nearest ) ;
 	m_EventBox_Nearest->signal_button_press_event().connect( sigc::bind_return<bool>(sigc::hide(sigc::mem_fun( *this, &YoukiController::handle_nearest_clicked )), true)) ;
 
+#if 0
 	Gtk::HBox * HBox_Navi = Gtk::manage( new Gtk::HBox ) ;
 	HBox_Navi->set_spacing(-1) ;
 	HBox_Navi->set_border_width(0) ;
@@ -457,7 +458,7 @@ namespace MPX
 	m_BTN_HISTORY_PREV->set_relief( Gtk::RELIEF_NONE ) ;
 	m_BTN_HISTORY_PREV->set_border_width(0) ; 
 	m_BTN_HISTORY_PREV->add( *iprev ) ;
-//	m_BTN_HISTORY_PREV->signal_clicked().connect( sigc::mem_fun( *this, &YoukiController::history_go_back)) ;
+	m_BTN_HISTORY_PREV->signal_clicked().connect( sigc::mem_fun( *this, &YoukiController::history_go_back)) ;
 	m_BTN_HISTORY_PREV->set_sensitive( false ) ;
 
 	Gtk::Image * iffwd = Gtk::manage( new Gtk::Image( Gtk::Stock::GO_FORWARD, Gtk::ICON_SIZE_BUTTON )) ;
@@ -467,6 +468,7 @@ namespace MPX
 	m_BTN_HISTORY_FFWD->add( *iffwd ) ;
 //	m_BTN_HISTORY_FFWD->signal_clicked().connect( sigc::mem_fun( *this, &YoukiController::history_go_ffwd)) ;
 	m_BTN_HISTORY_FFWD->set_sensitive( false ) ;
+#endif
 
 	Gtk::Alignment * Buttons_Align = Gtk::manage( new Gtk::Alignment ) ;
 	Gtk::HBox * Buttons_Box = Gtk::manage( new Gtk::HBox ) ;
@@ -502,12 +504,13 @@ namespace MPX
 	Buttons_Box->pack_start( *m_BTN_SHUFFLE, false, false, 0 ) ;
 	Buttons_Box->pack_start( *brept, false, false, 0 ) ;
 	Buttons_Box->pack_start( *balbm, false, false, 0 ) ;
-
 	Buttons_Align->add( *Buttons_Box ) ;
 
+#if 0
         HBox_Navi->pack_start( *m_BTN_HISTORY_PREV, false, false, 0 ) ;
         HBox_Navi->pack_start( *m_BTN_HISTORY_FFWD, false, false, 0 ) ;
         m_HBox_Entry->pack_start( *HBox_Navi, false, false, 0 ) ;
+#endif
 
 	m_InfoBar = Gtk::manage( new Gtk::InfoBar ) ;
 	m_InfoBar->add_button( Gtk::Stock::OK, 0 ) ;
@@ -602,10 +605,10 @@ namespace MPX
 	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "ViewActionUnderlineMatches", "Highlight Search Matches" ), sigc::mem_fun( *this, &YoukiController::handle_action_underline_matches)) ; 
 	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "PlaybackControlActionStartAlbumAtFavorite", "Start Albums at Favorite Track")) ; 
 
-	auto action_CAM = Gtk::ToggleAction::create( "PlaybackControlActionMarkov", "Fill Queue") ; 
+	auto action_CAM = Gtk::ToggleAction::create( "PlaybackControlActionMarkov", "Enable PlaySense") ; 
 	m_UI_Actions_Main->add( action_CAM, sigc::mem_fun(*this, &YoukiController::check_markov_queue_append )) ;
 
-	auto action_CCA = Gtk::ToggleAction::create( "PlaybackControlActionContinueCurrentAlbum", "Always Continue Playing Current Album" ) ; 
+	auto action_CCA = Gtk::ToggleAction::create( "PlaybackControlActionContinueCurrentAlbum", "Enable AlbumPlay" ) ; 
 	m_UI_Actions_Main->add( action_CCA ); 
 	balbm->set_related_action( action_CCA ) ;
 
@@ -621,25 +624,36 @@ namespace MPX
 	m_UI_Actions_Main->add( action_AUH, sigc::mem_fun( *this, &YoukiController::handle_use_history_toggled )) ; 
 	action_AUH->set_active() ;
 
-#if 0
-	auto func =
+	auto func1 =
 
-	[](Glib::RefPtr<Gtk::ToggleAction> shf, Glib::RefPtr<Gtk::ToggleAction> cca)
+	[](Glib::RefPtr<Gtk::Action> shf, Glib::RefPtr<Gtk::ToggleAction> cca)
+	{
+	    cca->set_active(false) ;
+	};
+
+	auto func2 =
+
+	[&](Glib::RefPtr<Gtk::Action> shf, Glib::RefPtr<Gtk::ToggleAction> cca)
+	{
+	    if( cca->get_active() )
 	    {
-		if( shf->get_active() )
+		for( auto& n : m_play_queue )
 		{
-		    cca->set_active( false ) ;
-		    cca->set_sensitive( false ) ;
+		    m_ListViewTracks->id_set_queuepos(n) ;
 		}
-		else
+
+		m_play_queue.clear() ;
+
+		if(m_rb2->get_active())
 		{
-		    cca->set_sensitive( true ) ;
+		    m_rb1->set_active() ;
+		    m_rb2->set_sensitive(false) ;
 		}
 	    }
-	;
+	};
 
-	action_SHF->signal_activate().connect(sigc::bind(func,action_SHF,action_CCA)) ;
-#endif
+	action_SHF->signal_activate().connect(sigc::bind(func1,action_SHF,action_CCA)) ;
+	action_CCA->signal_activate().connect(sigc::bind(func2,action_SHF,action_CCA)) ;
 
 	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "ViewActionAlbumsShowTimeDiscsTracks", "Show Additional Album Info" ), sigc::mem_fun( *this, &YoukiController::handle_action_underline_matches ) ); 
 
@@ -872,6 +886,14 @@ namespace MPX
                 , &YoukiController::on_list_view_aa_selection_changed
         )) ;
 
+#if 0
+        m_conn1 = m_ListViewArtist->signal_selection_changed().connect(
+            sigc::mem_fun(
+                  *this
+                , &YoukiController::history_save
+        )) ;
+#endif
+
         m_ListViewArtist->signal_find_accepted().connect(
             sigc::mem_fun(
                   *m_ListViewAlbums
@@ -890,6 +912,14 @@ namespace MPX
                 , &YoukiController::handle_albumlist_selection_changed
         )) ;
 
+#if 0
+        m_conn2 = m_ListViewAlbums->signal_selection_changed().connect(
+            sigc::mem_fun(
+                  *this
+                , &YoukiController::history_save
+        )) ;
+#endif
+ 
         m_ListViewAlbums->signal_only_this_album_mbid().connect(
             sigc::mem_fun(
                   *this
@@ -920,8 +950,8 @@ namespace MPX
                 , &YoukiController::handle_albumlist_start_playback
         )) ;
 
-	m_ListViewArtist->set_size_request( 144, -1 ) ;
-	m_ListViewAlbums->set_size_request( 204, -1 ) ;
+	m_ListViewArtist->set_size_request( 142, -1 ) ;
+	m_ListViewAlbums->set_size_request( 224, -1 ) ;
 
 	m_VBox_TL->pack_start( *HBox_TL, false, true, 0 ) ; 
 	m_VBox_TL->pack_start( *m_ScrolledWinTracks, true, true, 0 ) ; 
@@ -951,17 +981,61 @@ namespace MPX
                 , &YoukiController::on_status_icon_clicked
         ))) ;
 
+#if 0
+	m_view_history_pos = m_view_history.begin() ;
+	history_save() ;
+#endif
 	
-	Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("ViewActionAlbumsShowTimeDiscsTracks"))->set_active( true ) ;
-
-        on_style_changed() ;
-
 	handle_model_changed(0,false) ;
-
+        on_style_changed() ;
         m_main_window->show_all() ;
-
 	m_InfoBar->hide() ;
 	m_AQUE_Spinner->hide() ; 
+    }
+
+    void
+    YoukiController::history_save()
+    { 
+	ViewHistoryIter pos = m_view_history.end() ;
+	std::advance(pos,-1) ;
+
+	ViewHistoryItem i ;
+
+	i.FilterText = m_Entry->get_text() ;
+	i.SelectionArtist = m_ListViewArtist->get_selected_id() ;
+	i.SelectionArtist = m_ListViewAlbums->get_selected_id() ;
+
+	if( m_view_history_pos != pos )
+	{
+	    m_view_history.erase(pos,m_view_history.end()) ;
+	}
+
+	m_view_history.push_back(i) ;
+	m_view_history_pos = m_view_history.end() ;
+	std::advance(m_view_history_pos,-1) ;
+	
+	if(!m_view_history.empty())
+	{
+	    m_BTN_HISTORY_PREV->set_sensitive() ;
+	}
+    }
+
+    void
+    YoukiController::history_go_back()
+    { 
+	ViewHistoryIter& pos = m_view_history_pos ;
+	std::advance(pos,-1) ;
+
+	const ViewHistoryItem& i = *pos ;
+
+	m_Entry->set_text(i.FilterText) ;
+	m_ListViewArtist->select_id( i.SelectionArtist ) ;
+	m_ListViewArtist->select_id( i.SelectionAlbums ) ;
+
+	if(!m_view_history.size() > 1)
+	{
+	    m_BTN_HISTORY_FFWD->set_sensitive() ;
+	}
     }
 
     void
@@ -1228,6 +1302,9 @@ namespace MPX
 	    {
 		m_ListViewTracks->id_set_queuepos(n,c++) ;
 	    }
+
+	    private_->FilterModelTracks->regen_mapping_queue() ;
+
 	}
 	else
 	{
@@ -1246,7 +1323,12 @@ namespace MPX
 
 	m_play_queue.clear() ;
 
-	if(m_rb2->get_active())
+	if( m_track_current )
+	{
+	    check_markov_queue_append_real(m_track_current) ;
+	}
+
+	if(m_rb2->get_active() || m_play_queue.empty())
 	{
 	    m_rb1->set_active() ;
 	}
@@ -1317,19 +1399,49 @@ namespace MPX
 	    return ;
 	}
 
+	std::string s ;
+
+	if(!m_rb2->get_active())
+	{
+	    auto sel_row_albums = m_ListViewAlbums->get_selected_index() ; 
+	    auto sel_row_artist = m_ListViewArtist->get_selected_index() ; 
+	    
+	    if(  sel_row_albums )
+	    {
+		auto a = private_->FilterModelAlbums->row(sel_row_albums.get()) ;
+		s += (boost::format("<small><b>%s</b> by <b>%s</b>  •  </small>") % a->album % a->album_artist).str() ;
+	    }
+	    else
+	    if(  sel_row_artist )
+	    {
+		auto a = private_->FilterModelArtist->row(sel_row_artist.get()) ;
+		s += (boost::format("<small><b>%s</b>  •  </small>") % boost::get<0>(a)).str() ;
+	    }
+	}
+
 	guint total = private_->FilterModelTracks->get_total_time() ;
 	guint hrs = total / 3600 ;
 	guint min = (total-hrs*3600) / 60 ;
 	guint sec = total % 60 ;
 
-	std::string s ;
-
-	s += (boost::format("<small><b>%u</b> %s <b>–</b>") % size % ((size>1)?"Songs":"Song")).str() ;
+	s += (boost::format("<small><b>%u</b> %s  •  ") % size % ((size>1)?"Songs":"Song")).str() ;
 
 	if( hrs )
-	    s += (boost::format(" <b>%u</b>:<b>%02u</b>:<b>%02u</b> Total Time</small>") % hrs % min % sec).str() ;
-	else
-	    s += (boost::format(" <b>%u</b>:<b>%02u</b> Total Time</small>") % min % sec).str() ;
+	{
+	    s+= (boost::format("<b>%u</b>h") % hrs).str() ;
+	}
+	if( min )
+	{
+	    s+= " " ;
+	    s+= (boost::format("<b>%u</b>m") % min).str() ;
+	}
+	if( sec )
+	{
+	    s+= " " ;
+	    s+= (boost::format("<b>%u</b>s") % sec).str() ;
+	}
+
+	s += "</small>" ;
 
 	m_Label_TL->set_markup(s) ;
     }
@@ -2088,12 +2200,13 @@ namespace MPX
     
 		m_play_history.clear() ;
 
-		for( auto& i : m_play_queue )
+		for( auto& n : m_play_queue )
 		{
-		    m_ListViewTracks->id_set_queuepos(i) ;
+		    m_ListViewTracks->id_set_queuepos(n) ;
 		}
 
 		m_play_queue.clear() ;
+
 		m_rb1->set_active();
 		m_rb2->set_sensitive(false) ;
 
@@ -2183,16 +2296,31 @@ namespace MPX
 		}
 		else
 		{
+		    m_rb1->set_active() ;
+		    m_rb2->set_sensitive(false) ;
+		}
+	    
+
+		auto active = Glib::RefPtr<Gtk::ToggleAction>::cast_static(
+			m_UI_Actions_Main->get_action("PlaybackControlActionMarkov")
+		)->get_active() ;
+
+		if(active)
+		{
 		    check_markov_queue_append() ;
 
 		    if(m_play_queue.empty())
 		    {
+			m_InfoLabel->set_text(_("PlaySense: No more matching tracks found")) ;
+			m_InfoBar->set_message_type( Gtk::MESSAGE_INFO ) ;
+			m_InfoBar->show_all() ;
+
 			m_rb1->set_active() ;
 			m_rb2->set_sensitive(false) ;
 			tracklist_regen_mapping() ;
 		    }
 		    else
-		    if(m_rb1->get_active())
+		    if(m_rb2->get_active())
 		    {
 			private_->FilterModelTracks->regen_mapping_queue() ;
 		    }
@@ -2279,9 +2407,8 @@ namespace MPX
 		queue_next_track(id_next) ;
 	    }
 	    else
-	    if(id_next == 0)
 	    {
-		m_InfoLabel->set_text(_("Can't fill up Queue: No matching tracks found")) ;
+		m_InfoLabel->set_text(_("PlaySense: No more matching tracks found")) ;
 		m_InfoBar->set_message_type( Gtk::MESSAGE_INFO ) ;
 		m_InfoBar->show_all() ;
 	    }
@@ -2310,9 +2437,8 @@ namespace MPX
 		    queue_next_track(id_next) ;
 		}
 		else
-		if(id_next == 0)
 		{
-		    m_InfoLabel->set_text(_("Can't fill up Queue: No matching tracks found")) ;
+		    m_InfoLabel->set_text(_("PlaySense: No more matching tracks found.")) ;
 		    m_InfoBar->set_message_type( Gtk::MESSAGE_INFO ) ;
 		    m_InfoBar->show_all() ;
 		}
@@ -2367,8 +2493,13 @@ namespace MPX
 		    m_ListViewTracks->id_set_queuepos(n,c++) ;
 		}
 	    }
+	    else
+	    {
+		m_rb1->set_active() ;
+		m_rb2->set_sensitive(false) ;
+	    }
 
-	    if( m_rb2->get_active())
+	    if(m_rb2->get_active())
 	    {
 		private_->FilterModelTracks->regen_mapping_queue() ;
 	    }
@@ -2379,6 +2510,7 @@ namespace MPX
 	if( play && i == m_play_queue.end())
 	{
 	    play_track(t) ;
+	    check_markov_queue_append_real(t) ;
 	}
 	else
 	if( !play && i == m_play_queue.end())

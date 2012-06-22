@@ -115,6 +115,7 @@ namespace MPX
         draw_titleinfo( cairo ) ;
         draw_cover( cairo ) ;
 
+#if 0
         GdkRectangle r ;
         r.x = 2 ;
         r.y = 5 ;
@@ -141,6 +142,7 @@ namespace MPX
 	cairo->set_source_rgba(.45,.45,.45, 1) ;
 	cairo->stroke() ;
 	cairo->restore() ;
+#endif
 
 	if( m_audio_bitrate || m_audio_codec )
 	{
@@ -188,7 +190,7 @@ namespace MPX
 		) ; 
 
 		cairo->move_to(
-		      a.get_width() - width - 14
+		      a.get_width() - width - 14 - (m_cover ? 100 : 0)
 		    , 10 
 		) ;
 
@@ -305,7 +307,7 @@ namespace MPX
         layout->get_pixel_size( width, height ) ;
 
         cairo->move_to(
-              m_cover ? 112 : 8
+              8
             , 9
         ) ;
 
@@ -313,7 +315,7 @@ namespace MPX
         pango_cairo_show_layout( cairo->cobj(), layout->gobj() ) ;
 
         cairo->move_to(
-              m_cover ? 112 : 8
+              8
             , 9 + height + 1
         ) ;
 
@@ -334,7 +336,7 @@ namespace MPX
         layout->get_pixel_size( width, height ) ;
 
         cairo->move_to(
-              m_cover ? 112 : 8
+              8
             , 112 - height - 9 
         ) ;
 
@@ -358,7 +360,7 @@ namespace MPX
 
 	GdkRectangle r ;
 
-	r.x = 2 ; 
+	r.x = get_allocated_width() - 108 ; 
 	r.y = 5 ;
 	r.width = 103 ; 
 	r.height = 103 ; 
@@ -376,7 +378,7 @@ namespace MPX
 	    , r.width 
 	    , r.height 
 	    , rounding 
-	    , MPX::CairoCorners::CORNERS(5)
+	    , MPX::CairoCorners::CORNERS(10)
 	) ;
 	cairo->fill() ;
 

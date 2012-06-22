@@ -40,7 +40,7 @@ namespace Artist
 		s1 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_1) ;
 		s2 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_2) ;
 
-		Util::cairo_image_surface_blur( s1, 2 ) ;
+		Util::cairo_image_surface_blur( s1, 1 ) ;
 
 		boost::get<3>(*(i1->second)) = std::move(s1) ; 
 		boost::get<4>(*(i1->second)) = std::move(s2) ; 
@@ -99,7 +99,7 @@ namespace Artist
 
 	    if( icon )
 	    { 
-		return icon->scale_simple(120, 120, Gdk::INTERP_BILINEAR) ;
+		return icon->scale_simple(96, 96, Gdk::INTERP_BILINEAR) ;
 	    }
 
 	    return Glib::RefPtr<Gdk::Pixbuf>(0) ; 
@@ -127,12 +127,12 @@ namespace Artist
 		Glib::RefPtr<Gdk::Pixbuf> icon_desaturated_2 = icon->copy() ;
 
 		icon->saturate_and_pixelate(icon_desaturated_1, 0.0, false) ;
-		icon->saturate_and_pixelate(icon_desaturated_2, 0.2, false) ;
+		icon->saturate_and_pixelate(icon_desaturated_2, 0.5, false) ;
 
 		s1 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_1) ;
 		s2 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_2) ;
 
-		Util::cairo_image_surface_blur( s1, 2 ) ;
+		Util::cairo_image_surface_blur( s1, 1 ) ;
 	    }
 
 	    Row_t r (
@@ -180,12 +180,12 @@ namespace Artist
 		Glib::RefPtr<Gdk::Pixbuf> icon_desaturated_2 = icon->copy() ;
 
 		icon->saturate_and_pixelate(icon_desaturated_1, 0.0, false) ;
-		icon->saturate_and_pixelate(icon_desaturated_2, 0.2, false) ;
+		icon->saturate_and_pixelate(icon_desaturated_2, 0.5, false) ;
 
 		s1 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_1) ;
 		s2 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_2) ;
 
-		Util::cairo_image_surface_blur( s1, 2 ) ;
+		Util::cairo_image_surface_blur( s1, 1 ) ;
 	    }
 
 	    Row_t r (
@@ -413,13 +413,13 @@ namespace Artist
 	    m_image_disc = Util::cairo_image_surface_from_pixbuf(
 				    Gdk::Pixbuf::create_from_file(
 					    Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "artist.png" )
-	    )->scale_simple(120, 120, Gdk::INTERP_BILINEAR)) ;
+	    )->scale_simple(96, 96, Gdk::INTERP_BILINEAR)) ;
 	}
 
 	void
 	Column::set_rounding(double r)
 	{
-	    m_rounding = 3 ; // r ;
+	    m_rounding = 2 ; // r ;
 	}
 
 	double
@@ -468,31 +468,6 @@ namespace Artist
 	    return m_alignment ;
 	}
 
-	Cairo::RefPtr<Cairo::ImageSurface>
-	Column::render_rect_shadow(	
-	      guint w
-	    , guint h
-	)
-	{
-	    Cairo::RefPtr<Cairo::ImageSurface> s = Cairo::ImageSurface::create( Cairo::FORMAT_ARGB32, w+4, h+4 ) ;
-	    Cairo::RefPtr<Cairo::Context> c2 = Cairo::Context::create(s) ;
-
-	    c2->set_operator( Cairo::OPERATOR_CLEAR ) ;
-	    c2->paint() ;
-
-	    c2->set_operator( Cairo::OPERATOR_OVER ) ;
-	    c2->set_source_rgba(
-		      0 
-		    , 0 
-		    , 0 
-		    , 0.35 
-	    ) ;
-	    RoundedRectangle( c2, 2, 2, w, h, m_rounding ) ;
-	    c2->fill() ;
-	    Util::cairo_image_surface_blur( s, 1.5 ) ;
-	    return s ;
-	}
-
 	void
 	Column::render_header(
 	      const Cairo::RefPtr<Cairo::Context>&  cairo
@@ -539,6 +514,7 @@ namespace Artist
 
 	    int width, height ;
 
+#if 0
 	    const int text_size_px_s = 12 ;
 	    const int text_size_pt_s = static_cast<int>((text_size_px_s * 72)/ Util::screen_get_y_resolution(Gdk::Screen::get_default())) ;
 	    Glib::RefPtr<Pango::Layout> layout_s = Glib::wrap( pango_cairo_create_layout(cairo->cobj())) ;
@@ -549,6 +525,7 @@ namespace Artist
 	    layout_s->set_font_description(font_desc_s);
 	    layout_s->set_width((m_width-8)*PANGO_SCALE); 
 	    layout_s->set_ellipsize(Pango::ELLIPSIZE_END);
+#endif
 
 	    const int text_size_px = 12 ;
 	    const int text_size_pt = static_cast<int>((text_size_px*72)/ Util::screen_get_y_resolution(Gdk::Screen::get_default())) ;
@@ -558,15 +535,15 @@ namespace Artist
 	    font_desc.set_size(text_size_pt * PANGO_SCALE) ;
 	    font_desc.set_weight(Pango::WEIGHT_BOLD) ;
 	    layout->set_font_description(font_desc) ;
-	    layout->set_width(116*PANGO_SCALE) ;
-	    layout->set_ellipsize(Pango::ELLIPSIZE_END) ;
-
+	    layout->set_alignment(Pango::ALIGN_CENTER) ;
+	    layout->set_width(92*PANGO_SCALE) ;
+	    layout->set_wrap(Pango::WRAP_WORD) ;
 	    layout->set_text(get<0>(r)) ;
 	    layout->get_pixel_size( width, height ) ;
 
 	    //////////
 
-	    Cairo::RefPtr<Cairo::ImageSurface> surface = boost::get<4>(r) ;
+	    Cairo::RefPtr<Cairo::ImageSurface> surface = selected ? boost::get<3>(r) : boost::get<4>(r) ;
 
 	    if(!surface)
 	    {
@@ -575,7 +552,7 @@ namespace Artist
 
 	    //////////
 
-	    double x = (m_width-120)/2. ; 
+	    double x = (m_width-96)/2. ; 
 	    double y = ypos+8 ; 
 
 	    cairo->save() ;
@@ -589,35 +566,36 @@ namespace Artist
 		c = Util::pick_color_for_pixbuf(pb) ;
 	    }
 
-	    RoundedRectangle(cairo, 0, 0, 120, 64, m_rounding ) ;
-	    cairo->set_line_width(3) ;
-	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(c.get(),1)) ;
+	    RoundedRectangle(cairo, 1, 1, 94, 94, m_rounding ) ;
+	    cairo->set_source(surface, 0, 0) ;
+	    cairo->fill() ;
+
+	    RoundedRectangle(cairo, 1, 1, 94, 94, m_rounding ) ;
+	    cairo->set_line_width(1.5) ;
+	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(0.3,0.3,0.3,.8)) ;
 	    cairo->stroke_preserve() ;
 
-	    cairo->set_source(surface, 0, -12) ;
-	    cairo->fill_preserve() ;
-
-	    Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create( 60, 0, 60, 64 ) ;
+	    Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create( 48, 0, 48, 96 ) ;
 	    gradient->add_color_stop_rgba(
 		  0
+		, 0 
+		, 0 
 		, 0
-		, 0
-		, 0
-		, selected ? 0.70 : 0.50 
+		, selected ? 0.70 : 0.35 
 	    ) ;
 	    gradient->add_color_stop_rgba(
 		  0.66
 		, 0
 		, 0
 		, 0
-		, selected ? 0.35 : 0.25 
+		, selected ? 0.35 : 0.10
 	    ) ;
 	    gradient->add_color_stop_rgba(
-		  1
+		  1 
 		, 0
 		, 0
 		, 0
-		, selected ? 0.10 : 0.05
+		, 0 
 	    ) ;
 	    cairo->set_source( gradient ) ;
 	    cairo->fill() ;
@@ -626,26 +604,31 @@ namespace Artist
 
 	    //////////
 
-	    cairo->save() ;
-	    cairo->translate(xpos,ypos+8) ;
-	    //Util::render_text_shadow(layout, (m_width-width)/2.+1,(96-height)/2.+1, cairo, 1, 1) ; 
-	    cairo->move_to(
-		  (m_width-width)/2. 
-		, 4 
-	    );
-	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(1,1,1,.8)) ; 
-	    pango_cairo_show_layout(cairo->cobj(), layout->gobj());
-	    cairo->restore() ;
-
 	    if( selected )
 	    {
 		cairo->save() ;
 		cairo->translate(x,y) ;
-		RoundedRectangle(cairo, 0, 0, 120, 64, m_rounding) ;
+		RoundedRectangle(cairo, 0, 0, 96, 96, m_rounding) ;
 		cairo->set_source(m_rect_shadow, 0, 0) ;
 		cairo->fill() ;
 		cairo->restore() ;
 	    }
+
+
+	    //////////
+
+	    cairo->save() ;
+	    int x2 = xpos + (m_width-96) / 2. ;
+	    int y2 = ypos + 8 + (96-height)/2. ;
+	    cairo->translate(x2,y2) ;
+	    Util::render_text_shadow( layout, 1, 1, cairo, 1, 0.85 ) ;
+	    cairo->move_to(
+		  0 
+		, 0 
+	    );
+	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(1,1,1,1)) ; 
+	    pango_cairo_show_layout(cairo->cobj(), layout->gobj());
+	    cairo->restore() ;
 
 #if 0
 	    //////////
@@ -733,7 +716,7 @@ namespace Artist
 					    , context->get_language()
 	    ) ;
 
-	    m_height__row = 77 ;
+	    m_height__row = 112 ;
 
 	    m_height__headers = 0 ;
 #if 0
@@ -1018,9 +1001,8 @@ namespace Artist
 		    return true ;
 		}
 
-		default: break ;
+		default:
 
-#if 0
 		    if( !m_search_active )
 		    {
 			int x, y ;
@@ -1044,7 +1026,6 @@ namespace Artist
 
 			return false ;
 		    }
-#endif
 	    }
 
 	    return false ;
@@ -1260,8 +1241,8 @@ namespace Artist
 
 	    boost::shared_ptr<IYoukiThemeEngine> theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;
 
-	    const ThemeColor& c_text     = theme->get_color( THEME_COLOR_TEXT ) ;
-	    const ThemeColor& c_text_sel = theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
+	    const ThemeColor& c_text	    = theme->get_color( THEME_COLOR_TEXT ) ;
+	    const ThemeColor& c_text_sel    = theme->get_color( THEME_COLOR_TEXT_SELECTED ) ;
 
 	    guint d	= get_upper_row() ;
 	    guint d_max = Limiter<guint>(
@@ -1504,7 +1485,14 @@ namespace Artist
 	boost::optional<guint>
 	Class::get_selected_id()
 	{
-	    return get<S_ID>(m_selection.get()) ;
+	    boost::optional<guint> id ;
+
+	    if( m_selection )
+	    {
+		id = get<S_ID>(m_selection.get()) ;
+	    }
+
+	    return id ;
 	}
 
 	boost::optional<guint>

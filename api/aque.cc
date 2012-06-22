@@ -75,7 +75,7 @@ namespace
 
 	    for( auto& track : Xml->xml().toptracks().track() )
 	    {
-		s.insert( track.mbid() ) ;
+		s.insert( track.name() ) ;
 	    }
 	}
 	catch(std::runtime_error& cxe){
@@ -114,36 +114,6 @@ namespace
 	v = s ;
 	return v ;
     }
-
-    MPX::OVariant
-    _lastfm_artist_similar_mbid(
-	  const std::string& value
-    )
-    {
-	MPX::OVariant v ;
-	MPX::StrS s ;
-
-	try{
-	    MPX::URI u ((boost::format( "http://ws.audioscrobbler.com/2.0/?method=artist.getsimilar&mbid=%s&api_key=37cd50ae88b85b764b72bb4fe4041fe4" ) % Glib::Markup::escape_text(value)).str()) ;
-	    typedef MPX::XmlInstance<lfm_similarartists::lfm> Instance ; 
-
-	    Instance* Xml = new Instance(Glib::ustring( u )) ;
-
-	    for( auto& artist : Xml->xml().similarartists().artist() )
-	    {
-		s.insert( artist.mbid() ) ; 
-	    }
-
-	    delete Xml ;
-	}
-	catch(std::runtime_error& cxe){
-	    g_message("%s: RuntimeError: %s", G_STRLOC, cxe.what()) ;
-	}
-
-	v = s ;
-	return v ;
-    }
-
 }
 
 namespace
@@ -179,7 +149,7 @@ namespace
             else
             if( attribute == "top-tracks-for-artist" )
             {
-                c.TargetAttr = ATTRIBUTE_MB_TRACK_ID ;
+                c.TargetAttr = ATTRIBUTE_TITLE ;
 		c.Processing = CONSTRAINT_PROCESSING_ASYNC ;
 		c.SourceValue = value ;
 		c.GetValue = sigc::ptr_fun( &_lastfm_artist_toptracks ) ;	
@@ -193,16 +163,6 @@ namespace
 		c.Processing = CONSTRAINT_PROCESSING_ASYNC ;
 		c.SourceValue = value ;
 		c.GetValue = sigc::ptr_fun( &_lastfm_artist_similar ) ;	
-
-                constraints.push_back(c) ;
-            }
-            else
-            if( attribute == "mbid-artists-similar-to" )
-            {
-                c.TargetAttr = ATTRIBUTE_MB_ALBUM_ARTIST_ID ;
-		c.Processing = CONSTRAINT_PROCESSING_ASYNC ;
-		c.SourceValue = value ;
-		c.GetValue = sigc::ptr_fun( &_lastfm_artist_similar_mbid ) ;	
 
                 constraints.push_back(c) ;
             }
@@ -260,6 +220,17 @@ namespace
                 try{
                         c.TargetValue = (unsigned int)(boost::lexical_cast<int>(value)) ;
                         c.TargetAttr = ATTRIBUTE_BITRATE ;
+
+                        constraints.push_back(c) ;
+                } catch( boost::bad_lexical_cast ) {
+                }
+            }
+            else
+            if( attribute == "track" )
+            {
+                try{
+                        c.TargetValue = (unsigned int)(boost::lexical_cast<int>(value)) ;
+                        c.TargetAttr = ATTRIBUTE_TRACK ;
 
                         constraints.push_back(c) ;
                 } catch( boost::bad_lexical_cast ) {
@@ -702,9 +673,10 @@ namespace AQE
     {
         const MPX::Track& track = *(t.get()) ;
 
+        g_return_val_if_fail(track.has(c.TargetAttr), false) ;
+
         bool truthvalue = false ;
 
-	if(c.TargetValue)
         try{
           switch( c.MatchType )
           {
