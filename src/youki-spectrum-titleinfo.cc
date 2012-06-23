@@ -115,35 +115,6 @@ namespace MPX
         draw_titleinfo( cairo ) ;
         draw_cover( cairo ) ;
 
-#if 0
-        GdkRectangle r ;
-        r.x = 2 ;
-        r.y = 5 ;
-        r.width = a.get_width() - 6 ; 
-        r.height = a.get_height() - 8 ; 
-
-	cairo->save() ;
-	cairo->rectangle(
-	      2
-	    , 4 
-	    , 103 
-	    , 105 
-	) ;
-	cairo->clip() ;
-	RoundedRectangle(
-	      cairo
-	    , r.x
-	    , r.y
-	    , r.width
-	    , r.height
-	    , rounding
-	) ;
-	cairo->set_line_width(1) ;
-	cairo->set_source_rgba(.45,.45,.45, 1) ;
-	cairo->stroke() ;
-	cairo->restore() ;
-#endif
-
 	if( m_audio_bitrate || m_audio_codec )
 	{
 		std::string audioinfo ;
@@ -377,7 +348,7 @@ namespace MPX
 	    , r.y 
 	    , r.width 
 	    , r.height 
-	    , rounding 
+	    , rounding - 1
 	    , MPX::CairoCorners::CORNERS(10)
 	) ;
 	cairo->fill() ;
@@ -388,7 +359,7 @@ namespace MPX
 	    , r.y
 	    , r.width
 	    , r.height 
-	    , rounding
+	    , rounding - 1
 	    , MPX::CairoCorners::CORNERS(5)
 	) ;
 	Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create(
@@ -427,7 +398,6 @@ namespace MPX
 	) ;
 	cairo->set_source(gradient) ;
 	cairo->fill() ;
-
         cairo->restore() ;
     }
 }

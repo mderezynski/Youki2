@@ -201,16 +201,9 @@ namespace xml_schema
 
 // Forward declarations.
 //
-namespace lfm_artisttoptracks
-{
-  class lfm;
-  class toptracks;
-  class track;
-  class streamable;
-  class artist;
-  class image;
-}
-
+class lfm;
+class toptracks;
+class track;
 
 #include <memory>    // std::auto_ptr
 #include <algorithm> // std::binary_search
@@ -222,490 +215,197 @@ namespace lfm_artisttoptracks
 
 #include <xsd/cxx/xml/dom/parsing-header.hxx>
 
-namespace lfm_artisttoptracks
+class lfm: public ::xml_schema::type
 {
-  class lfm: public ::xml_schema::type
-  {
-    public:
-    // toptracks
-    // 
-    typedef ::lfm_artisttoptracks::toptracks toptracks_type;
-    typedef ::xsd::cxx::tree::traits< toptracks_type, char > toptracks_traits;
+  public:
+  // toptracks
+  // 
+  typedef ::toptracks toptracks_type;
+  typedef ::xsd::cxx::tree::traits< toptracks_type, char > toptracks_traits;
 
-    const toptracks_type&
-    toptracks () const;
+  const toptracks_type&
+  toptracks () const;
 
-    toptracks_type&
-    toptracks ();
+  toptracks_type&
+  toptracks ();
 
-    void
-    toptracks (const toptracks_type& x);
+  void
+  toptracks (const toptracks_type& x);
 
-    void
-    toptracks (::std::auto_ptr< toptracks_type > p);
+  void
+  toptracks (::std::auto_ptr< toptracks_type > p);
 
-    // status
-    // 
-    typedef ::xml_schema::ncname status_type;
-    typedef ::xsd::cxx::tree::traits< status_type, char > status_traits;
+  // Constructors.
+  //
+  lfm (const toptracks_type&);
 
-    const status_type&
-    status () const;
+  lfm (const ::xercesc::DOMElement& e,
+       ::xml_schema::flags f = 0,
+       ::xml_schema::type* c = 0);
 
-    status_type&
-    status ();
+  lfm (const lfm& x,
+       ::xml_schema::flags f = 0,
+       ::xml_schema::type* c = 0);
 
-    void
-    status (const status_type& x);
+  virtual lfm*
+  _clone (::xml_schema::flags f = 0,
+          ::xml_schema::type* c = 0) const;
 
-    void
-    status (::std::auto_ptr< status_type > p);
+  // Implementation.
+  //
+  protected:
+  void
+  parse (::xsd::cxx::xml::dom::parser< char >&,
+         ::xml_schema::flags);
 
-    // Constructors.
-    //
-    lfm (const toptracks_type&,
-         const status_type&);
+  private:
+  ::xsd::cxx::tree::one< toptracks_type > toptracks_;
+};
 
-    lfm (const ::xercesc::DOMElement& e,
+class toptracks: public ::xml_schema::type
+{
+  public:
+  // track
+  // 
+  typedef ::track track_type;
+  typedef ::xsd::cxx::tree::sequence< track_type > track_sequence;
+  typedef track_sequence::iterator track_iterator;
+  typedef track_sequence::const_iterator track_const_iterator;
+  typedef ::xsd::cxx::tree::traits< track_type, char > track_traits;
+
+  const track_sequence&
+  track () const;
+
+  track_sequence&
+  track ();
+
+  void
+  track (const track_sequence& s);
+
+  // Constructors.
+  //
+  toptracks ();
+
+  toptracks (const ::xercesc::DOMElement& e,
+             ::xml_schema::flags f = 0,
+             ::xml_schema::type* c = 0);
+
+  toptracks (const toptracks& x,
+             ::xml_schema::flags f = 0,
+             ::xml_schema::type* c = 0);
+
+  virtual toptracks*
+  _clone (::xml_schema::flags f = 0,
+          ::xml_schema::type* c = 0) const;
+
+  // Implementation.
+  //
+  protected:
+  void
+  parse (::xsd::cxx::xml::dom::parser< char >&,
+         ::xml_schema::flags);
+
+  private:
+  track_sequence track_;
+};
+
+class track: public ::xml_schema::type
+{
+  public:
+  // name
+  // 
+  typedef ::xml_schema::string name_type;
+  typedef ::xsd::cxx::tree::traits< name_type, char > name_traits;
+
+  const name_type&
+  name () const;
+
+  name_type&
+  name ();
+
+  void
+  name (const name_type& x);
+
+  void
+  name (::std::auto_ptr< name_type > p);
+
+  // playcount
+  // 
+  typedef ::xml_schema::integer playcount_type;
+  typedef ::xsd::cxx::tree::traits< playcount_type, char > playcount_traits;
+
+  const playcount_type&
+  playcount () const;
+
+  playcount_type&
+  playcount ();
+
+  void
+  playcount (const playcount_type& x);
+
+  // mbid
+  // 
+  typedef ::xml_schema::string mbid_type;
+  typedef ::xsd::cxx::tree::traits< mbid_type, char > mbid_traits;
+
+  const mbid_type&
+  mbid () const;
+
+  mbid_type&
+  mbid ();
+
+  void
+  mbid (const mbid_type& x);
+
+  void
+  mbid (::std::auto_ptr< mbid_type > p);
+
+  // rank
+  // 
+  typedef ::xml_schema::integer rank_type;
+  typedef ::xsd::cxx::tree::traits< rank_type, char > rank_traits;
+
+  const rank_type&
+  rank () const;
+
+  rank_type&
+  rank ();
+
+  void
+  rank (const rank_type& x);
+
+  // Constructors.
+  //
+  track (const name_type&,
+         const playcount_type&,
+         const mbid_type&,
+         const rank_type&);
+
+  track (const ::xercesc::DOMElement& e,
          ::xml_schema::flags f = 0,
          ::xml_schema::type* c = 0);
 
-    lfm (const lfm& x,
+  track (const track& x,
          ::xml_schema::flags f = 0,
          ::xml_schema::type* c = 0);
 
-    virtual lfm*
-    _clone (::xml_schema::flags f = 0,
-            ::xml_schema::type* c = 0) const;
-
-    // Implementation.
-    //
-    protected:
-    void
-    parse (::xsd::cxx::xml::dom::parser< char >&,
-           ::xml_schema::flags);
-
-    private:
-    ::xsd::cxx::tree::one< toptracks_type > toptracks_;
-    ::xsd::cxx::tree::one< status_type > status_;
-  };
-
-  class toptracks: public ::xml_schema::type
-  {
-    public:
-    // track
-    // 
-    typedef ::lfm_artisttoptracks::track track_type;
-    typedef ::xsd::cxx::tree::sequence< track_type > track_sequence;
-    typedef track_sequence::iterator track_iterator;
-    typedef track_sequence::const_iterator track_const_iterator;
-    typedef ::xsd::cxx::tree::traits< track_type, char > track_traits;
-
-    const track_sequence&
-    track () const;
-
-    track_sequence&
-    track ();
-
-    void
-    track (const track_sequence& s);
-
-    // artist
-    // 
-    typedef ::xml_schema::ncname artist_type;
-    typedef ::xsd::cxx::tree::traits< artist_type, char > artist_traits;
-
-    const artist_type&
-    artist () const;
-
-    artist_type&
-    artist ();
-
-    void
-    artist (const artist_type& x);
-
-    void
-    artist (::std::auto_ptr< artist_type > p);
-
-    // Constructors.
-    //
-    toptracks (const artist_type&);
-
-    toptracks (const ::xercesc::DOMElement& e,
-               ::xml_schema::flags f = 0,
-               ::xml_schema::type* c = 0);
-
-    toptracks (const toptracks& x,
-               ::xml_schema::flags f = 0,
-               ::xml_schema::type* c = 0);
-
-    virtual toptracks*
-    _clone (::xml_schema::flags f = 0,
-            ::xml_schema::type* c = 0) const;
-
-    // Implementation.
-    //
-    protected:
-    void
-    parse (::xsd::cxx::xml::dom::parser< char >&,
-           ::xml_schema::flags);
-
-    private:
-    track_sequence track_;
-    ::xsd::cxx::tree::one< artist_type > artist_;
-  };
-
-  class track: public ::xml_schema::type
-  {
-    public:
-    // name
-    // 
-    typedef ::xml_schema::string name_type;
-    typedef ::xsd::cxx::tree::traits< name_type, char > name_traits;
-
-    const name_type&
-    name () const;
-
-    name_type&
-    name ();
-
-    void
-    name (const name_type& x);
-
-    void
-    name (::std::auto_ptr< name_type > p);
-
-    // playcount
-    // 
-    typedef ::xml_schema::integer playcount_type;
-    typedef ::xsd::cxx::tree::traits< playcount_type, char > playcount_traits;
-
-    const playcount_type&
-    playcount () const;
-
-    playcount_type&
-    playcount ();
-
-    void
-    playcount (const playcount_type& x);
-
-    // mbid
-    // 
-    typedef ::xml_schema::string mbid_type;
-    typedef ::xsd::cxx::tree::traits< mbid_type, char > mbid_traits;
-
-    const mbid_type&
-    mbid () const;
-
-    mbid_type&
-    mbid ();
-
-    void
-    mbid (const mbid_type& x);
-
-    void
-    mbid (::std::auto_ptr< mbid_type > p);
-
-    // url
-    // 
-    typedef ::xml_schema::uri url_type;
-    typedef ::xsd::cxx::tree::traits< url_type, char > url_traits;
-
-    const url_type&
-    url () const;
-
-    url_type&
-    url ();
-
-    void
-    url (const url_type& x);
-
-    void
-    url (::std::auto_ptr< url_type > p);
-
-    // streamable
-    // 
-    typedef ::lfm_artisttoptracks::streamable streamable_type;
-    typedef ::xsd::cxx::tree::traits< streamable_type, char > streamable_traits;
-
-    const streamable_type&
-    streamable () const;
-
-    streamable_type&
-    streamable ();
-
-    void
-    streamable (const streamable_type& x);
-
-    void
-    streamable (::std::auto_ptr< streamable_type > p);
-
-    // artist
-    // 
-    typedef ::lfm_artisttoptracks::artist artist_type;
-    typedef ::xsd::cxx::tree::traits< artist_type, char > artist_traits;
-
-    const artist_type&
-    artist () const;
-
-    artist_type&
-    artist ();
-
-    void
-    artist (const artist_type& x);
-
-    void
-    artist (::std::auto_ptr< artist_type > p);
-
-    // image
-    // 
-    typedef ::lfm_artisttoptracks::image image_type;
-    typedef ::xsd::cxx::tree::sequence< image_type > image_sequence;
-    typedef image_sequence::iterator image_iterator;
-    typedef image_sequence::const_iterator image_const_iterator;
-    typedef ::xsd::cxx::tree::traits< image_type, char > image_traits;
-
-    const image_sequence&
-    image () const;
-
-    image_sequence&
-    image ();
-
-    void
-    image (const image_sequence& s);
-
-    // rank
-    // 
-    typedef ::xml_schema::integer rank_type;
-    typedef ::xsd::cxx::tree::traits< rank_type, char > rank_traits;
-
-    const rank_type&
-    rank () const;
-
-    rank_type&
-    rank ();
-
-    void
-    rank (const rank_type& x);
-
-    // Constructors.
-    //
-    track (const name_type&,
-           const playcount_type&,
-           const mbid_type&,
-           const url_type&,
-           const streamable_type&,
-           const artist_type&,
-           const rank_type&);
-
-    track (const ::xercesc::DOMElement& e,
-           ::xml_schema::flags f = 0,
-           ::xml_schema::type* c = 0);
-
-    track (const track& x,
-           ::xml_schema::flags f = 0,
-           ::xml_schema::type* c = 0);
-
-    virtual track*
-    _clone (::xml_schema::flags f = 0,
-            ::xml_schema::type* c = 0) const;
-
-    // Implementation.
-    //
-    protected:
-    void
-    parse (::xsd::cxx::xml::dom::parser< char >&,
-           ::xml_schema::flags);
-
-    private:
-    ::xsd::cxx::tree::one< name_type > name_;
-    ::xsd::cxx::tree::one< playcount_type > playcount_;
-    ::xsd::cxx::tree::one< mbid_type > mbid_;
-    ::xsd::cxx::tree::one< url_type > url_;
-    ::xsd::cxx::tree::one< streamable_type > streamable_;
-    ::xsd::cxx::tree::one< artist_type > artist_;
-    image_sequence image_;
-    ::xsd::cxx::tree::one< rank_type > rank_;
-  };
-
-  class streamable: public ::xsd::cxx::tree::fundamental_base< ::xml_schema::integer, char, ::xml_schema::simple_type >
-  {
-    public:
-    // fulltrack
-    // 
-    typedef ::xml_schema::integer fulltrack_type;
-    typedef ::xsd::cxx::tree::traits< fulltrack_type, char > fulltrack_traits;
-
-    const fulltrack_type&
-    fulltrack () const;
-
-    fulltrack_type&
-    fulltrack ();
-
-    void
-    fulltrack (const fulltrack_type& x);
-
-    // Constructors.
-    //
-    streamable (const ::xml_schema::integer&,
-                const fulltrack_type&);
-
-    streamable (const ::xercesc::DOMElement& e,
-                ::xml_schema::flags f = 0,
-                ::xml_schema::type* c = 0);
-
-    streamable (const streamable& x,
-                ::xml_schema::flags f = 0,
-                ::xml_schema::type* c = 0);
-
-    virtual streamable*
-    _clone (::xml_schema::flags f = 0,
-            ::xml_schema::type* c = 0) const;
-
-    // Implementation.
-    //
-    protected:
-    void
-    parse (::xsd::cxx::xml::dom::parser< char >&,
-           ::xml_schema::flags);
-
-    private:
-    ::xsd::cxx::tree::one< fulltrack_type > fulltrack_;
-  };
-
-  class artist: public ::xml_schema::type
-  {
-    public:
-    // name
-    // 
-    typedef ::xml_schema::string name_type;
-    typedef ::xsd::cxx::tree::traits< name_type, char > name_traits;
-
-    const name_type&
-    name () const;
-
-    name_type&
-    name ();
-
-    void
-    name (const name_type& x);
-
-    void
-    name (::std::auto_ptr< name_type > p);
-
-    // mbid
-    // 
-    typedef ::xml_schema::string mbid_type;
-    typedef ::xsd::cxx::tree::traits< mbid_type, char > mbid_traits;
-
-    const mbid_type&
-    mbid () const;
-
-    mbid_type&
-    mbid ();
-
-    void
-    mbid (const mbid_type& x);
-
-    void
-    mbid (::std::auto_ptr< mbid_type > p);
-
-    // url
-    // 
-    typedef ::xml_schema::uri url_type;
-    typedef ::xsd::cxx::tree::traits< url_type, char > url_traits;
-
-    const url_type&
-    url () const;
-
-    url_type&
-    url ();
-
-    void
-    url (const url_type& x);
-
-    void
-    url (::std::auto_ptr< url_type > p);
-
-    // Constructors.
-    //
-    artist (const name_type&,
-            const mbid_type&,
-            const url_type&);
-
-    artist (const ::xercesc::DOMElement& e,
-            ::xml_schema::flags f = 0,
-            ::xml_schema::type* c = 0);
-
-    artist (const artist& x,
-            ::xml_schema::flags f = 0,
-            ::xml_schema::type* c = 0);
-
-    virtual artist*
-    _clone (::xml_schema::flags f = 0,
-            ::xml_schema::type* c = 0) const;
-
-    // Implementation.
-    //
-    protected:
-    void
-    parse (::xsd::cxx::xml::dom::parser< char >&,
-           ::xml_schema::flags);
-
-    private:
-    ::xsd::cxx::tree::one< name_type > name_;
-    ::xsd::cxx::tree::one< mbid_type > mbid_;
-    ::xsd::cxx::tree::one< url_type > url_;
-  };
-
-  class image: public ::xml_schema::uri
-  {
-    public:
-    // size
-    // 
-    typedef ::xml_schema::ncname size_type;
-    typedef ::xsd::cxx::tree::traits< size_type, char > size_traits;
-
-    const size_type&
-    size () const;
-
-    size_type&
-    size ();
-
-    void
-    size (const size_type& x);
-
-    void
-    size (::std::auto_ptr< size_type > p);
-
-    // Constructors.
-    //
-    image (const ::xml_schema::uri&,
-           const size_type&);
-
-    image (const ::xercesc::DOMElement& e,
-           ::xml_schema::flags f = 0,
-           ::xml_schema::type* c = 0);
-
-    image (const image& x,
-           ::xml_schema::flags f = 0,
-           ::xml_schema::type* c = 0);
-
-    virtual image*
-    _clone (::xml_schema::flags f = 0,
-            ::xml_schema::type* c = 0) const;
-
-    // Implementation.
-    //
-    protected:
-    void
-    parse (::xsd::cxx::xml::dom::parser< char >&,
-           ::xml_schema::flags);
-
-    private:
-    ::xsd::cxx::tree::one< size_type > size_;
-  };
-}
+  virtual track*
+  _clone (::xml_schema::flags f = 0,
+          ::xml_schema::type* c = 0) const;
+
+  // Implementation.
+  //
+  protected:
+  void
+  parse (::xsd::cxx::xml::dom::parser< char >&,
+         ::xml_schema::flags);
+
+  private:
+  ::xsd::cxx::tree::one< name_type > name_;
+  ::xsd::cxx::tree::one< playcount_type > playcount_;
+  ::xsd::cxx::tree::one< mbid_type > mbid_;
+  ::xsd::cxx::tree::one< rank_type > rank_;
+};
 
 #include <iosfwd>
 
@@ -713,101 +413,563 @@ namespace lfm_artisttoptracks
 #include <xercesc/dom/DOMInputSource.hpp>
 #include <xercesc/dom/DOMErrorHandler.hpp>
 
-namespace lfm_artisttoptracks
-{
-  // Parse a URI or a local file.
-  //
+// Parse a URI or a local file.
+//
 
-  ::std::auto_ptr< ::lfm_artisttoptracks::lfm >
-  lfm_ (const ::std::string& uri,
+::std::auto_ptr< ::lfm >
+lfm_ (const ::std::string& uri,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::lfm >
+lfm_ (const ::std::string& uri,
+      ::xml_schema::error_handler& eh,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::lfm >
+lfm_ (const ::std::string& uri,
+      ::xercesc::DOMErrorHandler& eh,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+// Parse std::istream.
+//
+
+::std::auto_ptr< ::lfm >
+lfm_ (::std::istream& is,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::lfm >
+lfm_ (::std::istream& is,
+      ::xml_schema::error_handler& eh,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::lfm >
+lfm_ (::std::istream& is,
+      ::xercesc::DOMErrorHandler& eh,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::lfm >
+lfm_ (::std::istream& is,
+      const ::std::string& id,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::lfm >
+lfm_ (::std::istream& is,
+      const ::std::string& id,
+      ::xml_schema::error_handler& eh,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::lfm >
+lfm_ (::std::istream& is,
+      const ::std::string& id,
+      ::xercesc::DOMErrorHandler& eh,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+// Parse xercesc::DOMInputSource.
+//
+
+::std::auto_ptr< ::lfm >
+lfm_ (const ::xercesc::DOMInputSource& is,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::lfm >
+lfm_ (const ::xercesc::DOMInputSource& is,
+      ::xml_schema::error_handler& eh,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::lfm >
+lfm_ (const ::xercesc::DOMInputSource& is,
+      ::xercesc::DOMErrorHandler& eh,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+// Parse xercesc::DOMDocument.
+//
+
+::std::auto_ptr< ::lfm >
+lfm_ (const ::xercesc::DOMDocument& d,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::lfm >
+lfm_ (::xercesc::DOMDocument* d,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+// Parse a URI or a local file.
+//
+
+::std::auto_ptr< ::toptracks >
+toptracks_ (const ::std::string& uri,
+            ::xml_schema::flags f = 0,
+            const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::toptracks >
+toptracks_ (const ::std::string& uri,
+            ::xml_schema::error_handler& eh,
+            ::xml_schema::flags f = 0,
+            const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::toptracks >
+toptracks_ (const ::std::string& uri,
+            ::xercesc::DOMErrorHandler& eh,
+            ::xml_schema::flags f = 0,
+            const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+// Parse std::istream.
+//
+
+::std::auto_ptr< ::toptracks >
+toptracks_ (::std::istream& is,
+            ::xml_schema::flags f = 0,
+            const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::toptracks >
+toptracks_ (::std::istream& is,
+            ::xml_schema::error_handler& eh,
+            ::xml_schema::flags f = 0,
+            const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::toptracks >
+toptracks_ (::std::istream& is,
+            ::xercesc::DOMErrorHandler& eh,
+            ::xml_schema::flags f = 0,
+            const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::toptracks >
+toptracks_ (::std::istream& is,
+            const ::std::string& id,
+            ::xml_schema::flags f = 0,
+            const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::toptracks >
+toptracks_ (::std::istream& is,
+            const ::std::string& id,
+            ::xml_schema::error_handler& eh,
+            ::xml_schema::flags f = 0,
+            const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::toptracks >
+toptracks_ (::std::istream& is,
+            const ::std::string& id,
+            ::xercesc::DOMErrorHandler& eh,
+            ::xml_schema::flags f = 0,
+            const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+// Parse xercesc::DOMInputSource.
+//
+
+::std::auto_ptr< ::toptracks >
+toptracks_ (const ::xercesc::DOMInputSource& is,
+            ::xml_schema::flags f = 0,
+            const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::toptracks >
+toptracks_ (const ::xercesc::DOMInputSource& is,
+            ::xml_schema::error_handler& eh,
+            ::xml_schema::flags f = 0,
+            const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::toptracks >
+toptracks_ (const ::xercesc::DOMInputSource& is,
+            ::xercesc::DOMErrorHandler& eh,
+            ::xml_schema::flags f = 0,
+            const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+// Parse xercesc::DOMDocument.
+//
+
+::std::auto_ptr< ::toptracks >
+toptracks_ (const ::xercesc::DOMDocument& d,
+            ::xml_schema::flags f = 0,
+            const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::toptracks >
+toptracks_ (::xercesc::DOMDocument* d,
+            ::xml_schema::flags f = 0,
+            const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+// Parse a URI or a local file.
+//
+
+::std::auto_ptr< ::track >
+track_ (const ::std::string& uri,
         ::xml_schema::flags f = 0,
         const ::xml_schema::properties& p = ::xml_schema::properties ());
 
-  ::std::auto_ptr< ::lfm_artisttoptracks::lfm >
-  lfm_ (const ::std::string& uri,
+::std::auto_ptr< ::track >
+track_ (const ::std::string& uri,
         ::xml_schema::error_handler& eh,
         ::xml_schema::flags f = 0,
         const ::xml_schema::properties& p = ::xml_schema::properties ());
 
-  ::std::auto_ptr< ::lfm_artisttoptracks::lfm >
-  lfm_ (const ::std::string& uri,
+::std::auto_ptr< ::track >
+track_ (const ::std::string& uri,
         ::xercesc::DOMErrorHandler& eh,
         ::xml_schema::flags f = 0,
         const ::xml_schema::properties& p = ::xml_schema::properties ());
 
-  // Parse std::istream.
-  //
+// Parse std::istream.
+//
 
-  ::std::auto_ptr< ::lfm_artisttoptracks::lfm >
-  lfm_ (::std::istream& is,
+::std::auto_ptr< ::track >
+track_ (::std::istream& is,
         ::xml_schema::flags f = 0,
         const ::xml_schema::properties& p = ::xml_schema::properties ());
 
-  ::std::auto_ptr< ::lfm_artisttoptracks::lfm >
-  lfm_ (::std::istream& is,
+::std::auto_ptr< ::track >
+track_ (::std::istream& is,
         ::xml_schema::error_handler& eh,
         ::xml_schema::flags f = 0,
         const ::xml_schema::properties& p = ::xml_schema::properties ());
 
-  ::std::auto_ptr< ::lfm_artisttoptracks::lfm >
-  lfm_ (::std::istream& is,
+::std::auto_ptr< ::track >
+track_ (::std::istream& is,
         ::xercesc::DOMErrorHandler& eh,
         ::xml_schema::flags f = 0,
         const ::xml_schema::properties& p = ::xml_schema::properties ());
 
-  ::std::auto_ptr< ::lfm_artisttoptracks::lfm >
-  lfm_ (::std::istream& is,
+::std::auto_ptr< ::track >
+track_ (::std::istream& is,
         const ::std::string& id,
         ::xml_schema::flags f = 0,
         const ::xml_schema::properties& p = ::xml_schema::properties ());
 
-  ::std::auto_ptr< ::lfm_artisttoptracks::lfm >
-  lfm_ (::std::istream& is,
+::std::auto_ptr< ::track >
+track_ (::std::istream& is,
         const ::std::string& id,
         ::xml_schema::error_handler& eh,
         ::xml_schema::flags f = 0,
         const ::xml_schema::properties& p = ::xml_schema::properties ());
 
-  ::std::auto_ptr< ::lfm_artisttoptracks::lfm >
-  lfm_ (::std::istream& is,
+::std::auto_ptr< ::track >
+track_ (::std::istream& is,
         const ::std::string& id,
         ::xercesc::DOMErrorHandler& eh,
         ::xml_schema::flags f = 0,
         const ::xml_schema::properties& p = ::xml_schema::properties ());
 
-  // Parse xercesc::DOMInputSource.
-  //
+// Parse xercesc::DOMInputSource.
+//
 
-  ::std::auto_ptr< ::lfm_artisttoptracks::lfm >
-  lfm_ (const ::xercesc::DOMInputSource& is,
+::std::auto_ptr< ::track >
+track_ (const ::xercesc::DOMInputSource& is,
         ::xml_schema::flags f = 0,
         const ::xml_schema::properties& p = ::xml_schema::properties ());
 
-  ::std::auto_ptr< ::lfm_artisttoptracks::lfm >
-  lfm_ (const ::xercesc::DOMInputSource& is,
+::std::auto_ptr< ::track >
+track_ (const ::xercesc::DOMInputSource& is,
         ::xml_schema::error_handler& eh,
         ::xml_schema::flags f = 0,
         const ::xml_schema::properties& p = ::xml_schema::properties ());
 
-  ::std::auto_ptr< ::lfm_artisttoptracks::lfm >
-  lfm_ (const ::xercesc::DOMInputSource& is,
+::std::auto_ptr< ::track >
+track_ (const ::xercesc::DOMInputSource& is,
         ::xercesc::DOMErrorHandler& eh,
         ::xml_schema::flags f = 0,
         const ::xml_schema::properties& p = ::xml_schema::properties ());
 
-  // Parse xercesc::DOMDocument.
-  //
+// Parse xercesc::DOMDocument.
+//
 
-  ::std::auto_ptr< ::lfm_artisttoptracks::lfm >
-  lfm_ (const ::xercesc::DOMDocument& d,
+::std::auto_ptr< ::track >
+track_ (const ::xercesc::DOMDocument& d,
         ::xml_schema::flags f = 0,
         const ::xml_schema::properties& p = ::xml_schema::properties ());
 
-  ::std::auto_ptr< ::lfm_artisttoptracks::lfm >
-  lfm_ (::xercesc::DOMDocument* d,
+::std::auto_ptr< ::track >
+track_ (::xercesc::DOMDocument* d,
         ::xml_schema::flags f = 0,
         const ::xml_schema::properties& p = ::xml_schema::properties ());
-}
+
+// Parse a URI or a local file.
+//
+
+::std::auto_ptr< ::xml_schema::integer >
+playcount (const ::std::string& uri,
+           ::xml_schema::flags f = 0,
+           const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::xml_schema::integer >
+playcount (const ::std::string& uri,
+           ::xml_schema::error_handler& eh,
+           ::xml_schema::flags f = 0,
+           const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::xml_schema::integer >
+playcount (const ::std::string& uri,
+           ::xercesc::DOMErrorHandler& eh,
+           ::xml_schema::flags f = 0,
+           const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+// Parse std::istream.
+//
+
+::std::auto_ptr< ::xml_schema::integer >
+playcount (::std::istream& is,
+           ::xml_schema::flags f = 0,
+           const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::xml_schema::integer >
+playcount (::std::istream& is,
+           ::xml_schema::error_handler& eh,
+           ::xml_schema::flags f = 0,
+           const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::xml_schema::integer >
+playcount (::std::istream& is,
+           ::xercesc::DOMErrorHandler& eh,
+           ::xml_schema::flags f = 0,
+           const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::xml_schema::integer >
+playcount (::std::istream& is,
+           const ::std::string& id,
+           ::xml_schema::flags f = 0,
+           const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::xml_schema::integer >
+playcount (::std::istream& is,
+           const ::std::string& id,
+           ::xml_schema::error_handler& eh,
+           ::xml_schema::flags f = 0,
+           const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::xml_schema::integer >
+playcount (::std::istream& is,
+           const ::std::string& id,
+           ::xercesc::DOMErrorHandler& eh,
+           ::xml_schema::flags f = 0,
+           const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+// Parse xercesc::DOMInputSource.
+//
+
+::std::auto_ptr< ::xml_schema::integer >
+playcount (const ::xercesc::DOMInputSource& is,
+           ::xml_schema::flags f = 0,
+           const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::xml_schema::integer >
+playcount (const ::xercesc::DOMInputSource& is,
+           ::xml_schema::error_handler& eh,
+           ::xml_schema::flags f = 0,
+           const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::xml_schema::integer >
+playcount (const ::xercesc::DOMInputSource& is,
+           ::xercesc::DOMErrorHandler& eh,
+           ::xml_schema::flags f = 0,
+           const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+// Parse xercesc::DOMDocument.
+//
+
+::std::auto_ptr< ::xml_schema::integer >
+playcount (const ::xercesc::DOMDocument& d,
+           ::xml_schema::flags f = 0,
+           const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::xml_schema::integer >
+playcount (::xercesc::DOMDocument* d,
+           ::xml_schema::flags f = 0,
+           const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+// Parse a URI or a local file.
+//
+
+::std::auto_ptr< ::xml_schema::string >
+name (const ::std::string& uri,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::xml_schema::string >
+name (const ::std::string& uri,
+      ::xml_schema::error_handler& eh,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::xml_schema::string >
+name (const ::std::string& uri,
+      ::xercesc::DOMErrorHandler& eh,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+// Parse std::istream.
+//
+
+::std::auto_ptr< ::xml_schema::string >
+name (::std::istream& is,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::xml_schema::string >
+name (::std::istream& is,
+      ::xml_schema::error_handler& eh,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::xml_schema::string >
+name (::std::istream& is,
+      ::xercesc::DOMErrorHandler& eh,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::xml_schema::string >
+name (::std::istream& is,
+      const ::std::string& id,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::xml_schema::string >
+name (::std::istream& is,
+      const ::std::string& id,
+      ::xml_schema::error_handler& eh,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::xml_schema::string >
+name (::std::istream& is,
+      const ::std::string& id,
+      ::xercesc::DOMErrorHandler& eh,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+// Parse xercesc::DOMInputSource.
+//
+
+::std::auto_ptr< ::xml_schema::string >
+name (const ::xercesc::DOMInputSource& is,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::xml_schema::string >
+name (const ::xercesc::DOMInputSource& is,
+      ::xml_schema::error_handler& eh,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::xml_schema::string >
+name (const ::xercesc::DOMInputSource& is,
+      ::xercesc::DOMErrorHandler& eh,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+// Parse xercesc::DOMDocument.
+//
+
+::std::auto_ptr< ::xml_schema::string >
+name (const ::xercesc::DOMDocument& d,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::xml_schema::string >
+name (::xercesc::DOMDocument* d,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+// Parse a URI or a local file.
+//
+
+::std::auto_ptr< ::xml_schema::string >
+mbid (const ::std::string& uri,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::xml_schema::string >
+mbid (const ::std::string& uri,
+      ::xml_schema::error_handler& eh,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::xml_schema::string >
+mbid (const ::std::string& uri,
+      ::xercesc::DOMErrorHandler& eh,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+// Parse std::istream.
+//
+
+::std::auto_ptr< ::xml_schema::string >
+mbid (::std::istream& is,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::xml_schema::string >
+mbid (::std::istream& is,
+      ::xml_schema::error_handler& eh,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::xml_schema::string >
+mbid (::std::istream& is,
+      ::xercesc::DOMErrorHandler& eh,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::xml_schema::string >
+mbid (::std::istream& is,
+      const ::std::string& id,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::xml_schema::string >
+mbid (::std::istream& is,
+      const ::std::string& id,
+      ::xml_schema::error_handler& eh,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::xml_schema::string >
+mbid (::std::istream& is,
+      const ::std::string& id,
+      ::xercesc::DOMErrorHandler& eh,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+// Parse xercesc::DOMInputSource.
+//
+
+::std::auto_ptr< ::xml_schema::string >
+mbid (const ::xercesc::DOMInputSource& is,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::xml_schema::string >
+mbid (const ::xercesc::DOMInputSource& is,
+      ::xml_schema::error_handler& eh,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::xml_schema::string >
+mbid (const ::xercesc::DOMInputSource& is,
+      ::xercesc::DOMErrorHandler& eh,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+// Parse xercesc::DOMDocument.
+//
+
+::std::auto_ptr< ::xml_schema::string >
+mbid (const ::xercesc::DOMDocument& d,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
+
+::std::auto_ptr< ::xml_schema::string >
+mbid (::xercesc::DOMDocument* d,
+      ::xml_schema::flags f = 0,
+      const ::xml_schema::properties& p = ::xml_schema::properties ());
 
 #include <xsd/cxx/post.hxx>
 

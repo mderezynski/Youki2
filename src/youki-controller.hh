@@ -241,9 +241,6 @@ namespace MPX
 	    Gtk::Button			    * m_BTN_HISTORY_PREV ;
 	    Gtk::Button			    * m_BTN_HISTORY_FFWD ;
 
-            Gtk::HPaned                     * m_Paned1 ;
-            Gtk::HPaned                     * m_Paned2 ;
-
             Gtk::HBox			    * m_HBox_Main ;
             Gtk::HBox                       * m_HBox_Bottom ;
             Gtk::VBox                       * m_VBox_Bottom ;
@@ -325,6 +322,13 @@ namespace MPX
 	    void
 	    history_go_back() ;
 
+	    //////////
+
+	    void
+	    play_next_queue_item() ;
+
+	    //////////
+
 	    void
 	    check_markov_queue_append() ;
 
@@ -341,7 +345,7 @@ namespace MPX
 	    handle_queue_op_artist(guint) ;
 
 	    void
-	    play_next_queue_item() ;
+	    handle_queue_op_album(guint) ;
 
 	    void
 	    handle_show_queue_toggled() ;

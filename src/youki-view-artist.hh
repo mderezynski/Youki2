@@ -265,7 +265,7 @@ namespace Artist
 		double				    m_rounding ;
 
                 Cairo::RefPtr<Cairo::ImageSurface>  m_image_disc ;
-                Cairo::RefPtr<Cairo::ImageSurface>  m_rect_shadow ;
+                Cairo::RefPtr<Cairo::ImageSurface>  m_image_lensflare ;
 
 		Cairo::RefPtr<Cairo::ImageSurface>
 		render_rect_shadow(	

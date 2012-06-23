@@ -132,11 +132,12 @@ namespace Albums
 	{
 		Model_sp               m_realmodel ;
 		IdIterMap_t            m_iter_map ;
-		guint		       m_upper_bound ;
 
 		Signal_0	       m_SIGNAL__redraw ;
 		Signal_1	       m_SIGNAL__changed ;
 		Signal_1	       m_SIGNAL__cover_updated ;
+
+		guint		       m_upper_bound ;
 
 		DataModel() ;
 		DataModel(Model_sp model) ;
@@ -379,19 +380,21 @@ class Class
 
             private:
 
-                boost::optional<boost::tuple<Model_t::iterator, boost::optional<guint>, guint> >  m_selection ;
+                typedef boost::optional<boost::tuple<Model_t::iterator, boost::optional<guint>, guint> >  Sel_t ;
+
+                Sel_t m_selection ;
 
 		PropAdjustment	    property_vadj, property_hadj ;
 		PropScrollPolicy    property_vsp , property_hsp ;
 
 		struct Selection
 		{
-		    enum SelIdx
+		    enum sel
 		    {
-			  ITERATOR
-			, ID
-			, INDEX
-		    } ;
+		      ITERATOR
+		    , ID
+		    , INDEX
+		    };
 		} ;
 
                 Column_sp_vector_t	    m_columns ;

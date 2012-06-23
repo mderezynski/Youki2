@@ -35,7 +35,6 @@ namespace
 	  const std::string& value
     )
     {
-	MPX::OVariant v ;
 	MPX::StrS s ;
 
 	try{
@@ -55,8 +54,7 @@ namespace
 	    g_message("%s: RuntimeError: %s", G_STRLOC, cxe.what()) ;
 	}
 
-	v = s ;
-	return v ;
+	return MPX::OVariant(s) ;
     }
 
     MPX::OVariant
@@ -64,14 +62,15 @@ namespace
 	  const std::string& value
     )
     {
-	MPX::OVariant v ;
 	MPX::StrS s ;
 
 	try{
-	    MPX::URI u ((boost::format( "http://ws.audioscrobbler.com/2.0/?method=artist.gettoptracks&artist=%s&api_key=37cd50ae88b85b764b72bb4fe4041fe4" ) % Glib::Markup::escape_text(value)).str(), true ) ;
-	    typedef MPX::XmlInstance<lfm_artisttoptracks::lfm> Instance ;
+	    MPX::URI u ((boost::format( "http://ws.audioscrobbler.com/2.0/?method=artist.gettoptracks&artist=%s&api_key=37cd50ae88b85b764b72bb4fe4041fe4" ) % value).str(), true ) ;
+	    typedef MPX::XmlInstance<lfm> Instance ;
 
 	    Instance* Xml = new Instance(Glib::ustring( u )) ;
+
+	    g_message("n elements: %u", Xml->xml().toptracks().track().size()) ;
 
 	    for( auto& track : Xml->xml().toptracks().track() )
 	    {
@@ -82,8 +81,7 @@ namespace
 	    g_message("%s: RuntimeError: %s", G_STRLOC, cxe.what()) ;
 	}
 
-	v = s ;
-	return v ;
+	return MPX::OVariant(s) ;
     }
 
     MPX::OVariant
@@ -91,11 +89,41 @@ namespace
 	  const std::string& value
     )
     {
-	MPX::OVariant v ;
 	MPX::StrS s ;
 
+	s.insert(value) ;
+
 	try{
-	    MPX::URI u ((boost::format( "http://ws.audioscrobbler.com/2.0/?method=artist.getsimilar&artist=%s&api_key=37cd50ae88b85b764b72bb4fe4041fe4" ) % Glib::Markup::escape_text(value)).str()) ;
+	    MPX::URI u ((boost::format( "http://ws.audioscrobbler.com/2.0/?method=artist.getsimilar&artist=%s&api_key=37cd50ae88b85b764b72bb4fe4041fe4" ) % value).str(), true) ;
+	    typedef MPX::XmlInstance<lfm_similarartists::lfm> Instance ; 
+
+	    Instance* Xml = new Instance(Glib::ustring( u )) ;
+
+	    for( auto& artist : Xml->xml().similarartists().artist() )
+	    {
+		s.insert( artist.name() ) ; 
+	    }
+
+	    delete Xml ;
+	}
+	catch(std::runtime_error& cxe){
+	    g_message("%s: RuntimeError: %s", G_STRLOC, cxe.what()) ;
+	}
+
+	return MPX::OVariant(s) ;
+    }
+
+    MPX::OVariant
+    _lastfm_artist_similar_mbid(
+	  const std::string& value
+    )
+    {
+	MPX::StrS s ;
+    
+	s.insert(value) ;
+
+	try{
+	    MPX::URI u ((boost::format( "http://ws.audioscrobbler.com/2.0/?method=artist.getsimilar&mbid=%s&api_key=37cd50ae88b85b764b72bb4fe4041fe4" ) % value).str(), true) ;
 	    typedef MPX::XmlInstance<lfm_similarartists::lfm> Instance ; 
 
 	    Instance* Xml = new Instance(Glib::ustring( u )) ;
@@ -111,8 +139,7 @@ namespace
 	    g_message("%s: RuntimeError: %s", G_STRLOC, cxe.what()) ;
 	}
 
-	v = s ;
-	return v ;
+	return MPX::OVariant(s) ;
     }
 }
 
@@ -159,10 +186,20 @@ namespace
             else
             if( attribute == "artists-similar-to" )
             {
-                c.TargetAttr = ATTRIBUTE_MB_ALBUM_ARTIST_ID ;
+                c.TargetAttr = ATTRIBUTE_ALBUM_ARTIST ;
 		c.Processing = CONSTRAINT_PROCESSING_ASYNC ;
 		c.SourceValue = value ;
 		c.GetValue = sigc::ptr_fun( &_lastfm_artist_similar ) ;	
+
+                constraints.push_back(c) ;
+            }
+            else
+            if( attribute == "mbid-artists-similar-to" )
+            {
+                c.TargetAttr = ATTRIBUTE_MB_ALBUM_ARTIST_ID ;
+		c.Processing = CONSTRAINT_PROCESSING_ASYNC ;
+		c.SourceValue = value ;
+		c.GetValue = sigc::ptr_fun( &_lastfm_artist_similar_mbid ) ;	
 
                 constraints.push_back(c) ;
             }
@@ -387,7 +424,7 @@ namespace AQE
 		    , boost::ref(c)
 		) ;
 
-		while(!handle.wait_for(std::chrono::duration<int, std::milli>(50)))
+		while(!handle.wait_for(std::chrono::duration<int, std::milli>(100)))
 		{
 		    while(gtk_events_pending()) gtk_main_iteration() ;
 		}

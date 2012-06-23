@@ -607,7 +607,7 @@ namespace Albums
 	    ) ;
 	    cairo->fill() ;
 
-	    Util::cairo_image_surface_blur( album->surface_cache_blur, 1 ) ;
+	    Util::cairo_image_surface_blur( album->surface_cache_blur, 2 ) ;
 	}
 
 	void
@@ -660,11 +660,25 @@ namespace Albums
 		}
 
 		//////////
-
+/*
 		if(!album->rgba)
 		{
 		    render_rgba( album ) ;
 		}
+*/
+
+		//////////
+
+		RoundedRectangle(
+		      cairo
+		    , 4 
+		    , 2 
+		    , 184
+		    , 86
+		    , m_rounding - 1
+		) ;
+		cairo->set_source(selected?album->surface_cache_blur:album->surface_cache,0,0) ;
+		cairo->fill() ;
 
 		//////////
 
@@ -676,21 +690,9 @@ namespace Albums
 		    , 84
 		    , m_rounding 
 		) ;
-		cairo->set_source(selected?album->surface_cache_blur:album->surface_cache,0,0) ;
-		cairo->fill() ;
 
-		//////////
+		auto gradient = Cairo::LinearGradient::create( 96, 3, 96, 84 ) ;
 
-		RoundedRectangle(
-		      cairo
-		    , 4 
-		    , 2 
-		    , 184
-		    , 86
-		    , m_rounding 
-		) ;
-
-		auto gradient = Cairo::LinearGradient::create( 96, 2, 96, 86 ) ;
 		gradient->add_color_stop_rgba(
 		      0
 		    , 0 
@@ -713,54 +715,34 @@ namespace Albums
 		    , 0 
 		) ;
 		cairo->set_source(gradient) ;
-
-		//////////
-
-		if( selected )
-		{
-		    cairo->fill() ;
-
-		    RoundedRectangle(
-			  cairo
-			, 6 
-			, 4 
-			, 180
-			, 82
-			, m_rounding 
-		    ) ;
-
-		    cairo->set_source(m_image_lensflare,0,0) ;
-		}
-
 		cairo->fill() ;
 
 		//////////
-    
+   
 		cairo->save() ;
 		RoundedRectangle(
 		      cairo
-		    , 5 
-		    , 3 
-		    , 182
-		    , 84
+		    , 4 
+		    , 2 
+		    , 184
+		    , 86
 		    , m_rounding 
 		) ;
-		Gdk::Cairo::set_source_rgba(cairo,Util::make_rgba(0.3,0.3,0.3,1)) ;
-		cairo->set_line_width(2) ;
+		Gdk::Cairo::set_source_rgba(cairo,Util::make_rgba(0,0,0,1)) ;
+		cairo->set_line_width(1) ;
 		cairo->stroke() ;
 		cairo->restore() ;
 	    }
 	    else
 	    {
 		cairo->save() ;
-		cairo->translate(47,ypos+45) ;
+		cairo->translate(4,4) ;
 		Gdk::Cairo::set_source_pixbuf(
 		      cairo
 		    , m_image_album_loading_iter->get_pixbuf()
 		    , 0
 		    , 0
 		) ;
-
 		cairo->rectangle(0,0,20,20) ;
 		cairo->fill() ;
 		cairo->restore() ;
@@ -872,18 +854,18 @@ namespace Albums
 		layout[L3]->set_text(album->year.substr(0,4)) ;
 		layout[L3]->get_pixel_size( width, height );
 
-		int x = 184-width ;
-		int y = 70 ;
+		int x = 179-width ;
+		int y = 68 ;
 
 		cairo->translate(x,y) ;
 
 		Util::render_text_shadow(
 		      layout[L3]
-		    , 1 
-		    , 1 
+		    , -1 
+		    , -1 
 		    , cairo
 		    , 1
-		    , 0.85 
+		    , 0.95 
 		) ;
 
 		cairo->move_to(
@@ -896,6 +878,25 @@ namespace Albums
 
 		cairo->restore() ;
 	    }
+
+	    //////////
+
+	    if( selected )
+	    {
+		RoundedRectangle(
+		      cairo
+		    , 4 
+		    , 2 
+		    , 184
+		    , 86
+		    , m_rounding
+		) ;
+
+		cairo->set_source(m_image_lensflare,4,2) ;
+		cairo->fill() ;
+	    }
+
+	    //////////
 
 	    if( album_constraints )
 	    {
@@ -1300,6 +1301,7 @@ namespace Albums
 	)
 	{
 	    using boost::get;
+
 	    cancel_search();
 
 	    m_y_old = event->y ;
@@ -1322,6 +1324,11 @@ namespace Albums
 
 	    {
 		vadj_value_set( std::min<int>(vadj_upper(), ViewMetrics.ViewPortPx.upper() + ViewMetrics.RowHeight + (ViewMetrics.RowHeight - ymod) - ViewMetrics.Excess ));
+	    }
+
+	    if( event->button == 1 && (event->type == GDK_2BUTTON_PRESS) && m_selection )
+	    {
+		m_SIGNAL_start_playback.emit() ;
 	    }
 
 	    if( event->button == 1 && (!m_selection || (get<Selection::INDEX>(m_selection.get()) != d)))
@@ -1365,7 +1372,6 @@ namespace Albums
 		property_vadjustment().get_value()->freeze_notify() ;
 		property_vadjustment().get_value()->set_upper( upper );
 		property_vadjustment().get_value()->set_page_size( page_size );
-		property_vadjustment().get_value()->set_step_increment( 2 );
 		property_vadjustment().get_value()->thaw_notify() ;
 	    }
 	}
@@ -1670,7 +1676,7 @@ namespace Albums
 
 	    if( m_selection )
 	    {
-		id = boost::get<Selection::ID>(m_selection.get());
+		id = boost::get<1>(m_selection.get());
 	    }
     
 	    return id;
@@ -1888,12 +1894,14 @@ namespace Albums
 	void
 	Class::on_refetch_album_cover()
 	{
-	    int x, y ;
-	    Gdk::ModifierType mod ;
-	    get_window()->get_pointer(x,y,mod) ;
-	    guint d = (vadj_value() + y) / ViewMetrics.RowHeight;
+	    if(!m_selection)
+	    {
+		return ;
+	    }
+	    
+	    guint d = boost::get<2>(m_selection.get()) ;
 
-	    if( ModelExtents(d)) 
+	    if(ModelExtents(d)) 
 	    {
 		const Album_sp& album = m_model->row(d) ; 
 

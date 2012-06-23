@@ -127,7 +127,7 @@ namespace Artist
 		Glib::RefPtr<Gdk::Pixbuf> icon_desaturated_2 = icon->copy() ;
 
 		icon->saturate_and_pixelate(icon_desaturated_1, 0.0, false) ;
-		icon->saturate_and_pixelate(icon_desaturated_2, 0.5, false) ;
+		icon->saturate_and_pixelate(icon_desaturated_2, 0.0, false) ;
 
 		s1 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_1) ;
 		s2 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_2) ;
@@ -180,7 +180,7 @@ namespace Artist
 		Glib::RefPtr<Gdk::Pixbuf> icon_desaturated_2 = icon->copy() ;
 
 		icon->saturate_and_pixelate(icon_desaturated_1, 0.0, false) ;
-		icon->saturate_and_pixelate(icon_desaturated_2, 0.5, false) ;
+		icon->saturate_and_pixelate(icon_desaturated_2, 0.0, false) ;
 
 		s1 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_1) ;
 		s2 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_2) ;
@@ -405,7 +405,7 @@ namespace Artist
 	    , m_alignment( Pango::ALIGN_LEFT )
 
 	{
-	    m_rect_shadow = Util::cairo_image_surface_from_pixbuf(
+	    m_image_lensflare = Util::cairo_image_surface_from_pixbuf(
 				    Gdk::Pixbuf::create_from_file(
 					    Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "lensflare-vflipped.png" )
 	    )) ;
@@ -419,7 +419,7 @@ namespace Artist
 	void
 	Column::set_rounding(double r)
 	{
-	    m_rounding = 2 ; // r ;
+	    m_rounding = 4 ; // r ;
 	}
 
 	double
@@ -566,16 +566,11 @@ namespace Artist
 		c = Util::pick_color_for_pixbuf(pb) ;
 	    }
 
-	    RoundedRectangle(cairo, 1, 1, 94, 94, m_rounding ) ;
-	    cairo->set_source(surface, 0, 0) ;
-	    cairo->fill() ;
+	    RoundedRectangle(cairo, 0, 0, 96, 92, m_rounding ) ;
+	    cairo->set_source(surface, 0, -4) ;
+	    cairo->fill_preserve() ;
 
-	    RoundedRectangle(cairo, 1, 1, 94, 94, m_rounding ) ;
-	    cairo->set_line_width(1.5) ;
-	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(0.3,0.3,0.3,.8)) ;
-	    cairo->stroke_preserve() ;
-
-	    Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create( 48, 0, 48, 96 ) ;
+	    Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create( 48, 0, 48, 92 ) ;
 	    gradient->add_color_stop_rgba(
 		  0
 		, 0 
@@ -599,7 +594,6 @@ namespace Artist
 	    ) ;
 	    cairo->set_source( gradient ) ;
 	    cairo->fill() ;
-
 	    cairo->restore() ;
 
 	    //////////
@@ -608,20 +602,42 @@ namespace Artist
 	    {
 		cairo->save() ;
 		cairo->translate(x,y) ;
-		RoundedRectangle(cairo, 0, 0, 96, 96, m_rounding) ;
-		cairo->set_source(m_rect_shadow, 0, 0) ;
+		RoundedRectangle(
+		      cairo
+		    , 1
+		    , 1
+		    , 94
+		    , 90
+		    , m_rounding
+		) ;
+		cairo->set_source(
+		      m_image_lensflare, 0, 0
+		) ;
 		cairo->fill() ;
 		cairo->restore() ;
 	    }
 
+	    cairo->save() ;
+	    cairo->translate(x,y) ;
+	    RoundedRectangle(
+		  cairo
+		, 0
+		, 0
+		, 96
+		, 92
+		, m_rounding
+	    ) ;
+	    cairo->set_line_width(1) ;
+	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(0,0,0,1)) ;
+	    cairo->stroke() ;
+	    cairo->restore() ;
 
 	    //////////
 
 	    cairo->save() ;
 	    int x2 = xpos + (m_width-96) / 2. ;
-	    int y2 = ypos + 8 + (96-height)/2. ;
+	    int y2 = ypos + 8 + (92-height)/2. ;
 	    cairo->translate(x2,y2) ;
-	    Util::render_text_shadow( layout, 1, 1, cairo, 1, 0.85 ) ;
 	    cairo->move_to(
 		  0 
 		, 0 
@@ -716,7 +732,7 @@ namespace Artist
 					    , context->get_language()
 	    ) ;
 
-	    m_height__row = 112 ;
+	    m_height__row = 104 ;
 
 	    m_height__headers = 0 ;
 #if 0
@@ -1204,7 +1220,7 @@ namespace Artist
 	    Gdk::RGBA c2 ;
 	    c2.set_rgba( c_base.get_red(), c_base.get_green(), c_base.get_blue()) ;
 	    Util::color_to_hsb( c2, h, s, b ) ;
-	    b *= 0.88 ;
+	    b *= 0.92 ;
 	    c2 = Util::color_from_hsb( h, s, b ) ;
 
 	    Cairo::RefPtr<Cairo::LinearGradient> gr =
