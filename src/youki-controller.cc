@@ -627,7 +627,7 @@ namespace MPX
 	m_UI_Actions_Main->add( action_SHF ); 
 	m_BTN_SHUFFLE->set_related_action( action_SHF ) ;
 	
-	auto action_AUH = Gtk::ToggleAction::create( "PlaybackControlActionUseHistory", "Use Playback History") ;
+	auto action_AUH = Gtk::ToggleAction::create( "PlaybackControlActionUseHistory", "Enable Playback History") ;
 	m_UI_Actions_Main->add( action_AUH, sigc::mem_fun( *this, &YoukiController::handle_use_history_toggled )) ; 
 	action_AUH->set_active() ;
 
