@@ -49,14 +49,14 @@ namespace MPX
         std::string	    volume_udi;
         std::string	    device_udi;
         std::string	    label;
-        guint          size;
+        guint		    size;
         std::string	    mount_point;
-        std::time_t     mount_time;
+        std::time_t	    mount_time;
         std::string	    device_file;
         std::string	    drive_serial;
-        Hal::DriveBus   drive_bus;
-        Hal::DriveType  drive_type;
-        guint          drive_size;
+        Hal::DriveBus	    drive_bus;
+        Hal::DriveType	    drive_type;
+        guint		    drive_size;
         bool		    disc;
 
         Volume(

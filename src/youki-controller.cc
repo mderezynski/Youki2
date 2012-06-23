@@ -2049,7 +2049,14 @@ namespace MPX
 		    m_play_history.append(id1) ;
 		}
 
-                m_play->switch_stream( m_library->trackGetLocation( t ) ) ;
+		try{
+		    m_play->switch_stream( m_library->trackGetLocation( t ) ) ;
+		} catch( std::exception& cxe )
+		{
+		    m_InfoBar->set_message_type( Gtk::MESSAGE_ERROR ) ;
+		    m_InfoLabel->set_markup((boost::format("<b>Error</b> while preparing file: '%s'") % cxe.what()).str()) ;
+		    m_InfoBar->show_all() ;
+		}
 
         } catch( Library::FileQualificationError & cxe )
         {

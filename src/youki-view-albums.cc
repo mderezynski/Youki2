@@ -671,25 +671,16 @@ namespace Albums
 
 		RoundedRectangle(
 		      cairo
-		    , 4 
-		    , 2 
-		    , 184
-		    , 86
-		    , m_rounding - 1
-		) ;
-		cairo->set_source(selected?album->surface_cache_blur:album->surface_cache,0,0) ;
-		cairo->fill() ;
-
-		//////////
-
-		RoundedRectangle(
-		      cairo
 		    , 5 
 		    , 3 
 		    , 182
-		    , 84
-		    , m_rounding 
+		    , 86
+		    , m_rounding
 		) ;
+		cairo->set_source(selected?album->surface_cache_blur:album->surface_cache,0,0) ;
+		cairo->fill_preserve() ;
+
+		//////////
 
 		auto gradient = Cairo::LinearGradient::create( 96, 3, 96, 84 ) ;
 
@@ -715,19 +706,11 @@ namespace Albums
 		    , 0 
 		) ;
 		cairo->set_source(gradient) ;
-		cairo->fill() ;
+		cairo->fill_preserve() ;
 
 		//////////
    
 		cairo->save() ;
-		RoundedRectangle(
-		      cairo
-		    , 4 
-		    , 2 
-		    , 184
-		    , 86
-		    , m_rounding 
-		) ;
 		Gdk::Cairo::set_source_rgba(cairo,Util::make_rgba(0,0,0,1)) ;
 		cairo->set_line_width(1) ;
 		cairo->stroke() ;
@@ -736,7 +719,7 @@ namespace Albums
 	    else
 	    {
 		cairo->save() ;
-		cairo->translate(4,4) ;
+		cairo->translate(6,4) ;
 		Gdk::Cairo::set_source_pixbuf(
 		      cairo
 		    , m_image_album_loading_iter->get_pixbuf()
@@ -881,7 +864,7 @@ namespace Albums
 
 	    //////////
 
-	    if( selected )
+	    if( selected && !album->caching )
 	    {
 		RoundedRectangle(
 		      cairo
@@ -1331,7 +1314,7 @@ namespace Albums
 		m_SIGNAL_start_playback.emit() ;
 	    }
 
-	    if( event->button == 1 && (!m_selection || (get<Selection::INDEX>(m_selection.get()) != d)))
+	    if( (!m_selection || (get<Selection::INDEX>(m_selection.get()) != d)))
 	    {
 		if( ModelExtents( d ))
 		{

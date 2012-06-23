@@ -553,7 +553,7 @@ namespace Artist
 	    //////////
 
 	    double x = (m_width-96)/2. ; 
-	    double y = ypos+8 ; 
+	    double y = ypos+10 ; 
 
 	    cairo->save() ;
 	    cairo->translate( x, y ) ;
@@ -566,11 +566,11 @@ namespace Artist
 		c = Util::pick_color_for_pixbuf(pb) ;
 	    }
 
-	    RoundedRectangle(cairo, 0, 0, 96, 92, m_rounding ) ;
+	    RoundedRectangle(cairo, 0, 0, 96, 86, m_rounding ) ;
 	    cairo->set_source(surface, 0, -4) ;
 	    cairo->fill_preserve() ;
 
-	    Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create( 48, 0, 48, 92 ) ;
+	    Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create( 48, 0, 48, 86 ) ;
 	    gradient->add_color_stop_rgba(
 		  0
 		, 0 
@@ -604,10 +604,10 @@ namespace Artist
 		cairo->translate(x,y) ;
 		RoundedRectangle(
 		      cairo
-		    , 1
-		    , 1
-		    , 94
-		    , 90
+		    , 0
+		    , 0
+		    , 96
+		    , 86
 		    , m_rounding
 		) ;
 		cairo->set_source(
@@ -624,7 +624,7 @@ namespace Artist
 		, 0
 		, 0
 		, 96
-		, 92
+		, 86
 		, m_rounding
 	    ) ;
 	    cairo->set_line_width(1) ;
@@ -732,7 +732,7 @@ namespace Artist
 					    , context->get_language()
 	    ) ;
 
-	    m_height__row = 104 ;
+	    m_height__row = 98 ;
 
 	    m_height__headers = 0 ;
 #if 0

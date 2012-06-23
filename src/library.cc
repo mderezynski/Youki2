@@ -334,13 +334,16 @@ namespace MPX
         std::string
                 Library::trackGetLocation( const Track_sp& t )
                 {
-                    const MPX::Track& track = *(t.get()) ;
+                    const MPX::Track& track = *t ;
 #ifdef HAVE_HAL
                         if( m_Flags & F_USING_HAL )
                         {
                                 try{
                                         const guint&	   id          = get<guint>(track[ATTRIBUTE_MPX_DEVICE_ID].get()) ;
                                         const std::string& path        = get<std::string>(track[ATTRIBUTE_VOLUME_RELATIVE_PATH].get()) ;
+
+					g_message("ID: %u", id ) ;
+
                                         const std::string& mount_point = m_HAL->get_mount_point_for_id( id ) ;
 
                                         return filename_to_uri( build_filename( Util::normalize_path(mount_point), path ) );

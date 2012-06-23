@@ -183,9 +183,10 @@ namespace MPX
 
             drive_serial    = drive->get_serial();
             device_file     = volume->get_device_file();
-        } catch(...)
+
+        } catch(std::exception& cxe)
         {
-            throw;
+	    g_message("Exception in Volume ctor: %s", cxe.what()) ;
         }
     }
 
@@ -314,8 +315,6 @@ namespace MPX
             m_volume_id_map.erase( VolumeKey( volume.volume_udi, volume.device_udi ) ) ;
             m_id_mount_map.erase( id ) ;
         }
-
-        g_message( "ID for '%s':'%s' is [%u]", volume.volume_udi.c_str(), volume.device_udi.c_str(), id ) ;
 
         m_volume_id_map.insert(std::make_pair( VolumeKey( volume.volume_udi, volume.device_udi ), id )) ;
         m_id_mount_map.insert( std::make_pair(id, volume.mount_point) ) ;
@@ -615,18 +614,6 @@ namespace MPX
     {
         Hal::RefPtr <Hal::Volume> volume_hal_instance;
 
-	Glib::RefPtr<Gio::Volume> vol = Gio::VolumeMonitor::get()->get_volume_for_uuid( udi ) ;
-
-	if( vol )
-	{
-	    Glib::RefPtr<Gio::Mount> mount = vol->get_mount() ;
-
-	    if( mount )
-	    {
-		g_message("%s:%s", udi.c_str(), mount->get_name().c_str()) ; 
-	    } 
-	}
-
         try
         {
             volume_hal_instance = Hal::Volume::create_from_udi( m_context, udi );
@@ -634,14 +621,6 @@ namespace MPX
         catch( ... )
         {
             g_message("%s: Couldn't create HAL Volume from UDI", G_STRFUNC);
-            return;
-        }
-
-        // Now we know it's a volume
-
-        if( volume_hal_instance->get_fsusage() != Hal::VOLUME_USAGE_MOUNTABLE_FILESYSTEM )
-        {
-            g_message("%s: Got volume UDI, but is not mountable", G_STRFUNC);
             return;
         }
 
@@ -672,13 +651,14 @@ namespace MPX
                 m_volumes_mounted.insert( std::make_pair( volume_key, volume_hal_instance->is_mounted() )) ;
             }
 
-            if( !volume_hal_instance->is_disc() ) // we don't store information for discs permanently
-            {
-                volume_register( volume );
-                volume_process( udi );
-            }
+	    volume.mount_point = volume_hal_instance->get_mount_point() ; 
+	    g_message("mp: %s", volume.mount_point.c_str()) ;
+
+            volume_register( volume );
+            volume_process( udi );
 
             signal_volume_added_.emit( volume );
+
         }
         catch( ... )
         {
@@ -706,7 +686,6 @@ namespace MPX
         {
             if( m_context->device_query_capability( udi, "volume" ) )
             {
-                g_message("%s: Got new Volume: '%s'", G_STRFUNC, udi.c_str());
                 volume_insert( udi );
             }
         } catch( UnableToProbeDeviceError & cxe )

@@ -674,7 +674,7 @@ namespace MPX
 
 				if( error->domain == GST_STREAM_ERROR ) 
 				{
-				    g_message("%s: Continuing to next stream", G_STRLOC) ;
+//				    g_message("%s: Continuing to next stream", G_STRLOC) ;
 
 				    gst_element_set_state(
 					  play.m_playback_bin
@@ -688,7 +688,9 @@ namespace MPX
 					, GST_CLOCK_TIME_NONE
 				    ) ; 
 
+/*
 				    play.signal_eos_.emit() ;
+*/
 				}
                             }
                             break ;
