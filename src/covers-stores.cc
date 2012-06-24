@@ -152,10 +152,10 @@ namespace MPX
     LastFMCovers::get_url( const RequestQualifier& rql )
     {
     static boost::format lastfm_no_MBID_f ("http://ws.audioscrobbler.com/2.0/?method=album.getinfo&artist=%s&album=%s&api_key=ff56d530598d65c1a4088e57da7be2f9");
-    static boost::format lastfm_MBID_f ("http://ws.audioscrobbler.com/2.0/?method=album.getinfo&artist=%s&album=%s&mbid=%s&api_key=ff56d530598d65c1a4088e57da7be2f9");
+    static boost::format lastfm_MBID_f ("http://ws.audioscrobbler.com/2.0/?method=album.getinfo&mbid=%s&api_key=ff56d530598d65c1a4088e57da7be2f9");
 
 	if( rql.mbid.substr(0,4) != "mpx-" )
-        	return (lastfm_MBID_f % (URI::escape_string(rql.artist)) % (URI::escape_string(rql.album)) % (URI::escape_string(rql.mbid))).str();
+        	return (lastfm_MBID_f % (URI::escape_string(rql.mbid))).str();
 	else
         	return (lastfm_no_MBID_f % (URI::escape_string(rql.artist)) % (URI::escape_string(rql.album))).str();
     }

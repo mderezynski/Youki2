@@ -13,7 +13,7 @@ namespace MPX
 namespace PlaylistParser
 {
     class XSPF
-		:	public PlaylistParser::Base
+    :	public PlaylistParser::Base
     {
         public:
 

@@ -313,8 +313,8 @@ namespace MPX
 	    bool			      m_switchfocus ;
 	    sigc::connection		      m_conn_keytimer ; 
 
-	    Glib::RefPtr<Gtk::UIManager>      m_UI_Manager ;
-	    Glib::RefPtr<Gtk::ActionGroup>    m_UI_Actions_Main ;
+	    Glib::RefPtr<Gtk::UIManager>      m_UIManager ;
+	    Glib::RefPtr<Gtk::ActionGroup>    m_UIActions_Main ;
 
 	    void
 	    history_save() ;

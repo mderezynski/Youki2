@@ -96,7 +96,6 @@ namespace MPX
 
         m_stores_all.push_back(StorePtr(new InlineCovers()));
         m_stores_all.push_back(StorePtr(new LastFMCovers()));
-        //m_stores_all.push_back(StorePtr(new LocalCovers()));
         m_stores_all.push_back(StorePtr(new MusicBrainzCovers()));
 
 	for( guint n = 0 ; n < m_stores_all.size(); ++n )
@@ -126,6 +125,7 @@ namespace MPX
 	, bool			  overwrite
     )
     {
+/*
         maincontext()->signal_idle().connect(
             sigc::bind(
             sigc::mem_fun(
@@ -136,6 +136,8 @@ namespace MPX
             , acquire
 	    , overwrite
         )) ;
+*/
+	handle_cache( qual, acquire, overwrite ) ;
     }
 
     void

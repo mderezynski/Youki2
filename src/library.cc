@@ -161,7 +161,7 @@ namespace MPX
 
 			if( !v.empty() )
 			{
-				recache_cover( v[0] ) ;
+			    recache_cover( v[0] ) ;
 			}
 		}
 

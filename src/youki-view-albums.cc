@@ -689,14 +689,14 @@ namespace Albums
 		    , 0 
 		    , 0 
 		    , 0
-		    , selected ? 0.70 : 0.35 
+		    , .35 //selected ? 0.70 : 0.35 
 		) ;
 		gradient->add_color_stop_rgba(
 		      0.66
 		    , 0
 		    , 0
 		    , 0
-		    , selected ? 0.35 : 0.10
+		    , .03 //selected ? 0.35 : 0.10
 		) ;
 		gradient->add_color_stop_rgba(
 		      1 
@@ -779,7 +779,6 @@ namespace Albums
 	    //////////
 
 	    cairo->save() ;
-
 	    cairo->translate(16,45) ;
 
 	    layout[L2]->set_text( album->album ) ;
@@ -828,6 +827,7 @@ namespace Albums
 
 	    cairo->restore() ;
 
+#if 0
 	    //////////
 
 	    if( !album->year.empty() )
@@ -861,6 +861,7 @@ namespace Albums
 
 		cairo->restore() ;
 	    }
+#endif
 
 	    //////////
 

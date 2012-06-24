@@ -30,20 +30,20 @@ namespace PlaylistParser
 				xspf::trackList::track_sequence tracklist = (*xspf.xml().trackList().begin()).track();
 				for(xspf::trackList::track_sequence::iterator i = tracklist.begin(); i != tracklist.end(); ++i)
 				{
-                    MPX::Track t;
+				    MPX::Track t;
 
-                    t[ATTRIBUTE_LOCATION] = OVariant(*(i->location().begin()));
-                    t[ATTRIBUTE_TITLE] = OVariant(*(i->title().begin()));
-                    t[ATTRIBUTE_ARTIST] = OVariant(*(i->creator().begin()));
-                    t[ATTRIBUTE_ALBUM] = OVariant(*(i->album().begin()));
+				    t[ATTRIBUTE_LOCATION] = OVariant(*(i->location().begin()));
+				    t[ATTRIBUTE_TITLE] = OVariant(*(i->title().begin()));
+				    t[ATTRIBUTE_ARTIST] = OVariant(*(i->creator().begin()));
+				    t[ATTRIBUTE_ALBUM] = OVariant(*(i->album().begin()));
 
-                    gint64 time = *(i->duration().begin());
-                    t[ATTRIBUTE_TIME] = OVariant(time);
+				    gint64 time = *(i->duration().begin());
+				    t[ATTRIBUTE_TIME] = OVariant(time);
 
-                    gint64 track = *(i->trackNum().begin());
-                    t[ATTRIBUTE_TRACK] = OVariant(track); 
-            
-                    v.push_back(t);
+				    gint64 track = *(i->trackNum().begin());
+				    t[ATTRIBUTE_TRACK] = OVariant(track); 
+			    
+				    v.push_back(t);
 				}
 			}
 		} catch (...) {

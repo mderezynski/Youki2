@@ -566,9 +566,9 @@ MPX::LibraryScannerThread_MLibMan::on_scan_all(
     {
         Track_sp t = library->sqlToTrack( *i, false ); 
 
-        std::string location = get<std::string>( (*(t.get()))[ATTRIBUTE_LOCATION].get() ) ; 
+        std::string location = get<std::string>( (*t)[ATTRIBUTE_LOCATION].get() ) ; 
 
-        guint mtime1 = Util::get_file_mtime( get<std::string>( (*(t.get()))[ATTRIBUTE_LOCATION].get() ) ) ;
+        guint mtime1 = Util::get_file_mtime( get<std::string>( (*t)[ATTRIBUTE_LOCATION].get() ) ) ;
 
         if( mtime1 )
         {
@@ -580,7 +580,7 @@ MPX::LibraryScannerThread_MLibMan::on_scan_all(
             }
             else
             {
-                (*(t.get()))[ATTRIBUTE_MTIME] = mtime1 ;
+                (*t)[ATTRIBUTE_MTIME] = mtime1 ;
                 insert_file_no_mtime_check( t, location, get<std::string>((*i)["insert_path"]), mtime2 && mtime1 != mtime2 ) ; 
             }
         }
@@ -716,12 +716,12 @@ MPX::LibraryScannerThread_MLibMan::on_add(
                 return ;
 
             Track_sp t (new Track) ;
-            library->trackSetLocation( (*(t.get())), *i2 ) ;
+            library->trackSetLocation( (*t), *i2 ) ;
 
-            const std::string& location = get<std::string>( (*(t.get()))[ATTRIBUTE_LOCATION].get() ) ;
+            const std::string& location = get<std::string>( (*t)[ATTRIBUTE_LOCATION].get() ) ;
 
             guint mtime1 = Util::get_file_mtime( location ); 
-            guint mtime2 = get_track_mtime( (*(t.get())) ) ;
+            guint mtime2 = get_track_mtime( (*t) ) ;
 
             // Check if the file hasn't changed
             if( check_mtimes && mtime2 )
@@ -736,7 +736,7 @@ MPX::LibraryScannerThread_MLibMan::on_add(
                     }
             }
 
-            (*(t.get()))[ATTRIBUTE_MTIME] = mtime1 ; // Update the mtime in the track we're "building"
+            (*t)[ATTRIBUTE_MTIME] = mtime1 ; // Update the mtime in the track we're "building"
             insert_file_no_mtime_check( t, *i2, insert_path_sql, true ) ;
                         
             if( !(std::distance(collection.begin(), i2) % 50) )
@@ -830,7 +830,7 @@ MPX::LibraryScannerThread_MLibMan::on_scan_list_quick_stage_1(
             for( RowV::iterator i = v.begin(); i != v.end(); ++i )
             {
                 Track_sp t = library->sqlToTrack( *i, false ); 
-                const std::string& location = get<std::string>((*(t.get()))[ATTRIBUTE_LOCATION].get() ) ; 
+                const std::string& location = get<std::string>((*t)[ATTRIBUTE_LOCATION].get() ) ; 
 
                 // delete tracks which are gone from the FS
                 Glib::RefPtr<Gio::File> file = Gio::File::create_for_uri( location ) ;

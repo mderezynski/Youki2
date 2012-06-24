@@ -67,6 +67,23 @@ namespace
     "	</menu>"
     "</menubar>"
     ""
+    "<popup name='PopupMenuTrackList'>"
+    "       <menuitem action='ContextAddToQueue'/>"
+    "       <menuitem action='ContextAddToQueueNext'/>"
+    "       <separator/>"
+    "       <menuitem action='ContextRemoveFromQueue'/>"
+    "       <menuitem action='ContextClearQueue'/>"
+    "       <separator/>"
+    "       <menuitem action='ContextShowAlbum'/>"
+    "       <menuitem action='ContextShowArtist'/>"
+    "       <separator/>"
+    "	    <menu name='YoukiDJ' action='youkidj'>"
+    "		<menuitem action='ContextQueueOpArtist'/>"
+    "		<menuitem action='ContextQueueOpAlbum'/>"
+    "		<separator/>"
+    "		<menuitem action='ContextShowArtistSimilar'/>"
+    "	    </menu>" 
+    "</popup>"
     "</ui>"
     ;
 
@@ -393,7 +410,7 @@ namespace MPX
 	)) ;
 
         m_VBox = Gtk::manage( new Gtk::VBox ) ;
-        m_VBox->set_spacing( 2 ) ;
+        m_VBox->set_spacing(2) ;
 	m_VBox->set_border_width(0) ;
 
 	//////////
@@ -428,11 +445,12 @@ namespace MPX
 	m_VBox_TL->set_border_width(0) ;
 
 	m_Label_TL = Gtk::manage( new Gtk::Label ) ;
-	m_Label_TL->set_alignment(1) ;
+	m_Label_TL->set_alignment(0) ;
 
 	Gtk::HBox* HBox_TL = Gtk::manage( new Gtk::HBox ) ;
 	HBox_TL->pack_start( *HBox_PL_Top, false, false ) ;
 	HBox_TL->pack_start( *m_Label_TL, true, true ) ;
+	HBox_TL->set_spacing(10) ;
 
         m_HBox_Main = Gtk::manage( new Gtk::HBox ) ;
         m_HBox_Main->set_spacing( 4 ) ; 
@@ -548,11 +566,10 @@ namespace MPX
 
         m_VBox_Bottom = Gtk::manage( new Gtk::VBox ) ;
         m_VBox_Bottom->set_spacing(0) ;
-	m_VBox_Bottom->override_background_color(Util::make_rgba(0.7,0.7,0.7,0.8)) ;
 
 	Gtk::VBox* VBox2 = Gtk::manage( new Gtk::VBox ) ;
 	VBox2->set_border_width(0) ;
-	VBox2->set_spacing(0) ;
+	VBox2->set_spacing(4) ;
 
 	Gtk::Alignment * Main_Align = Gtk::manage( new Gtk::Alignment ) ;
 	Main_Align->add( *VBox2 ) ;
@@ -586,49 +603,46 @@ namespace MPX
 	sc = m_ScrolledWinAlbums->get_style_context() ;
 	sc->set_junction_sides( Gtk::JUNCTION_LEFT | Gtk::JUNCTION_BOTTOM ) ;
 
-        m_ListViewTracks = Gtk::manage( new View::Tracks::Class(m_play_queue)) ;
-        m_ListViewArtist = Gtk::manage( new View::Artist::Class ) ;
-        m_ListViewAlbums = Gtk::manage( new View::Albums::Class ) ;
-
 	// MENUS	
-	m_UI_Manager = Gtk::UIManager::create() ;
-	m_UI_Actions_Main = Gtk::ActionGroup::create("ActionsMain") ;
+	m_UIManager = Gtk::UIManager::create() ;
 
-	m_UI_Actions_Main->add( Gtk::Action::create("MenuFile","_Youki")) ; 
-	m_UI_Actions_Main->add( Gtk::Action::create("MenuView","_View")) ; 
-	m_UI_Actions_Main->add( Gtk::Action::create("MenuPlaybackControl","_Playback")) ; 
+	m_UIActions_Main = Gtk::ActionGroup::create("ActionsMain") ;
 
-	m_UI_Actions_Main->add( Gtk::Action::create_with_icon_name( "FileActionPreferences", "mpx-stock-preferences", "Preferences", "Allows you to set Audio, Library, and other Preferences"), sigc::bind( sigc::mem_fun( *this, &YoukiController::on_show_subsystem_window), 0)) ; 
+	m_UIActions_Main->add( Gtk::Action::create("MenuFile","_Youki")) ; 
+	m_UIActions_Main->add( Gtk::Action::create("MenuView","_View")) ; 
+	m_UIActions_Main->add( Gtk::Action::create("MenuPlaybackControl","_Playback")) ; 
 
-	m_UI_Actions_Main->add( Gtk::Action::create_with_icon_name( "FileActionLibrary", "mpx-stock-musiclibrary", "Library", "Allows you to configure which Paths Youki controls"), sigc::bind( sigc::mem_fun( *this, &YoukiController::on_show_subsystem_window), 1)) ; 
+	m_UIActions_Main->add( Gtk::Action::create_with_icon_name( "FileActionPreferences", "mpx-stock-preferences", "Preferences", "Allows you to set Audio, Library, and other Preferences"), sigc::bind( sigc::mem_fun( *this, &YoukiController::on_show_subsystem_window), 0)) ; 
 
-	m_UI_Actions_Main->add( Gtk::Action::create_with_icon_name( "FileActionPlugins", MPX_STOCK_PLUGIN, "Plugins", "Allows you to configure Plugins and turn them on or off"), sigc::bind( sigc::mem_fun( *this, &YoukiController::on_show_subsystem_window), 2)) ; 
+	m_UIActions_Main->add( Gtk::Action::create_with_icon_name( "FileActionLibrary", "mpx-stock-musiclibrary", "Library", "Allows you to configure which Paths Youki controls"), sigc::bind( sigc::mem_fun( *this, &YoukiController::on_show_subsystem_window), 1)) ; 
 
-	m_UI_Actions_Main->add( Gtk::Action::create( "FileActionAbout", Gtk::Stock::ABOUT, "About" ), sigc::bind(sigc::ptr_fun(&show_about_window), m_main_window)) ; 
+	m_UIActions_Main->add( Gtk::Action::create_with_icon_name( "FileActionPlugins", MPX_STOCK_PLUGIN, "Plugins", "Allows you to configure Plugins and turn them on or off"), sigc::bind( sigc::mem_fun( *this, &YoukiController::on_show_subsystem_window), 2)) ; 
 
-	m_UI_Actions_Main->add( Gtk::Action::create( "FocusEntry", "FocusEntry" ), Gtk::AccelKey("<F6>"), sigc::mem_fun( *m_Entry, &Gtk::Widget::grab_focus)) ; 
+	m_UIActions_Main->add( Gtk::Action::create( "FileActionAbout", Gtk::Stock::ABOUT, "About" ), sigc::bind(sigc::ptr_fun(&show_about_window), m_main_window)) ; 
 
-	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "ViewActionUnderlineMatches", "Highlight Search" ), sigc::mem_fun( *this, &YoukiController::handle_action_underline_matches)) ; 
+	m_UIActions_Main->add( Gtk::Action::create( "FocusEntry", "FocusEntry" ), Gtk::AccelKey("<F6>"), sigc::mem_fun( *m_Entry, &Gtk::Widget::grab_focus)) ; 
 
-	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "PlaybackControlActionStartAlbumAtFavorite", "Start Albums at Favorite Track")) ; 
+	m_UIActions_Main->add( Gtk::ToggleAction::create( "ViewActionUnderlineMatches", "Highlight Search" ), sigc::mem_fun( *this, &YoukiController::handle_action_underline_matches)) ; 
+
+	m_UIActions_Main->add( Gtk::ToggleAction::create( "PlaybackControlActionStartAlbumAtFavorite", "Start Albums at Favorite Track")) ; 
 
 	auto action_CAM = Gtk::ToggleAction::create( "PlaybackControlActionMarkov", "Enable PlaySense") ; 
-	m_UI_Actions_Main->add( action_CAM, sigc::mem_fun(*this, &YoukiController::check_markov_queue_append )) ;
+	m_UIActions_Main->add( action_CAM, sigc::mem_fun(*this, &YoukiController::check_markov_queue_append )) ;
 
 	auto action_CCA = Gtk::ToggleAction::create( "PlaybackControlActionContinueCurrentAlbum", "Enable AlbumPlay" ) ; 
-	m_UI_Actions_Main->add( action_CCA ); 
+	m_UIActions_Main->add( action_CCA ); 
 	balbm->set_related_action( action_CCA ) ;
 
 	auto action_REP = Gtk::ToggleAction::create( "PlaybackControlActionRepeat", "Repeat Playback" ) ; 
-	m_UI_Actions_Main->add( action_REP ); 
+	m_UIActions_Main->add( action_REP ); 
 	brept->set_related_action( action_REP ) ;
 
 	auto action_SHF = Gtk::Action::create( "PlaybackControlActionShuffle", "Shuffle Playback" ) ; 
-	m_UI_Actions_Main->add( action_SHF ); 
+	m_UIActions_Main->add( action_SHF ); 
 	m_BTN_SHUFFLE->set_related_action( action_SHF ) ;
 	
 	auto action_AUH = Gtk::ToggleAction::create( "PlaybackControlActionUseHistory", "Enable Playback History") ;
-	m_UI_Actions_Main->add( action_AUH, sigc::mem_fun( *this, &YoukiController::handle_use_history_toggled )) ; 
+	m_UIActions_Main->add( action_AUH, sigc::mem_fun( *this, &YoukiController::handle_use_history_toggled )) ; 
 	action_AUH->set_active() ;
 
 	auto func1 =
@@ -670,7 +684,7 @@ namespace MPX
     
 	[&]()
 	{
-	    bool active = Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("ViewActionShowHideBrowser"))->get_active() ;
+	    bool active = Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UIActions_Main->get_action("ViewActionShowHideBrowser"))->get_active() ;
 	    if(!active)
 	    {
 		m_ScrolledWinArtist->hide() ;
@@ -683,34 +697,32 @@ namespace MPX
 	    }
 	};
 
-	m_UI_Actions_Main->add( action_SHB, func3 ) ;
+	m_UIActions_Main->add( action_SHB, func3 ) ;
 
 
-	m_UI_Actions_Main->add( Gtk::ToggleAction::create( "ViewActionAlbumsShowTimeDiscsTracks", "Show Additional Album Info" ), sigc::mem_fun( *this, &YoukiController::handle_action_underline_matches ) ); 
+	m_UIActions_Main->add( Gtk::ToggleAction::create( "ViewActionAlbumsShowTimeDiscsTracks", "Show Additional Album Info" ), sigc::mem_fun( *this, &YoukiController::handle_action_underline_matches ) ); 
 
 	Glib::RefPtr<Gtk::ToggleAction> action_MOP = Gtk::ToggleAction::create( "PlaybackControlActionMinimizeOnPause", "Minimize Youki on Pause" ) ;
-	m_UI_Actions_Main->add( action_MOP ) ; 
+	m_UIActions_Main->add( action_MOP ) ; 
 	//mcs_bind->bind_toggle_action( action_MOP, "mpx", "minimize-on-pause" ) ;
 
 	Glib::RefPtr<Gtk::ToggleAction> action_FPT = Gtk::ToggleAction::create( "ViewActionFollowPlayingTrack", "Follow Playing Track" ) ;
-	m_UI_Actions_Main->add( action_FPT, sigc::mem_fun(*this, &YoukiController::handle_follow_playing_track_toggled)) ; 
+	m_UIActions_Main->add( action_FPT, sigc::mem_fun(*this, &YoukiController::handle_follow_playing_track_toggled)) ; 
 	//mcs_bind->bind_toggle_action( action_MOP, "mpx", "follow-current-track" ) ;
 
 	Glib::RefPtr<Gtk::ToggleAction> action_PST = Gtk::ToggleAction::create( "PlaybackControlActionPlayTrackOnSingleTap", "Play Tracks on Single Tap" ) ;
-	m_UI_Actions_Main->add( action_PST, sigc::mem_fun(*this, &YoukiController::handle_play_track_on_single_tap)) ; 
+	m_UIActions_Main->add( action_PST, sigc::mem_fun(*this, &YoukiController::handle_play_track_on_single_tap)) ; 
 	action_PST->set_active( mcs->key_get<bool>("mpx","play-on-single-tap")) ;
 	mcs_bind->bind_toggle_action( action_PST, "mpx", "play-on-single-tap" ) ;
 
-	m_UI_Manager->insert_action_group( m_UI_Actions_Main ) ;
-	m_UI_Manager->add_ui_from_string( main_menubar_ui ) ;
+	m_UIManager->insert_action_group( m_UIActions_Main ) ;
+	m_UIManager->add_ui_from_string( main_menubar_ui ) ;
 
-	Gtk::Widget * menubar = m_UI_Manager->get_widget( "/MenuBarMain" ) ;
-	dynamic_cast<Gtk::Container*>(menubar)->set_border_width(0) ;
+        m_ListViewTracks = Gtk::manage( new View::Tracks::Class(m_play_queue, m_UIManager)) ;
+        m_ListViewArtist = Gtk::manage( new View::Artist::Class ) ;
+        m_ListViewAlbums = Gtk::manage( new View::Albums::Class ) ;
 
-/*
-	gtk_widget_realize(GTK_WIDGET(m_ScrolledWinTracks->gobj())) ;
-	m_ScrolledWinTracks->get_vadjustment()->signal_changed().connect(sigc::mem_fun(*this,&YoukiController::handle_tracklist_vadj_changed)) ;
- */
+	Gtk::Widget * menubar = m_UIManager->get_widget( "/MenuBarMain" ) ;
 
         m_ScrolledWinArtist->set_shadow_type( Gtk::SHADOW_IN ) ;
         m_ScrolledWinAlbums->set_shadow_type( Gtk::SHADOW_IN ) ;
@@ -739,7 +751,7 @@ namespace MPX
         VBox2->pack_start( *HBox_Main_Align, true, true, 0 ) ;
         VBox2->pack_start( *m_VBox_Bottom, false, false, 0 ) ;
 
-        m_VBox_Bottom->pack_start( *m_main_info, false, false, 0 ) ;
+//        m_VBox_Bottom->pack_start( *m_main_info, false, false, 0 ) ;
         m_VBox_Bottom->pack_start( *Controls_Align, false, false, 0 ) ;
 
         m_main_volume = Gtk::manage( new KoboVolume ) ;
@@ -987,12 +999,13 @@ namespace MPX
                 , &YoukiController::handle_albumlist_start_playback
         )) ;
 
-	m_ListViewArtist->set_size_request( 148, -1 ) ;
-	m_ListViewAlbums->set_size_request( 224, -1 ) ;
+	m_ListViewArtist->set_size_request( 124, -1 ) ;
+	m_ListViewAlbums->set_size_request( 204, -1 ) ;
 
 	m_VBox_TL->pack_start( *HBox_TL, false, true, 0 ) ; 
 	m_VBox_TL->pack_start( *m_InfoBar, false, true, 0 ) ; 
 	m_VBox_TL->pack_start( *m_ScrolledWinTracks, true, true, 0 ) ; 
+	m_VBox_TL->pack_start( *m_main_info, false, true, 0 ) ;
 
         m_HBox_Main->pack_start( *m_ScrolledWinArtist, false, true, 0 ) ;
         m_HBox_Main->pack_start( *m_ScrolledWinAlbums, false, true, 0 ) ;
@@ -1459,7 +1472,7 @@ namespace MPX
     YoukiController::handle_follow_playing_track_toggled()
     {
         if( m_track_current && 
-	    Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("ViewActionFollowPlayingTrack"))->get_active())
+	    Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UIActions_Main->get_action("ViewActionFollowPlayingTrack"))->get_active())
         {
             const MPX::Track& track = *m_track_current ;
             guint id_track = boost::get<guint>(track[ATTRIBUTE_MPX_TRACK_ID].get()) ;
@@ -1481,16 +1494,17 @@ namespace MPX
 	    if(  sel_row_albums )
 	    {
 		auto a = private_->FilterModelAlbums->row(sel_row_albums.get()) ;
-		s += (boost::format("<small>Showing <b>%s</b> by <b>%s</b>: </small>") % Glib::Markup::escape_text(a->album) % Glib::Markup::escape_text(a->album_artist)).str() ;
+		s += (boost::format("<small><b>%s</b> by <b>%s</b></small>") % Glib::Markup::escape_text(a->album) % Glib::Markup::escape_text(a->album_artist)).str() ;
 	    }
 	    else
 	    if(  sel_row_artist )
 	    {
 		auto a = private_->FilterModelArtist->row(sel_row_artist.get()) ;
-		s += (boost::format("<small>Showing <b>%s</b>: </small>") % Glib::Markup::escape_text(boost::get<0>(a))).str() ;
+		s += (boost::format("<small>Everything by <b>%s</b></small>") % Glib::Markup::escape_text(boost::get<0>(a))).str() ;
 	    }
 	}
 
+#if 0
 	guint total = private_->FilterModelTracks->get_total_time() ;
 	guint hrs = total / 3600 ;
 	guint min = (total-hrs*3600) / 60 ;
@@ -1516,6 +1530,7 @@ namespace MPX
 	}
 
 	s += "</small>" ;
+#endif
 
 	m_Label_TL->set_markup(s) ;
     }
@@ -1535,17 +1550,17 @@ namespace MPX
     void
     YoukiController::handle_action_underline_matches()
     {
-	bool active = Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("ViewActionUnderlineMatches"))->get_active() ;
+	bool active = Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UIActions_Main->get_action("ViewActionUnderlineMatches"))->get_active() ;
 	m_ListViewTracks->set_highlight( active ) ;
 
-	active = Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("ViewActionAlbumsShowTimeDiscsTracks"))->get_active() ;
+	active = Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UIActions_Main->get_action("ViewActionAlbumsShowTimeDiscsTracks"))->get_active() ;
 	m_ListViewAlbums->set_show_additional_info( active ) ;
     }
 
     void
     YoukiController::handle_play_track_on_single_tap()
     {
-	bool active = Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("PlaybackControlActionPlayTrackOnSingleTap"))->get_active() ;
+	bool active = Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UIActions_Main->get_action("PlaybackControlActionPlayTrackOnSingleTap"))->get_active() ;
 	m_ListViewTracks->set_play_on_single_tap( active ) ;
     }
 
@@ -1570,7 +1585,7 @@ namespace MPX
 
     YoukiController::~YoukiController ()
     {
-	Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("PlaybackControlActionStartAlbumAtFavorite"))->set_active(false) ;
+	Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UIActions_Main->get_action("PlaybackControlActionStartAlbumAtFavorite"))->set_active(false) ;
 
         m_play->request_status( PLAYSTATUS_STOPPED ) ; 
 
@@ -1695,7 +1710,7 @@ namespace MPX
 	boost::optional<guint> id ;
 
         if( m_track_current && 
-	    Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("ViewActionFollowPlayingTrack"))->get_active())
+	    Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UIActions_Main->get_action("ViewActionFollowPlayingTrack"))->get_active())
         {
             id = boost::get<guint>((*m_track_current)[ATTRIBUTE_MPX_TRACK_ID].get()) ;
         }
@@ -2036,7 +2051,7 @@ namespace MPX
 	, bool		       register_in_history
     )
     {
-	bool history = Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("PlaybackControlActionUseHistory"))->get_active() ;
+	bool history = Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UIActions_Main->get_action("PlaybackControlActionUseHistory"))->get_active() ;
 
         try{
                 m_play->request_status( PLAYSTATUS_WAITING ) ;
@@ -2102,8 +2117,8 @@ namespace MPX
     void
     YoukiController::on_play_eos ()
     {
-	bool repeat  = Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("PlaybackControlActionRepeat"))->get_active() ;
-	bool history = Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("PlaybackControlActionUseHistory"))->get_active() ;
+	bool repeat  = Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UIActions_Main->get_action("PlaybackControlActionRepeat"))->get_active() ;
+	bool history = Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UIActions_Main->get_action("PlaybackControlActionUseHistory"))->get_active() ;
 
 	bool end = false ;
 	time_t t = time(NULL) ;
@@ -2127,7 +2142,7 @@ namespace MPX
 	}
 	else
 	{
-	    bool active = Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("PlaybackControlActionContinueCurrentAlbum"))->get_active() ;
+	    bool active = Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UIActions_Main->get_action("PlaybackControlActionContinueCurrentAlbum"))->get_active() ;
 
 	    if( active ) 
 	    {
@@ -2237,7 +2252,7 @@ namespace MPX
     YoukiController::tracklist_regen_mapping()
     {
         if( m_track_current && 
-	    Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("ViewActionFollowPlayingTrack"))->get_active())
+	    Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UIActions_Main->get_action("ViewActionFollowPlayingTrack"))->get_active())
         {
             const MPX::Track& track = *m_track_current ;
             guint id_track = boost::get<guint>(track[ATTRIBUTE_MPX_TRACK_ID].get()) ;
@@ -2253,7 +2268,7 @@ namespace MPX
     YoukiController::tracklist_regen_mapping_iterative()
     {
         if( m_track_current && 
-	    Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("ViewActionFollowPlayingTrack"))->get_active())
+	    Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UIActions_Main->get_action("ViewActionFollowPlayingTrack"))->get_active())
         {
             const MPX::Track& track = *m_track_current ;
             guint id_track = boost::get<guint>(track[ATTRIBUTE_MPX_TRACK_ID].get()) ;
@@ -2383,7 +2398,7 @@ namespace MPX
 	    
 
 		auto active = Glib::RefPtr<Gtk::ToggleAction>::cast_static(
-			m_UI_Actions_Main->get_action("PlaybackControlActionMarkov")
+			m_UIActions_Main->get_action("PlaybackControlActionMarkov")
 		)->get_active() ;
 
 		if(active)
@@ -2397,7 +2412,7 @@ namespace MPX
 			m_InfoBar->show_all() ;
 
 			Glib::RefPtr<Gtk::ToggleAction>::cast_static(
-				m_UI_Actions_Main->get_action("PlaybackControlActionMarkov")
+				m_UIActions_Main->get_action("PlaybackControlActionMarkov")
 			)->set_active(false) ;
 
 			m_rb1->set_active() ;
@@ -2415,7 +2430,7 @@ namespace MPX
 
         private_->FilterModelTracks->set_active_id( id_track ) ;
 
-        if( Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("ViewActionFollowPlayingTrack"))->get_active())
+        if( Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UIActions_Main->get_action("ViewActionFollowPlayingTrack"))->get_active())
         {
             m_ListViewTracks->scroll_to_id( id_track ) ;
         }
@@ -2483,7 +2498,7 @@ namespace MPX
     )
     {
 	auto active = Glib::RefPtr<Gtk::ToggleAction>::cast_static(
-		m_UI_Actions_Main->get_action("PlaybackControlActionMarkov")
+		m_UIActions_Main->get_action("PlaybackControlActionMarkov")
 	)->get_active() ;
 
 	if( active )
@@ -2497,7 +2512,7 @@ namespace MPX
 	    else
 	    {
 		Glib::RefPtr<Gtk::ToggleAction>::cast_static(
-			m_UI_Actions_Main->get_action("PlaybackControlActionMarkov")
+			m_UIActions_Main->get_action("PlaybackControlActionMarkov")
 		)->set_active(false) ;
 
 		m_InfoLabel->set_markup(_("<b>PlaySense</b>: No matching tracks found.")) ;
@@ -2515,7 +2530,7 @@ namespace MPX
 	if(track)
 	{
 	    auto active = Glib::RefPtr<Gtk::ToggleAction>::cast_static(
-		    m_UI_Actions_Main->get_action("PlaybackControlActionMarkov")
+		    m_UIActions_Main->get_action("PlaybackControlActionMarkov")
 	    )->get_active() ;
 
 	    guint id_track = boost::get<guint>((*track)[ATTRIBUTE_MPX_TRACK_ID].get()) ;
@@ -2531,7 +2546,7 @@ namespace MPX
 		else
 		{
 		    Glib::RefPtr<Gtk::ToggleAction>::cast_static(
-			    m_UI_Actions_Main->get_action("PlaybackControlActionMarkov")
+			    m_UIActions_Main->get_action("PlaybackControlActionMarkov")
 		    )->set_active(false) ;
 
 		    m_InfoLabel->set_markup(_("<b>PlaySense</b>: No matching tracks found")) ;
@@ -2765,7 +2780,7 @@ namespace MPX
     YoukiController::handle_tracklist_vadj_changed(
     ) 
     {
-	Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("PlaybackControlActionStartAlbumAtFavorite"))->set_active(false) ;
+	Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UIActions_Main->get_action("PlaybackControlActionStartAlbumAtFavorite"))->set_active(false) ;
     }
 
     void
@@ -2899,7 +2914,7 @@ namespace MPX
 	boost::optional<guint> id ;
 
         if( m_track_current && 
-	    Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("ViewActionFollowPlayingTrack"))->get_active())
+	    Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UIActions_Main->get_action("ViewActionFollowPlayingTrack"))->get_active())
         {
             id = boost::get<guint>((*m_track_current)[ATTRIBUTE_MPX_TRACK_ID].get()) ;
         }
@@ -3003,7 +3018,7 @@ namespace MPX
 
         if( m_track_current
 		&& 
-	    Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("ViewActionFollowPlayingTrack"))->get_active()
+	    Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UIActions_Main->get_action("ViewActionFollowPlayingTrack"))->get_active()
 		&&
 	    !queue_view )
         {
@@ -3053,7 +3068,7 @@ namespace MPX
 	    {
 		for( auto& s : m_nearest__artists )
 		{
-		    if( Glib::ustring(s).lowercase() == m_nearest )
+		    if( (Glib::ustring(s).lowercase() == Glib::ustring(m_nearest).lowercase()))
 		    {
 			m_nearest = s ;
 			break ;
@@ -3121,7 +3136,7 @@ namespace MPX
     void
     YoukiController::handle_shuffle_toggled()
     {
-	Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("PlaybackControlActionContinueCurrentAlbum"))->set_active(false) ;
+	Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UIActions_Main->get_action("PlaybackControlActionContinueCurrentAlbum"))->set_active(false) ;
 
 	if(!m_play_queue.empty())
 	{
@@ -3217,7 +3232,7 @@ namespace MPX
     void
     YoukiController::handle_albumlist_start_playback ()
     {
-	bool active = Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("PlaybackControlActionStartAlbumAtFavorite"))->get_active() ;
+	bool active = Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UIActions_Main->get_action("PlaybackControlActionStartAlbumAtFavorite"))->get_active() ;
 
         if( private_->FilterModelTracks->size() )
         {
@@ -3506,7 +3521,7 @@ void
     YoukiController::API_prev(
     )
     {
-	bool history = Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UI_Actions_Main->get_action("PlaybackControlActionUseHistory"))->get_active() ;
+	bool history = Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UIActions_Main->get_action("PlaybackControlActionUseHistory"))->get_active() ;
 	bool rwnd = (m_play->property_position().get_value() > 5)?0:1 ;
 
 	//FIXME: This doesn't work at all with flow plugins, of course we also don't have any yet

@@ -45,7 +45,7 @@ namespace MPX
     {
 	if( cover )
         {
-		m_cover = cover->scale_simple( 105, 105, Gdk::INTERP_HYPER ) ;
+		m_cover = cover->scale_simple( 108, 108, Gdk::INTERP_HYPER ) ;
 	}
 	else
 	{
@@ -161,8 +161,8 @@ namespace MPX
 		) ; 
 
 		cairo->move_to(
-		      a.get_width() - width - 14 - (m_cover ? 100 : 0)
-		    , 10 
+		      a.get_width() - width - 16 - (m_cover ? 100 : 0)
+		    , 6 
 		) ;
 
 		pango_cairo_show_layout( cairo->cobj(), layout->gobj() ) ;
@@ -182,10 +182,10 @@ namespace MPX
         const Gtk::Allocation& a = get_allocation ();
 
         GdkRectangle r ;
-        r.x = 1 ;
-        r.y = 5 ;
-        r.width = a.get_width() - 5 ; 
-        r.height = a.get_height() - 8 ; 
+        r.x = 0 ;
+        r.y = 0 ;
+        r.width = a.get_width() ; 
+        r.height = a.get_height() ; 
 
         cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 
@@ -332,9 +332,9 @@ namespace MPX
 	GdkRectangle r ;
 
 	r.x = get_allocated_width() - 108 ; 
-	r.y = 5 ;
-	r.width = 103 ; 
-	r.height = 103 ; 
+	r.y = 0 ;
+	r.width = 108 ; 
+	r.height = 108 ; 
 
 	Gdk::Cairo::set_source_pixbuf(
 	      cairo
