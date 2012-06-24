@@ -660,12 +660,11 @@ namespace Albums
 		}
 
 		//////////
-/*
+
 		if(!album->rgba)
 		{
 		    render_rgba( album ) ;
 		}
-*/
 
 		//////////
 
@@ -778,53 +777,46 @@ namespace Albums
 
 	    //////////
 
+	    if( album->coverart )
+	    {
+		cairo->save() ;
+		Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(album->rgba.get(),.7)) ;
+		cairo->rectangle(
+		      6
+		    , 26
+		    , 180  
+		    , 40 
+		) ;
+		cairo->fill() ;
+		cairo->restore() ;
+	    }
+
+	    //////////
+
 	    cairo->save() ;
 	    cairo->translate(16,45) ;
-
 	    layout[L2]->set_text( album->album ) ;
 	    layout[L2]->get_pixel_size( width, height );
-
-	    Util::render_text_shadow(
-		  layout[L2]
-		, 1
-		, 1
-		, cairo
-		, 1
-		, 0.85 
-	    ) ;
 	    cairo->move_to(
 		  0 
 		, 0 
 	    );
 	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(1,1,1)) ; 
 	    pango_cairo_show_layout(cairo->cobj(), layout[L2]->gobj()) ;
-
 	    cairo->restore() ;
 
 	    //////////
 
 	    cairo->save() ;
-
 	    cairo->translate(16,28) ;
-
 	    layout[L1]->set_text( album->album_artist );
 	    layout[L1]->get_pixel_size( width, height );
-
-	    Util::render_text_shadow(
-		  layout[L1]
-		, 1
-		, 1
-		, cairo
-		, 1
-		, 0.85
-	    ) ;
 	    cairo->move_to(
 		  0 
 		, 0 
 	    );
 	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(.95,.95,.95)) ; 
 	    pango_cairo_show_layout(cairo->cobj(), layout[L1]->gobj()) ;
-
 	    cairo->restore() ;
 
 #if 0
@@ -867,6 +859,8 @@ namespace Albums
 
 	    if( selected && !album->caching )
 	    {
+		cairo->save() ;
+		cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 		RoundedRectangle(
 		      cairo
 		    , 4 
@@ -878,6 +872,7 @@ namespace Albums
 
 		cairo->set_source(m_image_lensflare,4,2) ;
 		cairo->fill() ;
+		cairo->restore() ;
 	    }
 
 	    //////////
@@ -1837,31 +1832,30 @@ namespace Albums
 	void
 	Class::on_show_only_this_album()
 	{
-	    int x, y ;
-	    Gdk::ModifierType mod ;
-	    get_window()->get_pointer(x,y,mod) ;
-	    guint d = (vadj_value() + y) / ViewMetrics.RowHeight;
-
-	    if( ModelExtents(d))
+	    if( m_selection )
 	    {
-		const Album_sp& album = m_model->row(d) ;
-		_signal_0.emit( album->mbid );
+		guint d = boost::get<2>(m_selection.get()) ;
+
+		if( ModelExtents(d))
+		{
+		    const Album_sp& album = m_model->row(d) ;
+		    _signal_0.emit( album->mbid );
+		}
 	    }
 	}
 
 	void
 	Class::on_show_only_this_artist()
 	{
-	    int x, y ;
-	    Gdk::ModifierType mod ;
-	    get_window()->get_pointer(x,y,mod) ;
-	    guint d = (vadj_value() + y) / ViewMetrics.RowHeight;
-
-
-	    if( ModelExtents(d)) 
+	    if( m_selection )
 	    {
-		const Album_sp& album = m_model->row(d) ;
-		_signal_1.emit( album->mbid_artist );
+		guint d = boost::get<2>(m_selection.get()) ;
+
+		if( ModelExtents(d)) 
+		{
+		    const Album_sp& album = m_model->row(d) ;
+		    _signal_1.emit( album->mbid_artist );
+		}
 	    }
 	}
 

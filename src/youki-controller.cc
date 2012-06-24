@@ -751,7 +751,7 @@ namespace MPX
         VBox2->pack_start( *HBox_Main_Align, true, true, 0 ) ;
         VBox2->pack_start( *m_VBox_Bottom, false, false, 0 ) ;
 
-//        m_VBox_Bottom->pack_start( *m_main_info, false, false, 0 ) ;
+//	m_VBox_Bottom->pack_start( *m_main_info, false, false, 0 ) ;
         m_VBox_Bottom->pack_start( *Controls_Align, false, false, 0 ) ;
 
         m_main_volume = Gtk::manage( new KoboVolume ) ;

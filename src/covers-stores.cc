@@ -27,6 +27,7 @@
 #include <giomm.h>
 
 #include <string>
+#include <future>
 
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
@@ -78,20 +79,21 @@ namespace MPX
 
             request = Soup::RequestSync::create( url ) ; 
 
-	    int code = request->run() ;
+	    auto handle = std::async(
+		  std::launch::async
+		, [&request](){ request->run(); }
+	    ) ;
 
-            if( code == 200 )
-            {
-                save_image(
-                      request->get_data_raw()
-                    , request->get_data_size()
-                    , rql
-                ) ;
-            }
-            else
-            {
-                request_failed() ;
-            }
+	    while(!handle.wait_for(std::chrono::duration<int, std::milli>(50)))
+	    {
+		while(gtk_events_pending()) gtk_main_iteration() ;
+	    }
+
+	    save_image(
+		  request->get_data_raw()
+		, request->get_data_size()
+		, rql
+	    ) ;
         }
     }
 
