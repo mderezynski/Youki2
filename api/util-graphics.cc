@@ -601,8 +601,7 @@ namespace MPX
           Cairo::RefPtr<Cairo::ImageSurface>    image
     )
     {
-        Glib::RefPtr<Gdk::Pixbuf> pixbuf = Gdk::Pixbuf::create(Gdk::COLORSPACE_RGB, true, 8, image->get_width(), image->get_height()) ;
-        convert_bgra_to_rgba(((guint8 const*)image->get_data()), pixbuf->get_pixels(), image->get_width(), image->get_height()) ;
+        Glib::RefPtr<Gdk::Pixbuf> pixbuf = Gdk::Pixbuf::create(image, 0, 0, image->get_width(), image->get_height()) ; 
         return pixbuf ;
     }
 
