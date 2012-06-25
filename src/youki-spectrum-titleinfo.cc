@@ -45,7 +45,7 @@ namespace MPX
     {
 	if( cover )
         {
-		m_cover = cover->scale_simple( 110, 110, Gdk::INTERP_HYPER ) ;
+		m_cover = cover->scale_simple( 109, 109, Gdk::INTERP_HYPER ) ;
 	}
 	else
 	{
@@ -161,7 +161,7 @@ namespace MPX
 		) ; 
 
 		cairo->move_to(
-		      a.get_width() - width - 16 - (m_cover ? 100 : 0)
+		      a.get_width() - width - 10 - (m_cover ? 108 : 0)
 		    , 6 
 		) ;
 
@@ -332,9 +332,9 @@ namespace MPX
 	GdkRectangle r ;
 
 	r.x = get_allocated_width() - 110 ; 
-	r.y = 0 ;
-	r.width = 110 ; 
-	r.height = 110 ; 
+	r.y = 1 ;
+	r.width = 109 ; 
+	r.height = 109 ; 
 
 	Gdk::Cairo::set_source_pixbuf(
 	      cairo

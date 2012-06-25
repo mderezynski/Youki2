@@ -150,6 +150,7 @@ TARGET_LINK_LIBRARIES(youki-bin
   ${X11_X11_LIB}
   mconfig
   mpx-api
+  mpx-sigx
   mpx-widgets
   mpx-musicbrainz
   mpx-view-components

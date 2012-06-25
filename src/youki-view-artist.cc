@@ -27,7 +27,7 @@ namespace Artist
 
 	    if( i1 != m_mbid_map.end() )
 	    {
-		icon = icon->scale_simple( 96, 96, Gdk::INTERP_BILINEAR ) ; 
+		icon = icon->scale_simple( 126, 126, Gdk::INTERP_BILINEAR ) ; 
 		
 		Glib::RefPtr<Gdk::Pixbuf> icon_desaturated_1 = icon->copy() ; 
 		Glib::RefPtr<Gdk::Pixbuf> icon_desaturated_2 = icon->copy() ;
@@ -99,7 +99,7 @@ namespace Artist
 
 	    if( icon )
 	    { 
-		return icon->scale_simple(96, 96, Gdk::INTERP_BILINEAR) ;
+		return icon->scale_simple(126, 126, Gdk::INTERP_BILINEAR) ;
 	    }
 
 	    return Glib::RefPtr<Gdk::Pixbuf>(0) ; 
@@ -332,24 +332,42 @@ namespace Artist
 	    using boost::get;
 
 	    if(m_datamodel->empty())
+	    {
 		return ;
+	    }
 
 	    RowRowMapping_t new_mapping;
 	    new_mapping.reserve(m_datamodel->size()) ;
+
+	    boost::optional<guint> upper_bound_prev_id ;
+
+	    if(!m_mapping.empty())
+	    {
+		upper_bound_prev_id = boost::get<1>(row(m_upper_bound)) ;
+	    } 
+
 	    m_upper_bound = 0 ;
 
+	    guint c = 0 ;
+    
 	    for( auto i = m_datamodel->begin() ; i != m_datamodel->end(); ++i )
 	    {
 		boost::optional<guint> id = get<1>(*i) ;
 
+		if( upper_bound_prev_id && id == upper_bound_prev_id )
+		{
+		    m_upper_bound = c ; 
+		}	
+
 		if(!m_constraints_artist || (*m_constraints_artist)[id.get()].Count)
 		{
 		    new_mapping.push_back( i ) ;
+		    ++c ;
 		}
 	    }
 
 	    std::swap( m_mapping, new_mapping ) ;
-	    m_SIGNAL__changed.emit(0) ;
+	    m_SIGNAL__changed.emit(m_upper_bound) ;
 	}
 
 	void
@@ -413,7 +431,7 @@ namespace Artist
 	    m_image_disc = Util::cairo_image_surface_from_pixbuf(
 				    Gdk::Pixbuf::create_from_file(
 					    Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "artist.png" )
-	    )->scale_simple(96, 96, Gdk::INTERP_BILINEAR)) ;
+	    )->scale_simple(126, 126, Gdk::INTERP_BILINEAR)) ;
 	}
 
 	void
@@ -535,9 +553,9 @@ namespace Artist
 	    font_desc.set_size(text_size_pt * PANGO_SCALE) ;
 	    font_desc.set_weight(Pango::WEIGHT_BOLD) ;
 	    layout->set_font_description(font_desc) ;
-	    layout->set_alignment(Pango::ALIGN_CENTER) ;
-	    layout->set_width(92*PANGO_SCALE) ;
-	    layout->set_wrap(Pango::WRAP_WORD) ;
+	    layout->set_alignment(Pango::ALIGN_LEFT) ;
+	    layout->set_width(120*PANGO_SCALE) ;
+	    layout->set_ellipsize(Pango::ELLIPSIZE_END) ;
 	    layout->set_text(get<0>(r)) ;
 	    layout->get_pixel_size( width, height ) ;
 
@@ -552,7 +570,7 @@ namespace Artist
 
 	    //////////
 
-	    double x = (m_width-96)/2. ; 
+	    double x = (m_width-126)/2. ; 
 	    double y = ypos+10 ; 
 
 	    cairo->save() ;
@@ -566,11 +584,11 @@ namespace Artist
 		c = Util::pick_color_for_pixbuf(pb) ;
 	    }
 
-	    RoundedRectangle(cairo, 0, 0, 96, 86, m_rounding ) ;
-	    cairo->set_source(surface, 0, -4) ;
+	    RoundedRectangle(cairo, 0, 0, 126, 70, m_rounding ) ;
+	    cairo->set_source(surface, 0, -12) ;
 	    cairo->fill_preserve() ;
 
-	    Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create( 48, 0, 48, 86 ) ;
+	    Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create( 48, 0, 48, 70 ) ;
 	    gradient->add_color_stop_rgba(
 		  0
 		, 0 
@@ -606,12 +624,12 @@ namespace Artist
 		      cairo
 		    , 0
 		    , 0
-		    , 96
-		    , 86
+		    , 126
+		    , 70
 		    , m_rounding
 		) ;
 		cairo->set_source(
-		      m_image_lensflare, 0, 0
+		      m_image_lensflare, 0, -16
 		) ;
 		cairo->fill() ;
 		cairo->restore() ;
@@ -623,8 +641,8 @@ namespace Artist
 		  cairo
 		, 0
 		, 0
-		, 96
-		, 86
+		, 126
+		, 70
 		, m_rounding
 	    ) ;
 	    cairo->set_line_width(1) ;
@@ -635,12 +653,10 @@ namespace Artist
 	    //////////
 
 	    cairo->save() ;
-	    int x2 = xpos + (m_width-96) / 2. ;
-	    int y2 = ypos + 8 + (92-height)/2. ;
-	    cairo->translate(x2,y2) ;
+	    cairo->translate(x,y) ;
 	    cairo->move_to(
-		  0 
-		, 0 
+		  6 
+		, 6 
 	    );
 	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(1,1,1,1)) ; 
 	    pango_cairo_show_layout(cairo->cobj(), layout->gobj());
@@ -732,7 +748,7 @@ namespace Artist
 					    , context->get_language()
 	    ) ;
 
-	    m_height__row = 98 ;
+	    m_height__row = 82 ;
 
 	    m_height__headers = 0 ;
 #if 0
@@ -1138,8 +1154,8 @@ namespace Artist
 	    if( property_vadjustment().get_value() )
 	    {
 		property_vadjustment().get_value()->freeze_notify() ;
-		property_vadjustment().get_value()->set_upper( upper ) ;
-		property_vadjustment().get_value()->set_page_size( page_size ) ;
+		property_vadjustment().get_value()->set_upper((upper<page_size)?page_size:upper) ;
+		property_vadjustment().get_value()->set_page_size(page_size) ;
 		property_vadjustment().get_value()->set_step_increment( m_height__row ) ;
 		property_vadjustment().get_value()->thaw_notify() ;
 	    }

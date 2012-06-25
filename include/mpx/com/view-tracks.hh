@@ -62,50 +62,7 @@ namespace View
 {
 namespace Tracks
 {
-        std::string
-        RowGetArtistName(
-              const MPX::SQL::Row&   r
-        )
-        {
-            std::string name ;
-
-            if( r.count( "album_artist" )) 
-            {
-                Glib::ustring in_utf8 = boost::get<std::string>(r.find("album_artist")->second) ; 
-
-                gunichar c = in_utf8[0] ;
-
-                if( g_unichar_get_script( c ) != G_UNICODE_SCRIPT_LATIN && r.count("album_artist_sortname") ) 
-                {
-                        std::string in = boost::get<std::string>( r.find("album_artist_sortname")->second ) ; 
-
-                        boost::iterator_range <std::string::iterator> match1 = boost::find_nth( in, ", ", 0 ) ;
-                        boost::iterator_range <std::string::iterator> match2 = boost::find_nth( in, ", ", 1 ) ;
-
-                        if( !match1.empty() && match2.empty() ) 
-                        {
-                            name = std::string (match1.end(), in.end()) + " " + std::string (in.begin(), match1.begin());
-                        }
-                        else
-                        {
-                            name = in ;
-                        }
-
-                        return name ;
-                }
-
-                name = in_utf8 ;
-            }
-
-            return name ;
-        }
-
-        namespace
-        {
-            const double rounding = 1. ; 
-        }
-
-	struct NewRow_t
+	struct ModelData_t
 	{
 	    Track_sp	    TrackSp ;
 	    guint	    ID ;
@@ -121,7 +78,7 @@ namespace Tracks
 	    boost::optional<guint> queuepos ;
 	} ;
 
-	typedef boost::shared_ptr<NewRow_t> NewRow_sp ;
+	typedef boost::shared_ptr<ModelData_t> ModelData_sp ;
 
 	enum class RowDatum
 	{
@@ -137,38 +94,38 @@ namespace Tracks
 	} ;
 
 
-	bool operator==(const NewRow_t& a, const NewRow_t& b)
+	bool operator==(const ModelData_t& a, const ModelData_t& b)
 	{
 	    return a.ID == b.ID ;
 	}
 
-	bool operator!=(const NewRow_t& a, const NewRow_t& b)
+	bool operator!=(const ModelData_t& a, const ModelData_t& b)
 	{
 	    return a.ID != b.ID ;
 	}
 
-	bool operator<(const NewRow_t& a, const NewRow_t& b)
+	bool operator<(const ModelData_t& a, const ModelData_t& b)
 	{
 	    return a.ID < b.ID ; 
 	}
 
 
-	bool operator==(const NewRow_sp& a, const NewRow_sp& b)
+	bool operator==(const ModelData_sp& a, const ModelData_sp& b)
 	{
 	    return a->ID == b->ID ;
 	}
 
-	bool operator!=(const NewRow_sp& a, const NewRow_sp& b)
+	bool operator!=(const ModelData_sp& a, const ModelData_sp& b)
 	{
 	    return a->ID != b->ID ;
 	}
 
-	bool operator<(const NewRow_sp& a, const NewRow_sp& b)
+	bool operator<(const ModelData_sp& a, const ModelData_sp& b)
 	{
 	    return a->ID < b->ID ; 
 	}
 
-        typedef std::vector<NewRow_sp>			Model_t ;
+        typedef std::vector<ModelData_sp>			Model_t ;
         typedef boost::shared_ptr<Model_t>		Model_sp ;
 
 	typedef sigc::signal<void>			Signal0 ;
@@ -257,11 +214,11 @@ namespace Tracks
         } ;
 
         struct OrderFunc
-        : public std::binary_function<NewRow_sp, NewRow_sp, bool>
+        : public std::binary_function<ModelData_sp, ModelData_sp, bool>
         {
             bool operator() (
-                  const NewRow_sp&  a
-                , const NewRow_sp&  b
+                  const ModelData_sp&  a
+                , const ModelData_sp&  b
             )
             {
 		if(! a && b )
@@ -379,7 +336,7 @@ namespace Tracks
                     return m_realmodel->size() ;
                 }
 
-                inline virtual const NewRow_sp&
+                inline virtual const ModelData_sp&
                 row(guint d)
                 {
                     return (*m_realmodel)[d] ;
@@ -401,7 +358,7 @@ namespace Tracks
                 {
                     using boost::get ;
 
-		    NewRow_t * nr = new NewRow_t ;
+		    ModelData_t * nr = new ModelData_t ;
 
 		    nr->TrackSp = track ;
 		    nr->ID = get<guint>(r["id"]) ;
@@ -414,7 +371,7 @@ namespace Tracks
 		    nr->Time = r.count("time") ? get<guint>(r["time"]) : 0 ;
 		    nr->Track = r.count("track") ? get<guint>(r["track"]) : 0 ;
 
-                    m_realmodel->push_back(NewRow_sp(nr)) ;
+                    m_realmodel->push_back(ModelData_sp(nr)) ;
                 }
 
                 void
@@ -669,7 +626,7 @@ namespace Tracks
                     return m_mapping ? m_mapping->size() : 0 ;
                 }
 
-                virtual const NewRow_sp&
+                virtual const ModelData_sp&
                 row(guint d)
                 {
                     return *((*m_mapping)[d]);
@@ -741,8 +698,8 @@ namespace Tracks
 
                     static OrderFunc order ;
 
-		    NewRow_t * nr = new NewRow_t ;
-		    NewRow_sp nrsp (nr) ;
+		    ModelData_t * nr = new ModelData_t ;
+		    ModelData_sp nrsp (nr) ;
 
 		    nr->TrackSp = track ;
 		    nr->ID = id ; 
@@ -1031,7 +988,7 @@ namespace Tracks
                         IntersectVector_t intersect ;
                         intersect.reserve( m_frags.size() ) ; 
 
-                        StrV vec (4) ;
+                        StrV vec(4) ;
 
                         for( guint n = 0 ; n < m_frags.size(); ++n )
                         {
@@ -1055,14 +1012,14 @@ namespace Tracks
 
                             for( Model_t::const_iterator i = m_realmodel->begin(); i != m_realmodel->end(); ++i )
                             {
-                                const NewRow_sp r = *i;
+                                const ModelData_sp r = *i;
 
-                                vec[0] = Glib::ustring(r->Artist).lowercase() ;
-                                vec[1] = Glib::ustring(r->Album).lowercase() ;
-                                vec[2] = Glib::ustring(r->Title).lowercase() ;
-                                vec[3] = Glib::ustring(r->AlbumArtist).lowercase() ;
+                                vec[0] = r->Artist ;
+                                vec[1] = r->Album ;
+                                vec[2] = r->Title ;
+                                vec[3] = r->AlbumArtist ;
 
-                                if( Util::match_vec( m_frags[n], vec ))
+                                if(Util::match_vec( m_frags[n], vec ))
                                 {
                                     model_iterator_set->insert( i ) ; 
                                 }
@@ -1298,12 +1255,12 @@ namespace Tracks
 
                             for( auto& i : *m_mapping_unfiltered ) 
                             {
-                                const NewRow_sp& r = *i ;
+                                const ModelData_sp& r = *i ;
 
-                                vec[0] = Glib::ustring(r->Artist).lowercase() ;
-                                vec[1] = Glib::ustring(r->Album).lowercase() ;
-                                vec[2] = Glib::ustring(r->Title).lowercase() ;
-                                vec[3] = Glib::ustring(r->AlbumArtist).lowercase() ;
+                                vec[0] = r->Artist ;
+                                vec[1] = r->Album ;
+                                vec[2] = r->Title ;
+                                vec[3] = r->AlbumArtist ;
 
                                 if( Util::match_vec( f, vec ))
                                 {
@@ -1546,7 +1503,7 @@ namespace Tracks
                 render(
                       const Cairo::RefPtr<Cairo::Context>&  cairo
                     , Gtk::Widget&			    widget
-                    , const NewRow_sp&			    r
+                    , const ModelData_sp&			    r
                     , int				    xpos
                     , int				    ypos
                     , int				    rowheight
@@ -2281,7 +2238,7 @@ namespace Tracks
 
                 inline bool
                 Compare(
-                      const NewRow_sp&                 r
+                      const ModelData_sp&                 r
                     , const boost::optional<guint>&    id
                 )
                 {
@@ -2554,7 +2511,7 @@ namespace Tracks
 		    {
 			xpos = 0 ;
 
-			const NewRow_sp& r = m_model->row( d_cur ) ;
+			const ModelData_sp& r = m_model->row( d_cur ) ;
 
 			if( Compare( r, m_model->m_id_currently_playing )) 
 			{
@@ -3149,7 +3106,7 @@ namespace Tracks
                 {
                     if( m_selection )
                     {
-                        const NewRow_sp& r = *(boost::get<0>(m_selection.get())) ;
+                        const ModelData_sp& r = *(boost::get<0>(m_selection.get())) ;
                         const MPX::Track_sp& t = r->TrackSp ; 
                         const MPX::Track& track = *(t.get()) ;
 
@@ -3163,7 +3120,7 @@ namespace Tracks
                 {
                     if( m_selection )
                     {
-                        const NewRow_sp& r = *(boost::get<0>(m_selection.get())) ;
+                        const ModelData_sp& r = *(boost::get<0>(m_selection.get())) ;
                         const MPX::Track_sp& t = r->TrackSp ; 
                         const MPX::Track& track = *(t.get()) ;
 
@@ -3177,7 +3134,7 @@ namespace Tracks
                 {
                     if( m_selection )
                     {
-                        const NewRow_sp& r = *(boost::get<0>(m_selection.get())) ;
+                        const ModelData_sp& r = *(boost::get<0>(m_selection.get())) ;
                         const MPX::Track_sp& t = r->TrackSp ; 
                         const MPX::Track& track = *(t.get()) ;
 
@@ -3231,7 +3188,7 @@ namespace Tracks
 		{	
 		    if( m_selection )
 		    {
-			NewRow_sp sp = m_model->row(boost::get<S_INDEX>(m_selection.get())) ;
+			ModelData_sp sp = m_model->row(boost::get<S_INDEX>(m_selection.get())) ;
 
 			if( sp->queuepos )
 			{

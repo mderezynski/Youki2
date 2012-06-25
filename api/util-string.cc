@@ -101,8 +101,8 @@ namespace
 
 namespace MPX
 {
-  namespace Util
-  {
+namespace Util
+{
     // Converts a RFC822 time string to a time_t value
     // Code (C) Liferea Developers
     time_t parseRFC822Date (const char * date)
@@ -416,16 +416,18 @@ namespace MPX
         using boost::algorithm::is_any_of;
         using boost::algorithm::find_first;
 
-        std::string nl = Glib::ustring(n).lowercase() ;
+        std::string&& nl = Glib::ustring(n).lowercase() ;
 
         for( std::size_t i = 0 ; i < h.size(); ++i )
         {
-	    if (h[i].length() < 1)
+	    const std::string& hl = Glib::ustring(h[i]).lowercase() ;
+
+	    if (hl.length() < 1)
             {
 		continue ;
             }
 
-    	    if (find_first (h[i], nl))
+    	    if (find_first (hl, nl))
             {
                 return true ;
             }

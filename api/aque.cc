@@ -27,6 +27,7 @@
 #include "xmlcpp/xsd-topartists-2.0.hxx"
 #include "xmlcpp/xsd-artist-similar-2.0.hxx"
 #include "xmlcpp/xsd-artist-toptracks-2.0.hxx"
+#include "xmlcpp/xsd-tag-toptracks-2.0.hxx"
 
 namespace
 {
@@ -38,7 +39,7 @@ namespace
 	MPX::StrS s ;
 
 	try{
-	    MPX::URI u ((boost::format( "http://ws.audioscrobbler.com/2.0/?method=tag.gettopalbums&tag=%s&api_key=37cd50ae88b85b764b72bb4fe4041fe4" ) % value).str()) ;
+	    MPX::URI u ((boost::format( "http://ws.audioscrobbler.com/2.0/?method=tag.gettopalbums&tag=%s&api_key=37cd50ae88b85b764b72bb4fe4041fe4" ) % value).str(), true ) ;
 	    typedef MPX::XmlInstance<lfm_tagtopalbums::lfm> Instance ;
 	
 	    Instance* Xml = new Instance(Glib::ustring( u )) ;
@@ -58,6 +59,31 @@ namespace
     }
 
     MPX::OVariant
+    _lastfm_tag_toptracks(
+	  const std::string& value
+    )
+    {
+	MPX::StrS s ;
+
+	try{
+	    MPX::URI u ((boost::format( "http://ws.audioscrobbler.com/2.0/?method=tag.gettoptracks&tag=%s&api_key=37cd50ae88b85b764b72bb4fe4041fe4" ) % value).str(), true ) ;
+
+	    typedef MPX::XmlInstance<lfm_top_tracks_for_tag::lfm> Instance ;
+	    Instance* Xml = new Instance(Glib::ustring( u )) ;
+
+	    for( auto& track : Xml->xml().toptracks().track() )
+	    {
+		s.insert( track.name() ) ;
+	    }
+	}
+	catch(std::runtime_error& cxe){
+	    g_message("%s: RuntimeError: %s", G_STRLOC, cxe.what()) ;
+	}
+
+	return MPX::OVariant(s) ;
+    }
+
+    MPX::OVariant
     _lastfm_artist_toptracks(
 	  const std::string& value
     )
@@ -66,15 +92,19 @@ namespace
 
 	try{
 	    MPX::URI u ((boost::format( "http://ws.audioscrobbler.com/2.0/?method=artist.gettoptracks&artist=%s&api_key=37cd50ae88b85b764b72bb4fe4041fe4" ) % value).str(), true ) ;
-	    typedef MPX::XmlInstance<lfm> Instance ;
 
+	    typedef MPX::XmlInstance<lfm_top_tracks_for_artist::lfm> Instance ;
 	    Instance* Xml = new Instance(Glib::ustring( u )) ;
 
-	    g_message("n elements: %u", Xml->xml().toptracks().track().size()) ;
+	    guint c = 0 ;
 
 	    for( auto& track : Xml->xml().toptracks().track() )
 	    {
 		s.insert( track.name() ) ;
+		++c ;
+
+		if( c == 5 )
+		    break ;
 	    }
 	}
 	catch(std::runtime_error& cxe){
@@ -99,6 +129,8 @@ namespace
 
 	    Instance* Xml = new Instance(Glib::ustring( u )) ;
 
+	    g_message("Size: %u", Xml->xml().similarartists().artist().size()) ;
+
 	    for( auto& artist : Xml->xml().similarartists().artist() )
 	    {
 		s.insert( artist.name() ) ; 
@@ -109,6 +141,8 @@ namespace
 	catch(std::runtime_error& cxe){
 	    g_message("%s: RuntimeError: %s", G_STRLOC, cxe.what()) ;
 	}
+
+	g_message("Done!") ;
 
 	return MPX::OVariant(s) ;
     }
@@ -164,6 +198,16 @@ namespace
             c.MatchType = type ;
             c.InverseMatch = inverse_match ;
 
+            if( attribute == "top-tracks-for-tag" )
+            {
+                c.TargetAttr = ATTRIBUTE_TITLE ;
+		c.Processing = CONSTRAINT_PROCESSING_ASYNC ;
+		c.SourceValue = value ;
+		c.GetValue = sigc::ptr_fun( &_lastfm_tag_toptracks ) ;	
+
+                constraints.push_back(c) ;
+            }
+	    else
             if( attribute == "top-albums-for-tag" )
             {
                 c.TargetAttr = ATTRIBUTE_MB_ALBUM_ID ;
@@ -180,7 +224,6 @@ namespace
 		c.Processing = CONSTRAINT_PROCESSING_ASYNC ;
 		c.SourceValue = value ;
 		c.GetValue = sigc::ptr_fun( &_lastfm_artist_toptracks ) ;	
-
                 constraints.push_back(c) ;
             }
             else
@@ -424,7 +467,7 @@ namespace AQE
 		    , boost::ref(c)
 		) ;
 
-		while(!handle.wait_for(std::chrono::duration<int, std::milli>(100)))
+		while(!handle.wait_for(std::chrono::duration<int, std::milli>(20)))
 		{
 		    while(gtk_events_pending()) gtk_main_iteration() ;
 		}
@@ -656,7 +699,7 @@ namespace AQE
         , const MPX::Track_sp&  t
     )
     {
-        const MPX::Track& track = *(t.get()) ;
+        const MPX::Track& track = *t ; 
 
         g_return_val_if_fail(track.has(c.TargetAttr), false) ;
 
@@ -711,6 +754,7 @@ namespace AQE
         const MPX::Track& track = *(t.get()) ;
 
         g_return_val_if_fail(track.has(c.TargetAttr), false) ;
+        g_return_val_if_fail(bool(c.TargetValue), false) ;
 
         bool truthvalue = false ;
 
@@ -806,16 +850,14 @@ namespace AQE
 
     bool
     match_track(
-          const Constraints_t&  c
+          const Constraints_t&  constraints
         , const MPX::Track_sp&  t
     )
     {
-        const MPX::Track& track = *(t.get()) ;
+        const MPX::Track& track = *t ;
 
-        for( Constraints_t::const_iterator i = c.begin(); i != c.end(); ++i )
+        for( auto& c : constraints ) 
         {
-            const Constraint_t& c = *i ;
-
             if( !track.has( c.TargetAttr ))
             {
                 return false ;

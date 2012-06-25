@@ -407,6 +407,7 @@ namespace MPX
 
             void
             on_play_eos(
+		  bool /*no_markov*/ = false
             ) ;
 
             void

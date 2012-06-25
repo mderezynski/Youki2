@@ -192,6 +192,11 @@ namespace MPX
           Glib::RefPtr<Gdk::Pixbuf>
     ) ;
 
+    double
+    get_lightness_for_pixbuf(
+          Glib::RefPtr<Gdk::Pixbuf>
+    ) ; 
+
     Gdk::RGBA
     get_dominant_color_for_pixbuf(
           Glib::RefPtr<Gdk::Pixbuf>

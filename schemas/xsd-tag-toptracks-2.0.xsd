@@ -10,8 +10,6 @@
                   <xs:sequence>
                     <xs:element type="xs:string" name="name"/>
                     <xs:element type="xs:short" name="duration"/>
-                    <xs:element type="xs:int" name="playcount"/>
-                    <xs:element type="xs:int" name="listeners"/>
                     <xs:element type="xs:string" name="mbid"/>
                     <xs:element type="xs:anyURI" name="url"/>
                     <xs:element name="streamable">
@@ -46,7 +44,7 @@
                 </xs:complexType>
               </xs:element>
             </xs:sequence>
-            <xs:attribute type="xs:string" name="artist"/>
+            <xs:attribute type="xs:string" name="tag"/>
             <xs:attribute type="xs:byte" name="page"/>
             <xs:attribute type="xs:byte" name="perPage"/>
             <xs:attribute type="xs:byte" name="totalPages"/>

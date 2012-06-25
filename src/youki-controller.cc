@@ -326,10 +326,10 @@ namespace MPX
 
 	/* Connect Play */
         m_play->signal_eos().connect(
-            sigc::mem_fun(
+            sigc::bind( sigc::mem_fun(
                   *this
                 , &YoukiController::on_play_eos
-        )) ;
+        ), false )) ;
 
         m_play->signal_error().connect(
             sigc::mem_fun(
@@ -999,8 +999,8 @@ namespace MPX
                 , &YoukiController::handle_albumlist_start_playback
         )) ;
 
-	m_ListViewArtist->set_size_request( 124, -1 ) ;
-	m_ListViewAlbums->set_size_request( 204, -1 ) ;
+	m_ListViewArtist->set_size_request( 152, -1 ) ;
+	m_ListViewAlbums->set_size_request( 268, -1 ) ;
 
 	m_VBox_TL->pack_start( *HBox_TL, false, true, 0 ) ; 
 	m_VBox_TL->pack_start( *m_InfoBar, false, true, 0 ) ; 
@@ -1634,7 +1634,7 @@ namespace MPX
         m_covers->fetch(
               get<std::string>(r["mb_album_id"])
             , cover_pb
-            , 192
+            , 256
         ) ;
 
         if( cover_pb ) 
@@ -1654,7 +1654,7 @@ namespace MPX
         album->album_id = id ;
         album->artist_id = get<guint>(r["album_artist_id"]) ;
         album->album = get<std::string>(r["album"]) ;
-        album->album_artist = get<std::string>(r["album_artist"]) ; //Util::row_get_album_artist_name( r ) ; 
+        album->album_artist = get<std::string>(r["album_artist"]) ;
         album->mbid = get<std::string>(r["mb_album_id"]) ;
         album->mbid_artist = get<std::string>(r["mb_album_artist_id"]) ;
         album->type = r.count("mb_release_type") ? get<std::string>(r["mb_release_type"]) : "" ;
@@ -1931,7 +1931,7 @@ namespace MPX
         m_covers->fetch(
               get<std::string>(v[0]["mb_album_id"])
             , cover_pb
-            , 192
+            , 256
         ) ;
 
         if( cover_pb ) 
@@ -2115,7 +2115,9 @@ namespace MPX
     }
 
     void
-    YoukiController::on_play_eos ()
+    YoukiController::on_play_eos(
+	  bool no_markov
+    )
     {
 	bool repeat  = Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UIActions_Main->get_action("PlaybackControlActionRepeat"))->get_active() ;
 	bool history = Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UIActions_Main->get_action("PlaybackControlActionUseHistory"))->get_active() ;
@@ -2207,7 +2209,7 @@ namespace MPX
 	end = true ;
 
 	x1:
-	if( m_track_previous )
+	if( m_track_previous && !no_markov )
 	{
             m_library->trackPlayed( m_track_previous, t ) ;
 
@@ -2929,7 +2931,7 @@ namespace MPX
 	}
 
 	private_->FilterModelArtist->regen_mapping() ;
-	m_ListViewArtist->scroll_to_index(0) ;
+	//m_ListViewArtist->scroll_to_index(0) ;
 
 	private_->FilterModelAlbums->regen_mapping() ;
 	//m_ListViewAlbums->scroll_to_index(0) ;
@@ -3138,7 +3140,7 @@ namespace MPX
     {
 	Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UIActions_Main->get_action("PlaybackControlActionContinueCurrentAlbum"))->set_active(false) ;
 
-	if(!m_play_queue.empty())
+	if(!m_play_queue.empty() && m_rb2->get_active())
 	{
 	    std::random_shuffle( m_play_queue.begin(), m_play_queue.end(), std::pointer_to_unary_function<int,int>(Rand)) ;
 
@@ -3149,12 +3151,7 @@ namespace MPX
 		m_ListViewTracks->id_set_queuepos(n,c++) ;
 	    }
 
-	    m_rb2->set_sensitive() ;
-
-	    if(m_rb2->get_active())
-	    {
-		private_->FilterModelTracks->regen_mapping_queue() ;
-	    }
+	    private_->FilterModelTracks->regen_mapping_queue() ;
 
 	    return ;
 	}
@@ -3513,7 +3510,7 @@ void
     {
         if( m_track_current )
         {
-            on_play_eos() ;
+            on_play_eos(true) ;
         }
     }
 

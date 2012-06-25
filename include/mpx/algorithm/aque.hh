@@ -32,6 +32,8 @@ namespace AQE
 	, CONSTRAINT_PROCESSING_ASYNC
     } ;
 
+    typedef sigc::slot<MPX::OVariant, const std::string&> SlotValueGet_t ;
+
     struct Constraint_t
     {
         int                     TargetAttr ;
@@ -40,8 +42,6 @@ namespace AQE
         bool                    InverseMatch ;
 	ConstraintProcessing_t	Processing ;
 	std::string		SourceValue ;
-
-	typedef sigc::slot<MPX::OVariant, const std::string&> SlotValueGet_t ;
 
 	SlotValueGet_t		GetValue ;
 

@@ -131,6 +131,41 @@ namespace
 	return make_hsl (h, s, l);
     }
 
+    double get_lightness (Glib::RefPtr<Gdk::Pixbuf> const& image)
+    {
+	using namespace MPX ;
+
+	int bytes_per_pixel = image->get_has_alpha () ? 4 : 3;
+
+	int width  = image->get_width ();
+	int height = image->get_height ();
+	int row_stride = image->get_rowstride ();
+
+	int lightness = 0 ;
+
+	uint8_t const *pixel_row = image->get_pixels ();
+
+	for (int y = 0; y < height; y++) {
+	    uint8_t const* p = pixel_row;
+
+	    for (int x = 0; x < width; x++) {
+
+		double h, s, b ;
+
+		Util::color_to_hsb(Util::make_rgba(p[0]/255.,p[1]/255.,p[2]/255.), h, s, b ) ; 
+		lightness += (b*255) ;
+
+		p += bytes_per_pixel;
+	    }
+
+	    pixel_row += row_stride;
+	}
+
+	double l = (lightness / ( width * height )) / 255. ; 
+
+	return l ; 
+    }
+
     Gdk::RGBA get_dominant_color (Glib::RefPtr<Gdk::Pixbuf> const& image)
     {
 	using namespace MPX ;
@@ -605,13 +640,21 @@ namespace MPX
         return pixbuf ;
     }
 
+    double
+    get_lightness_for_pixbuf(
+          Glib::RefPtr<Gdk::Pixbuf>             pb0
+    )
+    {
+	return get_lightness( pb0->scale_simple(64,64,Gdk::INTERP_BILINEAR)) ;
+    }
+
 
     Gdk::RGBA
     get_dominant_color_for_pixbuf(
           Glib::RefPtr<Gdk::Pixbuf>             pb0
     )
     {
-	return get_dominant_color( pb0->scale_simple(64,64,Gdk::INTERP_HYPER)) ;
+	return get_dominant_color( pb0->scale_simple(64,64,Gdk::INTERP_BILINEAR)) ;
     }
 
     Gdk::RGBA
@@ -621,6 +664,7 @@ namespace MPX
     {
 	Gdk::RGBA mean = get_dominant_color_for_pixbuf(pb0) ;
 
+#if 0
 	double    r = mean.get_red()
 		, g = mean.get_green()
 		, b = mean.get_blue()
@@ -630,6 +674,7 @@ namespace MPX
 	{
 	    mean = Util::get_mean_color_for_pixbuf(pb0) ; 
 	}
+#endif
 
 	return mean ;
     }

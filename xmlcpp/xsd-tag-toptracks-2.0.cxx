@@ -38,9 +38,9 @@
 
 #include <xsd/cxx/pre.hxx>
 
-#include "xsd-artist-toptracks-2.0.hxx"
+#include "xsd-tag-toptracks-2.0.hxx"
 
-namespace lfm_top_tracks_for_artist
+namespace lfm_top_tracks_for_tag
 {
   // lfm
   // 
@@ -121,34 +121,34 @@ namespace lfm_top_tracks_for_artist
     this->track_ = track;
   }
 
-  const toptracks::artist_optional& toptracks::
-  artist () const
+  const toptracks::tag_optional& toptracks::
+  tag () const
   {
-    return this->artist_;
+    return this->tag_;
   }
 
-  toptracks::artist_optional& toptracks::
-  artist ()
+  toptracks::tag_optional& toptracks::
+  tag ()
   {
-    return this->artist_;
-  }
-
-  void toptracks::
-  artist (const artist_type& artist)
-  {
-    this->artist_.set (artist);
+    return this->tag_;
   }
 
   void toptracks::
-  artist (const artist_optional& artist)
+  tag (const tag_type& tag)
   {
-    this->artist_ = artist;
+    this->tag_.set (tag);
   }
 
   void toptracks::
-  artist (::std::auto_ptr< artist_type > artist)
+  tag (const tag_optional& tag)
   {
-    this->artist_.set (artist);
+    this->tag_ = tag;
+  }
+
+  void toptracks::
+  tag (::std::auto_ptr< tag_type > tag)
+  {
+    this->tag_.set (tag);
   }
 
   const toptracks::page_optional& toptracks::
@@ -291,42 +291,6 @@ namespace lfm_top_tracks_for_artist
   duration (const duration_type& duration)
   {
     this->duration_.set (duration);
-  }
-
-  const track::playcount_type& track::
-  playcount () const
-  {
-    return this->playcount_.get ();
-  }
-
-  track::playcount_type& track::
-  playcount ()
-  {
-    return this->playcount_.get ();
-  }
-
-  void track::
-  playcount (const playcount_type& playcount)
-  {
-    this->playcount_.set (playcount);
-  }
-
-  const track::listeners_type& track::
-  listeners () const
-  {
-    return this->listeners_.get ();
-  }
-
-  track::listeners_type& track::
-  listeners ()
-  {
-    return this->listeners_.get ();
-  }
-
-  void track::
-  listeners (const listeners_type& listeners)
-  {
-    this->listeners_.set (listeners);
   }
 
   const track::mbid_type& track::
@@ -608,7 +572,7 @@ namespace lfm_top_tracks_for_artist
 
 #include <xsd/cxx/xml/dom/parsing-source.hxx>
 
-namespace lfm_top_tracks_for_artist
+namespace lfm_top_tracks_for_tag
 {
   // lfm
   //
@@ -711,7 +675,7 @@ namespace lfm_top_tracks_for_artist
   toptracks ()
   : ::xml_schema::type (),
     track_ (::xml_schema::flags (), this),
-    artist_ (::xml_schema::flags (), this),
+    tag_ (::xml_schema::flags (), this),
     page_ (::xml_schema::flags (), this),
     perPage_ (::xml_schema::flags (), this),
     totalPages_ (::xml_schema::flags (), this),
@@ -725,7 +689,7 @@ namespace lfm_top_tracks_for_artist
              ::xml_schema::type* c)
   : ::xml_schema::type (x, f, c),
     track_ (x.track_, f, this),
-    artist_ (x.artist_, f, this),
+    tag_ (x.tag_, f, this),
     page_ (x.page_, f, this),
     perPage_ (x.perPage_, f, this),
     totalPages_ (x.totalPages_, f, this),
@@ -739,7 +703,7 @@ namespace lfm_top_tracks_for_artist
              ::xml_schema::type* c)
   : ::xml_schema::type (e, f | ::xml_schema::flags::base, c),
     track_ (f, this),
-    artist_ (f, this),
+    tag_ (f, this),
     page_ (f, this),
     perPage_ (f, this),
     totalPages_ (f, this),
@@ -782,12 +746,12 @@ namespace lfm_top_tracks_for_artist
       const ::xsd::cxx::xml::qualified_name< char > n (
         ::xsd::cxx::xml::dom::name< char > (i));
 
-      if (n.name () == "artist" && n.namespace_ ().empty ())
+      if (n.name () == "tag" && n.namespace_ ().empty ())
       {
-        ::std::auto_ptr< artist_type > r (
-          artist_traits::create (i, f, this));
+        ::std::auto_ptr< tag_type > r (
+          tag_traits::create (i, f, this));
 
-        this->artist (r);
+        this->tag (r);
         continue;
       }
 
@@ -830,8 +794,6 @@ namespace lfm_top_tracks_for_artist
   track::
   track (const name_type& name,
          const duration_type& duration,
-         const playcount_type& playcount,
-         const listeners_type& listeners,
          const mbid_type& mbid,
          const url_type& url,
          const streamable_type& streamable,
@@ -839,8 +801,6 @@ namespace lfm_top_tracks_for_artist
   : ::xml_schema::type (),
     name_ (name, ::xml_schema::flags (), this),
     duration_ (duration, ::xml_schema::flags (), this),
-    playcount_ (playcount, ::xml_schema::flags (), this),
-    listeners_ (listeners, ::xml_schema::flags (), this),
     mbid_ (mbid, ::xml_schema::flags (), this),
     url_ (url, ::xml_schema::flags (), this),
     streamable_ (streamable, ::xml_schema::flags (), this),
@@ -857,8 +817,6 @@ namespace lfm_top_tracks_for_artist
   : ::xml_schema::type (x, f, c),
     name_ (x.name_, f, this),
     duration_ (x.duration_, f, this),
-    playcount_ (x.playcount_, f, this),
-    listeners_ (x.listeners_, f, this),
     mbid_ (x.mbid_, f, this),
     url_ (x.url_, f, this),
     streamable_ (x.streamable_, f, this),
@@ -875,8 +833,6 @@ namespace lfm_top_tracks_for_artist
   : ::xml_schema::type (e, f | ::xml_schema::flags::base, c),
     name_ (f, this),
     duration_ (f, this),
-    playcount_ (f, this),
-    listeners_ (f, this),
     mbid_ (f, this),
     url_ (f, this),
     streamable_ (f, this),
@@ -922,28 +878,6 @@ namespace lfm_top_tracks_for_artist
         if (!duration_.present ())
         {
           this->duration (duration_traits::create (i, f, this));
-          continue;
-        }
-      }
-
-      // playcount
-      //
-      if (n.name () == "playcount" && n.namespace_ () == "")
-      {
-        if (!playcount_.present ())
-        {
-          this->playcount (playcount_traits::create (i, f, this));
-          continue;
-        }
-      }
-
-      // listeners
-      //
-      if (n.name () == "listeners" && n.namespace_ () == "")
-      {
-        if (!listeners_.present ())
-        {
-          this->listeners (listeners_traits::create (i, f, this));
           continue;
         }
       }
@@ -1029,20 +963,6 @@ namespace lfm_top_tracks_for_artist
     {
       throw ::xsd::cxx::tree::expected_element< char > (
         "duration",
-        "");
-    }
-
-    if (!playcount_.present ())
-    {
-      throw ::xsd::cxx::tree::expected_element< char > (
-        "playcount",
-        "");
-    }
-
-    if (!listeners_.present ())
-    {
-      throw ::xsd::cxx::tree::expected_element< char > (
-        "listeners",
         "");
     }
 
@@ -1345,9 +1265,9 @@ namespace lfm_top_tracks_for_artist
 #include <xsd/cxx/xml/sax/std-input-source.hxx>
 #include <xsd/cxx/tree/error-handler.hxx>
 
-namespace lfm_top_tracks_for_artist
+namespace lfm_top_tracks_for_tag
 {
-  ::std::auto_ptr< ::lfm_top_tracks_for_artist::lfm >
+  ::std::auto_ptr< ::lfm_top_tracks_for_tag::lfm >
   lfm_ (const ::std::string& u,
         ::xml_schema::flags f,
         const ::xml_schema::properties& p)
@@ -1363,8 +1283,8 @@ namespace lfm_top_tracks_for_artist
 
     h.throw_if_failed< ::xsd::cxx::tree::parsing< char > > ();
 
-    ::std::auto_ptr< ::lfm_top_tracks_for_artist::lfm > r (
-      ::lfm_top_tracks_for_artist::lfm_ (
+    ::std::auto_ptr< ::lfm_top_tracks_for_tag::lfm > r (
+      ::lfm_top_tracks_for_tag::lfm_ (
         d.get (), f | ::xml_schema::flags::own_dom, p));
 
     if (f & ::xml_schema::flags::keep_dom)
@@ -1373,7 +1293,7 @@ namespace lfm_top_tracks_for_artist
     return r;
   }
 
-  ::std::auto_ptr< ::lfm_top_tracks_for_artist::lfm >
+  ::std::auto_ptr< ::lfm_top_tracks_for_tag::lfm >
   lfm_ (const ::std::string& u,
         ::xml_schema::error_handler& h,
         ::xml_schema::flags f,
@@ -1389,8 +1309,8 @@ namespace lfm_top_tracks_for_artist
     if (!d)
       throw ::xsd::cxx::tree::parsing< char > ();
 
-    ::std::auto_ptr< ::lfm_top_tracks_for_artist::lfm > r (
-      ::lfm_top_tracks_for_artist::lfm_ (
+    ::std::auto_ptr< ::lfm_top_tracks_for_tag::lfm > r (
+      ::lfm_top_tracks_for_tag::lfm_ (
         d.get (), f | ::xml_schema::flags::own_dom, p));
 
     if (f & ::xml_schema::flags::keep_dom)
@@ -1399,7 +1319,7 @@ namespace lfm_top_tracks_for_artist
     return r;
   }
 
-  ::std::auto_ptr< ::lfm_top_tracks_for_artist::lfm >
+  ::std::auto_ptr< ::lfm_top_tracks_for_tag::lfm >
   lfm_ (const ::std::string& u,
         ::xercesc::DOMErrorHandler& h,
         ::xml_schema::flags f,
@@ -1411,8 +1331,8 @@ namespace lfm_top_tracks_for_artist
     if (!d)
       throw ::xsd::cxx::tree::parsing< char > ();
 
-    ::std::auto_ptr< ::lfm_top_tracks_for_artist::lfm > r (
-      ::lfm_top_tracks_for_artist::lfm_ (
+    ::std::auto_ptr< ::lfm_top_tracks_for_tag::lfm > r (
+      ::lfm_top_tracks_for_tag::lfm_ (
         d.get (), f | ::xml_schema::flags::own_dom, p));
 
     if (f & ::xml_schema::flags::keep_dom)
@@ -1421,7 +1341,7 @@ namespace lfm_top_tracks_for_artist
     return r;
   }
 
-  ::std::auto_ptr< ::lfm_top_tracks_for_artist::lfm >
+  ::std::auto_ptr< ::lfm_top_tracks_for_tag::lfm >
   lfm_ (::std::istream& is,
         ::xml_schema::flags f,
         const ::xml_schema::properties& p)
@@ -1432,10 +1352,10 @@ namespace lfm_top_tracks_for_artist
 
     ::xsd::cxx::xml::sax::std_input_source isrc (is);
     ::xercesc::Wrapper4InputSource wrap (&isrc, false);
-    return ::lfm_top_tracks_for_artist::lfm_ (wrap, f, p);
+    return ::lfm_top_tracks_for_tag::lfm_ (wrap, f, p);
   }
 
-  ::std::auto_ptr< ::lfm_top_tracks_for_artist::lfm >
+  ::std::auto_ptr< ::lfm_top_tracks_for_tag::lfm >
   lfm_ (::std::istream& is,
         ::xml_schema::error_handler& h,
         ::xml_schema::flags f,
@@ -1447,10 +1367,10 @@ namespace lfm_top_tracks_for_artist
 
     ::xsd::cxx::xml::sax::std_input_source isrc (is);
     ::xercesc::Wrapper4InputSource wrap (&isrc, false);
-    return ::lfm_top_tracks_for_artist::lfm_ (wrap, h, f, p);
+    return ::lfm_top_tracks_for_tag::lfm_ (wrap, h, f, p);
   }
 
-  ::std::auto_ptr< ::lfm_top_tracks_for_artist::lfm >
+  ::std::auto_ptr< ::lfm_top_tracks_for_tag::lfm >
   lfm_ (::std::istream& is,
         ::xercesc::DOMErrorHandler& h,
         ::xml_schema::flags f,
@@ -1458,10 +1378,10 @@ namespace lfm_top_tracks_for_artist
   {
     ::xsd::cxx::xml::sax::std_input_source isrc (is);
     ::xercesc::Wrapper4InputSource wrap (&isrc, false);
-    return ::lfm_top_tracks_for_artist::lfm_ (wrap, h, f, p);
+    return ::lfm_top_tracks_for_tag::lfm_ (wrap, h, f, p);
   }
 
-  ::std::auto_ptr< ::lfm_top_tracks_for_artist::lfm >
+  ::std::auto_ptr< ::lfm_top_tracks_for_tag::lfm >
   lfm_ (::std::istream& is,
         const ::std::string& sid,
         ::xml_schema::flags f,
@@ -1473,10 +1393,10 @@ namespace lfm_top_tracks_for_artist
 
     ::xsd::cxx::xml::sax::std_input_source isrc (is, sid);
     ::xercesc::Wrapper4InputSource wrap (&isrc, false);
-    return ::lfm_top_tracks_for_artist::lfm_ (wrap, f, p);
+    return ::lfm_top_tracks_for_tag::lfm_ (wrap, f, p);
   }
 
-  ::std::auto_ptr< ::lfm_top_tracks_for_artist::lfm >
+  ::std::auto_ptr< ::lfm_top_tracks_for_tag::lfm >
   lfm_ (::std::istream& is,
         const ::std::string& sid,
         ::xml_schema::error_handler& h,
@@ -1489,10 +1409,10 @@ namespace lfm_top_tracks_for_artist
 
     ::xsd::cxx::xml::sax::std_input_source isrc (is, sid);
     ::xercesc::Wrapper4InputSource wrap (&isrc, false);
-    return ::lfm_top_tracks_for_artist::lfm_ (wrap, h, f, p);
+    return ::lfm_top_tracks_for_tag::lfm_ (wrap, h, f, p);
   }
 
-  ::std::auto_ptr< ::lfm_top_tracks_for_artist::lfm >
+  ::std::auto_ptr< ::lfm_top_tracks_for_tag::lfm >
   lfm_ (::std::istream& is,
         const ::std::string& sid,
         ::xercesc::DOMErrorHandler& h,
@@ -1501,10 +1421,10 @@ namespace lfm_top_tracks_for_artist
   {
     ::xsd::cxx::xml::sax::std_input_source isrc (is, sid);
     ::xercesc::Wrapper4InputSource wrap (&isrc, false);
-    return ::lfm_top_tracks_for_artist::lfm_ (wrap, h, f, p);
+    return ::lfm_top_tracks_for_tag::lfm_ (wrap, h, f, p);
   }
 
-  ::std::auto_ptr< ::lfm_top_tracks_for_artist::lfm >
+  ::std::auto_ptr< ::lfm_top_tracks_for_tag::lfm >
   lfm_ (const ::xercesc::DOMInputSource& i,
         ::xml_schema::flags f,
         const ::xml_schema::properties& p)
@@ -1516,8 +1436,8 @@ namespace lfm_top_tracks_for_artist
 
     h.throw_if_failed< ::xsd::cxx::tree::parsing< char > > ();
 
-    ::std::auto_ptr< ::lfm_top_tracks_for_artist::lfm > r (
-      ::lfm_top_tracks_for_artist::lfm_ (
+    ::std::auto_ptr< ::lfm_top_tracks_for_tag::lfm > r (
+      ::lfm_top_tracks_for_tag::lfm_ (
         d.get (), f | ::xml_schema::flags::own_dom, p));
 
     if (f & ::xml_schema::flags::keep_dom)
@@ -1526,7 +1446,7 @@ namespace lfm_top_tracks_for_artist
     return r;
   }
 
-  ::std::auto_ptr< ::lfm_top_tracks_for_artist::lfm >
+  ::std::auto_ptr< ::lfm_top_tracks_for_tag::lfm >
   lfm_ (const ::xercesc::DOMInputSource& i,
         ::xml_schema::error_handler& h,
         ::xml_schema::flags f,
@@ -1538,8 +1458,8 @@ namespace lfm_top_tracks_for_artist
     if (!d)
       throw ::xsd::cxx::tree::parsing< char > ();
 
-    ::std::auto_ptr< ::lfm_top_tracks_for_artist::lfm > r (
-      ::lfm_top_tracks_for_artist::lfm_ (
+    ::std::auto_ptr< ::lfm_top_tracks_for_tag::lfm > r (
+      ::lfm_top_tracks_for_tag::lfm_ (
         d.get (), f | ::xml_schema::flags::own_dom, p));
 
     if (f & ::xml_schema::flags::keep_dom)
@@ -1548,7 +1468,7 @@ namespace lfm_top_tracks_for_artist
     return r;
   }
 
-  ::std::auto_ptr< ::lfm_top_tracks_for_artist::lfm >
+  ::std::auto_ptr< ::lfm_top_tracks_for_tag::lfm >
   lfm_ (const ::xercesc::DOMInputSource& i,
         ::xercesc::DOMErrorHandler& h,
         ::xml_schema::flags f,
@@ -1560,8 +1480,8 @@ namespace lfm_top_tracks_for_artist
     if (!d)
       throw ::xsd::cxx::tree::parsing< char > ();
 
-    ::std::auto_ptr< ::lfm_top_tracks_for_artist::lfm > r (
-      ::lfm_top_tracks_for_artist::lfm_ (
+    ::std::auto_ptr< ::lfm_top_tracks_for_tag::lfm > r (
+      ::lfm_top_tracks_for_tag::lfm_ (
         d.get (), f | ::xml_schema::flags::own_dom, p));
 
     if (f & ::xml_schema::flags::keep_dom)
@@ -1570,7 +1490,7 @@ namespace lfm_top_tracks_for_artist
     return r;
   }
 
-  ::std::auto_ptr< ::lfm_top_tracks_for_artist::lfm >
+  ::std::auto_ptr< ::lfm_top_tracks_for_tag::lfm >
   lfm_ (const ::xercesc::DOMDocument& d,
         ::xml_schema::flags f,
         const ::xml_schema::properties& p)
@@ -1580,8 +1500,8 @@ namespace lfm_top_tracks_for_artist
       ::xsd::cxx::xml::dom::auto_ptr< ::xercesc::DOMDocument > c (
         static_cast< ::xercesc::DOMDocument* > (d.cloneNode (true)));
 
-      ::std::auto_ptr< ::lfm_top_tracks_for_artist::lfm > r (
-        ::lfm_top_tracks_for_artist::lfm_ (
+      ::std::auto_ptr< ::lfm_top_tracks_for_tag::lfm > r (
+        ::lfm_top_tracks_for_tag::lfm_ (
           c.get (), f | ::xml_schema::flags::own_dom, p));
 
       c.release ();
@@ -1595,8 +1515,8 @@ namespace lfm_top_tracks_for_artist
     if (n.name () == "lfm" &&
         n.namespace_ () == "")
     {
-      ::std::auto_ptr< ::lfm_top_tracks_for_artist::lfm > r (
-        ::xsd::cxx::tree::traits< ::lfm_top_tracks_for_artist::lfm, char >::create (
+      ::std::auto_ptr< ::lfm_top_tracks_for_tag::lfm > r (
+        ::xsd::cxx::tree::traits< ::lfm_top_tracks_for_tag::lfm, char >::create (
           e, f, 0));
       return r;
     }
@@ -1608,7 +1528,7 @@ namespace lfm_top_tracks_for_artist
       "");
   }
 
-  ::std::auto_ptr< ::lfm_top_tracks_for_artist::lfm >
+  ::std::auto_ptr< ::lfm_top_tracks_for_tag::lfm >
   lfm_ (::xercesc::DOMDocument* d,
         ::xml_schema::flags f,
         const ::xml_schema::properties&)
@@ -1629,8 +1549,8 @@ namespace lfm_top_tracks_for_artist
     if (n.name () == "lfm" &&
         n.namespace_ () == "")
     {
-      ::std::auto_ptr< ::lfm_top_tracks_for_artist::lfm > r (
-        ::xsd::cxx::tree::traits< ::lfm_top_tracks_for_artist::lfm, char >::create (
+      ::std::auto_ptr< ::lfm_top_tracks_for_tag::lfm > r (
+        ::xsd::cxx::tree::traits< ::lfm_top_tracks_for_tag::lfm, char >::create (
           e, f, 0));
       c.release ();
       return r;

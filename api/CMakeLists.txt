@@ -63,23 +63,6 @@ SET(mpx_api_SOURCES
   util-ui.cc
   xml.cc
   xpath.cc
-  tunnel_context_base.cpp
-  tunnel_validity_tracker.cpp
-  bad_sync_call.cpp
-  connection_handler.cpp
-  connection_wrapper.cpp
-  dispatchables.cpp
-  dispatcher.cpp
-  glib_dispatcher.cpp
-  glib_threadable.cpp
-  operator_new.cpp
-  signal_f_base.cpp
-  signal_wrapper_base.cpp
-  __sigx_pch__.cpp
-  __sigx_pchfence__.h
-  tunnel_base.cpp
-  bad_caller.cpp
-  bad_dispatcher.cpp
   ${mpx_api_ADD_SOURCES}
 )
 

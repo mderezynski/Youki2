@@ -31,8 +31,8 @@
 // in the accompanying FLOSSE file.
 //
 
-#ifndef XSD_ARTIST_TOPTRACKS_2_0_HXX
-#define XSD_ARTIST_TOPTRACKS_2_0_HXX
+#ifndef XSD_TAG_TOPTRACKS_2_0_HXX
+#define XSD_TAG_TOPTRACKS_2_0_HXX
 
 // Begin prologue.
 //
@@ -201,7 +201,7 @@ namespace xml_schema
 
 // Forward declarations.
 //
-namespace lfm_top_tracks_for_artist
+namespace lfm_top_tracks_for_tag
 {
   class lfm;
   class toptracks;
@@ -222,14 +222,14 @@ namespace lfm_top_tracks_for_artist
 
 #include <xsd/cxx/xml/dom/parsing-header.hxx>
 
-namespace lfm_top_tracks_for_artist
+namespace lfm_top_tracks_for_tag
 {
   class lfm: public ::xml_schema::type
   {
     public:
     // toptracks
     // 
-    typedef ::lfm_top_tracks_for_artist::toptracks toptracks_type;
+    typedef ::lfm_top_tracks_for_tag::toptracks toptracks_type;
     typedef ::xsd::cxx::tree::traits< toptracks_type, char > toptracks_traits;
 
     const toptracks_type&
@@ -298,7 +298,7 @@ namespace lfm_top_tracks_for_artist
     public:
     // track
     // 
-    typedef ::lfm_top_tracks_for_artist::track track_type;
+    typedef ::lfm_top_tracks_for_tag::track track_type;
     typedef ::xsd::cxx::tree::sequence< track_type > track_sequence;
     typedef track_sequence::iterator track_iterator;
     typedef track_sequence::const_iterator track_const_iterator;
@@ -313,26 +313,26 @@ namespace lfm_top_tracks_for_artist
     void
     track (const track_sequence& s);
 
-    // artist
+    // tag
     // 
-    typedef ::xml_schema::string artist_type;
-    typedef ::xsd::cxx::tree::optional< artist_type > artist_optional;
-    typedef ::xsd::cxx::tree::traits< artist_type, char > artist_traits;
+    typedef ::xml_schema::string tag_type;
+    typedef ::xsd::cxx::tree::optional< tag_type > tag_optional;
+    typedef ::xsd::cxx::tree::traits< tag_type, char > tag_traits;
 
-    const artist_optional&
-    artist () const;
+    const tag_optional&
+    tag () const;
 
-    artist_optional&
-    artist ();
-
-    void
-    artist (const artist_type& x);
+    tag_optional&
+    tag ();
 
     void
-    artist (const artist_optional& x);
+    tag (const tag_type& x);
 
     void
-    artist (::std::auto_ptr< artist_type > p);
+    tag (const tag_optional& x);
+
+    void
+    tag (::std::auto_ptr< tag_type > p);
 
     // page
     // 
@@ -431,7 +431,7 @@ namespace lfm_top_tracks_for_artist
 
     private:
     track_sequence track_;
-    artist_optional artist_;
+    tag_optional tag_;
     page_optional page_;
     perPage_optional perPage_;
     totalPages_optional totalPages_;
@@ -472,34 +472,6 @@ namespace lfm_top_tracks_for_artist
     void
     duration (const duration_type& x);
 
-    // playcount
-    // 
-    typedef ::xml_schema::int_ playcount_type;
-    typedef ::xsd::cxx::tree::traits< playcount_type, char > playcount_traits;
-
-    const playcount_type&
-    playcount () const;
-
-    playcount_type&
-    playcount ();
-
-    void
-    playcount (const playcount_type& x);
-
-    // listeners
-    // 
-    typedef ::xml_schema::int_ listeners_type;
-    typedef ::xsd::cxx::tree::traits< listeners_type, char > listeners_traits;
-
-    const listeners_type&
-    listeners () const;
-
-    listeners_type&
-    listeners ();
-
-    void
-    listeners (const listeners_type& x);
-
     // mbid
     // 
     typedef ::xml_schema::string mbid_type;
@@ -536,7 +508,7 @@ namespace lfm_top_tracks_for_artist
 
     // streamable
     // 
-    typedef ::lfm_top_tracks_for_artist::streamable streamable_type;
+    typedef ::lfm_top_tracks_for_tag::streamable streamable_type;
     typedef ::xsd::cxx::tree::traits< streamable_type, char > streamable_traits;
 
     const streamable_type&
@@ -553,7 +525,7 @@ namespace lfm_top_tracks_for_artist
 
     // artist
     // 
-    typedef ::lfm_top_tracks_for_artist::artist artist_type;
+    typedef ::lfm_top_tracks_for_tag::artist artist_type;
     typedef ::xsd::cxx::tree::traits< artist_type, char > artist_traits;
 
     const artist_type&
@@ -570,7 +542,7 @@ namespace lfm_top_tracks_for_artist
 
     // image
     // 
-    typedef ::lfm_top_tracks_for_artist::image image_type;
+    typedef ::lfm_top_tracks_for_tag::image image_type;
     typedef ::xsd::cxx::tree::sequence< image_type > image_sequence;
     typedef image_sequence::iterator image_iterator;
     typedef image_sequence::const_iterator image_const_iterator;
@@ -607,8 +579,6 @@ namespace lfm_top_tracks_for_artist
     //
     track (const name_type&,
            const duration_type&,
-           const playcount_type&,
-           const listeners_type&,
            const mbid_type&,
            const url_type&,
            const streamable_type&,
@@ -636,8 +606,6 @@ namespace lfm_top_tracks_for_artist
     private:
     ::xsd::cxx::tree::one< name_type > name_;
     ::xsd::cxx::tree::one< duration_type > duration_;
-    ::xsd::cxx::tree::one< playcount_type > playcount_;
-    ::xsd::cxx::tree::one< listeners_type > listeners_;
     ::xsd::cxx::tree::one< mbid_type > mbid_;
     ::xsd::cxx::tree::one< url_type > url_;
     ::xsd::cxx::tree::one< streamable_type > streamable_;
@@ -837,23 +805,23 @@ namespace lfm_top_tracks_for_artist
 #include <xercesc/dom/DOMInputSource.hpp>
 #include <xercesc/dom/DOMErrorHandler.hpp>
 
-namespace lfm_top_tracks_for_artist
+namespace lfm_top_tracks_for_tag
 {
   // Parse a URI or a local file.
   //
 
-  ::std::auto_ptr< ::lfm_top_tracks_for_artist::lfm >
+  ::std::auto_ptr< ::lfm_top_tracks_for_tag::lfm >
   lfm_ (const ::std::string& uri,
         ::xml_schema::flags f = 0,
         const ::xml_schema::properties& p = ::xml_schema::properties ());
 
-  ::std::auto_ptr< ::lfm_top_tracks_for_artist::lfm >
+  ::std::auto_ptr< ::lfm_top_tracks_for_tag::lfm >
   lfm_ (const ::std::string& uri,
         ::xml_schema::error_handler& eh,
         ::xml_schema::flags f = 0,
         const ::xml_schema::properties& p = ::xml_schema::properties ());
 
-  ::std::auto_ptr< ::lfm_top_tracks_for_artist::lfm >
+  ::std::auto_ptr< ::lfm_top_tracks_for_tag::lfm >
   lfm_ (const ::std::string& uri,
         ::xercesc::DOMErrorHandler& eh,
         ::xml_schema::flags f = 0,
@@ -862,37 +830,37 @@ namespace lfm_top_tracks_for_artist
   // Parse std::istream.
   //
 
-  ::std::auto_ptr< ::lfm_top_tracks_for_artist::lfm >
+  ::std::auto_ptr< ::lfm_top_tracks_for_tag::lfm >
   lfm_ (::std::istream& is,
         ::xml_schema::flags f = 0,
         const ::xml_schema::properties& p = ::xml_schema::properties ());
 
-  ::std::auto_ptr< ::lfm_top_tracks_for_artist::lfm >
+  ::std::auto_ptr< ::lfm_top_tracks_for_tag::lfm >
   lfm_ (::std::istream& is,
         ::xml_schema::error_handler& eh,
         ::xml_schema::flags f = 0,
         const ::xml_schema::properties& p = ::xml_schema::properties ());
 
-  ::std::auto_ptr< ::lfm_top_tracks_for_artist::lfm >
+  ::std::auto_ptr< ::lfm_top_tracks_for_tag::lfm >
   lfm_ (::std::istream& is,
         ::xercesc::DOMErrorHandler& eh,
         ::xml_schema::flags f = 0,
         const ::xml_schema::properties& p = ::xml_schema::properties ());
 
-  ::std::auto_ptr< ::lfm_top_tracks_for_artist::lfm >
+  ::std::auto_ptr< ::lfm_top_tracks_for_tag::lfm >
   lfm_ (::std::istream& is,
         const ::std::string& id,
         ::xml_schema::flags f = 0,
         const ::xml_schema::properties& p = ::xml_schema::properties ());
 
-  ::std::auto_ptr< ::lfm_top_tracks_for_artist::lfm >
+  ::std::auto_ptr< ::lfm_top_tracks_for_tag::lfm >
   lfm_ (::std::istream& is,
         const ::std::string& id,
         ::xml_schema::error_handler& eh,
         ::xml_schema::flags f = 0,
         const ::xml_schema::properties& p = ::xml_schema::properties ());
 
-  ::std::auto_ptr< ::lfm_top_tracks_for_artist::lfm >
+  ::std::auto_ptr< ::lfm_top_tracks_for_tag::lfm >
   lfm_ (::std::istream& is,
         const ::std::string& id,
         ::xercesc::DOMErrorHandler& eh,
@@ -902,18 +870,18 @@ namespace lfm_top_tracks_for_artist
   // Parse xercesc::DOMInputSource.
   //
 
-  ::std::auto_ptr< ::lfm_top_tracks_for_artist::lfm >
+  ::std::auto_ptr< ::lfm_top_tracks_for_tag::lfm >
   lfm_ (const ::xercesc::DOMInputSource& is,
         ::xml_schema::flags f = 0,
         const ::xml_schema::properties& p = ::xml_schema::properties ());
 
-  ::std::auto_ptr< ::lfm_top_tracks_for_artist::lfm >
+  ::std::auto_ptr< ::lfm_top_tracks_for_tag::lfm >
   lfm_ (const ::xercesc::DOMInputSource& is,
         ::xml_schema::error_handler& eh,
         ::xml_schema::flags f = 0,
         const ::xml_schema::properties& p = ::xml_schema::properties ());
 
-  ::std::auto_ptr< ::lfm_top_tracks_for_artist::lfm >
+  ::std::auto_ptr< ::lfm_top_tracks_for_tag::lfm >
   lfm_ (const ::xercesc::DOMInputSource& is,
         ::xercesc::DOMErrorHandler& eh,
         ::xml_schema::flags f = 0,
@@ -922,12 +890,12 @@ namespace lfm_top_tracks_for_artist
   // Parse xercesc::DOMDocument.
   //
 
-  ::std::auto_ptr< ::lfm_top_tracks_for_artist::lfm >
+  ::std::auto_ptr< ::lfm_top_tracks_for_tag::lfm >
   lfm_ (const ::xercesc::DOMDocument& d,
         ::xml_schema::flags f = 0,
         const ::xml_schema::properties& p = ::xml_schema::properties ());
 
-  ::std::auto_ptr< ::lfm_top_tracks_for_artist::lfm >
+  ::std::auto_ptr< ::lfm_top_tracks_for_tag::lfm >
   lfm_ (::xercesc::DOMDocument* d,
         ::xml_schema::flags f = 0,
         const ::xml_schema::properties& p = ::xml_schema::properties ());
@@ -940,4 +908,4 @@ namespace lfm_top_tracks_for_artist
 //
 // End epilogue.
 
-#endif // XSD_ARTIST_TOPTRACKS_2_0_HXX
+#endif // XSD_TAG_TOPTRACKS_2_0_HXX

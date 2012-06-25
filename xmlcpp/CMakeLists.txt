@@ -21,6 +21,8 @@ SET(mpx_parsers_SOURCES
   xsd-topalbums-2.0.hxx
   xsd-topartists-2.0.cxx
   xsd-topartists-2.0.hxx
+  xsd-tag-toptracks-2.0.hxx
+  xsd-tag-toptracks-2.0.cxx
   xspf.cxx
   xspf.hxx
 )

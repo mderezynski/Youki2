@@ -83,6 +83,7 @@ TARGET_LINK_LIBRARIES(youki-mlibman-bin
   ${X11_X11_LIB}
   mconfig
   mpx-api
+  mpx-sigx
   mpx-widgets
   mpx-musicbrainz
   ${youki_mlibman_bin_ADD_LIBRARIES}
