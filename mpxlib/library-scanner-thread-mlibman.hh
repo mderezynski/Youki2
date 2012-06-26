@@ -31,11 +31,7 @@
 #include <sigx/sigx.h>
 #include <sigx/signal_f.h>
 #include <sigx/request_f.h>
-#ifdef HAVE_TR1
-#include <tr1/unordered_map>
-#else
 #include <map>
-#endif
 #include <boost/tuple/tuple.hpp>
 #include <boost/tuple/tuple_comparison.hpp>
 #include "mpx/mpx-covers.hh"
@@ -297,25 +293,18 @@ namespace MPX
             typedef boost::shared_ptr<TrackInfo>    TrackInfo_p;
             typedef std::vector<TrackInfo_p>        TrackInfo_p_Vector;
 
-#ifdef HAVE_TR1
-            typedef std::tr1::unordered_map<guint,      TrackInfo_p_Vector>   Map_L4;
-            typedef std::tr1::unordered_map<std::string, Map_L4>               Map_L3;
-            typedef std::tr1::unordered_map<guint,      Map_L3>               Map_L2;
-            typedef std::tr1::unordered_map<guint,      Map_L2>               Map_L1;
-#else
-            typedef std::map<guint,      TrackInfo_p_Vector>   Map_L4;
+            typedef std::map<guint,       TrackInfo_p_Vector>   Map_L4;
             typedef std::map<std::string, Map_L4>               Map_L3;
-            typedef std::map<guint,      Map_L3>               Map_L2;
-            typedef std::map<guint,      Map_L2>               Map_L1;
-#endif
+            typedef std::map<guint,       Map_L3>               Map_L2;
+            typedef std::map<guint,       Map_L2>               Map_L1;
 
             //typedef std::map<guint , std::map<guint, std::map<std::string, TrackInfo_p_Vector> > > InsertionTracks_t;
 
             Map_L1      m_InsertionTracks;
 
-            typedef boost::tuple<guint, std::string>                          FileDuplet_t;
-            typedef std::map<FileDuplet_t, time_t>                             Duplet_MTIME_t;
-            typedef std::set<guint>                                           IdSet_t;
+            typedef boost::tuple<guint, std::string>  FileDuplet_t;
+            typedef std::map<FileDuplet_t, time_t>    Duplet_MTIME_t;
+            typedef std::set<guint>                   IdSet_t;
 
             IdSet_t                                 m_AlbumIDs, m_AlbumArtistIDs; 
             IdSet_t                                 m_ProcessedAlbums;

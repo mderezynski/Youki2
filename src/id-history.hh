@@ -57,6 +57,7 @@ namespace MPX
 		rewind()
 		{
 		    mHistoryFirst = mHistory.begin() ;
+		    mHistoryCurrent = mHistoryFirst ;
 		}
 
 		void

@@ -78,7 +78,10 @@ namespace MPX
 	    g_message("RemoteStore:: URL['%s']", url.c_str()) ;
 
             request = Soup::RequestSync::create( url ) ; 
+    
+	    request->run() ;
 
+#if 0
 	    auto handle = std::async(
 		  std::launch::async
 		, [&request](){ request->run(); }
@@ -88,6 +91,7 @@ namespace MPX
 	    {
 		while(gtk_events_pending()) gtk_main_iteration() ;
 	    }
+#endif
 
 	    save_image(
 		  request->get_data_raw()

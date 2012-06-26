@@ -183,9 +183,9 @@ namespace MPX
 
         GdkRectangle r ;
         r.x = 0 ;
-        r.y = 0 ;
+        r.y = 1 ;
         r.width = a.get_width() ; 
-        r.height = a.get_height() ; 
+        r.height = a.get_height() - 2 ; 
 
         cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 
@@ -322,15 +322,12 @@ namespace MPX
           const Cairo::RefPtr<Cairo::Context>& cairo
     )
     {
-	if( !m_cover )
-	    return ;
+	if(!m_cover) return ;
 
         cairo->save() ;
-
 	cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 
 	GdkRectangle r ;
-
 	r.x = get_allocated_width() - 110 ; 
 	r.y = 1 ;
 	r.width = 109 ; 
@@ -348,7 +345,7 @@ namespace MPX
 	    , r.y 
 	    , r.width 
 	    , r.height 
-	    , rounding - 1
+	    , rounding 
 	    , MPX::CairoCorners::CORNERS(10)
 	) ;
 	cairo->fill() ;
@@ -359,7 +356,7 @@ namespace MPX
 	    , r.y
 	    , r.width
 	    , r.height 
-	    , rounding - 1
+	    , rounding
 	    , MPX::CairoCorners::CORNERS(5)
 	) ;
 	Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create(

@@ -202,6 +202,14 @@ namespace
 
 namespace MPX
 {
+    enum EntityType
+    {
+          ENTITY_TRACK
+        , ENTITY_ALBUM
+        , ENTITY_ARTIST
+        , ENTITY_ALBUM_ARTIST
+    };
+
     struct YoukiController::Private
     { 
         View::Artist::DataModelFilter_sp  FilterModelArtist ;
@@ -256,9 +264,9 @@ namespace MPX
                 , 0
         ) ;
 
-        m_covers    = services->get<Covers>("mpx-service-covers").get() ;
-        m_play      = services->get<MPX::Play>("mpx-service-play").get() ;
-        m_library   = services->get<Library>("mpx-service-library").get() ;
+        m_covers    = (services->get<Covers>("mpx-service-covers")).get() ;
+        m_play      = (services->get<MPX::Play>("mpx-service-play")).get() ;
+        m_library   = (services->get<Library>("mpx-service-library")).get() ;
 
         m_mlibman_dbus_proxy = services->get<info::backtrace::Youki::MLibMan_proxy_actual>("mpx-service-mlibman").get() ; 
 
@@ -1044,6 +1052,17 @@ namespace MPX
     }
 
     void
+    YoukiController::infobar_set_message(
+	  const std::string& msg_str
+	, Gtk::MessageType   msg_type
+    )
+    {
+	m_InfoBar->set_message_type( msg_type ) ; 
+	m_InfoLabel->set_markup( msg_str ) ;
+	m_InfoBar->show_all() ;
+    }
+
+    void
     YoukiController::history_save()
     { 
 	ViewHistoryIter pos = m_view_history.end() ;
@@ -1266,6 +1285,7 @@ namespace MPX
 	m_find_nearest_artist_full.load_dictionary(m_nearest__artists) ;
 	m_find_nearest_artist_full_lc.load_dictionary(artists_lc) ;
 
+	g_message("Artist Regen Mapping: %s", G_STRFUNC) ;
         private_->FilterModelArtist->regen_mapping() ;
     }
 
@@ -1475,7 +1495,7 @@ namespace MPX
 	    Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UIActions_Main->get_action("ViewActionFollowPlayingTrack"))->get_active())
         {
             const MPX::Track& track = *m_track_current ;
-            guint id_track = boost::get<guint>(track[ATTRIBUTE_MPX_TRACK_ID].get()) ;
+            guint id_track = boost::get<guint>(*(track[ATTRIBUTE_MPX_TRACK_ID])) ;
 	    m_ListViewTracks->scroll_to_id(id_track) ;
         }
     }
@@ -1483,7 +1503,6 @@ namespace MPX
     void
     YoukiController::handle_model_changed(guint,bool)
     {
-	guint size = private_->FilterModelTracks->size() ;
 	auto sel_row_albums = m_ListViewAlbums->get_selected_index() ; 
 	auto sel_row_artist = m_ListViewArtist->get_selected_index() ; 
 	
@@ -1493,13 +1512,13 @@ namespace MPX
 	{
 	    if(  sel_row_albums )
 	    {
-		auto a = private_->FilterModelAlbums->row(sel_row_albums.get()) ;
+		auto a = private_->FilterModelAlbums->row(*sel_row_albums) ;
 		s += (boost::format("<small><b>%s</b> by <b>%s</b></small>") % Glib::Markup::escape_text(a->album) % Glib::Markup::escape_text(a->album_artist)).str() ;
 	    }
 	    else
 	    if(  sel_row_artist )
 	    {
-		auto a = private_->FilterModelArtist->row(sel_row_artist.get()) ;
+		auto a = private_->FilterModelArtist->row(*sel_row_artist) ;
 		s += (boost::format("<small>Everything by <b>%s</b></small>") % Glib::Markup::escape_text(boost::get<0>(a))).str() ;
 	    }
 	}
@@ -1706,7 +1725,6 @@ namespace MPX
     {
         push_new_tracks() ;
 
-#if 0
 	boost::optional<guint> id ;
 
         if( m_track_current && 
@@ -1719,19 +1737,34 @@ namespace MPX
         m_conn2.block() ;
         m_conn4.block() ;
 
-        private_->FilterModelTracks->enable_fragment_cache() ;
+	SQL::RowV v ;
+	m_library->getSQL(v, (boost::format("SELECT max(id) AS id FROM album_artist")).str()) ; 
+	guint max_artist = boost::get<guint>(v[0]["id"]) ;
+
+	v.clear();
+	m_library->getSQL(v, (boost::format("SELECT max(id) AS id FROM album")).str()) ; 
+	guint max_albums = boost::get<guint>(v[0]["id"]) ;
+	private_->FilterModelTracks->set_sizes( max_artist, max_albums ) ;
+
+	private_->FilterModelTracks->clear_fragment_cache() ;
+	private_->FilterModelTracks->enable_fragment_cache() ;
+
+#if 0
 	private_->FilterModelTracks->regen_mapping(id) ;
-
 	private_->FilterModelArtist->set_constraints_artist( private_->FilterModelTracks->m_constraints_artist ) ;
-	private_->FilterModelAlbums->set_constraints_albums( private_->FilterModelTracks->m_constraints_albums ) ;
-
 	private_->FilterModelArtist->regen_mapping() ;
+
+	private_->FilterModelAlbums->set_constraints_albums( private_->FilterModelTracks->m_constraints_albums ) ;
         private_->FilterModelAlbums->regen_mapping() ;
+#endif
+
+	remove_dangling() ;
 
         m_conn1.unblock() ;
         m_conn2.unblock() ;
         m_conn4.unblock() ;
-#endif
+
+	handle_search_entry_changed() ;
     }
 
     void
@@ -1774,8 +1807,9 @@ namespace MPX
 	    , 0 // FIXME FIXME FIXME
             , id 
         ) ; 
-
-//	private_->FilterModelArtist->regen_mapping() ; 
+	
+	g_message("Artist Regen Mapping: %s", G_STRFUNC) ;	
+	private_->FilterModelArtist->regen_mapping() ; 
     }
 
     struct YoukiController::NewAlbumFetchStruct
@@ -1801,7 +1835,7 @@ namespace MPX
             private_->FilterModelTracks->set_sizes( max_artist, max_albums ) ;
 
             private_->FilterModelAlbums->insert_album( a_sp ) ; 
-//	    private_->FilterModelAlbums->regen_mapping() ;
+	    private_->FilterModelAlbums->regen_mapping() ;
 
         } catch( std::logic_error ) 
         {
@@ -1851,7 +1885,7 @@ namespace MPX
     bool
     YoukiController::on_library_entity_deleted_idle(
           guint                id
-        , int                   type
+        , int                  type
     )
     {
         switch( type )
@@ -1859,25 +1893,12 @@ namespace MPX
             case 0: /* track */
             {
                 private_->FilterModelTracks->erase_track( id ) ; 
-		tracklist_regen_mapping() ;
             }
             break ;
 
             case 1: /* album */
             {
                 private_->FilterModelAlbums->erase_album( id ) ; 
-                private_->FilterModelAlbums->regen_mapping() ;
-
-                SQL::RowV v ;
-
-                m_library->getSQL(v, (boost::format("SELECT max(id) AS id FROM album_artist")).str()) ; 
-                guint max_artist = boost::get<guint>(v[0]["id"]) ;
-
-                v.clear();
-
-                m_library->getSQL(v, (boost::format("SELECT max(id) AS id FROM album")).str()) ; 
-                guint max_albums = boost::get<guint>(v[0]["id"]) ;
-                private_->FilterModelTracks->set_sizes( max_artist, max_albums ) ;
             }
             break ;
 
@@ -1888,16 +1909,8 @@ namespace MPX
 
             case 3: /* album artist */
             {
+		g_message("Erase Artist %s", G_STRFUNC) ;
                 private_->FilterModelArtist->erase_artist( id ) ; 
-                private_->FilterModelArtist->regen_mapping() ; 
-
-                SQL::RowV v ;
-                m_library->getSQL(v, (boost::format("SELECT max(id) AS id FROM album_artist")).str()) ; 
-                guint max_artist = boost::get<guint>(v[0]["id"]) ;
-                v.clear();
-                m_library->getSQL(v, (boost::format("SELECT max(id) AS id FROM album")).str()) ; 
-                guint max_albums = boost::get<guint>(v[0]["id"]) ;
-                private_->FilterModelTracks->set_sizes( max_artist, max_albums ) ;
             }
             break;
         }
@@ -1908,10 +1921,11 @@ namespace MPX
     void
     YoukiController::on_library_entity_deleted(
           guint                id
-        , int                   type
+        , int                  type
     )
     {
-	Glib::signal_idle().connect( sigc::bind( sigc::mem_fun( *this, &YoukiController::on_library_entity_deleted_idle ), id, type )) ;
+	on_library_entity_deleted_idle(id,type) ;
+	//Glib::signal_idle().connect( sigc::bind( sigc::mem_fun( *this, &YoukiController::on_library_entity_deleted_idle ), id, type )) ;
     }
 
     void
@@ -1943,7 +1957,7 @@ namespace MPX
 
 	if( m_track_current )
 	{
-	    MPX::Track& track = *(m_track_current.get()) ;
+	    MPX::Track& track = *m_track_current ; 
 
 	    if( track.has( ATTRIBUTE_MB_ALBUM_ID ) )
 	    {
@@ -2059,18 +2073,20 @@ namespace MPX
 
 		guint id1 = boost::get<guint>((*m_track_current)[ATTRIBUTE_MPX_TRACK_ID].get()) ;
 
-		if( history && !m_play_history.has_ffwd() && register_in_history )
+		if( history && register_in_history )
 		{
 		    m_play_history.append(id1) ;
+		    m_play_history.print() ;
 		}
 
 		try{
 		    m_play->switch_stream( m_library->trackGetLocation( t ) ) ;
 		} catch( std::exception& cxe )
 		{
-		    m_InfoBar->set_message_type( Gtk::MESSAGE_ERROR ) ;
-		    m_InfoLabel->set_markup((boost::format("<b>Error</b> while preparing file: '%s'") % cxe.what()).str()) ;
-		    m_InfoBar->show_all() ;
+		    infobar_set_message(
+			  (boost::format("<b>Error</b> while preparing file: '%s'") % cxe.what()).str()
+			, Gtk::MESSAGE_ERROR
+		    ) ;
 		}
 
         } catch( Library::FileQualificationError & cxe )
@@ -2109,9 +2125,10 @@ namespace MPX
 	, const std::string&	c
     )
     {
-	m_InfoBar->set_message_type( Gtk::MESSAGE_ERROR ) ;
-	m_InfoLabel->set_text((boost::format("%s: %s (%s)") % a % b % c).str()) ;
-	m_InfoBar->show_all() ;
+	infobar_set_message(
+	      (boost::format("%s: %s (%s)") % a % b % c).str()
+	    , Gtk::MESSAGE_ERROR
+	) ;
     }
 
     void
@@ -2131,8 +2148,9 @@ namespace MPX
 
 	if( history && m_play_history.has_ffwd())
 	{
+	    m_play_history.print() ;
 	    Track_sp p = m_library->getTrackById( m_play_history.go_ffwd() ) ;
-	    play_track( p ) ;
+	    play_track( p, false ) ;
 	    goto x1 ;
 	}	
 	else
@@ -2229,8 +2247,9 @@ namespace MPX
 		if( history )
 		{
 		    m_play_history.rewind() ;
+		    m_play_history.print() ;
 		    Track_sp p = m_library->getTrackById( m_play_history.current() ) ;
-		    play_track( p ) ;
+		    play_track( p, false ) ;
 		}
 		else
 		if( private_->FilterModelTracks->size() )
@@ -2356,9 +2375,10 @@ namespace MPX
     {
 	if(!m_track_current) 
 	{
-	    m_InfoLabel->set_markup(_("<b>Playback Backend</b>: No new Track after stream switch (possibly a bad file)")) ;
-	    m_InfoBar->set_message_type( Gtk::MESSAGE_WARNING ) ;
-	    m_InfoBar->show_all() ;
+	    infobar_set_message(
+		  _("<b>Playback Backend</b>: No new Track after stream switch (possibly a bad file)")
+		, Gtk::MESSAGE_WARNING	
+	    ) ;
 	    return ;
 	}
 
@@ -2409,9 +2429,10 @@ namespace MPX
 
 		    if(m_play_queue.empty())
 		    {
-			m_InfoLabel->set_markup(_("<b>PlaySense</b>: No matching tracks found")) ;
-			m_InfoBar->set_message_type( Gtk::MESSAGE_INFO ) ;
-			m_InfoBar->show_all() ;
+			infobar_set_message(
+			      _("<b>PlaySense</b>: No matching tracks found")
+			    , Gtk::MESSAGE_INFO
+			) ;
 
 			Glib::RefPtr<Gtk::ToggleAction>::cast_static(
 				m_UIActions_Main->get_action("PlaybackControlActionMarkov")
@@ -2517,9 +2538,10 @@ namespace MPX
 			m_UIActions_Main->get_action("PlaybackControlActionMarkov")
 		)->set_active(false) ;
 
-		m_InfoLabel->set_markup(_("<b>PlaySense</b>: No matching tracks found.")) ;
-		m_InfoBar->set_message_type( Gtk::MESSAGE_INFO ) ;
-		m_InfoBar->show_all() ;
+		infobar_set_message(
+		      _("<b>PlaySense</b>: No matching tracks found.")
+		    ,  Gtk::MESSAGE_INFO
+		) ;
 	    }
 	}
     }
@@ -2551,9 +2573,10 @@ namespace MPX
 			    m_UIActions_Main->get_action("PlaybackControlActionMarkov")
 		    )->set_active(false) ;
 
-		    m_InfoLabel->set_markup(_("<b>PlaySense</b>: No matching tracks found")) ;
-		    m_InfoBar->set_message_type( Gtk::MESSAGE_INFO ) ;
-		    m_InfoBar->show_all() ;
+		    infobar_set_message(
+			  _("<b>PlaySense</b>: No matching tracks found")
+			, Gtk::MESSAGE_INFO
+		    ) ;
 		}
 	    }
 	}
@@ -2930,11 +2953,10 @@ namespace MPX
 	    private_->FilterModelTracks->process_filter("",id,text_noaque) ;
 	}
 
+	g_message("Artist Regen Mapping: %s", G_STRFUNC) ;
 	private_->FilterModelArtist->regen_mapping() ;
-	//m_ListViewArtist->scroll_to_index(0) ;
 
 	private_->FilterModelAlbums->regen_mapping() ;
-	//m_ListViewAlbums->scroll_to_index(0) ;
 
         m_conn1.unblock() ;
         m_conn2.unblock() ;
@@ -3024,8 +3046,7 @@ namespace MPX
 		&&
 	    !queue_view )
         {
-            const MPX::Track& track = *m_track_current ;
-            id = boost::get<guint>(track[ATTRIBUTE_MPX_TRACK_ID].get()) ;
+            id = boost::get<guint>((*m_track_current)[ATTRIBUTE_MPX_TRACK_ID].get()) ;
         }
 
 	private_->FilterModelTracks->clear_synthetic_constraints_quiet() ;
@@ -3043,14 +3064,17 @@ namespace MPX
 	    private_->FilterModelAlbums->set_constraints_albums( private_->FilterModelTracks->m_constraints_albums ) ;
 
 	    if( mode == FilterMode::ITERATIVE && !queue_view ) {
-		private_->FilterModelArtist->regen_mapping_iterative() ;
+
+		g_message("Artist Regen Mapping: %s 1", G_STRFUNC) ;
+		private_->FilterModelArtist->regen_mapping(); // _iterative() ;
 
 		if( artist_view_has_selection )
 		    private_->FilterModelAlbums->regen_mapping() ;
 		else
-		    private_->FilterModelAlbums->regen_mapping_iterative() ;
+		    private_->FilterModelAlbums->regen_mapping(); //_iterative() ;
 	    }
 	    else {
+		g_message("Artist Regen Mapping: %s 2", G_STRFUNC) ;
 		private_->FilterModelArtist->regen_mapping() ;
 		private_->FilterModelAlbums->regen_mapping() ;
 	    }
@@ -3527,6 +3551,7 @@ void
 	    if( history && m_play_history.has_prev())
 	    {
 		guint id = m_play_history.go_back() ;
+		m_play_history.print() ;
 		play_track( m_library->getTrackById( id )) ;		    
 	    }
 	    else
@@ -3572,5 +3597,85 @@ void
     )
     {
         play_track( m_library->getTrackById( id )) ; 
+    }
+
+    void
+    YoukiController::remove_dangling () 
+    {
+	MPX::SQL::SQLDB * sql = m_library->get_sql_db() ;
+
+	typedef std::set<guint> IdSet ;
+
+	static boost::format delete_f ("DELETE FROM %s WHERE id = '%u'") ;
+	IdSet idset1 ;
+	IdSet idset2 ;
+	SQL::RowV rows;
+
+	/// CLEAR DANGLING ARTISTS
+	idset1.clear() ;
+	rows.clear() ;
+	sql->get(rows, "SELECT DISTINCT mpx_artist_id FROM track_view") ;
+	for (SQL::RowV::const_iterator i = rows.begin(); i != rows.end(); ++i)
+		idset1.insert (get<guint>(i->find ("mpx_artist_id")->second)) ;
+
+	idset2.clear() ;
+	rows.clear() ;
+	sql->get(rows, "SELECT DISTINCT id FROM artist") ;
+	for (SQL::RowV::const_iterator i = rows.begin(); i != rows.end(); ++i)
+		idset2.insert (get<guint>(i->find ("id")->second)) ;
+
+	for (IdSet::const_iterator i = idset2.begin(); i != idset2.end(); ++i)
+	{
+	      if (idset1.find (*i) == idset1.end())
+	      {
+		  sql->exec_sql((delete_f % "artist" % (*i)).str()) ;
+		  on_library_entity_deleted( *i, ENTITY_ARTIST ) ;
+	      }
+	}
+
+
+	/// CLEAR DANGLING ALBUMS
+	idset1.clear() ;
+	rows.clear() ;
+	sql->get(rows, "SELECT DISTINCT mpx_album_id FROM track_view") ;
+	for (SQL::RowV::const_iterator i = rows.begin(); i != rows.end(); ++i)
+		idset1.insert (get<guint>(i->find ("mpx_album_id")->second)) ;
+
+	idset2.clear() ;
+	rows.clear() ;
+	sql->get(rows, "SELECT DISTINCT id FROM album") ;
+	for (SQL::RowV::const_iterator i = rows.begin(); i != rows.end(); ++i)
+		idset2.insert (get<guint>(i->find ("id")->second)) ;
+
+	for (IdSet::const_iterator i = idset2.begin(); i != idset2.end(); ++i)
+	{
+	      if (idset1.find (*i) == idset1.end())
+	      {
+		  sql->exec_sql((delete_f % "album" % (*i)).str()) ;
+		  on_library_entity_deleted( *i, ENTITY_ALBUM ) ;
+	      }
+	}
+
+	/// CLEAR DANGLING ALBUM ARTISTS
+	idset1.clear() ;
+	rows.clear() ;
+	sql->get(rows, "SELECT DISTINCT mpx_album_artist_id FROM track_view") ;
+	for (SQL::RowV::const_iterator i = rows.begin(); i != rows.end(); ++i)
+		idset1.insert (get<guint>(i->find ("mpx_album_artist_id")->second)) ;
+
+	idset2.clear() ;
+	rows.clear() ;
+	sql->get(rows, "SELECT DISTINCT id FROM album_artist") ;
+	for (SQL::RowV::const_iterator i = rows.begin(); i != rows.end(); ++i)
+		idset2.insert (get<guint>(i->find ("id")->second)) ;
+
+	for (IdSet::const_iterator i = idset2.begin(); i != idset2.end(); ++i)
+	{
+	      if (idset1.find (*i) == idset1.end())
+	      {
+		  sql->exec_sql((delete_f % "album_artist" % (*i)).str()) ;
+		  on_library_entity_deleted( *i, ENTITY_ALBUM_ARTIST ) ;
+	      }
+	}
     }
 }

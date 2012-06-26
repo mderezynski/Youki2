@@ -10,6 +10,7 @@
 #include <boost/ref.hpp>
 #include <boost/unordered_set.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/interprocess/containers/stable_vector.hpp>
 
 #include <sigx/sigx.h>
 
@@ -125,14 +126,14 @@ namespace Tracks
 	    return a->ID < b->ID ; 
 	}
 
-        typedef std::vector<ModelData_sp>			Model_t ;
-        typedef boost::shared_ptr<Model_t>		Model_sp ;
+        typedef boost::container::stable_vector<ModelData_sp>	Model_t ;
+        typedef boost::shared_ptr<Model_t>			Model_sp ;
 
 	typedef sigc::signal<void>			Signal0 ;
         typedef sigc::signal<void, guint, bool>		Signal2 ;
 
-	typedef std::vector<guint>		    IdVector_t ;
-	typedef boost::shared_ptr<IdVector_t>	    IdVector_sp ;
+	typedef std::vector<guint>			IdVector_t ;
+	typedef boost::shared_ptr<IdVector_t>		IdVector_sp ;
 
         struct Model_t_iterator_equal
         : std::binary_function<Model_t::iterator, Model_t::iterator, bool>
@@ -153,6 +154,7 @@ namespace Tracks
                 return a == b ;
             }
 
+/*
             bool operator()(
                   const Model_t::const_iterator& a
                 , const Model_t::iterator& b
@@ -168,6 +170,7 @@ namespace Tracks
             {
                 return a == b ;
             }
+*/
         } ;
 
         struct Model_t_iterator_hash
@@ -287,34 +290,30 @@ namespace Tracks
         struct DataModel
         : public sigc::trackable 
         {
-		typedef std::vector<Model_t::size_type>		ModelIdxVec_t ;
-		typedef std::vector<ModelIdxVec_t>		AlbumTrackMapping_t ;
-
-                Model_sp		m_realmodel;
+                Model_sp		m_base_model;
                 guint			m_upper_bound ;
 		bool			m_showing_queue ;
 
-		AlbumTrackMapping_t	m_album_track_mapping ;
                 Signal2			m_SIGNAL__changed;
 
                 DataModel()
                 : m_upper_bound( 0 )
 		, m_showing_queue(false)
                 {
-                    m_realmodel = Model_sp(new Model_t); 
+                    m_base_model = Model_sp(new Model_t); 
                 }
 
                 DataModel(Model_sp model)
                 : m_upper_bound( 0 )
 		, m_showing_queue(false)
                 {
-                    m_realmodel = model; 
+                    m_base_model = model; 
                 }
 
                 virtual void
                 clear()
                 {
-                    m_realmodel->clear () ;
+                    m_base_model->clear () ;
                     m_upper_bound = 0 ;
                 } 
 
@@ -327,19 +326,19 @@ namespace Tracks
                 virtual bool
                 is_set()
                 {
-                    return bool(m_realmodel) ;
+                    return bool(m_base_model) ;
                 }
 
                 virtual guint
                 size()
                 {
-                    return m_realmodel->size() ;
+                    return m_base_model->size() ;
                 }
 
                 inline virtual const ModelData_sp&
                 row(guint d)
                 {
-                    return (*m_realmodel)[d] ;
+                    return (*m_base_model)[d] ;
                 }
 
                 virtual void
@@ -371,20 +370,7 @@ namespace Tracks
 		    nr->Time = r.count("time") ? get<guint>(r["time"]) : 0 ;
 		    nr->Track = r.count("track") ? get<guint>(r["track"]) : 0 ;
 
-                    m_realmodel->push_back(ModelData_sp(nr)) ;
-                }
-
-                void
-                erase_track(guint id)
-                {
-                    for( Model_t::iterator i = m_realmodel->begin() ; i != m_realmodel->end() ; ++i ) 
-                    {
-                        if( (*i)->ID == id )
-                        {
-                            m_realmodel->erase( i ) ;
-                            return ;
-                        }
-                    }
+                    m_base_model->push_back(ModelData_sp(nr)) ;
                 }
         };
 
@@ -452,7 +438,7 @@ namespace Tracks
 
                 DataModelFilter( DataModel_sp& model )
 
-                    : DataModel( model->m_realmodel )
+                    : DataModel( model->m_base_model )
                     , m_max_size_constraints_artist( 0 )
                     , m_max_size_constraints_albums( 0 )
                     , m_cache_enabled(true)
@@ -499,8 +485,6 @@ namespace Tracks
 
 		    if( m_constraints_artist )
 	                m_constraints_artist->resize( max_size_artist ) ;
-
-		    m_album_track_mapping.resize( m_max_size_constraints_albums ) ;
                 }
 
                 void
@@ -643,6 +627,7 @@ namespace Tracks
                     m_SIGNAL__changed.emit( m_upper_bound, false ) ;
                 }
 
+#if 0
                 void
                 erase( guint p )
                 {
@@ -656,6 +641,7 @@ namespace Tracks
 
                     m_SIGNAL__changed.emit( m_upper_bound, true ) ;
                 }
+#endif
 
                 virtual void
                 append_track(SQL::Row& r, const MPX::Track_sp& track)
@@ -666,8 +652,27 @@ namespace Tracks
                 void
                 erase_track(guint id)
                 {
-                    DataModel::erase_track( id );
+                    for( RowRowMapping_t::iterator i = m_mapping->begin() ; i != m_mapping->end() ; ++i ) 
+                    {
+                        if( (**i)->ID == id )
+                        {
+                            m_mapping->erase( i ) ;
+                            break ;
+                        }
+                    }
+
+                    for( Model_t::iterator i = m_base_model->begin() ; i != m_base_model->end() ; ++i ) 
+                    {
+                        if( (*i)->ID == id )
+                        {
+                            m_base_model->erase( i ) ;
+                            return ;
+                        }
+                    }
+    
+		    m_SIGNAL__changed.emit(0, true) ;
                 }
+
 
                 virtual void
                 insert_track(
@@ -712,10 +717,10 @@ namespace Tracks
 		    nr->Time = time ; 
 		    nr->Track = track_n ;
 
-                    m_realmodel->insert(
+                    m_base_model->insert(
                           std::upper_bound(
-                              m_realmodel->begin()
-                            , m_realmodel->end()
+                              m_base_model->begin()
+                            , m_base_model->end()
                             , nrsp 
                             , order
                           )
@@ -829,9 +834,9 @@ namespace Tracks
                 )
                 {
                     m_mapping_identity = RowRowMapping_sp( new RowRowMapping_t ) ;
-                    m_mapping_identity->reserve( m_realmodel->size() ) ;
+                    m_mapping_identity->reserve( m_base_model->size() ) ;
 
-                    for( Model_t::iterator i = m_realmodel->begin(); i != m_realmodel->end(); ++i )
+                    for( Model_t::iterator i = m_base_model->begin(); i != m_base_model->end(); ++i )
                     {
 			m_mapping_identity->push_back( i ) ;
                     }
@@ -861,25 +866,24 @@ namespace Tracks
 		    TCVector_t& constraints_albums = *m_constraints_albums ;
 		    TCVector_t& constraints_artist = *m_constraints_artist ;
 
-		    new_mapping->reserve( m_realmodel->size() ) ;
-		    new_mapping_unfiltered->reserve( m_realmodel->size() ) ;
+		    new_mapping->reserve( m_base_model->size() ) ;
+		    new_mapping_unfiltered->reserve( m_base_model->size() ) ;
 
-		    for( Model_t::iterator i = m_realmodel->begin() ; i != m_realmodel->end() ; ++i ) 
+		    for( Model_t::iterator i = m_base_model->begin() ; i != m_base_model->end() ; ++i ) 
 		    {
-			const MPX::Track_sp& t = (*i)->TrackSp ; 
-			const MPX::Track& track = *t ;
+			MPX::Track_sp t = (*i)->TrackSp ; 
 
 			if( bool((*i)->queuepos))
 			{
-			    guint id_album  = get<guint>(track[ATTRIBUTE_MPX_ALBUM_ID].get()) ;
+			    guint id_album  = get<guint>((*t)[ATTRIBUTE_MPX_ALBUM_ID].get()) ;
 			    TracksConstraint& tc_alb = constraints_albums[id_album] ;
 			    tc_alb.Count ++ ; 
-			    tc_alb.Time += get<guint>(track[ATTRIBUTE_TIME].get()) ;
+			    tc_alb.Time += get<guint>((*t)[ATTRIBUTE_TIME].get()) ;
 
-			    guint id_artist = get<guint>(track[ATTRIBUTE_MPX_ALBUM_ARTIST_ID].get()) ;
+			    guint id_artist = get<guint>((*t)[ATTRIBUTE_MPX_ALBUM_ARTIST_ID].get()) ;
 			    TracksConstraint& tc_art = constraints_artist[id_artist] ;
 			    tc_art.Count ++ ; 
-			    tc_art.Time += get<guint>(track[ATTRIBUTE_TIME].get()) ;
+			    tc_art.Time += get<guint>((*t)[ATTRIBUTE_TIME].get()) ;
 
 			    new_mapping->push_back( i ) ; 
 			}
@@ -950,13 +954,12 @@ namespace Tracks
                         TCVector_t& constraints_albums = *m_constraints_albums ;
                         TCVector_t& constraints_artist = *m_constraints_artist ;
 
-                        new_mapping->reserve( m_realmodel->size() ) ;
-                        new_mapping_unfiltered->reserve( m_realmodel->size() ) ;
+                        new_mapping->reserve( m_base_model->size() ) ;
+                        new_mapping_unfiltered->reserve( m_base_model->size() ) ;
 
-                        for( Model_t::iterator i = m_realmodel->begin() ; i != m_realmodel->end() ; ++i ) 
+                        for( Model_t::iterator i = m_base_model->begin() ; i != m_base_model->end() ; ++i ) 
                         {
-                            const MPX::Track_sp& t = (*i)->TrackSp ; 
-                            const MPX::Track& track = *t ;
+                            MPX::Track_sp t = (*i)->TrackSp ; 
 
 			    if( !m_constraints_aqe.empty() && !AQE::match_track( m_constraints_aqe, t ))
 			    {
@@ -970,15 +973,15 @@ namespace Tracks
 				continue ;
 			    }
 
-			    guint id_album  = get<guint>(track[ATTRIBUTE_MPX_ALBUM_ID].get()) ;
+			    guint id_album  = get<guint>((*t)[ATTRIBUTE_MPX_ALBUM_ID].get()) ;
 			    TracksConstraint& tc_alb = constraints_albums[id_album] ;
 			    tc_alb.Count ++ ; 
-			    tc_alb.Time += get<guint>(track[ATTRIBUTE_TIME].get()) ;
+			    tc_alb.Time += get<guint>((*t)[ATTRIBUTE_TIME].get()) ;
 
-			    guint id_artist = get<guint>(track[ATTRIBUTE_MPX_ALBUM_ARTIST_ID].get()) ;
+			    guint id_artist = get<guint>((*t)[ATTRIBUTE_MPX_ALBUM_ARTIST_ID].get()) ;
 			    TracksConstraint& tc_art = constraints_artist[id_artist] ;
 			    tc_art.Count ++ ; 
-			    tc_art.Time += get<guint>(track[ATTRIBUTE_TIME].get()) ;
+			    tc_art.Time += get<guint>((*t)[ATTRIBUTE_TIME].get()) ;
 
 			    new_mapping->push_back( i ) ; 
                         }
@@ -997,6 +1000,7 @@ namespace Tracks
                                 continue ;
                             }
 
+#if 0
                             if( m_cache_enabled ) 
                             {
                                 FragmentCache_t::iterator cache_iter = m_fragment_cache.find( m_frags[n] ) ;
@@ -1007,10 +1011,11 @@ namespace Tracks
                                     continue ;
                                 }
                             }
+#endif
 
                             ModelIteratorSet_sp model_iterator_set( new ModelIteratorSet_t ) ;
 
-                            for( Model_t::const_iterator i = m_realmodel->begin(); i != m_realmodel->end(); ++i )
+                            for( Model_t::const_iterator i = m_base_model->begin(); i != m_base_model->end(); ++i )
                             {
                                 const ModelData_sp r = *i;
 
@@ -1027,10 +1032,12 @@ namespace Tracks
 
                             intersect.push_back( model_iterator_set ) ; 
 
+#if 0
                             if( m_cache_enabled && m_constraints_ext.empty() && m_constraints_aqe.empty())
                             {
                                 m_fragment_cache.insert( std::make_pair( m_frags[n], model_iterator_set )) ;
                             }
+#endif
                         }
 
                         std::sort( intersect.begin(), intersect.end(), IntersectSort() ) ;
@@ -1079,8 +1086,7 @@ namespace Tracks
 
                         for( auto& i : *output ) 
                         {
-                            const MPX::Track_sp& t = (*i)->TrackSp ; 
-                            const MPX::Track& track = *t ;
+                            MPX::Track_sp t = (*i)->TrackSp ; 
 
 			    if( !m_constraints_aqe.empty() && !AQE::match_track( m_constraints_aqe, t ))
 			    {
@@ -1094,15 +1100,15 @@ namespace Tracks
 				continue ;
 			    }
 
-			    guint id_album  = get<guint>(track[ATTRIBUTE_MPX_ALBUM_ID].get()) ;
+			    guint id_album  = get<guint>((*t)[ATTRIBUTE_MPX_ALBUM_ID].get()) ;
 			    TracksConstraint& tc_alb = constraints_albums[id_album] ;
 			    tc_alb.Count ++ ; 
-			    tc_alb.Time += get<guint>(track[ATTRIBUTE_TIME].get()) ;
+			    tc_alb.Time += get<guint>((*t)[ATTRIBUTE_TIME].get()) ;
 
-			    guint id_artist = get<guint>(track[ATTRIBUTE_MPX_ALBUM_ARTIST_ID].get()) ;
+			    guint id_artist = get<guint>((*t)[ATTRIBUTE_MPX_ALBUM_ARTIST_ID].get()) ;
 			    TracksConstraint& tc_art = constraints_artist[id_artist] ;
 			    tc_art.Count ++ ; 
-			    tc_art.Time += get<guint>(track[ATTRIBUTE_TIME].get()) ;
+			    tc_art.Time += get<guint>((*t)[ATTRIBUTE_TIME].get()) ;
 
 			    new_mapping->push_back(i) ;
                         }
@@ -1149,24 +1155,6 @@ namespace Tracks
 
                     m_upper_bound = 0 ;
 
-		    if( m_constraint_single_album ) // FIXME: This is not iterative
-		    {
-			AlbumTrackMapping_t::size_type n = m_constraint_single_album.get() ; 
-			const ModelIdxVec_t& v = m_album_track_mapping[n] ;
-
-                        new_mapping->reserve( m_realmodel->size() ) ;
-                        new_mapping_unfiltered->reserve( m_realmodel->size() ) ;
-
-			for( ModelIdxVec_t::const_iterator i = v.begin() ; i != v.end() ; ++i )
-			{
-			    Model_t::iterator i2 = m_realmodel->begin() ;
-			    std::advance( i2, *i ) ;
-
-			    new_mapping->push_back( i2 ) ; 
-			    new_mapping_unfiltered->push_back( i2 ) ; 
-			}
-		    }
-		    else
                     if( m_frags.empty() && (m_constraints_ext.empty() && m_constraints_aqe.empty()) )
                     {
                         m_constraints_albums.reset() ;
@@ -1198,8 +1186,7 @@ namespace Tracks
 	
                         for( auto& i : *m_mapping_unfiltered ) 
                         {
-                            const MPX::Track_sp& t = (*i)->TrackSp ; 
-                            const MPX::Track& track = *(t.get()) ;
+                            MPX::Track_sp t = (*i)->TrackSp ; 
 
                             if( !m_constraints_aqe.empty() && !AQE::match_track( m_constraints_aqe, t ))
                             {
@@ -1213,15 +1200,15 @@ namespace Tracks
                                 continue ;
                             }
 
-                            guint id_album  = get<guint>(track[ATTRIBUTE_MPX_ALBUM_ID].get()) ;
+                            guint id_album  = get<guint>((*t)[ATTRIBUTE_MPX_ALBUM_ID].get()) ;
 			    TracksConstraint& tc_alb = constraints_albums[id_album] ;
                             tc_alb.Count ++ ; 
-			    tc_alb.Time += get<guint>(track[ATTRIBUTE_TIME].get()) ;
+			    tc_alb.Time += get<guint>((*t)[ATTRIBUTE_TIME].get()) ;
 
-                            guint id_artist = get<guint>(track[ATTRIBUTE_MPX_ALBUM_ARTIST_ID].get()) ;
+                            guint id_artist = get<guint>((*t)[ATTRIBUTE_MPX_ALBUM_ARTIST_ID].get()) ;
 			    TracksConstraint& tc_art = constraints_artist[id_artist] ;
                             tc_art.Count ++ ; 
-			    tc_art.Time += get<guint>(track[ATTRIBUTE_TIME].get()) ;
+			    tc_art.Time += get<guint>((*t)[ATTRIBUTE_TIME].get()) ;
 
                             new_mapping->push_back( i ) ; 
                         }
@@ -1240,6 +1227,7 @@ namespace Tracks
                                 continue ;
                             }
 
+#if 0
                             if( m_cache_enabled ) 
                             {
                                 FragmentCache_t::iterator cache_iter = m_fragment_cache.find( f ) ;
@@ -1250,6 +1238,7 @@ namespace Tracks
                                     continue ;
                                 }
                             }
+#endif
 
                             ModelIteratorSet_sp model_iterator_set ( new ModelIteratorSet_t ) ;
 
@@ -1270,6 +1259,7 @@ namespace Tracks
 
                             intersect.push_back( model_iterator_set ) ; 
 
+#if 0
                             // We cannot cache results which are preconstrainted i.e. through ext or aqe constraints.
                             // If there is more than 1 frag then the result set, since we go through a previous projection,
                             // the controller mapping (m_mapping_unfiltered) is already constrainted through the preceding frags
@@ -1288,6 +1278,7 @@ namespace Tracks
                             {
                                 m_fragment_cache.insert( std::make_pair( f, model_iterator_set )) ;
                             }
+#endif
                         }
 
                         std::sort( intersect.begin(), intersect.end(), IntersectSort() ) ;
@@ -1323,8 +1314,8 @@ namespace Tracks
                             }
                         }
 
-                        new_mapping->reserve( m_realmodel->size() ) ;
-                        new_mapping_unfiltered->reserve( m_realmodel->size() ) ; 
+                        new_mapping->reserve( m_base_model->size() ) ;
+                        new_mapping_unfiltered->reserve( m_base_model->size() ) ; 
 
                         m_constraints_albums = TCVector_sp( new TCVector_t ) ; 
                         m_constraints_albums->resize( m_max_size_constraints_albums + 1 ) ;
@@ -1337,8 +1328,7 @@ namespace Tracks
 
                         for( ModelIteratorSet_t::iterator i = output->begin() ; i != output->end(); ++i )
                         {
-                            const MPX::Track_sp& t = (**i)->TrackSp ; 
-                            const MPX::Track& track = *t ;
+                            MPX::Track_sp t = (**i)->TrackSp ; 
 
                             if( !m_constraints_aqe.empty() && !AQE::match_track( m_constraints_aqe, t ))
                             {
@@ -1352,15 +1342,15 @@ namespace Tracks
                                 continue ;
                             }
 
-                            guint id_album  = get<guint>(track[ATTRIBUTE_MPX_ALBUM_ID].get()) ;
+                            guint id_album  = get<guint>((*t)[ATTRIBUTE_MPX_ALBUM_ID].get()) ;
 			    TracksConstraint& tc_alb = constraints_albums[id_album] ;
                             tc_alb.Count ++ ; 
-			    tc_alb.Time += get<guint>(track[ATTRIBUTE_TIME].get()) ;
+			    tc_alb.Time += get<guint>((*t)[ATTRIBUTE_TIME].get()) ;
 
-                            guint id_artist = get<guint>(track[ATTRIBUTE_MPX_ALBUM_ARTIST_ID].get()) ;
+                            guint id_artist = get<guint>((*t)[ATTRIBUTE_MPX_ALBUM_ARTIST_ID].get()) ;
 			    TracksConstraint& tc_art = constraints_artist[id_artist] ;
                             tc_art.Count ++ ; 
-			    tc_art.Time += get<guint>(track[ATTRIBUTE_TIME].get()) ;
+			    tc_art.Time += get<guint>((*t)[ATTRIBUTE_TIME].get()) ;
 
                             new_mapping->push_back( *i ) ;
                         }
@@ -1387,9 +1377,8 @@ namespace Tracks
 
 		    for( RowRowMapping_t::iterator i = (*m_mapping).begin() ; i != (*m_mapping).end() ; ++i ) 
 		    {
-			const MPX::Track_sp& t = (**i)->TrackSp ; 
-			const MPX::Track& track = *t ;
-			total += get<guint>(track[ATTRIBUTE_TIME].get()) ;
+			MPX::Track_sp t = (**i)->TrackSp ; 
+			total += get<guint>((*t)[ATTRIBUTE_TIME].get()) ;
 		    }
 
 		    return total ;
@@ -1675,7 +1664,7 @@ namespace Tracks
 		bool				    m_play_on_single_tap ;
 
 		int				    m_vadj_value_old ;
-		const std::vector<guint>&	    m_play_queue_ref ;
+		std::vector<guint>&		    m_play_queue_ref ;
 
                 Glib::RefPtr<Gtk::UIManager>	    m_UIManager ;
                 Glib::RefPtr<Gtk::ActionGroup>	    m_ActionGroup ;
@@ -2154,14 +2143,33 @@ namespace Tracks
                     {
 			if( ModelExtents( row )) 
 			{
-				auto& r_a = m_model->row(row) ;
-				auto& r_b = m_model->row(m_row__button_press.get()) ;
+			    DataModelFilter::RowRowMapping_sp mapping = m_model->m_mapping ;
 
-				std::swap( r_a->queuepos, r_b->queuepos ) ;
-				
-				m_model->swap( row, m_row__button_press.get() ) ;
+			    DataModelFilter::RowRowMapping_t::const_iterator i1 = m_model->m_mapping->begin() ; 
+			    DataModelFilter::RowRowMapping_t::const_iterator i2 = m_model->m_mapping->begin() ;
+	
+			    std::advance( i1, row ) ;
+			    std::advance( i2, m_row__button_press.get()) ;
+
+			    std::iter_swap( i1, i2 ) ;
+
+			    std::swap( (**i1)->queuepos, (**i2)->queuepos ) ;
+
+			    typedef std::vector<guint> Vec ;
+
+			    Vec::iterator qi1 = std::find( m_play_queue_ref.begin(), m_play_queue_ref.end(), (**i1)->ID ) ;
+			    Vec::iterator qi2 = std::find( m_play_queue_ref.begin(), m_play_queue_ref.end(), (**i2)->ID ) ;
+
+			    std::iter_swap( qi1, qi2 ) ; 
+
+			    if( m_selection && boost::get<1>(*m_selection) == *m_row__button_press)
+			    {
 				select_index(row) ;
-				m_row__button_press = row ;
+			    }
+
+			    m_row__button_press = row ;
+
+			    queue_draw() ;
 			}
                     }
 
@@ -2507,7 +2515,7 @@ namespace Tracks
 		    guint n = 0 ;
 		    Algorithm::Adder<guint> d_cur( n, d ) ;	
 
-		    while( n < d_max && ModelExtents(d_cur)) 
+		    while( n < d_max && d_cur < m_model->size()) 
 		    {
 			xpos = 0 ;
 
@@ -2832,7 +2840,7 @@ namespace Tracks
 		    , boost::optional<guint> qpos = boost::optional<guint>()
                 )
                 {
-                    for( auto& r : *(m_model->m_realmodel) )
+                    for( auto& r : *(m_model->m_base_model) )
                     {
                         if( r->ID == id )
                         {
@@ -3106,12 +3114,11 @@ namespace Tracks
                 {
                     if( m_selection )
                     {
-                        const ModelData_sp& r = *(boost::get<0>(m_selection.get())) ;
-                        const MPX::Track_sp& t = r->TrackSp ; 
-                        const MPX::Track& track = *(t.get()) ;
+                        ModelData_sp r = *(boost::get<0>(m_selection.get())) ;
+                        MPX::Track_sp t = r->TrackSp ; 
 
-			if( track.has(ATTRIBUTE_MB_ALBUM_ID))
-			    _signal_0.emit( get<std::string>(track[ATTRIBUTE_MB_ALBUM_ID].get()));
+			if( (*t).has(ATTRIBUTE_MB_ALBUM_ID))
+			    _signal_0.emit( get<std::string>((*t)[ATTRIBUTE_MB_ALBUM_ID].get()));
                     }
                 }
 
@@ -3120,12 +3127,11 @@ namespace Tracks
                 {
                     if( m_selection )
                     {
-                        const ModelData_sp& r = *(boost::get<0>(m_selection.get())) ;
-                        const MPX::Track_sp& t = r->TrackSp ; 
-                        const MPX::Track& track = *(t.get()) ;
+                        ModelData_sp r = *(boost::get<0>(m_selection.get())) ;
+                        MPX::Track_sp t = r->TrackSp ; 
 
-			if( track.has(ATTRIBUTE_MB_ALBUM_ARTIST_ID))
-			    _signal_1.emit( get<std::string>(track[ATTRIBUTE_MB_ALBUM_ARTIST_ID].get()));
+			if( (*t).has(ATTRIBUTE_MB_ALBUM_ARTIST_ID))
+			    _signal_1.emit( get<std::string>((*t)[ATTRIBUTE_MB_ALBUM_ARTIST_ID].get()));
                     }
                 }
 
@@ -3134,12 +3140,11 @@ namespace Tracks
                 {
                     if( m_selection )
                     {
-                        const ModelData_sp& r = *(boost::get<0>(m_selection.get())) ;
-                        const MPX::Track_sp& t = r->TrackSp ; 
-                        const MPX::Track& track = *(t.get()) ;
+                        ModelData_sp r = *(boost::get<0>(m_selection.get())) ;
+                        MPX::Track_sp t = r->TrackSp ; 
 
-			if( track.has(ATTRIBUTE_MB_ALBUM_ARTIST_ID))
-			    _signal_2.emit( get<std::string>(track[ATTRIBUTE_MB_ALBUM_ARTIST_ID].get()));
+			if( (*t).has(ATTRIBUTE_MB_ALBUM_ARTIST_ID))
+			    _signal_2.emit( get<std::string>((*t)[ATTRIBUTE_MB_ALBUM_ARTIST_ID].get()));
                     }
                 }
 
@@ -3269,7 +3274,7 @@ namespace Tracks
                 }
  
                 Class(
-		      const std::vector<guint>&	    pq
+		      std::vector<guint>&	    pq
 		    , Glib::RefPtr<Gtk::UIManager>  uim
 		)
 

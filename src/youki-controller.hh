@@ -317,17 +317,13 @@ namespace MPX
 	    Glib::RefPtr<Gtk::ActionGroup>    m_UIActions_Main ;
 
 	    void
+	    play_next_queue_item() ;
+
+	    void
 	    history_save() ;
 
 	    void
 	    history_go_back() ;
-
-	    //////////
-
-	    void
-	    play_next_queue_item() ;
-
-	    //////////
 
 	    void
 	    check_markov_queue_append() ;
@@ -555,6 +551,14 @@ namespace MPX
 	    void
 	    update_entry_placeholder_text() ;
 
+	    void
+	    infobar_set_message(
+		  const std::string&
+		, Gtk::MessageType
+	    ) ;
+
+	    //////////
+
             void
             on_library_scan_start() ;
 
@@ -589,6 +593,9 @@ namespace MPX
 	    bool
 	    on_library_entity_deleted_idle( guint, int ) ;
 
+	    void
+	    remove_dangling() ;
+
             void
             on_library_entity_deleted(
                   guint
@@ -611,7 +618,10 @@ namespace MPX
             ) ;
 
 	    bool
-	    on_library_entity_updated_idle( guint, int ) ;
+	    on_library_entity_updated_idle(
+		  guint
+		, int 
+	    ) ;
 
             void
             on_library_entity_updated(

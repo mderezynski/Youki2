@@ -831,7 +831,8 @@ namespace MPX
                         Signals.EntityDeleted.emit( get<guint>(r["id"]), ENTITY_TRACK );
                     }
 
-                    remove_dangling();
+                    // remove_dangling();
+
                     mm->push_message("Done.") ;
                 }
 #endif // HAVE_HAL
@@ -1199,6 +1200,7 @@ namespace MPX
                         {
                                 if( idset1.find (*i) == idset1.end() )
                                         m_SQL->exec_sql((delete_f % "album_artist" % (*i)).str());
+					g_message("%s: Deleting Album Artist: %u", G_STRFUNC, *i) ;
                                         on_entity_deleted( *i , ENTITY_ALBUM_ARTIST );
                         }
                 }

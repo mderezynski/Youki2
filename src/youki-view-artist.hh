@@ -10,7 +10,6 @@
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/interprocess/containers/stable_vector.hpp>
-#include <unordered_map>
 #include <sigx/sigx.h>
 
 #include "mpx/algorithm/aque.hh"
@@ -64,14 +63,10 @@ namespace Artist
 	} ;
 
         typedef boost::container::stable_vector<Row_t>Model_t ;
-
         typedef boost::shared_ptr<Model_t> Model_sp ;
-
         typedef std::map<guint, Model_t::iterator> IdIterMap_t ;
-
-        typedef std::vector<Model_t::iterator> RowRowMapping_t ;
-
-        typedef std::unordered_map<std::string, Model_t::iterator> MBIDIterMap_t;
+        typedef boost::container::stable_vector<Model_t::iterator> RowRowMapping_t ;
+        typedef std::map<std::string, Model_t::iterator> MBIDIterMap_t;
 
         typedef sigc::signal<void>                         Signal_0 ;
         typedef sigc::signal<void, guint>		   Signal_1 ;
@@ -106,7 +101,7 @@ namespace Artist
 
 	    protected:
 
-                Model_sp	    m_datamodel ;
+                Model_sp	    m_base_model ;
                 IdIterMap_t         m_iter_map ;
 		MBIDIterMap_t	    m_mbid_map ;
                 guint		    m_upper_bound ;
@@ -174,6 +169,9 @@ namespace Artist
 		    , guint			    totaltime
                     , const boost::optional<guint>& artist_id = boost::optional<guint>()
                 ) ;
+
+		virtual void
+		erase_artist(guint);
         } ;
 
         typedef boost::shared_ptr<DataModel> DataModel_sp;
@@ -236,9 +234,7 @@ namespace Artist
                 ) ;
 
                 virtual void
-                erase_artist(
-                      guint artist_id
-                ) ;
+                erase_artist(guint) ;
 
                 void
                 regen_mapping(
@@ -246,10 +242,6 @@ namespace Artist
 
                 void
                 regen_mapping_iterative(
-                ) ;
-
-                void
-                update_count(
                 ) ;
         } ;
 
@@ -328,9 +320,11 @@ namespace Artist
                     , bool				    selected
                     , const ThemeColor&			    color
                     , const ThemeColor&			    color_sel
+                    , const ThemeColor&			    color_sel_bg
 		    , const TCVector_sp&		    constraints
                 ) ; 
-        } ;
+        
+} ;
 
         typedef boost::shared_ptr<Column>   Column_sp ;
         typedef std::vector<Column_sp>	    Column_SP_vector_t ;

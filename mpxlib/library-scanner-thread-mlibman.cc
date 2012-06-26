@@ -8,11 +8,7 @@
 #include <glibmm.h>
 #include <glibmm/i18n.h>
 
-#ifdef HAVE_TR1
-#include <tr1/unordered_set>
-#else
 #include <set>
-#endif
 
 #include "mpx/mpx-sql.hh"
 #include "mpx/mpx-types.hh"
@@ -608,7 +604,7 @@ MPX::LibraryScannerThread_MLibMan::on_scan_all(
     }
 
     process_insertion_list () ;
-    do_remove_dangling () ;
+    //do_remove_dangling () ;
     update_albums () ;
 
     pthreaddata->Message.emit(_("Rescan: Done")) ;
@@ -752,7 +748,7 @@ MPX::LibraryScannerThread_MLibMan::on_add(
     }
 
     process_insertion_list () ;
-    do_remove_dangling () ;
+    //do_remove_dangling () ;
     update_albums () ;
 
     pthreaddata->Message.emit(_("Rescan: Done")) ;
@@ -1896,11 +1892,7 @@ MPX::LibraryScannerThread_MLibMan::do_remove_dangling ()
 {
   ThreadData * pthreaddata = m_ThreadData.get() ;
 
-#ifdef HAVE_TR1
-  typedef std::tr1::unordered_set<guint> IdSet ;
-#else
   typedef std::set<guint> IdSet ;
-#endif // HAVE_TR1
 
   static boost::format delete_f ("DELETE FROM %s WHERE id = '%u'") ;
   IdSet idset1 ;
@@ -1976,6 +1968,7 @@ MPX::LibraryScannerThread_MLibMan::do_remove_dangling ()
         if (idset1.find (*i) == idset1.end())
         {
             m_SQL->exec_sql((delete_f % "album_artist" % (*i)).str()) ;
+	    g_message("%s: Deleting Album Artist ID %u", G_STRFUNC, *i) ;
             pthreaddata->EntityDeleted( *i , ENTITY_ALBUM_ARTIST ) ;
         }
   }
@@ -2017,7 +2010,7 @@ MPX::LibraryScannerThread_MLibMan::on_vacuum()
           }
   }
 
-  do_remove_dangling () ;
+  // do_remove_dangling () ;
 
   pthreaddata->Message.emit(_("Vacuum process done.")) ;
   pthreaddata->ScanEnd.emit() ;
@@ -2072,7 +2065,7 @@ MPX::LibraryScannerThread_MLibMan::on_vacuum_volume_list(
           }
   }
 
-  do_remove_dangling () ;
+  // do_remove_dangling () ;
 
   pthreaddata->Message.emit(_("Vacuum Process: Done")) ;
 

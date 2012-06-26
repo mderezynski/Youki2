@@ -68,8 +68,6 @@ SET(youki_bin_SOURCES
   ld-find-nearest.hh
   library.cc
   library.hh
-  library-scanner-thread-mlibman.cc
-  library-scanner-thread-mlibman.hh
   mpx-mlibman-dbus-proxy-actual.hh
   ${CMAKE_CURRENT_BINARY_DIR}/mpx-mlibman-dbus-proxy.hh
   ${CMAKE_CURRENT_BINARY_DIR}/mpx-app-dbus-adaptor.hh

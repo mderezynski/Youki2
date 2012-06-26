@@ -79,11 +79,11 @@ namespace Albums
 	DataModel::DataModel()
 	: m_upper_bound(0)
 	{
-	    m_realmodel = Model_sp(new Model_t);
+	    m_base_model = Model_sp(new Model_t);
 	}
 
 	DataModel::DataModel(Model_sp model)
-	: m_realmodel(model)
+	: m_base_model(model)
 	, m_upper_bound(0)
 	{
 	}
@@ -91,7 +91,7 @@ namespace Albums
 	void
 	DataModel::clear()
 	{
-	    m_realmodel->clear();
+	    m_base_model->clear();
 	    m_iter_map.clear();
 	    m_upper_bound = 0;
 	}
@@ -117,23 +117,23 @@ namespace Albums
 	bool
 	DataModel::is_set()
 	{
-	    return bool(m_realmodel);
+	    return bool(m_base_model);
 	}
 
 	guint
 	DataModel::size()
 	{
-	    return m_realmodel ? m_realmodel->size() : 0;
+	    return m_base_model ? m_base_model->size() : 0;
 	}
 
 	const Album_sp&
 	DataModel::row(guint d)
 	{
-	    return (*m_realmodel)[d];
+	    return (*m_base_model)[d];
 	}
 
 	void
-	DataModel::set_current_row(guint d)
+	DataModel::set_upper_bound(guint d)
 	{
 	    m_upper_bound = d;
 	}
@@ -141,10 +141,10 @@ namespace Albums
 	void	
 	DataModel::append_album(const Album_sp album)
 	{
-	    m_realmodel->push_back( album );
-	    Model_t::iterator i = m_realmodel->end();
+	    m_base_model->push_back( album );
+	    Model_t::iterator i = m_base_model->end();
 	    std::advance( i, -1 );
-	    m_iter_map.insert( std::make_pair( album->album_id, i ));
+	    m_iter_map.insert( std::make_pair( *(album->album_id), i ));
 	}
 
 	void
@@ -152,38 +152,40 @@ namespace Albums
 	{
 	    static OrderFunc order;
 
-	    Model_t::iterator i = m_realmodel->insert(
+	    Model_t::iterator i = m_base_model->insert(
 		std::lower_bound(
-		    m_realmodel->begin()
-		  , m_realmodel->end()
+		    m_base_model->begin()
+		  , m_base_model->end()
 		  , album
 		  , order
 		)
 	      , album
 	    );
 
-	    m_iter_map.insert( std::make_pair( album->album_id, i ));
+	    m_iter_map.insert( std::make_pair( *(album->album_id), i ));
 	}
 
 	void
 	DataModel::update_album(const Album_sp album)
 	{
-	    if( album && m_iter_map.find( album->album_id ) != m_iter_map.end() )
+	    if( album && m_iter_map.find( *(album->album_id)) != m_iter_map.end() )
 	    {
-		*(m_iter_map[album->album_id]) = album;
+		*(m_iter_map[*(album->album_id)]) = album;
 		m_SIGNAL__redraw.emit();
 	    }
 	}
 
 	void
-	DataModel::erase_album(guint id)
+	DataModel::erase_album(	
+	      guint id
+	)
 	{
 	    IdIterMap_t::iterator i = m_iter_map.find( id );
 
 	    if( i != m_iter_map.end() )
 	    {
-		m_realmodel->erase( i->second );
-		m_iter_map.erase( id );
+		m_iter_map.erase(id);
+		m_base_model->erase( i->second );
 	    }
 	}
 
@@ -234,7 +236,7 @@ namespace Albums
 	DataModelFilter::DataModelFilter(
 	      DataModel_sp model
 	)
-	: DataModel( model->m_realmodel )
+	: DataModel( model->m_base_model )
 	{
 	    regen_mapping();
 	}
@@ -349,7 +351,6 @@ namespace Albums
 	)
 	{
 	    DataModel::update_album( album );
-	    regen_mapping();
 	}
 
 	void
@@ -358,28 +359,28 @@ namespace Albums
 	{
 	    using boost::get;
 
-	    if( m_realmodel->empty() )
+	    if( m_base_model->empty() )
 	    {
 		return;
 	    }
 
 	    RowRowMapping_t new_mapping;
-	    new_mapping.reserve( m_realmodel->size() );
+	    new_mapping.reserve( m_base_model->size() );
 
 	    boost::optional<guint> upper_bound_prev_id ;
     
-	    if( !m_mapping.empty() )
-	    {
-		upper_bound_prev_id = row(m_upper_bound)->album_id.get() ;
+	    if( !m_mapping.empty()) {
+		if( m_upper_bound < m_base_model->size() && row(m_upper_bound) && row(m_upper_bound)->album_id) {
+		    upper_bound_prev_id = row(m_upper_bound)->album_id.get() ;
+		}
 	    }
 
 	    m_upper_bound = 0 ;
-
 	    guint c = 0 ;
 
 	    if( (!m_constraints_albums || m_constraints_albums->empty())) 
 	    {
-		for( auto i = m_realmodel->begin(); i != m_realmodel->end(); ++i )
+		for( auto i = m_base_model->begin(); i != m_base_model->end(); ++i )
 		{
 		    if( upper_bound_prev_id && ((*i)->album_id.get() == upper_bound_prev_id))
 		    {
@@ -392,11 +393,9 @@ namespace Albums
 	    }
 	    else
 	    {
-		const TCVector_t& constraints_ = *m_constraints_albums;
-	
-		for( auto i = m_realmodel->begin(); i != m_realmodel->end(); ++i )
+		for( auto i = m_base_model->begin(); i != m_base_model->end(); ++i )
 		{
-		    if( constraints_[(*i)->album_id.get()].Count ) 
+		    if( (*m_constraints_albums)[(*i)->album_id.get()].Count ) 
 		    {
 			if( upper_bound_prev_id && ((*i)->album_id.get() == upper_bound_prev_id ))
 			{
@@ -409,11 +408,8 @@ namespace Albums
 		}
 	    }
 
-	    if( !vector_compare( m_mapping, new_mapping ))
-	    {
-		std::swap( new_mapping, m_mapping );
-		m_SIGNAL__changed.emit( m_upper_bound );
-	    }
+	    std::swap( new_mapping, m_mapping );
+	    m_SIGNAL__changed.emit( m_upper_bound );
 	}
 
 	void
@@ -422,7 +418,7 @@ namespace Albums
 	{
 	    using boost::get;
 
-	    if( m_realmodel->empty() )
+	    if( m_base_model->empty() )
 	    {
 		return;
 	    }
@@ -434,18 +430,18 @@ namespace Albums
     
 	    if( !m_mapping.empty() )
 	    {
-		upper_bound_prev_id = row(m_upper_bound)->album_id.get() ;
+		if( m_upper_bound < m_mapping.size() && row(m_upper_bound) && row(m_upper_bound)->album_id)
+		{
+		    upper_bound_prev_id = row(m_upper_bound)->album_id.get() ;
+		}
 	    }
 
 	    m_upper_bound = 0 ;
-
 	    guint c = 0 ;
-
-	    const TCVector_t& constraints_ = *m_constraints_albums;
 
 	    for( auto i = m_mapping.begin(); i != m_mapping.end(); ++i )
 	    {
-		if( constraints_[(**i)->album_id.get()].Count ) 
+		if( (*m_constraints_albums)[(**i)->album_id.get()].Count ) 
 		{
 		    if( upper_bound_prev_id && ((**i)->album_id.get() == upper_bound_prev_id ))
 		    {
@@ -457,11 +453,8 @@ namespace Albums
 		}
 	    }
 
-	    if( !vector_compare( m_mapping, new_mapping ))
-	    {
-		std::swap( new_mapping, m_mapping );
-		m_SIGNAL__changed.emit( m_upper_bound );
-	    }
+	    std::swap( new_mapping, m_mapping );
+	    m_SIGNAL__changed.emit( m_upper_bound );
 	}
 
 ///////////////////////
@@ -504,7 +497,7 @@ namespace Albums
 	    double r
 	)
 	{
-	    m_rounding = 2 ; // r;
+	    m_rounding = 3 ; // r;
 	}
 
 	double
@@ -566,7 +559,7 @@ namespace Albums
 		Util::cairo_image_surface_to_pixbuf( album->coverart ? album->coverart : m_image_disc ) ; 
 
 	    Glib::RefPtr<Gdk::Pixbuf> icon = icon_desaturated_1->copy() ; 
-	    icon->saturate_and_pixelate(icon_desaturated_1, 0.70, false) ;
+	    icon->saturate_and_pixelate(icon_desaturated_1, 0.85, false) ;
 
 	    cairo->set_operator(Cairo::OPERATOR_OVER) ;
 	    cairo->set_source(
@@ -584,6 +577,7 @@ namespace Albums
 
 	    cairo->fill() ;
 
+#if 0
 	    //////////
 
 	    album->surface_cache_blur = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, 256, 130) ;
@@ -605,7 +599,8 @@ namespace Albums
 		, 130
 	    ) ;
 	    cairo->fill() ;
-	    Util::cairo_image_surface_blur( album->surface_cache_blur, 2 ) ;
+
+	    Util::cairo_image_surface_blur( album->surface_cache_blur, 4 ) ;
 
 	    cairo = Cairo::Context::create(album->surface_cache) ;
 
@@ -622,6 +617,7 @@ namespace Albums
 		, 40
 	    ) ;
 	    cairo->fill() ;
+#endif
 	}
 
 	void
@@ -634,130 +630,13 @@ namespace Albums
 	    , guint				    row_height
 	    , const ThemeColor&			    color
 	    , const ThemeColor&			    color_sel
-	    , const ThemeColor&			    color_bg
+	    , const ThemeColor&			    color_bg_sel
 	    , guint				    model_mapping_size
 	    , guint				    model_size
 	    , bool				    selected
 	    , const TCVector_sp&		    album_constraints
 	)
 	{
-	    double h,s,b ;
-
-	    Util::color_to_hsb( color, h, s, b );
-	    s *= 0.45;
-	    Gdk::RGBA c1 = Util::color_from_hsb( h, s, b );
-	    c1.set_alpha(1.);
-
-	    Util::color_to_hsb( color, h, s, b );
-	    s *= 0.95;
-	    Gdk::RGBA c2 = Util::color_from_hsb( h, s, b );
-	    c2.set_alpha(1.);
-	    
-	    Util::color_to_hsb( Util::make_rgba(.8,.8,.8), h, s, b );
-	    s *= 0.80;
-	    Gdk::RGBA c3 = Util::color_from_hsb( h, s, b );
-	    c3.set_alpha(1.);
-
-	    time_t time_now = time(NULL) ;
-	    Range<time_t> WithinPast3Days(time_now-(3*24*60*60), time_now) ;
-
-	    cairo->save() ;
-	    cairo->translate((m_width-256)/2.,ypos+7) ;
-
-	    if( !album->caching )
-	    {
-		//////////
-
-		if(!album->surface_cache) 
-		{
-		    render_icon( album ) ;
-		}
-
-		//////////
-
-		if(!album->rgba)
-		{
-		    render_rgba( album ) ;
-		}
-
-		//////////
-
-		RoundedRectangle(
-		      cairo
-		    , 5 
-		    , 3 
-		    , 246
-		    , 86
-		    , m_rounding
-		) ;
-		cairo->set_source(album->surface_cache,0,0) ;
-		cairo->fill_preserve() ;
-
-		//////////
-
-		auto gradient = Cairo::LinearGradient::create( 96, 3, 96, 84 ) ;
-
-		gradient->add_color_stop_rgba(
-		      0
-		    , 0 
-		    , 0 
-		    , 0
-		    , .45 //selected ? 0.70 : 0.35 
-		) ;
-		gradient->add_color_stop_rgba(
-		      0.66
-		    , 0
-		    , 0
-		    , 0
-		    , .10 //selected ? 0.35 : 0.10
-		) ;
-		gradient->add_color_stop_rgba(
-		      1 
-		    , 0
-		    , 0
-		    , 0
-		    , 0 
-		) ;
-		cairo->set_source(gradient) ;
-		cairo->fill() ;
-	    }
-	    else
-	    {
-		cairo->save() ;
-		cairo->translate(14,12) ;
-		Gdk::Cairo::set_source_pixbuf(
-		      cairo
-		    , m_image_album_loading_iter->get_pixbuf()
-		    , 0
-		    , 0
-		) ;
-		cairo->rectangle(0,0,20,20) ;
-		cairo->fill() ;
-		cairo->restore() ;
-	    }
-
-	    //////////
-
-	    if( selected && !album->caching )
-	    {
-		cairo->save() ;
-		cairo->set_operator( Cairo::OPERATOR_OVER ) ;
-		RoundedRectangle(
-		      cairo
-		    , 4 
-		    , 2 
-		    , 248
-		    , 86
-		    , m_rounding
-		) ;
-
-		cairo->set_source(m_image_lensflare,4,2) ;
-		cairo->fill() ;
-		cairo->restore() ;
-	    }
-
-	    //////////
-
 	    enum { L1, L2, L3, N_LS } ;
 	    const int text_size_px[N_LS] = { 15, 15, 12 };
 	    const int text_size_pt[N_LS] = {   static_cast<int> ((text_size_px[L1] * 72)
@@ -801,40 +680,179 @@ namespace Albums
 
 	    int width, height;
 
+	    double h,s,b ;
+
+	    Util::color_to_hsb( color, h, s, b );
+	    s *= 0.45;
+	    Gdk::RGBA c1 = Util::color_from_hsb( h, s, b );
+	    c1.set_alpha(1.);
+
+	    Util::color_to_hsb( color, h, s, b );
+	    s *= 0.95;
+	    Gdk::RGBA c2 = Util::color_from_hsb( h, s, b );
+	    c2.set_alpha(1.);
+	    
+	    Util::color_to_hsb( color, h, s, b );
+	    b = fmin( 1, b*1.3 ) ;
+	    Gdk::RGBA c3 = Util::color_from_hsb( h, s, b );
+
+	    time_t time_now = time(NULL) ;
+	    Range<time_t> WithinPast3Days(time_now-(3*24*60*60), time_now) ;
+
+	    if(!album->surface_cache) 
+	    {
+		render_icon( album ) ;
+	    }
+
+	    if(!album->rgba)
+	    {
+		render_rgba( album ) ;
+	    }
+
+	    cairo->save() ;
+	    cairo->translate((m_width-256)/2.,ypos+7) ;
+
 	    //////////
 
 	    cairo->save() ;
 
 	    if( selected )
-		Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(color_bg,.6)) ;
+	    {
+		RoundedRectangle(
+		      cairo
+		    , 5   
+		    , 3   
+		    , 247 
+		    , 86 
+		    , m_rounding
+		) ;
+	    }
 	    else
-		cairo->set_source_rgba(.4,.4,.4,.6) ;
+	    {
+		RoundedRectangle(
+		      cairo
+		    , 5   
+		    , 3   
+		    , 247 
+		    , 86 
+		    , m_rounding
+		) ;
+	    }
 
-	    cairo->rectangle(
-		  5
-		, 40
-		, 245  
-		, 40 
-	    ) ;
-	    cairo->fill() ;
+	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(0,0,0,.95)) ;
+	    cairo->set_line_width(selected?6:3) ;
+	    cairo->stroke() ;
 	    cairo->restore() ;
 
 	    //////////
 
-	    cairo->save() ;
-	    RoundedRectangle(
-		  cairo
-		, 5 
-		, 3 
-		, 246
-		, 86
-		, m_rounding
-	    ) ;
+	    if( !album->caching )
+	    {
+		RoundedRectangle(
+		      cairo
+		    , 5 
+		    , 3 
+		    , 247
+		    , 86
+		    , m_rounding
+		) ;
+		cairo->set_source(album->surface_cache,0,0) ;
+		cairo->fill_preserve() ;
 
-	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(0,0,0,1)) ;
-	    cairo->set_line_width(1) ;
-	    cairo->stroke() ;
-	    cairo->restore() ;
+		//////////
+
+		auto gradient = Cairo::LinearGradient::create( 96, 3, 96, 84 ) ;
+
+		gradient->add_color_stop_rgba(
+		      0
+		    , 0 
+		    , 0 
+		    , 0
+		    , .25 //selected ? 0.70 : 0.35 
+		) ;
+		gradient->add_color_stop_rgba(
+		      0.38
+		    , 0
+		    , 0
+		    , 0
+		    , .10 //selected ? 0.35 : 0.10
+		) ;
+		gradient->add_color_stop_rgba(
+		      0.62
+		    , 0
+		    , 0
+		    , 0
+		    , .10 //selected ? 0.35 : 0.10
+		) ;
+		gradient->add_color_stop_rgba(
+		      1 
+		    , 0
+		    , 0
+		    , 0
+		    , .18 
+		) ;
+		cairo->set_source(gradient) ;
+		cairo->fill() ;
+
+#if 0
+		//////////
+
+		if( selected )
+		{
+		    cairo->save() ;
+		    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
+		    RoundedRectangle(
+			  cairo
+			, 5 
+			, 3 
+			, 247
+			, 86
+			, m_rounding
+		    ) ; 
+		    cairo->set_source(m_image_lensflare,5,3) ;
+		    cairo->fill() ;
+		    cairo->restore() ;
+		}
+#endif
+
+		//////////
+
+		cairo->save() ;
+
+		Gdk::RGBA c5 ;
+
+		if( selected )
+		    c5 = color_bg_sel ; 
+		else
+		    c5 = Util::make_rgba(.4,.4,.4,1.) ;
+
+		cairo->rectangle(
+		      4
+		    , 40
+		    , 249  
+		    , 40 
+		) ;
+		Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(c5,selected?.75:.5)) ;
+		cairo->fill() ;
+
+		cairo->restore() ;
+
+		//////////
+	    }
+	    else
+	    {
+		cairo->save() ;
+		cairo->translate(14,12) ;
+		Gdk::Cairo::set_source_pixbuf(
+		      cairo
+		    , m_image_album_loading_iter->get_pixbuf()
+		    , 0
+		    , 0
+		) ;
+		cairo->rectangle(0,0,20,20) ;
+		cairo->fill() ;
+		cairo->restore() ;
+	    }
 
 	    //////////
 
@@ -871,23 +889,32 @@ namespace Albums
 	    {
 		cairo->save() ;
 
+		RoundedRectangle(
+		      cairo
+		    , 5 
+		    , 3 
+		    , 39
+		    , 18
+		    , m_rounding
+		    , MPX::CairoCorners::CORNERS(9)
+		) ;
+
+		Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(c5,.7)) ;
+		cairo->fill() ;
+
+		cairo->restore() ;
+
+		//////////
+
+		cairo->save() ;
+
 		layout[L3]->set_text(album->year.substr(0,4)) ;
 		layout[L3]->get_pixel_size( width, height );
 
-		int x = 179-width ;
-		int y = 68 ;
+		int x = 10 ; 
+		int y = 4 ;
 
 		cairo->translate(x,y) ;
-
-		Util::render_text_shadow(
-		      layout[L3]
-		    , -1 
-		    , -1 
-		    , cairo
-		    , 1
-		    , 0.95 
-		) ;
-
 		cairo->move_to(
 		      0 
 		    , 0 
@@ -898,8 +925,10 @@ namespace Albums
 
 		cairo->restore() ;
 	    }
-	    //////////
 #endif
+
+#if 0
+	    //////////
 
 	    font_desc[L3].set_weight( Pango::WEIGHT_NORMAL );
 	    layout[L3]->set_font_description( font_desc[L3] );
@@ -931,12 +960,13 @@ namespace Albums
 	    Gdk::Cairo::set_source_rgba(cairo, selected?color_sel:color) ; 
 	    pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj());
 
+
 	    guint hrs = album_time / 3600;
 	    guint min = (album_time-hrs*3600) / 60;
 	    guint sec = album_time % 60;
 
 	    guint hrs_total = album->total_time / 3600;
-	    guint min_total = (album->total_time-hrs*3600) / 60;
+	    guint min_total = (album->total_time-hrs_total*3600) / 60;
 	    guint sec_total = album->total_time % 60;
 
 	    if( album->total_time != album_time )
@@ -954,6 +984,8 @@ namespace Albums
 	    pango_cairo_show_layout(cairo->cobj(), layout[L3]->gobj());
 
 	    //////////
+#endif
+
 
 	    if(WithinPast3Days( album->insert_date ))
 	    {
@@ -969,7 +1001,7 @@ namespace Albums
 	Class::initialize_metrics ()
 	{
 	    ViewMetrics.set_base__row_height(
-		  120
+		  106
 	    );
 	}
 
@@ -986,8 +1018,9 @@ namespace Albums
 		    , vadj_value()
 		);
 
-		m_model->set_current_row( ViewMetrics.ViewPort.upper() );
-		get_window()->scroll( 0, y1 - y2 ); 
+		m_model->set_upper_bound( ViewMetrics.ViewPort.upper() );
+
+		//get_window()->scroll( 0, y1 - y2 ); 
 
 		if( m_button_depressed )
 		{
@@ -1001,6 +1034,8 @@ namespace Albums
 			}
 		    }
 		}
+
+		queue_draw() ;
 	    }
 	}
 
@@ -1492,7 +1527,7 @@ namespace Albums
 
 	    RowRowMapping_t::const_iterator i = m_model->iter( d_cur );
 
-	    while( n < d_max && ModelExtents(d_cur)) 
+	    while( n < d_max && d_cur < m_model->size()) 
 	    {
 		int selected = m_selection && boost::get<Selection::INDEX>(m_selection.get()) == d_cur;
 
@@ -1507,7 +1542,7 @@ namespace Albums
 		    , selected ? c_text : c_text_sel
 		    , c_sel
 		    , ModelCount(m_model->size())
-		    , ModelCount(m_model->m_realmodel->size())
+		    , ModelCount(m_model->m_base_model->size())
 		    , selected
 		    , m_model->m_constraints_albums
 		);
@@ -1607,7 +1642,7 @@ namespace Albums
 	void
 	Class::invalidate_covers()
 	{
-	    for( auto& i : *(m_model->m_realmodel))
+	    for( auto& i : *(m_model->m_base_model))
 	    {
 		i->surface_cache.clear();
 	    }

@@ -77,14 +77,10 @@ namespace Albums
         };
 
         typedef boost::shared_ptr<Album> Album_sp ;
-
         typedef boost::container::stable_vector<Album_sp> Model_t ;
-
         typedef boost::shared_ptr<Model_t> Model_sp ;
-
-        typedef std::map<boost::optional<guint>, Model_t::iterator> IdIterMap_t ;
-
-        typedef std::vector<Model_t::iterator>RowRowMapping_t ;
+        typedef std::map<guint, Model_t::iterator> IdIterMap_t ;
+        typedef boost::container::stable_vector<Model_t::iterator>RowRowMapping_t ;
 
 
 	bool operator==( const Album_sp& a, const Album_sp& b ) ;
@@ -130,7 +126,7 @@ namespace Albums
 	struct DataModel
         : public sigc::trackable
 	{
-		Model_sp               m_realmodel ;
+		Model_sp               m_base_model ;
 		IdIterMap_t            m_iter_map ;
 
 		Signal_0	       m_SIGNAL__redraw ;
@@ -166,7 +162,7 @@ namespace Albums
 		row(guint) ;
 
 		virtual void
-		set_current_row(guint) ;
+		set_upper_bound(guint) ;
 
 		virtual void
 		append_album(const Album_sp) ;

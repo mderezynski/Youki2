@@ -62,6 +62,8 @@
 
 #include "mpx/i-youki-play.hh"
 
+#include <sigx/sigx.h>
+
 namespace MPX
 {
         /** Playback Engine
@@ -87,6 +89,7 @@ namespace MPX
         class Play
         : public IPlay
         , public Service::Base
+	, public sigx::glib_auto_dispatchable
         {
                 private:
 
