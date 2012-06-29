@@ -83,11 +83,14 @@ namespace MPX
 
 
                 RowV v;
-                m_SQL->get( v, "SELECT flags FROM meta WHERE rowid = 1" ) ; 
+                m_SQL->get( v, "SELECT flags,uuid FROM meta WHERE rowid = 1" ) ; 
 
-                if( !v.empty() )
+                if(!v.empty())
                 {
                     m_Flags |= get<guint>(v[0]["flags"]); 
+		    m_UUID = get<std::string>(v[0]["uuid"]) ;
+
+		    g_message(":: SQL UUID is [%s]", m_UUID.c_str()) ;
                 }
 
                 mcs->key_set<bool>("library","use-hal", bool(m_Flags & F_USING_HAL));
@@ -339,11 +342,8 @@ namespace MPX
                         if( m_Flags & F_USING_HAL )
                         {
                                 try{
-                                        const guint&	   id          = get<guint>(track[ATTRIBUTE_MPX_DEVICE_ID].get()) ;
-                                        const std::string& path        = get<std::string>(track[ATTRIBUTE_VOLUME_RELATIVE_PATH].get()) ;
-
-					g_message("ID: %u", id ) ;
-
+                                        const guint&	   id = get<guint>(track[ATTRIBUTE_MPX_DEVICE_ID].get()) ;
+                                        const std::string& path = get<std::string>(track[ATTRIBUTE_VOLUME_RELATIVE_PATH].get()) ;
                                         const std::string& mount_point = m_HAL->get_mount_point_for_id( id ) ;
 
                                         return filename_to_uri( build_filename( Util::normalize_path(mount_point), path ) );
@@ -632,10 +632,9 @@ namespace MPX
 
                                     if( row.count("hal_vrp") )
                                             (*track.get())[ATTRIBUTE_VOLUME_RELATIVE_PATH] = get<std::string>(row["hal_vrp"]);
-#if 0
+
                                     (*track.get())[ATTRIBUTE_LOCATION] = trackGetLocation( track ); 
                                     g_assert( (*track.get()).has(ATTRIBUTE_LOCATION) );
-#endif
                                 }
                                 else
 #endif
@@ -706,10 +705,10 @@ namespace MPX
                                 if( row.count("amazon_asin") )
                                         (*track.get())[ATTRIBUTE_ASIN] = get<std::string>(row["amazon_asin"]);
 
-                                if( row.count("album_j") )
+                                if( row.count("mpx_album_id") )
                                         (*track.get())[ATTRIBUTE_MPX_ALBUM_ID] = get<guint>(row["album_j"]);
 
-                                if( row.count("artist_j") )
+                                if( row.count("mpx_artist_id") )
                                         (*track.get())[ATTRIBUTE_MPX_ARTIST_ID] = get<guint>(row["artist_j"]);
 
                                 if( row.count("mpx_album_artist_id") )

@@ -76,10 +76,13 @@ namespace Albums
 	    {}
         };
 
-        typedef boost::shared_ptr<Album> Album_sp ;
-        typedef boost::container::stable_vector<Album_sp> Model_t ;
-        typedef boost::shared_ptr<Model_t> Model_sp ;
-        typedef std::map<guint, Model_t::iterator> IdIterMap_t ;
+        typedef boost::shared_ptr<Album>		    Album_sp ;
+
+        typedef boost::container::stable_vector<Album_sp>   Model_t ;
+        typedef boost::shared_ptr<Model_t>		    Model_sp ;
+
+        typedef std::map<guint, Model_t::iterator>	    IdIterMap_t ;
+
         typedef boost::container::stable_vector<Model_t::iterator>RowRowMapping_t ;
 
 

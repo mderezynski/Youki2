@@ -192,6 +192,9 @@ namespace MPX
             ScannerConnectable&
             connect ();
 
+	    void /* sync tunnel */
+	    remove_dangling() ;
+
         protected:
 
             virtual void on_startup () ; 

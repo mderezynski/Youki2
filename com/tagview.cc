@@ -213,11 +213,9 @@ namespace MPX
         }
 
         bool
-        TagView::on_expose_event (GdkEventExpose * event)
+        TagView::on_draw(const Cairo::RefPtr<Cairo::Context>& cr)
         {
             using namespace Gtk;
-
-            Cairo::RefPtr<Cairo::Context> cr = get_window()->create_cairo_context();
 
             int w, h;
             Gtk::Allocation a = get_allocation();

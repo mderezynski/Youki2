@@ -141,8 +141,6 @@ namespace Artist
 		, artist_mbid
 		, s1 
 		, s2 
-		, tracks
-		, totaltime
 	    ) ;
 
 	    m_base_model->push_back(r);
@@ -194,8 +192,6 @@ namespace Artist
 		, artist_mbid
 		, s1 
 		, s2 
-		, tracks
-		, totaltime
 	    ) ;
 
 	    Model_t::iterator i = m_base_model->insert(
@@ -222,8 +218,6 @@ namespace Artist
 	      guint id
 	)
 	{
-	    g_message(G_STRFUNC) ;
-
 	    IdIterMap_t::iterator i = m_iter_map.find(id) ;
 
 	    if(i != m_iter_map.end())
@@ -344,20 +338,15 @@ namespace Artist
 		return ;
 	    }
 
-	    g_message("Base Model size: %u", m_base_model->size()) ;
-
 	    RowRowMapping_t new_mapping;
 	    new_mapping.reserve(m_base_model->size()) ;
 
 	    boost::optional<guint> upper_bound_prev_id ;
 
-/*
-
 	    if(!m_mapping.empty())
 	    {
 		upper_bound_prev_id = boost::get<1>(row(m_upper_bound)) ;
 	    } 
-*/
 
 	    m_upper_bound = 0 ;
 	    guint c = 0 ;
@@ -747,7 +736,7 @@ namespace Artist
 	    ));
 
 	    configure_vadj(
-		  (m_model->size() * m_height__row)
+		  (m_model->size() * m_height__row) + 10
 		, m_height__current_viewport
 		, m_height__row
 	    ) ;
@@ -1154,7 +1143,7 @@ namespace Artist
 		) ;
 
 		configure_vadj(
-		      (m_model->size() * m_height__row)
+		      (m_model->size() * m_height__row) + 10
 		    , m_height__current_viewport
 		    , m_height__row 
 		) ;
@@ -1403,7 +1392,7 @@ namespace Artist
 	)
 	{
 	    configure_vadj(
-		 (m_model->size() * m_height__row)
+		 (m_model->size() * m_height__row) + 10
 	       , m_height__current_viewport
 	       , m_height__row
 	    ) ;

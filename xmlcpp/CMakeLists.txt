@@ -23,8 +23,8 @@ SET(mpx_parsers_SOURCES
   xsd-topartists-2.0.hxx
   xsd-tag-toptracks-2.0.hxx
   xsd-tag-toptracks-2.0.cxx
-  xspf.cxx
-  xspf.hxx
+  xsd-track-top-tags-2.0.hxx
+  xsd-track-top-tags-2.0.cxx
 )
 
 ADD_LIBRARY(mpx-parsers SHARED ${mpx_parsers_SOURCES})

@@ -173,6 +173,7 @@ namespace MPX
     };
 
     typedef boost::shared_ptr<Track> Track_sp;
+    typedef std::vector<Track_sp>    Track_sp_v ;
 
     namespace SQL
     {

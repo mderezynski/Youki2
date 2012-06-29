@@ -189,6 +189,12 @@ namespace MPX
                 guint
             ) ;
 
+	    const std::string&
+	    get_uuid()
+	    {
+		return m_UUID ;
+	    }
+
             void
             markovUpdate(guint /* track a */, guint /* track b */) ;
 
@@ -273,7 +279,7 @@ namespace MPX
 
 
 
-            typedef sigc::signal<void>                          SignalScanStart;
+            typedef sigc::signal<void>                         SignalScanStart;
 
             typedef sigc::signal<void,
                 guint,
@@ -327,15 +333,19 @@ namespace MPX
 
             guint        m_Flags ;
 
+	    std::string	 m_UUID ;
+
         protected:
 
 	    void
-	    recache_cover( SQL::Row& ) ;
+	    recache_cover(
+		  SQL::Row&
+	    ) ;
 
             bool
             recache_covers_handler(
                   SQL::RowV*
-                , std::size_t*
+                , guint*
             ) ; 
 
             guint

@@ -9,6 +9,7 @@
 #include <glibmm/i18n.h>
 
 #include <set>
+#include <algorithm>
 
 #include "mpx/mpx-sql.hh"
 #include "mpx/mpx-types.hh"
@@ -521,10 +522,10 @@ MPX::LibraryScannerThread_MLibMan::on_scan_all(
 
     pthreaddata->ScanStart.emit() ;
 
+    m_SQL->exec_sql("BEGIN") ;
+
     m_ScanSummary = ScanSummary() ;
-
     boost::shared_ptr<Library_MLibMan> library = services->get<Library_MLibMan>("mpx-service-library") ;
-
     RowV v ;
 
 #ifdef HAVE_HAL
@@ -589,7 +590,11 @@ MPX::LibraryScannerThread_MLibMan::on_scan_all(
 
 
         if( check_abort_scan() )
-            return ;
+	{
+	    m_SQL->exec_sql("ROLLBACK") ;
+	    do_remove_dangling() ; 
+	    return ;
+	}
 
         m_ScanSummary.FilesTotal ++  ;
 
@@ -603,9 +608,11 @@ MPX::LibraryScannerThread_MLibMan::on_scan_all(
         }
     }
 
-    process_insertion_list () ;
-    //do_remove_dangling () ;
-    update_albums () ;
+    process_insertion_list() ;
+    do_remove_dangling() ;
+    update_albums() ;
+
+    m_SQL->exec_sql("COMMIT") ;
 
     pthreaddata->Message.emit(_("Rescan: Done")) ;
     pthreaddata->ScanSummary.emit( m_ScanSummary ) ;
@@ -748,7 +755,7 @@ MPX::LibraryScannerThread_MLibMan::on_add(
     }
 
     process_insertion_list () ;
-    //do_remove_dangling () ;
+    do_remove_dangling () ;
     update_albums () ;
 
     pthreaddata->Message.emit(_("Rescan: Done")) ;
@@ -1890,90 +1897,88 @@ MPX::LibraryScannerThread_MLibMan::insert(
 void
 MPX::LibraryScannerThread_MLibMan::do_remove_dangling () 
 {
-  ThreadData * pthreaddata = m_ThreadData.get() ;
+    ThreadData * pthreaddata = m_ThreadData.get() ;
 
-  typedef std::set<guint> IdSet ;
+    MPX::SQL::SQLDB& sql = *m_SQL ; 
 
-  static boost::format delete_f ("DELETE FROM %s WHERE id = '%u'") ;
-  IdSet idset1 ;
-  IdSet idset2 ;
-  RowV rows;
+    typedef std::set<guint> IdSet ;
 
-  /// CLEAR DANGLING ARTISTS
-  pthreaddata->Message.emit(_("Finding Lost Artists...")) ;
+    static boost::format delete_f ("DELETE FROM %s WHERE id = '%u'") ;
+    IdSet idset1 ;
+    IdSet idset2 ;
+    SQL::RowV rows;
 
-  idset1.clear() ;
-  rows.clear() ;
-  m_SQL->get(rows, "SELECT DISTINCT artist_j FROM track") ;
-  for (RowV::const_iterator i = rows.begin(); i != rows.end(); ++i)
-          idset1.insert (get<guint>(i->find ("artist_j")->second)) ;
+    sql.exec_sql("BEGIN") ;
 
-  idset2.clear() ;
-  rows.clear() ;
-  m_SQL->get(rows, "SELECT DISTINCT id FROM artist") ;
-  for (RowV::const_iterator i = rows.begin(); i != rows.end(); ++i)
-          idset2.insert (get<guint>(i->find ("id")->second)) ;
+    /// CLEAR DANGLING ARTISTS
+    idset1.clear() ;
+    rows.clear() ;
+    sql.get(rows, "SELECT DISTINCT mpx_artist_id FROM track_view") ;
+    for (SQL::RowV::const_iterator i = rows.begin(); i != rows.end(); ++i)
+	    idset1.insert (get<guint>(i->find ("mpx_artist_id")->second)) ;
 
-  for (IdSet::const_iterator i = idset2.begin(); i != idset2.end(); ++i)
-  {
-        if (idset1.find (*i) == idset1.end())
-        {
-            m_SQL->exec_sql((delete_f % "artist" % (*i)).str()) ;
-            pthreaddata->EntityDeleted( *i , ENTITY_ARTIST ) ;
-        }
-  }
+    idset2.clear() ;
+    rows.clear() ;
+    sql.get(rows, "SELECT DISTINCT id FROM artist") ;
+    for (SQL::RowV::const_iterator i = rows.begin(); i != rows.end(); ++i)
+	    idset2.insert (get<guint>(i->find ("id")->second)) ;
 
+    IdSet r ; 
+    std::set_difference(idset2.begin(), idset2.end(), idset1.begin(), idset1.end(), std::inserter(r, r.end())) ;
 
-  /// CLEAR DANGLING ALBUMS
-  pthreaddata->Message.emit(_("Finding Lost Albums...")) ;
+    for( auto id : r )
+    {
+	sql.exec_sql((delete_f % "artist" % id).str()) ;
+	pthreaddata->EntityDeleted( id, ENTITY_ARTIST ) ;
+    }
 
-  idset1.clear() ;
-  rows.clear() ;
-  m_SQL->get(rows, "SELECT DISTINCT album_j FROM track") ;
-  for (RowV::const_iterator i = rows.begin(); i != rows.end(); ++i)
-          idset1.insert (get<guint>(i->find ("album_j")->second)) ;
+    /// CLEAR DANGLING ALBUMS
+    idset1.clear() ;
+    rows.clear() ;
+    sql.get(rows, "SELECT DISTINCT mpx_album_id FROM track_view") ;
+    for (SQL::RowV::const_iterator i = rows.begin(); i != rows.end(); ++i)
+	    idset1.insert (get<guint>(i->find ("mpx_album_id")->second)) ;
 
-  idset2.clear() ;
-  rows.clear() ;
-  m_SQL->get(rows, "SELECT DISTINCT id FROM album") ;
-  for (RowV::const_iterator i = rows.begin(); i != rows.end(); ++i)
-          idset2.insert (get<guint>(i->find ("id")->second)) ;
+    idset2.clear() ;
+    rows.clear() ;
+    sql.get(rows, "SELECT DISTINCT id FROM album") ;
+    for (SQL::RowV::const_iterator i = rows.begin(); i != rows.end(); ++i)
+	    idset2.insert (get<guint>(i->find ("id")->second)) ;
 
-  for (IdSet::const_iterator i = idset2.begin(); i != idset2.end(); ++i)
-  {
-        if (idset1.find (*i) == idset1.end())
-        {
-            m_SQL->exec_sql((delete_f % "album" % (*i)).str()) ;
-            pthreaddata->EntityDeleted( *i , ENTITY_ALBUM ) ;
-        }
-  }
+    r.clear() ; 
+    std::set_difference(idset2.begin(), idset2.end(), idset1.begin(), idset1.end(), std::inserter(r, r.end())) ;
 
-  /// CLEAR DANGLING ALBUM ARTISTS
-  pthreaddata->Message.emit(_("Finding Lost Album Artists...")) ;
+    for( auto id : r )
+    {
+	sql.exec_sql((delete_f % "album" % id).str()) ;
+	pthreaddata->EntityDeleted( id, ENTITY_ALBUM ) ;
+    }
 
-  idset1.clear() ;
-  rows.clear() ;
-  m_SQL->get(rows, "SELECT DISTINCT album_artist_j FROM album") ;
-  for (RowV::const_iterator i = rows.begin(); i != rows.end(); ++i)
-          idset1.insert (get<guint>(i->find ("album_artist_j")->second)) ;
+    /// CLEAR DANGLING ALBUM ARTISTS
+    idset1.clear() ;
+    rows.clear() ;
+    sql.get(rows, "SELECT DISTINCT mpx_album_artist_id FROM track_view") ;
+    for (SQL::RowV::const_iterator i = rows.begin(); i != rows.end(); ++i)
+	    idset1.insert (get<guint>(i->find ("mpx_album_artist_id")->second)) ;
 
-  idset2.clear() ;
-  rows.clear() ;
-  m_SQL->get(rows, "SELECT DISTINCT id FROM album_artist") ;
-  for (RowV::const_iterator i = rows.begin(); i != rows.end(); ++i)
-          idset2.insert (get<guint>(i->find ("id")->second)) ;
+    idset2.clear() ;
+    rows.clear() ;
+    sql.get(rows, "SELECT DISTINCT id FROM album_artist") ;
+    for (SQL::RowV::const_iterator i = rows.begin(); i != rows.end(); ++i)
+	    idset2.insert (get<guint>(i->find ("id")->second)) ;
 
-  for (IdSet::const_iterator i = idset2.begin(); i != idset2.end(); ++i)
-  {
-        if (idset1.find (*i) == idset1.end())
-        {
-            m_SQL->exec_sql((delete_f % "album_artist" % (*i)).str()) ;
-	    g_message("%s: Deleting Album Artist ID %u", G_STRFUNC, *i) ;
-            pthreaddata->EntityDeleted( *i , ENTITY_ALBUM_ARTIST ) ;
-        }
-  }
+    r.clear() ; 
+    std::set_difference(idset2.begin(), idset2.end(), idset1.begin(), idset1.end(), std::inserter(r, r.end())) ;
 
-  pthreaddata->Message.emit(_("Cleanup: Done")) ;
+    for( auto id : r )
+    {
+	sql.exec_sql((delete_f % "album_artist" % id).str()) ;
+	pthreaddata->EntityDeleted( id, ENTITY_ALBUM_ARTIST ) ;
+    }
+
+    sql.exec_sql("COMMIT") ;
+
+    pthreaddata->Message.emit(_("Cleanup: Done")) ;
 }
 
 void
@@ -2010,7 +2015,7 @@ MPX::LibraryScannerThread_MLibMan::on_vacuum()
           }
   }
 
-  // do_remove_dangling () ;
+  do_remove_dangling () ;
 
   pthreaddata->Message.emit(_("Vacuum process done.")) ;
   pthreaddata->ScanEnd.emit() ;
@@ -2065,7 +2070,7 @@ MPX::LibraryScannerThread_MLibMan::on_vacuum_volume_list(
           }
   }
 
-  // do_remove_dangling () ;
+  do_remove_dangling () ;
 
   pthreaddata->Message.emit(_("Vacuum Process: Done")) ;
 
@@ -2213,4 +2218,13 @@ MPX::LibraryScannerThread_MLibMan::on_update_statistics()
     pthreaddata->ScanEnd.emit() ;
 }
 
-
+void
+MPX::LibraryScannerThread_MLibMan::remove_dangling()
+{
+    sigx::open_sync_tunnel(
+		sigc::mem_fun(
+			*this
+		      , &LibraryScannerThread_MLibMan::do_remove_dangling
+		)
+    )() ;
+}

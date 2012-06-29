@@ -4,9 +4,6 @@
 
 #include "mpx/mpx-paths.hh"
 
-#undef PACKAGE
-#define PACKAGE "youki"
-
 namespace MPX
 {
   Path app_paths[N_PATHS];

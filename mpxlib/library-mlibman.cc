@@ -24,16 +24,18 @@
 #include "library-mlibman.hh"
 #include "library-scanner-thread-mlibman.hh"
 
-#include <boost/format.hpp>
 #include <glibmm.h>
 #include <glibmm/i18n.h>
 #include <giomm.h>
 
-#ifdef HAVE_TR1
-#include <tr1/unordered_set>
-#else
+#include <boost/format.hpp>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
+#include <boost/lexical_cast.hpp>
+
 #include <set>
-#endif
+#include <sstream>
 
 #include "mpx/mpx-sql.hh"
 #include "mpx/mpx-uri.hh"
@@ -320,17 +322,22 @@ namespace MPX
 #ifdef HAVE_HAL
                                 m_Flags |= ( mcs->key_get<bool>("library","use-hal") ? F_USING_HAL : 0) ; 
 #endif // HAVE_HAL
-                                m_SQL->exec_sql( "CREATE TABLE meta (version STRING, flags INTEGER DEFAULT 0, last_scan_date INTEGER DEFAULT 0)" ) ;
-                                m_SQL->exec_sql( ( boost::format( "INSERT INTO meta (flags) VALUES (%u)" ) % m_Flags ).str() ) ;
+                                m_SQL->exec_sql( "CREATE TABLE meta (version STRING, flags INTEGER DEFAULT 0, last_scan_date INTEGER DEFAULT 0, uuid STRING)" ) ;
+
+				boost::uuids::uuid u = boost::uuids::random_generator()() ; 
+				m_UUID = boost::lexical_cast<std::string>(u) ; 
+
+                                m_SQL->exec_sql(( boost::format( "INSERT INTO meta (flags,uuid) VALUES ('%u','%s')") % m_Flags % m_UUID).str() ) ;
                         }
                         else
                         {
                                 RowV v ;
-                                m_SQL->get( v, "SELECT flags FROM meta WHERE rowid = 1" ) ; 
+                                m_SQL->get( v, "SELECT flags,uuid FROM meta WHERE rowid = 1" ) ; 
             
-                                if( !v.empty() )
+                                if(!v.empty())
                                 {
-                                    m_Flags |= get<guint>( v[0]["flags"]); 
+                                    m_Flags |= get<guint>(v[0]["flags"]); 
+				    m_UUID = get<std::string>(v[0]["uuid"]) ;
                                 }
                         }
 
@@ -831,8 +838,6 @@ namespace MPX
                         Signals.EntityDeleted.emit( get<guint>(r["id"]), ENTITY_TRACK );
                     }
 
-                    // remove_dangling();
-
                     mm->push_message("Done.") ;
                 }
 #endif // HAVE_HAL
@@ -1117,91 +1122,4 @@ namespace MPX
                         m_ScannerThread->add(list);
                 }
 
-        void
-                Library_MLibMan::remove_dangling () 
-                {
-                        boost::shared_ptr<MPX::MLibManager> mm = services->get<MLibManager>("mpx-service-mlibman");
-
-#ifdef HAVE_TR1
-                        typedef std::tr1::unordered_set<guint> IdSet;
-#else
-                        typedef std::set<guint> IdSet;
-#endif
-                        static boost::format delete_f ("DELETE FROM %s WHERE id = '%u'");
-                        IdSet idset1;
-                        IdSet idset2;
-                        RowV rows;
-
-                        /// CLEAR DANGLING ARTISTS
-                        mm->push_message(_("Finding Lost Artists..."));
-
-                        idset1.clear();
-                        rows.clear();
-                        m_SQL->get(rows, "SELECT DISTINCT artist_j FROM track");
-                        for( RowV::const_iterator i = rows.begin(); i != rows.end(); ++i )
-                                idset1.insert (get<guint>(i->find ("artist_j")->second));
-
-                        idset2.clear();
-                        rows.clear();
-                        m_SQL->get(rows, "SELECT DISTINCT id FROM artist");
-                        for( RowV::const_iterator i = rows.begin(); i != rows.end(); ++i )
-                                idset2.insert (get<guint>(i->find ("id")->second));
-
-                        for( IdSet::const_iterator i = idset2.begin(); i != idset2.end(); ++i )
-                        {
-                                if( idset1.find (*i) == idset1.end() )
-                                {
-                                        m_SQL->exec_sql((delete_f % "artist" % (*i)).str());
-                                        on_entity_deleted( *i , ENTITY_ARTIST );
-                                }
-                        }
-
-
-                        /// CLEAR DANGLING ALBUMS
-                        mm->push_message(_("Finding Lost Albums..."));
-
-                        idset1.clear();
-                        rows.clear();
-                        m_SQL->get(rows, "SELECT DISTINCT album_j FROM track");
-                        for( RowV::const_iterator i = rows.begin(); i != rows.end(); ++i )
-                                idset1.insert (get<guint>(i->find ("album_j")->second));
-
-                        idset2.clear();
-                        rows.clear();
-                        m_SQL->get(rows, "SELECT DISTINCT id FROM album");
-                        for( RowV::const_iterator i = rows.begin(); i != rows.end(); ++i )
-                                idset2.insert (get<guint>(i->find ("id")->second));
-
-                        for( IdSet::const_iterator i = idset2.begin(); i != idset2.end(); ++i )
-                        {
-                                if( idset1.find (*i) == idset1.end() )
-                                {
-                                        m_SQL->exec_sql((delete_f % "album" % (*i)).str());
-                                        on_entity_deleted( *i , ENTITY_ALBUM );
-                                }
-                        }
-
-                        /// CLEAR DANGLING ALBUM ARTISTS
-                        mm->push_message(_("Finding Lost Album Artists..."));
-
-                        idset1.clear();
-                        rows.clear();
-                        m_SQL->get(rows, "SELECT DISTINCT album_artist_j FROM album");
-                        for( RowV::const_iterator i = rows.begin(); i != rows.end(); ++i )
-                                idset1.insert (get<guint>(i->find ("album_artist_j")->second));
-
-                        idset2.clear();
-                        rows.clear();
-                        m_SQL->get(rows, "SELECT DISTINCT id FROM album_artist");
-                        for( RowV::const_iterator i = rows.begin(); i != rows.end(); ++i )
-                                idset2.insert (get<guint>(i->find ("id")->second));
-
-                        for( IdSet::const_iterator i = idset2.begin(); i != idset2.end(); ++i )
-                        {
-                                if( idset1.find (*i) == idset1.end() )
-                                        m_SQL->exec_sql((delete_f % "album_artist" % (*i)).str());
-					g_message("%s: Deleting Album Artist: %u", G_STRFUNC, *i) ;
-                                        on_entity_deleted( *i , ENTITY_ALBUM_ARTIST );
-                        }
-                }
 } // namespace MPX

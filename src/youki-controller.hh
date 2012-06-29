@@ -7,6 +7,7 @@
 #include <gtkmm.h>
 #include <list>
 #include <unordered_map>
+#include <unordered_set>
 
 #include <boost/optional.hpp>
 #include <boost/shared_ptr.hpp>
@@ -19,8 +20,8 @@
 #include "kobo-main.hh"
 #include "kobo-position.hh"
 #include "kobo-volume.hh"
-
 #include "youki-spectrum-titleinfo.hh"
+
 #include "mpx-mlibman-dbus-proxy-actual.hh"
 
 #include "ld-find-nearest.hh"
@@ -248,7 +249,7 @@ namespace MPX
 	    Gtk::Label			    * m_Label_TL ;
             Gtk::Entry                      * m_Entry ;
 
-	    Gtk::RadioButton		    * m_rb1, * m_rb2 ;
+	    Gtk::RadioButton		    * m_rb1, * m_rb2, * m_rb3 ;
 
             Gtk::Alignment                  * m_Alignment_Entry ;
             Gtk::HBox                       * m_HBox_Entry ;
@@ -277,10 +278,11 @@ namespace MPX
 	    StrV			      m_nearest__artists ;
 	    StrV			      m_nearest__artists_popular ;
 
-	    typedef boost::shared_ptr<LDFindNearest> LDFN_p ;
-	    typedef std::map<std::string, LDFN_p>    StrLDFN_map_t ;
-	    typedef std::set<std::string>	     StrSet_t ;
-	    typedef std::map<std::string, StrSet_t>  StrSet_map_t ;
+	    typedef boost::shared_ptr<LDFindNearest>		LDFN_p ;
+
+	    typedef std::unordered_map<std::string, LDFN_p>	StrLDFN_map_t ;
+	    typedef std::unordered_set<std::string>		StrSet_t ;
+	    typedef std::unordered_map<std::string, StrSet_t>	StrSet_map_t ;
 
 	    StrSet_map_t		      m_ssmap ;
 	    StrLDFN_map_t		      m_ldmap ; 
@@ -292,6 +294,7 @@ namespace MPX
 
             std::vector<guint>	    m_play_queue ;
 	    IdHistory		    m_play_history ;
+
 	    ViewHistory		    m_view_history ;
 	    ViewHistoryIter	    m_view_history_pos ;
 	    
@@ -315,6 +318,7 @@ namespace MPX
 
 	    Glib::RefPtr<Gtk::UIManager>      m_UIManager ;
 	    Glib::RefPtr<Gtk::ActionGroup>    m_UIActions_Main ;
+	    Glib::RefPtr<Gtk::ActionGroup>    m_UIActions_Tracklist ;
 
 	    void
 	    play_next_queue_item() ;
@@ -335,7 +339,40 @@ namespace MPX
 	    check_markov_queue_append_real(guint) ;
 
 	    void
+	    clear_play_queue() ;
+
+	    void
+	    apply_queue() ;
+
+	    void
+	    apply_history() ;
+
+	    void
+	    append_to_queue(
+		  const IdV&
+	    ) ;
+
+	    void
+	    append_to_queue(
+		  const SQL::RowV&
+	    ) ;
+
+	    void
 	    handle_info_bar_response(int) ;
+
+	    void
+	    save_xspf_real(
+		  const std::string&
+	    ) ;
+
+	    void
+	    handle_save_xspf() ;
+
+	    void
+	    handle_load_xspf() ;
+
+	    void
+	    handle_save_xspf_history() ;
 
 	    void
 	    handle_queue_op_artist(guint) ;
@@ -344,10 +381,10 @@ namespace MPX
 	    handle_queue_op_album(guint) ;
 
 	    void
-	    handle_show_queue_toggled() ;
+	    handle_show_play_queue_toggled() ;
 
 	    void
-	    handle_clear_queue() ;
+	    handle_clear_play_queue() ;
 
 	    void
 	    handle_remove_track_from_queue(guint) ;
@@ -493,10 +530,6 @@ namespace MPX
             ) ;
 
             void
-            on_advanced_changed(
-            ) ;
-
-            void
             on_position_seek(
                   guint
             ) ;
@@ -592,9 +625,6 @@ namespace MPX
 
 	    bool
 	    on_library_entity_deleted_idle( guint, int ) ;
-
-	    void
-	    remove_dangling() ;
 
             void
             on_library_entity_deleted(

@@ -611,8 +611,6 @@ namespace MPX
     MLibManager::scan_end ()
     {
         update_filestats();
-	//on_update_statistics() ;
-
         m_VboxInner->set_sensitive(true);
         m_Actions->set_sensitive(true);
 
@@ -1320,10 +1318,13 @@ namespace MPX
                 TreePath path = FSTreeStore->get_path(iter_copy);
                 FSTreeStore->row_changed(path, iter_copy);
 
+                services->get<Library_MLibMan>("mpx-service-library")->scanner()->remove_dangling();
+                services->get<Library_MLibMan>("mpx-service-library")->scanner()->update_statistics();
+
+		scan_end() ;
+
                 m_VboxInner->set_sensitive( true );
                 m_Actions->set_sensitive( true );
-
-                //services->get<Library_MLibMan>("mpx-service-library")->scanner()->update_statistics();
             }
 
 	    dialog_showing = false ;

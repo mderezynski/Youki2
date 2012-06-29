@@ -228,7 +228,10 @@ namespace MPX
             IHAL                                                * m_HAL ;
 #endif // HAVE_HAL
             boost::shared_ptr<LibraryScannerThread_MLibMan>       m_ScannerThread ;
-            guint                                                m_Flags ;
+
+            guint                                                 m_Flags ;
+
+	    std::string						  m_UUID ;
 
         protected:
 
@@ -269,9 +272,6 @@ namespace MPX
                 const std::string&
             );
         
-            void
-            remove_dangling() ;
-
             void
             on_priority_settings_changed(
                 MCS_CB_DEFAULT_SIGNATURE

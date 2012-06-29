@@ -88,7 +88,7 @@ class TagView : public Gtk::DrawingArea
         on_configure_event (GdkEventConfigure * event);
 
         virtual bool
-        on_expose_event (GdkEventExpose * event);
+        on_draw(const Cairo::RefPtr<Cairo::Context>&);
 
     public:
 

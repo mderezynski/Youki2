@@ -76,7 +76,7 @@ namespace Tracks
 	    guint	    Track ;	
 	    guint	    Time ;
 
-	    boost::optional<guint> queuepos ;
+	    boost::optional<guint> sort_order ;
 	} ;
 
 	typedef boost::shared_ptr<ModelData_t> ModelData_sp ;
@@ -204,7 +204,7 @@ namespace Tracks
                 , const Model_t::const_iterator& b
             )
             {
-		return (*a)->queuepos < (*b)->queuepos ;
+		return (*a)->sort_order < (*b)->sort_order ;
             }
 
             bool operator() (
@@ -212,7 +212,7 @@ namespace Tracks
                 , Model_t::const_iterator& b
             )
             {
-		return (*a)->queuepos < (*b)->queuepos ;
+		return (*a)->sort_order < (*b)->sort_order ;
             }
         } ;
 
@@ -291,21 +291,21 @@ namespace Tracks
         : public sigc::trackable 
         {
                 Model_sp		m_base_model;
+		bool			m_FLAG_queue ;
                 guint			m_upper_bound ;
-		bool			m_showing_queue ;
 
                 Signal2			m_SIGNAL__changed;
 
                 DataModel()
-                : m_upper_bound( 0 )
-		, m_showing_queue(false)
+		: m_FLAG_queue(false)
+                , m_upper_bound(0)
                 {
                     m_base_model = Model_sp(new Model_t); 
                 }
 
                 DataModel(Model_sp model)
-                : m_upper_bound( 0 )
-		, m_showing_queue(false)
+		: m_FLAG_queue(false)
+                , m_upper_bound(0)
                 {
                     m_base_model = model; 
                 }
@@ -439,8 +439,8 @@ namespace Tracks
                 DataModelFilter( DataModel_sp& model )
 
                     : DataModel( model->m_base_model )
-                    , m_max_size_constraints_artist( 0 )
-                    , m_max_size_constraints_albums( 0 )
+                    , m_max_size_constraints_artist(0)
+                    , m_max_size_constraints_albums(0)
                     , m_cache_enabled(true)
 
                 {
@@ -843,7 +843,7 @@ namespace Tracks
                 }
 
                 virtual void
-                regen_mapping_queue(
+                regen_mapping_sort_order(
                 )
                 {
                     using boost::get;
@@ -851,7 +851,7 @@ namespace Tracks
                     using boost::algorithm::is_any_of;
                     using boost::algorithm::find_first;
 
-		    m_showing_queue = true ;
+		    m_FLAG_queue = true ;
 	
                     RowRowMapping_sp new_mapping( new RowRowMapping_t ), new_mapping_unfiltered( new RowRowMapping_t ) ;
 
@@ -873,7 +873,7 @@ namespace Tracks
 		    {
 			MPX::Track_sp t = (*i)->TrackSp ; 
 
-			if( bool((*i)->queuepos))
+			if( bool((*i)->sort_order))
 			{
 			    guint id_album  = get<guint>((*t)[ATTRIBUTE_MPX_ALBUM_ID].get()) ;
 			    TracksConstraint& tc_alb = constraints_albums[id_album] ;
@@ -907,7 +907,7 @@ namespace Tracks
                     using boost::algorithm::is_any_of;
                     using boost::algorithm::find_first;
 
-		    m_showing_queue = false ;
+		    m_FLAG_queue = false ;
 	
                     RowRowMapping_sp new_mapping( new RowRowMapping_t ), new_mapping_unfiltered( new RowRowMapping_t ) ;
 
@@ -1000,7 +1000,6 @@ namespace Tracks
                                 continue ;
                             }
 
-#if 0
                             if( m_cache_enabled ) 
                             {
                                 FragmentCache_t::iterator cache_iter = m_fragment_cache.find( m_frags[n] ) ;
@@ -1011,7 +1010,6 @@ namespace Tracks
                                     continue ;
                                 }
                             }
-#endif
 
                             ModelIteratorSet_sp model_iterator_set( new ModelIteratorSet_t ) ;
 
@@ -1032,12 +1030,10 @@ namespace Tracks
 
                             intersect.push_back( model_iterator_set ) ; 
 
-#if 0
                             if( m_cache_enabled && m_constraints_ext.empty() && m_constraints_aqe.empty())
                             {
                                 m_fragment_cache.insert( std::make_pair( m_frags[n], model_iterator_set )) ;
                             }
-#endif
                         }
 
                         std::sort( intersect.begin(), intersect.end(), IntersectSort() ) ;
@@ -1138,7 +1134,7 @@ namespace Tracks
                     using boost::algorithm::is_any_of;
                     using boost::algorithm::find_first;
 
-		    m_showing_queue = false ;
+		    m_FLAG_queue = false ;
 
                     RowRowMapping_sp new_mapping( new RowRowMapping_t ), new_mapping_unfiltered( new RowRowMapping_t ) ;
 
@@ -1227,7 +1223,6 @@ namespace Tracks
                                 continue ;
                             }
 
-#if 0
                             if( m_cache_enabled ) 
                             {
                                 FragmentCache_t::iterator cache_iter = m_fragment_cache.find( f ) ;
@@ -1238,7 +1233,6 @@ namespace Tracks
                                     continue ;
                                 }
                             }
-#endif
 
                             ModelIteratorSet_sp model_iterator_set ( new ModelIteratorSet_t ) ;
 
@@ -1259,7 +1253,6 @@ namespace Tracks
 
                             intersect.push_back( model_iterator_set ) ; 
 
-#if 0
                             // We cannot cache results which are preconstrainted i.e. through ext or aqe constraints.
                             // If there is more than 1 frag then the result set, since we go through a previous projection,
                             // the controller mapping (m_mapping_unfiltered) is already constrainted through the preceding frags
@@ -1278,7 +1271,6 @@ namespace Tracks
                             {
                                 m_fragment_cache.insert( std::make_pair( f, model_iterator_set )) ;
                             }
-#endif
                         }
 
                         std::sort( intersect.begin(), intersect.end(), IntersectSort() ) ;
@@ -1397,8 +1389,8 @@ namespace Tracks
             public:
 
                 Column (std::string const& title)
-                : m_width( 0 )
-                , m_column( 0 )
+                : m_width(0)
+                , m_column(0)
                 , m_title( title )
                 , m_alignment( Pango::ALIGN_LEFT )
                 {
@@ -1560,7 +1552,7 @@ namespace Tracks
 
 		    //////////
 		    
-		    if( m_column == 0 && (*r).queuepos )
+		    if( m_column == 0 && (*r).sort_order )
 		    {
 			const int text_size_px_s = 12 ;
 			const int text_size_pt_s = static_cast<int>((text_size_px_s * 72)/ Util::screen_get_y_resolution(Gdk::Screen::get_default())) ;
@@ -1591,7 +1583,7 @@ namespace Tracks
 
 			int width, height ;
 
-			layout_s->set_text((boost::format("%u") % (*r).queuepos.get()).str()) ;
+			layout_s->set_text((boost::format("%u") % (*r).sort_order.get()).str()) ;
 			layout_s->get_pixel_size(width,height) ;
 
 			cairo->move_to( m_width + 24 + (30-width)/2., (ypos)+(rowheight-height)/2.) ; 
@@ -1616,6 +1608,8 @@ namespace Tracks
 	typedef sigc::signal<void>				SignalClearQueue ;
 	typedef sigc::signal<void, guint>			SignalQueueOpArtist ;
 	typedef sigc::signal<void, guint>			SignalQueueOpAlbum ;
+	typedef sigc::signal<void>				SignalSaveXSPF ;
+	typedef sigc::signal<void>				SignalLoadXSPF ;
 
         class Class
         : public Gtk::DrawingArea, public Gtk::Scrollable
@@ -1664,7 +1658,8 @@ namespace Tracks
 		bool				    m_play_on_single_tap ;
 
 		int				    m_vadj_value_old ;
-		std::vector<guint>&		    m_play_queue_ref ;
+		IdV&				    m_play_queue_ref ;
+		const IdV&			    m_play_history_ref ;
 
                 Glib::RefPtr<Gtk::UIManager>	    m_UIManager ;
                 Glib::RefPtr<Gtk::ActionGroup>	    m_ActionGroup ;
@@ -1685,6 +1680,9 @@ namespace Tracks
 		SignalClearQueue		    m_SIGNAL_queue_op_clear ;
 		SignalQueueOpArtist		    m_SIGNAL_queue_op_artist ;
 		SignalQueueOpAlbum		    m_SIGNAL_queue_op_album ;
+		SignalSaveXSPF			    m_SIGNAL_save_xspf ;
+		SignalLoadXSPF			    m_SIGNAL_load_xspf ;
+		SignalSaveXSPF			    m_SIGNAL_save_xspf_history ;
 
                 void
                 initialize_metrics ()
@@ -1899,8 +1897,8 @@ namespace Tracks
 
                         case GDK_KEY_Home:
                         {
-                            select_index( 0 ) ;
-                            scroll_to_index( 0 ) ;
+                            select_index(0) ;
+                            scroll_to_index(0) ;
 
                             return true ;
                         }
@@ -2087,21 +2085,23 @@ namespace Tracks
 		    else 
                     if(event->type == GDK_BUTTON_PRESS && event->button == 3 && m_selection )
                     {
-			m_ActionGroup->get_action("ContextRemoveFromQueue")->set_sensitive(m_model->row(d)->queuepos);
-			m_ActionGroup->get_action("ContextAddToQueue")->set_sensitive(!m_model->row(d)->queuepos);
-			m_ActionGroup->get_action("ContextAddToQueueNext")->set_sensitive(!m_model->row(d)->queuepos);
+			m_ActionGroup->get_action("ContextRemoveFromQueue")->set_sensitive(m_model->row(d)->sort_order);
+			m_ActionGroup->get_action("ContextAddToQueue")->set_sensitive(!m_model->row(d)->sort_order);
+			m_ActionGroup->get_action("ContextAddToQueueNext")->set_sensitive(!m_model->row(d)->sort_order);
 			m_ActionGroup->get_action("ContextClearQueue")->set_sensitive(!m_play_queue_ref.empty());
+			m_ActionGroup->get_action("ContextSaveXSPF")->set_sensitive(!m_play_queue_ref.empty());
+			m_ActionGroup->get_action("ContextXSPFSaveHistory")->set_sensitive(!m_play_history_ref.empty());
 
 			auto m = dynamic_cast<Gtk::ImageMenuItem*>(m_UIManager->get_widget("/PopupMenuTrackList/YoukiDJ/ContextShowArtistSimilar")) ;
 			const std::string& a = (*(m_model->row(boost::get<1>(m_selection.get())))).Artist ;
-			m->set_label((boost::format("Artists similar to %s") % a).str()) ;
+			m->set_label((boost::format("Artists similar to '%s'") % a).str()) ;
 
 			m = dynamic_cast<Gtk::ImageMenuItem*>(m_UIManager->get_widget("/PopupMenuTrackList/YoukiDJ/ContextQueueOpArtist")) ;
-			m->set_label((boost::format("Top Tracks for %s") % a).str()) ;
+			m->set_label((boost::format("Top Tracks for '%s'") % a).str()) ;
 
 			m = dynamic_cast<Gtk::ImageMenuItem*>(m_UIManager->get_widget("/PopupMenuTrackList/YoukiDJ/ContextQueueOpAlbum")) ;
 			const std::string& b = (*(m_model->row(boost::get<1>(m_selection.get())))).Album ;
-			m->set_label((boost::format("Top Tracks for %s") % b).str()) ;
+			m->set_label((boost::format("Top Tracks for '%s'") % b).str()) ;
 
 
 			m_row__button_press.reset() ;
@@ -2139,7 +2139,7 @@ namespace Tracks
 
                     std::size_t row = get_upper_row() + ( y_orig - m_height__headers ) / m_height__row ;
 
-                    if( m_model->m_showing_queue && m_row__button_press && row != m_row__button_press.get() )
+                    if( m_model->m_FLAG_queue && m_row__button_press && row != m_row__button_press.get() )
                     {
 			if( ModelExtents( row )) 
 			{
@@ -2153,7 +2153,7 @@ namespace Tracks
 
 			    std::iter_swap( i1, i2 ) ;
 
-			    std::swap( (**i1)->queuepos, (**i2)->queuepos ) ;
+			    std::swap( (**i1)->sort_order, (**i2)->sort_order ) ;
 
 			    typedef std::vector<guint> Vec ;
 
@@ -2192,6 +2192,7 @@ namespace Tracks
 			property_vadjustment().get_value()->freeze_notify() ;	
                         property_vadjustment().get_value()->set_upper( (upper<page_size)?page_size:upper ) ; 
 		        property_vadjustment().get_value()->set_page_size( page_size ) ; 
+		        property_vadjustment().get_value()->set_step_increment( 2 ) ; 
 			property_vadjustment().get_value()->thaw_notify() ;
 		    }
                 }
@@ -2781,6 +2782,24 @@ namespace Tracks
                     return m_SIGNAL_queue_op_artist ;
                 }
 
+                SignalSaveXSPF&
+                signal_save_xspf()
+                {
+                    return m_SIGNAL_save_xspf ;
+                }
+
+                SignalLoadXSPF&
+                signal_load_xspf()
+                {
+                    return m_SIGNAL_load_xspf ;
+                }
+
+                SignalSaveXSPF&
+                signal_save_xspf_history()
+                {
+                    return m_SIGNAL_save_xspf_history ;
+                }
+
                 void
                 column_set_collapsed(
                       int       column
@@ -2835,7 +2854,7 @@ namespace Tracks
                 }
 
                 void
-                id_set_queuepos(
+                id_set_sort_order(
 		      guint		     id
 		    , boost::optional<guint> qpos = boost::optional<guint>()
                 )
@@ -2844,7 +2863,7 @@ namespace Tracks
                     {
                         if( r->ID == id )
                         {
-			    r->queuepos = qpos ;
+			    r->sort_order = qpos ;
 			    queue_draw() ;
                             break ;
                         }
@@ -2888,7 +2907,7 @@ namespace Tracks
                         ) ;
 
                         if( m_model->m_mapping->size() < get_page_size()) 
-                            vadj_value_set( 0 ) ; 
+                            vadj_value_set(0) ; 
                         else
                         if( d_lim > (m_model->m_mapping->size() - get_page_size()) )
                             vadj_value_set( m_model->m_mapping->size() - get_page_size() ) ; 
@@ -3189,16 +3208,34 @@ namespace Tracks
 		}
 
 		void
+		on_save_xspf()
+		{
+		    m_SIGNAL_save_xspf.emit() ;
+		}
+
+		void
+		on_load_xspf()
+		{
+		    m_SIGNAL_load_xspf.emit() ;
+		}
+
+		void
+		on_save_xspf_history()
+		{
+		    m_SIGNAL_save_xspf_history.emit() ;
+		}
+
+		void
 		on_remove_track_from_queue()
 		{	
 		    if( m_selection )
 		    {
 			ModelData_sp sp = m_model->row(boost::get<S_INDEX>(m_selection.get())) ;
 
-			if( sp->queuepos )
+			if( sp->sort_order )
 			{
 			    m_SIGNAL_queue_op_remove_track.emit(sp->ID) ; 
-			    sp->queuepos.reset() ;
+			    sp->sort_order.reset() ;
 			}
 		    }
 		}
@@ -3274,8 +3311,10 @@ namespace Tracks
                 }
  
                 Class(
-		      std::vector<guint>&	    pq
-		    , Glib::RefPtr<Gtk::UIManager>  uim
+		      IdV&				pq
+		    , const IdV&			ph
+		    , Glib::RefPtr<Gtk::UIManager>	uim
+		    , Glib::RefPtr<Gtk::ActionGroup>	ag
 		)
 
                         : ObjectBase( "YoukiClassTracks" )
@@ -3295,8 +3334,9 @@ namespace Tracks
 			, m_play_on_single_tap(false)
 			, m_vadj_value_old(0)
 			, m_play_queue_ref(pq)
+			, m_play_history_ref(ph)
 			, m_UIManager(uim)
-
+			, m_ActionGroup(ag)
                 {
 		    property_vadjustment().signal_changed().connect( sigc::mem_fun( *this, &Class::on_vadj_prop_changed )) ;
 
@@ -3372,7 +3412,6 @@ namespace Tracks
                     m_SearchWindow->add( *m_SearchHBox ) ;
                     m_SearchHBox->show_all() ;
 
-                    m_ActionGroup = Gtk::ActionGroup::create() ;
                     m_ActionGroup->add( Gtk::Action::create("ContextMenu", "Context Menu")) ;
                     m_ActionGroup->add( Gtk::Action::create("youkidj", "Youki DJ")) ;
 
@@ -3392,13 +3431,17 @@ namespace Tracks
                         sigc::mem_fun(*this, &Class::on_remove_track_from_queue)) ;
                     m_ActionGroup->add( Gtk::Action::create("ContextClearQueue", "Clear Queue"),
                         sigc::mem_fun(*this, &Class::on_clear_queue)) ;
+                    m_ActionGroup->add( Gtk::Action::create("ContextSaveXSPF", "Save Queue to .xspf Playlist"),
+                        sigc::mem_fun(*this, &Class::on_save_xspf)) ;
+                    m_ActionGroup->add( Gtk::Action::create("ContextXSPFSaveHistory", "Save History to .xspf Playlist"),
+                        sigc::mem_fun(*this, &Class::on_save_xspf_history)) ;
+                    m_ActionGroup->add( Gtk::Action::create("ContextLoadXSPF", "Load .xspf into Queue"),
+                        sigc::mem_fun(*this, &Class::on_load_xspf)) ;
                     m_ActionGroup->add( Gtk::Action::create("ContextQueueOpArtist", "Top Tracks for Artist"),
                         sigc::mem_fun(*this, &Class::on_enqueue_toptracks)) ;
                     m_ActionGroup->add( Gtk::Action::create("ContextQueueOpAlbum", "Top Tracks for Album"),
                         sigc::mem_fun(*this, &Class::on_enqueue_toptracks_album)) ;
  
-                    m_UIManager->insert_action_group(m_ActionGroup) ;
-
                     m_pMenuPopup = dynamic_cast<Gtk::Menu*>(m_UIManager->get_widget("/PopupMenuTrackList")) ;
 
 		    {

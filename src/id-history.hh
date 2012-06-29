@@ -2,6 +2,7 @@
 #define MPX_ID_HISTORY__HH
 
 #include <vector>
+#include "mpx/mpx-types.hh"
 
 namespace MPX
 {
@@ -9,7 +10,7 @@ namespace MPX
     {
 	private:
 
-		typedef std::vector<guint>  History ;
+		typedef IdV		    History ;
 		typedef History::iterator   HistoryPosition ;
 
 		History			    mHistory ;
@@ -26,6 +27,12 @@ namespace MPX
 
 		virtual ~IdHistory()
 		{
+		}
+
+		const IdV&
+		get()
+		{
+		    return mHistory ;
 		}
 
 		void

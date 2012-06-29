@@ -555,15 +555,39 @@ namespace Albums
 	    cairo->set_operator(Cairo::OPERATOR_CLEAR) ;
 	    cairo->paint() ;
 
-	    Glib::RefPtr<Gdk::Pixbuf> icon_desaturated_1 =
+	    auto icon_desaturated_1 =
 		Util::cairo_image_surface_to_pixbuf( album->coverart ? album->coverart : m_image_disc ) ; 
+	    auto icon_desaturated_2 = icon_desaturated_1->copy() ;
 
-	    Glib::RefPtr<Gdk::Pixbuf> icon = icon_desaturated_1->copy() ; 
+	    auto icon = icon_desaturated_1->copy() ; 
+
 	    icon->saturate_and_pixelate(icon_desaturated_1, 0.85, false) ;
+	    icon->saturate_and_pixelate(icon_desaturated_2, 0.25, false) ;
 
 	    cairo->set_operator(Cairo::OPERATOR_OVER) ;
 	    cairo->set_source(
 		  Util::cairo_image_surface_from_pixbuf(icon_desaturated_1)
+		,   0
+		, -80 
+	    ) ;
+	    cairo->rectangle(
+		  0
+		, 0
+		, 256
+		, 130
+	    ) ;
+	    cairo->fill() ;
+
+
+	    album->surface_cache_blur = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, 256, 98) ;
+	    cairo = Cairo::Context::create(album->surface_cache_blur) ;
+
+	    cairo->set_operator(Cairo::OPERATOR_CLEAR) ;
+	    cairo->paint() ;
+
+	    cairo->set_operator(Cairo::OPERATOR_OVER) ;
+	    cairo->set_source(
+		    Util::cairo_image_surface_from_pixbuf(icon_desaturated_2) 
 		,   0
 		, -80 
 	    ) ;
@@ -574,50 +598,10 @@ namespace Albums
 		, 256
 		, 130
 	    ) ;
+	    cairo->clip() ;
+	    cairo->paint_with_alpha(0.4) ;
 
-	    cairo->fill() ;
-
-#if 0
-	    //////////
-
-	    album->surface_cache_blur = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, 256, 130) ;
-	    cairo = Cairo::Context::create(album->surface_cache_blur) ;
-
-	    cairo->set_operator(Cairo::OPERATOR_CLEAR) ;
-	    cairo->paint() ;
-
-	    cairo->set_operator(Cairo::OPERATOR_OVER) ;
-	    cairo->set_source(
-		  album->surface_cache 
-		, 0
-		, 0
-	    ) ;
-	    cairo->rectangle(
-		  0
-		, 0
-		, 256
-		, 130
-	    ) ;
-	    cairo->fill() ;
-
-	    Util::cairo_image_surface_blur( album->surface_cache_blur, 4 ) ;
-
-	    cairo = Cairo::Context::create(album->surface_cache) ;
-
-	    cairo->set_operator(Cairo::OPERATOR_OVER) ;
-	    cairo->set_source(
-		  album->surface_cache_blur
-		, 0
-		, 0
-	    ) ;
-	    cairo->rectangle(
-		  0
-		, 40
-		, 256
-		, 40
-	    ) ;
-	    cairo->fill() ;
-#endif
+	    Util::cairo_image_surface_blur( album->surface_cache_blur, 3 ) ;
 	}
 
 	void
@@ -696,6 +680,13 @@ namespace Albums
 	    b = fmin( 1, b*1.3 ) ;
 	    Gdk::RGBA c3 = Util::color_from_hsb( h, s, b );
 
+	    Gdk::RGBA c5 ;
+
+	    if( selected )
+		c5 = color_bg_sel ; 
+	    else
+		c5 = Util::make_rgba(.4,.4,.4,1.) ;
+
 	    time_t time_now = time(NULL) ;
 	    Range<time_t> WithinPast3Days(time_now-(3*24*60*60), time_now) ;
 
@@ -715,32 +706,16 @@ namespace Albums
 	    //////////
 
 	    cairo->save() ;
-
-	    if( selected )
-	    {
-		RoundedRectangle(
-		      cairo
-		    , 5   
-		    , 3   
-		    , 247 
-		    , 86 
-		    , m_rounding
-		) ;
-	    }
-	    else
-	    {
-		RoundedRectangle(
-		      cairo
-		    , 5   
-		    , 3   
-		    , 247 
-		    , 86 
-		    , m_rounding
-		) ;
-	    }
-
-	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(0,0,0,.95)) ;
-	    cairo->set_line_width(selected?6:3) ;
+	    RoundedRectangle(
+		  cairo
+		, 5   
+		, 3   
+		, 247 
+		, 86 
+		, m_rounding
+	    ) ;
+	    Gdk::Cairo::set_source_rgba(cairo, selected?c5:Util::make_rgba(0,0,0,1)) ;
+	    cairo->set_line_width(3) ;
 	    cairo->stroke() ;
 	    cairo->restore() ;
 
@@ -756,7 +731,7 @@ namespace Albums
 		    , 86
 		    , m_rounding
 		) ;
-		cairo->set_source(album->surface_cache,0,0) ;
+		cairo->set_source(selected?album->surface_cache_blur:album->surface_cache,0,0) ;
 		cairo->fill_preserve() ;
 
 		//////////
@@ -768,21 +743,21 @@ namespace Albums
 		    , 0 
 		    , 0 
 		    , 0
-		    , .25 //selected ? 0.70 : 0.35 
+		    , selected ? 0.70 : 0.35 
 		) ;
 		gradient->add_color_stop_rgba(
 		      0.38
 		    , 0
 		    , 0
 		    , 0
-		    , .10 //selected ? 0.35 : 0.10
+		    , selected ? 0.35 : 0.10
 		) ;
 		gradient->add_color_stop_rgba(
 		      0.62
 		    , 0
 		    , 0
 		    , 0
-		    , .10 //selected ? 0.35 : 0.10
+		    , selected ? 0.35 : 0.10
 		) ;
 		gradient->add_color_stop_rgba(
 		      1 
@@ -794,50 +769,57 @@ namespace Albums
 		cairo->set_source(gradient) ;
 		cairo->fill() ;
 
-#if 0
-		//////////
-
-		if( selected )
-		{
-		    cairo->save() ;
-		    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
-		    RoundedRectangle(
-			  cairo
-			, 5 
-			, 3 
-			, 247
-			, 86
-			, m_rounding
-		    ) ; 
-		    cairo->set_source(m_image_lensflare,5,3) ;
-		    cairo->fill() ;
-		    cairo->restore() ;
-		}
-#endif
-
 		//////////
 
 		cairo->save() ;
-
-		Gdk::RGBA c5 ;
-
-		if( selected )
-		    c5 = color_bg_sel ; 
-		else
-		    c5 = Util::make_rgba(.4,.4,.4,1.) ;
-
+		Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(selected?c5:Util::make_rgba(0,0,0,.95),selected?.80:.5)) ;
 		cairo->rectangle(
-		      4
-		    , 40
-		    , 249  
-		    , 40 
+		      5
+		    , 38
+		    , 247  
+		    , 42 
 		) ;
-		Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(c5,selected?.75:.5)) ;
 		cairo->fill() ;
 
-		cairo->restore() ;
+#if 0
+		cairo->arc( 19, 18, 6, 0, 2*M_PI ) ;
+		cairo->set_line_width(1.5) ;
+		cairo->set_source_rgba(1,1,1,1) ;
+		cairo->fill_preserve() ;
+		cairo->set_source_rgba(0,0,0,1) ;
+		cairo->stroke() ;
+#endif
 
-		//////////
+#if 0
+		double r1 =  90 * (M_PI/180.0) ; 
+		double r2 = 180 * (M_PI/180.0) ; 
+
+		cairo->arc(11,32,6,r1,r2) ;
+		cairo->line_to(5,38) ;
+		cairo->line_to(11,38) ;
+		cairo->close_path() ;	
+		cairo->fill() ;
+
+		double r3 =   0 * (M_PI/180.0) ; 
+		double r4 =  90 * (M_PI/180.0) ; 
+
+		cairo->arc(248,34,4,r3,r4) ;
+		cairo->line_to(252,38) ;
+		cairo->line_to(252,34) ;
+		cairo->close_path() ;	
+		cairo->fill() ;
+
+		double r5 = 180 * (M_PI/180.0) ; 
+		double r6 = 270 * (M_PI/180.0) ; 
+
+		cairo->arc(9,84,4,r5,r6) ;
+		cairo->line_to(5,80) ;
+		cairo->line_to(5,84) ;
+		cairo->close_path() ;
+		cairo->fill() ;
+#endif
+
+		cairo->restore() ;
 	    }
 	    else
 	    {
@@ -857,7 +839,7 @@ namespace Albums
 	    //////////
 
 	    cairo->save() ;
-	    cairo->translate(16,59) ;
+	    cairo->translate(16,58) ;
 	    layout[L2]->set_text( album->album ) ;
 	    layout[L2]->get_pixel_size( width, height );
 	    cairo->move_to(
@@ -871,7 +853,7 @@ namespace Albums
 	    //////////
 
 	    cairo->save() ;
-	    cairo->translate(16,42) ;
+	    cairo->translate(16,41) ;
 	    layout[L1]->set_text( album->album_artist );
 	    layout[L1]->get_pixel_size( width, height );
 	    cairo->move_to(
@@ -1391,7 +1373,11 @@ namespace Albums
 		m_SIGNAL_start_playback.emit() ;
 	    }
 
-	    if( (!m_selection || (get<Selection::INDEX>(m_selection.get()) != d)))
+	    if( (event->button == 1) && m_selection && (get<Selection::INDEX>(m_selection.get()) != d))
+	    {
+	    }
+
+	    if( event->button == 1 && (!m_selection || (get<Selection::INDEX>(m_selection.get()) != d)))
 	    {
 		if( ModelExtents( d ))
 		{

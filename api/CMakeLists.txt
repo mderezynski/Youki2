@@ -63,6 +63,7 @@ SET(mpx_api_SOURCES
   util-ui.cc
   xml.cc
   xpath.cc
+  xspf-write.cc
   ${mpx_api_ADD_SOURCES}
 )
 
