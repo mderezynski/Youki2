@@ -1,0 +1,100 @@
+INCLUDE_DIRECTORIES(
+  ${PROJECT_BINARY_DIR}
+  ${PROJECT_SOURCE_DIR}
+  ${PROJECT_SOURCE_DIR}/include	
+  ${ALSA_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIR}
+  ${CAIROMM_INCLUDE_DIRS}
+  ${CDIO_INCLUDE_DIRS}
+  ${CDPARANOIA_INCLUDE_DIR}
+  ${DBUS_INCLUDE_DIRS}
+  ${EXO_INCLUDE_DIRS}
+  ${GDL_INCLUDE_DIRS}
+  ${GIOMM_INCLUDE_DIRS}
+  ${GLIB_INCLUDE_DIRS}
+  ${GLIBMM_INCLUDE_DIRS}
+  ${GST_INCLUDE_DIRS}
+  ${GTKGLEXT_INCLUDE_DIRS}
+  ${GTKMM_INCLUDE_DIRS}
+  ${HAL_INCLUDE_DIRS}
+  ${NM_INCLUDE_DIRS}
+  ${LIBOFA_INCLUDE_DIRS}
+  ${PYGTK_INCLUDE_DIRS}
+  ${PYTHON_INCLUDE_DIRS}
+  ${RSVG_INCLUDE_DIRS}
+  ${SEXYMM_INCLUDE_DIRS}
+  ${SOUP_INCLUDE_DIRS}
+  ${SQLITE_INCLUDE_DIRS}
+  ${STARTUP_NOTIFY_INCLUDE_DIRS}
+  ${TAGLIB_INCLUDE_DIRS}
+  ${X11_X11_INCLUDE_PATH}
+  ${XML_INCLUDE_DIRS}
+  ${XPROTO_INCLUDE_DIRS}
+  ${mpx_sigx_ADD_INCLUDE_DIRS}
+)
+
+SET(mpx_sigx_SOVERSION 0)
+SET(mpx_sigx_VERSION 2.0)
+
+SET(mpx_sigx_SOURCES
+  tunnel_context_base.cpp
+  tunnel_validity_tracker.cpp
+  bad_sync_call.cpp
+  connection_handler.cpp
+  connection_wrapper.cpp
+  dispatchables.cpp
+  dispatcher.cpp
+  glib_dispatcher.cpp
+  glib_threadable.cpp
+  operator_new.cpp
+  signal_f_base.cpp
+  signal_wrapper_base.cpp
+  __sigx_pch__.cpp
+  __sigx_pchfence__.h
+  tunnel_base.cpp
+  bad_caller.cpp
+  bad_dispatcher.cpp
+  ${mpx_sigx_ADD_SOURCES}
+)
+
+ADD_LIBRARY(mpx-sigx SHARED ${mpx_sigx_SOURCES})
+
+SET_TARGET_PROPERTIES(mpx-sigx
+  PROPERTIES
+  VERSION ${mpx_sigx_VERSION}
+  SOVERSION ${mpx_sigx_SOVERSION}
+)
+
+TARGET_LINK_LIBRARIES(mpx-sigx
+  ${ALSA_LIBRARIES}
+  ${Boost_REGEX_LIBRARY}
+  ${Boost_FILESYSTEM_LIBRARY}
+  ${CAIROMM_LIBRARIES}
+  ${CDIO_LIBRARIES}
+  ${CDPARANOIA_LIBRARY}
+  ${DBUS_LIBRARIES}
+  ${EXO_LIBRARIES}
+  ${GDL_LIBRARIES}
+  ${GIOMM_LIBRARIES}
+  ${GLIBMM_LIBRARIES}
+  ${GST_LIBRARIES}
+  ${GTKGLEXT_LIBRARIES}
+  ${GTKMM_LIBRARIES}
+  ${HAL_LIBRARIES}
+  ${NM_LIBRARIES}
+  ${LIBOFA_LIBRARIES}
+  ${PYGTK_LIBRARIES}
+  ${PYTHON_LIBRARIES}
+  ${RSVG_LIBRARIES}
+  ${SEXYMM_LIBRARIES}
+  ${SM_LIBRARIES}
+  ${SOUP_LIBRARIES}
+  ${SQLITE_LIBRARIES}
+  ${STARTUP_NOTIFY_LIBRARIES}
+  ${TAGLIB_LIBRARIES}
+  ${XML_LIBRARIES}
+  ${X11_X11_LIB}
+  ${mpx_sigx_ADD_LIBRARIES}
+)
+
+INSTALL(TARGETS mpx-sigx LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
