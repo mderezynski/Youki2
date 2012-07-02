@@ -78,7 +78,6 @@ namespace MPX
 	    g_message("RemoteStore:: URL['%s']", url.c_str()) ;
 
             request = Soup::RequestSync::create( url ) ; 
-    
 	    request->run() ;
 
 #if 0

@@ -94,12 +94,14 @@ namespace MPX
 
 	double h, s, b ;
 
+/*
 	if( m_color )
 	{
 	    cgdk = m_color.get() ;
 	}
 	else
-	    cgdk.set_rgba( 0.25, 0.25, 0.25, 1.0 ) ;
+*/
+	    cgdk.set_rgba( 0.55, 0.55, 0.55, 1.0 ) ;
 
 	Util::color_to_hsb( cgdk, h, s, b ) ;
 	b *= 0.55 ; 

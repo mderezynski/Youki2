@@ -512,6 +512,9 @@ namespace MPX
 	    }
 	}
 
+        m_Builder->get_widget("button-fstree", m_ButtonFSTree);
+	m_ButtonFSTree->signal_clicked().connect( sigc::mem_fun( *this, &MLibManager::RebuildFSTree )) ;
+
 	build_fstree("/") ;
 	Gtk::TreePath path (1);
 	m_FSTree->expand_row(path, false);
@@ -531,6 +534,15 @@ namespace MPX
             mcs->key_get<int>("mpx","window-mlib-x"),
             mcs->key_get<int>("mpx","window-mlib-y")
         );
+    }
+
+    void
+    MLibManager::RebuildFSTree()
+    {
+	Gtk::TreePath path (1);
+	FSTreeStore->erase(FSTreeStore->get_iter(path)) ;
+	build_fstree("/") ;
+	m_FSTree->expand_row(path, false);
     }
 
     void
@@ -1319,7 +1331,7 @@ namespace MPX
                 FSTreeStore->row_changed(path, iter_copy);
 
                 services->get<Library_MLibMan>("mpx-service-library")->scanner()->remove_dangling();
-                services->get<Library_MLibMan>("mpx-service-library")->scanner()->update_statistics();
+//                services->get<Library_MLibMan>("mpx-service-library")->scanner()->update_statistics();
 
 		scan_end() ;
 

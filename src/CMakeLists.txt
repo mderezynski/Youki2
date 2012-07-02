@@ -75,6 +75,8 @@ SET(youki_bin_SOURCES
   markov-analyzer-thread.hh
   play.hh
   play.cc
+  playlist-manager.hh
+  playlist-manager.cc
   plugin.cc
 #  plugin-loader-python.hh
 #  plugin-loader-python.cc

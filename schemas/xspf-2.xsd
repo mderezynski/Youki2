@@ -1,0 +1,48 @@
+<xs:schema id="NewDataSet" targetNamespace="http://xspf.org/ns/0/" xmlns:mstns="http://xspf.org/ns/0/" xmlns="http://xspf.org/ns/0/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" attributeFormDefault="qualified" elementFormDefault="qualified" xmlns:app1="http://youki.mp/ns/0/" msdata:schemafragmentcount="2">
+<!-- Generated using Flame-Ware Solutions XML-2-XSD v2.0 at http://www.flame-ware.com/Products/XML-2-XSD/ -->
+  <xs:import namespace="http://youki.mp/ns/0/" />
+  <xs:element name="playlist">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="creator" msdata:Prefix="xspf" type="xs:string" minOccurs="0" msdata:Ordinal="0" />
+        <xs:element name="trackList" msdata:Prefix="xspf" minOccurs="0" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="track" msdata:Prefix="xspf" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="location" msdata:Prefix="xspf" type="xs:string" minOccurs="0" />
+                    <xs:element name="identifier" msdata:Prefix="xspf" type="xs:string" minOccurs="0" />
+                    <xs:element name="creator" msdata:Prefix="xspf" type="xs:string" minOccurs="0" />
+                    <xs:element name="album" msdata:Prefix="xspf" type="xs:string" minOccurs="0" />
+                    <xs:element name="title" msdata:Prefix="xspf" type="xs:string" minOccurs="0" />
+                    <xs:element name="extension" msdata:Prefix="xspf" minOccurs="0" maxOccurs="unbounded">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element ref="app1:sqldb-uuid" minOccurs="0" msdata:Ordinal="0" />
+                        </xs:sequence>
+                        <xs:attribute name="application" form="unqualified" type="xs:string" />
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+      <xs:attribute name="version" form="unqualified" type="xs:string" />
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="NewDataSet" msdata:IsDataSet="true" msdata:UseCurrentLocale="true" msdata:Prefix="xspf">
+    <xs:complexType>
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:element ref="playlist" />
+      </xs:choice>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
+<xs:schema targetNamespace="http://youki.mp/ns/0/" xmlns:mstns="http://xspf.org/ns/0/" xmlns="http://youki.mp/ns/0/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" attributeFormDefault="qualified" elementFormDefault="qualified" xmlns:app1="http://youki.mp/ns/0/">
+  <xs:import namespace="http://xspf.org/ns/0/" />
+  <xs:element name="sqldb-uuid" msdata:Prefix="yki" type="xs:string" />
+</xs:schema>

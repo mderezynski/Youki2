@@ -36,6 +36,7 @@ SET(mpx_widgets_SOURCES
   task-dialog.cc
   timed-confirmation.cc
   cairo-blur.cc
+  cell-renderer-cairo-surface.cc
   ${CMAKE_CURRENT_BINARY_DIR}/widget-marshalers.c
   ${CMAKE_CURRENT_BINARY_DIR}/widget-marshalers.h
 )

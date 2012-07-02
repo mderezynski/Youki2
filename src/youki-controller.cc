@@ -69,6 +69,7 @@ namespace
     "	    <menuitem action='PlaybackControlActionUseHistory'/>"
     "	    <menuitem action='PlaybackControlActionMarkov'/>"
     "	    <menuitem action='PlaybackControlActionContinueCurrentAlbum'/>"
+    "	    <menuitem action='PlaybackControlActionKeepQueue'/>"
     "	</menu>"
     "</menubar>"
     ""
@@ -92,6 +93,7 @@ namespace
     "	    </menu>" 
     "       <separator/>"
     "       <menuitem action='ContextLoadXSPF'/>"
+    "       <separator/>"
     "       <menuitem action='ContextSaveXSPF'/>"
     "       <menuitem action='ContextXSPFSaveHistory'/>"
      "</popup>"
@@ -234,7 +236,7 @@ namespace MPX
     : Glib::ObjectBase( "YoukiController" )
     , Service::Base("mpx-service-controller")
     , private_( new Private )
-    , m_main_window(0)
+    , m_MainWindow(0)
     {
         m_C_SIG_ID_track_new =
             g_signal_new(
@@ -386,6 +388,23 @@ namespace MPX
                 , &YoukiController::on_play_metadata
         )) ;
 
+	//////////
+
+#if 0
+	m_PlaylistManager = new PlaylistManager ;
+	m_PlaylistGUI = Gtk::manage( new PlaylistGUI ) ;
+	m_PlaylistGUI->load_playlists( m_PlaylistManager->get()) ;
+	m_ScrolledWindowPlaylists = Gtk::manage( new Gtk::ScrolledWindow ) ;
+	m_ScrolledWindowPlaylists->add( *m_PlaylistGUI ) ;
+	m_ScrolledWindowPlaylists->set_size_request( 320, -1 ) ;
+	m_ScrolledWindowPlaylists->set_shadow_type( Gtk::SHADOW_IN ) ;
+#endif
+
+	mcs->domain_register("PlaylistManager") ;
+	mcs->key_register("PlaylistManager","basedir",std::string(Glib::build_filename(Glib::build_filename(g_get_user_data_dir(),PACKAGE),"playlists"))) ;
+
+	//////////
+	
 	/* Setup main search Entry */
         m_Entry = Gtk::manage( new Gtk::Entry ) ;
 	m_Entry->set_size_request( 650, -1 ) ;
@@ -564,15 +583,15 @@ namespace MPX
 	dynamic_cast<Gtk::Container*>(m_InfoBar->get_content_area())->add(*m_InfoLabel) ;
 	m_InfoBar->hide() ;
 
-	m_AQUE_Spinner = Gtk::manage( new Gtk::Image ) ;
+	m_ActivitySpinner = Gtk::manage( new Gtk::Image ) ;
 	Glib::RefPtr<Gdk::PixbufAnimation> anim = Gdk::PixbufAnimation::create_from_file(
 						    Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "album-cover-loading.gif" )) ;
-	m_AQUE_Spinner->set( anim ) ;
-	Glib::signal_timeout().connect( sigc::bind_return(sigc::mem_fun( *m_AQUE_Spinner, &Gtk::Widget::queue_draw), true), 100) ;
+	m_ActivitySpinner->set( anim ) ;
+	Glib::signal_timeout().connect( sigc::bind_return(sigc::mem_fun( *m_ActivitySpinner, &Gtk::Widget::queue_draw), true), 100) ;
 
         m_HBox_Entry->pack_start( *m_Label_Search, false, false, 0 ) ;
         m_HBox_Entry->pack_start( *m_Entry, false, false, 0 ) ;
-        m_HBox_Entry->pack_start( *m_AQUE_Spinner, false, false, 0 ) ;
+        m_HBox_Entry->pack_start( *m_ActivitySpinner, false, false, 0 ) ;
         m_HBox_Entry->pack_start( *m_EventBox_Nearest, false, false, 0 ) ;
         m_HBox_Entry->pack_start( *Buttons_Align, true, true, 0 ) ;
 
@@ -610,8 +629,8 @@ namespace MPX
 	pixvector.push_back( Gdk::Pixbuf::create_from_file( Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "youki96x96.png" ))) ;
 	pixvector.push_back( Gdk::Pixbuf::create_from_file( Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "youki128x128.png" ))) ;
 
-        m_main_window = new MainWindow ;
-        m_main_window->set_icon_list( pixvector ) ; 
+        m_MainWindow = new MainWindow ;
+        m_MainWindow->set_icon_list( pixvector ) ; 
 
 	// MAIN VIEW WIDGETS	
         m_ScrolledWinArtist = Gtk::manage( new Gtk::ScrolledWindow ) ;
@@ -643,7 +662,7 @@ namespace MPX
 
 	m_UIActions_Main->add( Gtk::Action::create_with_icon_name( "FileActionPlugins", MPX_STOCK_PLUGIN, "Plugins", "Allows you to configure Plugins and turn them on or off"), sigc::bind( sigc::mem_fun( *this, &YoukiController::on_show_subsystem_window), 2)) ; 
 
-	m_UIActions_Main->add( Gtk::Action::create( "FileActionAbout", Gtk::Stock::ABOUT, "About" ), sigc::bind(sigc::ptr_fun(&show_about_window), m_main_window)) ; 
+	m_UIActions_Main->add( Gtk::Action::create( "FileActionAbout", Gtk::Stock::ABOUT, "About" ), sigc::bind(sigc::ptr_fun(&show_about_window), m_MainWindow)) ; 
 
 	m_UIActions_Main->add( Gtk::Action::create( "FocusEntry", "FocusEntry" ), Gtk::AccelKey("<F6>"), sigc::mem_fun( *m_Entry, &Gtk::Widget::grab_focus)) ; 
 
@@ -698,7 +717,7 @@ namespace MPX
 	action_CCA->signal_activate().connect(sigc::bind(func2,action_SHF,action_CCA)) ;
 #endif
 
-	auto action_SHB = Gtk::ToggleAction::create( "ViewActionShowHideBrowser", "Show/Hide Browse Panes" ) ;
+	auto action_SHB = Gtk::ToggleAction::create( "ViewActionShowHideBrowser", "Toggle Showing Browser" ) ;
 	action_SHB->set_active() ;
 
 	auto func3 =
@@ -710,16 +729,21 @@ namespace MPX
 	    {
 		m_ScrolledWinArtist->hide() ;
 		m_ScrolledWinAlbums->hide() ;
+//		m_ScrolledWindowPlaylists->show() ;
 	    }
 	    else
 	    {
 		m_ScrolledWinArtist->show() ;
 		m_ScrolledWinAlbums->show() ;
+//		m_ScrolledWindowPlaylists->hide() ;
+//		m_PlaylistGUI->clear_selection() ;
+		private_->FilterModelTracks->regen_mapping() ;
 	    }
 	};
 
 	m_UIActions_Main->add( action_SHB, func3 ) ;
 
+	m_UIActions_Main->add( Gtk::ToggleAction::create( "PlaybackControlActionKeepQueue", "Keep Played Items in Queue" )) ;
 
 	m_UIActions_Main->add( Gtk::ToggleAction::create( "ViewActionAlbumsShowTimeDiscsTracks", "Show Additional Album Info" ), sigc::mem_fun( *this, &YoukiController::handle_action_underline_matches ) ); 
 
@@ -1051,6 +1075,7 @@ namespace MPX
 
         m_HBox_Main->pack_start( *m_ScrolledWinArtist, false, true, 0 ) ;
         m_HBox_Main->pack_start( *m_ScrolledWinAlbums, false, true, 0 ) ;
+//        m_HBox_Main->pack_start( *m_ScrolledWindowPlaylists, false, true, 0 ) ;
         m_HBox_Main->pack_start( *m_VBox_TL, true, true, 0 ) ;
 
         std::vector<Gtk::Widget*> widget_v( 4 ) ; /* NEEDS TO BE CHANGED IF WIDGETS ARE ADDED */
@@ -1059,8 +1084,8 @@ namespace MPX
         widget_v[2] = m_ListViewArtist ;
         widget_v[3] = m_ListViewAlbums ;
 
-        m_main_window->set_focus_chain( widget_v ) ;
-        m_main_window->set_widget_top( *m_VBox ) ;
+        m_MainWindow->set_focus_chain( widget_v ) ;
+        m_MainWindow->set_widget_top( *m_VBox ) ;
 
 	m_VBox->pack_start( *menubar, false, false, 0 ) ;
         m_VBox->pack_start( *Main_Align, true, true, 0 ) ;
@@ -1077,12 +1102,31 @@ namespace MPX
 	m_view_history_pos = m_view_history.begin() ;
 	history_save() ;
 #endif
-	
+	auto func4 =
+    
+	[&]()
+	{
+	    m_ScrolledWinArtist->show() ;
+	    m_ScrolledWinAlbums->show() ;
+#if 0
+	    m_ScrolledWindowPlaylists->hide() ;
+	    m_PlaylistGUI->clear_selection() ;
+#endif
+	    private_->FilterModelTracks->regen_mapping() ;
+	} ;
+
+#if 0
+	m_PlaylistGUI->signal_playlist_selected().connect( sigc::mem_fun( *this, &YoukiController::handle_playlist_selected )) ;
+	m_PlaylistGUI->signal_playlist_no_selected().connect( func4 ) ;
+#endif
+
 	handle_model_changed(0,false) ;
         on_style_changed() ;
-        m_main_window->show_all() ;
+
+        m_MainWindow->show_all() ;
 	m_InfoBar->hide() ;
-	m_AQUE_Spinner->hide() ; 
+	m_ActivitySpinner->hide() ; 
+//	m_ScrolledWindowPlaylists->hide() ;
     }
 
     void
@@ -1148,11 +1192,11 @@ namespace MPX
     {
 	if( show )
 	{
-	    m_AQUE_Spinner->show() ;
+	    m_ActivitySpinner->show() ;
 	}	
 	else
 	{
-	    m_AQUE_Spinner->hide() ;
+	    m_ActivitySpinner->hide() ;
 	}
     }
 
@@ -1339,7 +1383,7 @@ namespace MPX
 	      v , "SELECT album.id AS id, album_artist.mb_album_artist_id AS mbid_artist, album FROM album"
 		  " JOIN album_artist"
 		  " ON album.album_artist_j = album_artist.id ORDER BY"
-		  " album_artist, album_artist_j, mb_release_date, album"
+		  " album_artist, mb_release_date, album"
 	    ) ; 
 
 	} catch (MPX::SQL::SqlGenericError & cxe )
@@ -1375,7 +1419,7 @@ namespace MPX
 	private_->FilterModelTracks->set_sizes( max_artist, max_albums ) ;
 
 	v.clear() ;
-	m_library->getSQL(v, "SELECT * FROM track_view ORDER BY album_artist, mpx_album_artist_id, mb_release_date, album, discnr, track_view.track") ;
+	m_library->getSQL(v, "SELECT * FROM track_view ORDER BY album_artist, mb_release_date, album, ifnull(discnr,0), track_view.track") ;
 
 	for( auto& r : v ) 
 	{
@@ -1395,7 +1439,7 @@ namespace MPX
 	  guint id
     )
     {
-	std::vector<guint>::iterator i = std::find(m_play_queue.begin(), m_play_queue.end(), id) ; 
+	auto i = std::find(m_play_queue.begin(), m_play_queue.end(), id) ; 
 
 	if(i != m_play_queue.end())
 	{
@@ -1420,7 +1464,7 @@ namespace MPX
 	else
 	{
 	    m_rb1->set_active() ;
-	    m_rb2->set_sensitive(false) ;
+	    m_rb2->set_sensitive(!m_play_queue.empty()) ;
 	}
     }
 
@@ -1497,7 +1541,7 @@ namespace MPX
 	    m_rb1->set_active() ;
 	}
 
-	m_rb2->set_sensitive(false) ;
+	m_rb2->set_sensitive(!m_play_queue.empty()) ;
     }
     
     void
@@ -1508,12 +1552,14 @@ namespace MPX
 	Gtk::FileChooserDialog fcd (_("Youki :: Select Folder to Save Playlist"), Gtk::FILE_CHOOSER_ACTION_SAVE ) ; 
 	fcd.add_button(_("Cancel"), Gtk::RESPONSE_REJECT) ;
 	fcd.add_button(_("Save Playlist"), Gtk::RESPONSE_ACCEPT) ;
+	fcd.set_do_overwrite_confirmation(true) ;
+	fcd.set_filename(_("New Playlist.xspf")) ;
 
 	if( fcd.run() == Gtk::RESPONSE_ACCEPT )
 	{
 	    try{
 		Glib::RefPtr<Gio::File> gfile = Gio::File::create_for_path(fcd.get_filename()) ;
-		Glib::RefPtr<Gio::FileOutputStream> out_s = gfile->create_file() ;
+		Glib::RefPtr<Gio::FileOutputStream> out_s = gfile->replace("",true,Gio::FILE_CREATE_REPLACE_DESTINATION) ;
 		out_s->write(xspf) ;
 	    } catch( Glib::Error& cxe ) {
 		infobar_set_message(
@@ -1521,6 +1567,10 @@ namespace MPX
 		    , Gtk::MESSAGE_ERROR
 		) ;
 	    }
+#if 0
+	    m_PlaylistManager->load_playlists() ;
+	    m_PlaylistGUI->load_playlists(m_PlaylistManager->get()) ;
+#endif
 	}	
     }
 
@@ -1565,9 +1615,11 @@ namespace MPX
 	Gtk::FileChooserDialog fcd (_("Youki :: Select .xspf Playlist to Load"), Gtk::FILE_CHOOSER_ACTION_OPEN ) ; 
 	fcd.add_button(_("Cancel"), Gtk::RESPONSE_REJECT) ;
 	fcd.add_button(_("Load Playlist"), Gtk::RESPONSE_ACCEPT) ;
+	fcd.set_current_folder(mcs->key_get<std::string>("PlaylistManager","basedir")) ;
 
 	std::string xspf ;
 	std::string uuid = m_library->get_uuid() ;
+
 	std::vector<guint> v ;
 
 	if( fcd.run() == Gtk::RESPONSE_ACCEPT )
@@ -1577,7 +1629,9 @@ namespace MPX
 	    try{
 		XSPF_read( xspf, uuid, v ) ;
 		append_to_queue(v) ;
-		m_rb2->set_sensitive() ;
+		m_rb2->set_sensitive(!m_play_queue.empty()) ;
+		m_rb2->set_active(!m_play_queue.empty()) ;
+		m_ListViewTracks->queue_draw() ; // FIXME: (?)
 	    } catch( std::runtime_error& cxe ) {
 		infobar_set_message(
 		      (boost::format("<b>XSPF:</b> while loading: '%s'") % cxe.what()).str()
@@ -1602,7 +1656,7 @@ namespace MPX
         }
 
 	append_to_queue(v) ;
-	m_rb2->set_sensitive() ;
+	m_rb2->set_sensitive(!m_play_queue.empty()) ;
 
         PlayStatus status = PlayStatus( m_play->property_status().get_value() ) ;
 
@@ -1627,7 +1681,7 @@ namespace MPX
         }
 
 	append_to_queue(v) ;
-	m_rb2->set_sensitive() ;
+	m_rb2->set_sensitive(!m_play_queue.empty()) ;
 
         PlayStatus status = PlayStatus( m_play->property_status().get_value() ) ;
 
@@ -1660,6 +1714,18 @@ namespace MPX
 	    m_ListViewTracks->scroll_to_id(id_track) ;
         }
     }
+
+#if 0
+    void
+    YoukiController::handle_playlist_selected(
+	  const Playlist_sp& p_sp
+    )
+    {
+	m_rb1->set_active() ;
+	private_->FilterModelTracks->regen_mapping_static_projection(p_sp->Playlist) ;
+	m_Label_TL->set_markup((boost::format("<small>Playlist <b>%s</b> with <b>%s</b></small>") % p_sp->Name % p_sp->Excerpt.ArtistsJoined).str()) ;
+    }
+#endif
 
     void
     YoukiController::handle_model_changed(guint,bool)
@@ -1741,17 +1807,17 @@ namespace MPX
 
         m_play->request_status( PLAYSTATUS_STOPPED ) ; 
 
-        delete m_main_window ;
+        delete m_MainWindow ;
         delete private_ ;
 
-        m_main_window = 0 ;
+        m_MainWindow = 0 ;
         private_ = 0 ;
     }
 
     Gtk::Window*
     YoukiController::get_widget ()
     {
-        return m_main_window ;
+        return m_MainWindow ;
     }
 
 /*////////// */
@@ -2021,6 +2087,7 @@ namespace MPX
             case 1: /* album */
             {
                 private_->FilterModelAlbums->erase_album( id ) ; 
+                private_->FilterModelAlbums->regen_mapping() ;
             }
             break ;
 
@@ -2032,6 +2099,7 @@ namespace MPX
             case 3: /* album artist */
             {
                 private_->FilterModelArtist->erase_artist( id ) ; 
+                private_->FilterModelArtist->regen_mapping() ;
             }
             break;
         }
@@ -2252,9 +2320,11 @@ namespace MPX
 	  bool no_markov
     )
     {
-	bool repeat   = Glib::RefPtr<Gtk::ToggleAction>::cast_static(
+	bool keep_queue = Glib::RefPtr<Gtk::ToggleAction>::cast_static(
+			    m_UIActions_Main->get_action("PlaybackControlActionKeepQueue"))->get_active() ;
+	bool repeat = Glib::RefPtr<Gtk::ToggleAction>::cast_static(
 			    m_UIActions_Main->get_action("PlaybackControlActionRepeat"))->get_active() ;
-	bool history  = Glib::RefPtr<Gtk::ToggleAction>::cast_static(
+	bool history = Glib::RefPtr<Gtk::ToggleAction>::cast_static(
 			    m_UIActions_Main->get_action("PlaybackControlActionUseHistory"))->get_active() ;
 	bool stop_now = Glib::RefPtr<Gtk::ToggleAction>::cast_static(
 			    m_UIActions_Tracklist->get_action("ContextStopAfterCurrent"))->get_active() ;
@@ -2269,6 +2339,9 @@ namespace MPX
 
 	if( stop_now )
 	{
+	    Glib::RefPtr<Gtk::ToggleAction>::cast_static(
+		    m_UIActions_Tracklist->get_action("ContextStopAfterCurrent"))->set_active(false) ;
+
 	    end = true ;
 	    goto x1 ;
 	}
@@ -2280,7 +2353,7 @@ namespace MPX
 	    goto x1 ;
 	}	
 	else
-	if(!m_play_queue.empty()) /* tracks in the play queue? */
+	if(!m_play_queue.empty() && !keep_queue) /* tracks in the play queue? */
 	{
 	    /* ... so get next track from the play queue! */
 	    play_next_queue_item() ;
@@ -2441,14 +2514,12 @@ namespace MPX
 
             case PLAYSTATUS_STOPPED:
     
+		Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UIActions_Tracklist->get_action("ContextStopAfterCurrent"))->set_active(false) ;
 		Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UIActions_Tracklist->get_action("ContextStopAfterCurrent"))->set_sensitive(false) ;
 
 		m_play_history.clear() ;
 
-		clear_play_queue() ;
-
-		m_rb1->set_active();
-		m_rb2->set_sensitive(false) ;
+		m_rb2->set_sensitive(!m_play_queue.empty()) ;
 
                 m_track_current.reset() ;
                 m_seek_position.reset() ; 
@@ -2463,8 +2534,8 @@ namespace MPX
 
                 private_->FilterModelTracks->clear_active_track() ;
 
-		m_main_window->set_title("Youki") ;
-                m_main_window->queue_draw () ;    
+		m_MainWindow->set_title("Youki") ;
+                m_MainWindow->queue_draw () ;    
 
                 break ;
 
@@ -2474,7 +2545,7 @@ namespace MPX
 		m_main_position->unpause() ;
                 m_seek_position.reset() ; 
                 m_main_info->clear() ;
-                m_main_window->queue_draw () ;    
+                m_MainWindow->queue_draw () ;    
 
                 break ;
 
@@ -2482,9 +2553,9 @@ namespace MPX
 
 		m_main_position->pause() ;
 
-		if( m_main_window && mcs->key_get<bool>("mpx","minimize-on-pause"))
+		if( m_MainWindow && mcs->key_get<bool>("mpx","minimize-on-pause"))
 		{
-		    m_main_window->iconify() ;
+		    m_MainWindow->iconify() ;
 		}			
 
                 break ;
@@ -2496,6 +2567,9 @@ namespace MPX
     void
     YoukiController::on_play_stream_switched()
     {
+	bool keep_queue = Glib::RefPtr<Gtk::ToggleAction>::cast_static(
+			    m_UIActions_Main->get_action("PlaybackControlActionKeepQueue"))->get_active() ;
+
 	if(!m_track_current) 
 	{
 	    infobar_set_message(
@@ -2512,7 +2586,7 @@ namespace MPX
 
 	guint id_track = boost::get<guint>(track[ATTRIBUTE_MPX_TRACK_ID].get()) ;
 
-	if(!m_play_queue.empty())
+	if(!m_play_queue.empty() && !keep_queue)
 	{
 	    guint id_queue = m_play_queue.front() ;
 
@@ -2533,7 +2607,7 @@ namespace MPX
 		else
 		{
 		    m_rb1->set_active() ;
-		    m_rb2->set_sensitive(false) ;
+		    m_rb2->set_sensitive(!m_play_queue.empty()) ;
 		}
 	    
 
@@ -2557,7 +2631,7 @@ namespace MPX
 			)->set_active(false) ;
 
 			m_rb1->set_active() ;
-			m_rb2->set_sensitive(false) ;
+			m_rb2->set_sensitive(!m_play_queue.empty()) ;
 			tracklist_regen_mapping() ;
 		    }
 		    else
@@ -2611,7 +2685,7 @@ namespace MPX
 	
 	skip1:
 
-	m_main_window->set_title((boost::format("Youki :: %s - %s") % info[0] % info[2]).str()) ;
+	m_MainWindow->set_title((boost::format("Youki :: %s - %s") % info[0] % info[2]).str()) ;
 
 	m_InfoLabel->set_text("") ;
 	m_InfoBar->hide() ; 
@@ -2693,6 +2767,12 @@ namespace MPX
 		}
 		else
 		{
+		    SQL::RowV v ;
+
+		    m_library->getSQL(v,"SELECT id FROM track ORDER BY random() LIMIT 1") ;		    
+		    id_next = boost::get<guint>(v[0]["id"]) ;
+		    queue_next_track(id_next) ;
+#if 0
 		    Glib::RefPtr<Gtk::ToggleAction>::cast_static(
 			    m_UIActions_Main->get_action("PlaybackControlActionMarkov")
 		    )->set_active(false) ;
@@ -2701,6 +2781,7 @@ namespace MPX
 			  _("<b>PlaySense</b>: No matching tracks found")
 			, Gtk::MESSAGE_INFO
 		    ) ;
+#endif
 		}
 	    }
 	}
@@ -2732,32 +2813,38 @@ namespace MPX
 	, bool		next
     ) 
     {
+	bool keep_queue = Glib::RefPtr<Gtk::ToggleAction>::cast_static(
+			    m_UIActions_Main->get_action("PlaybackControlActionKeepQueue"))->get_active() ;
+
         const MPX::Track& track = *t ;
 
         emit_track_cancelled() ;
 
 	guint id = boost::get<guint>(track[ATTRIBUTE_MPX_TRACK_ID].get()) ;
 
-	std::vector<guint>::iterator i = std::find(m_play_queue.begin(), m_play_queue.end(), id) ; 
+	auto i = std::find(m_play_queue.begin(), m_play_queue.end(), id) ; 
 
 	if( play && i != m_play_queue.end())
 	{
-	    m_play_queue.erase(i) ;
-	    m_ListViewTracks->id_set_sort_order(id) ;		
+	    if( !keep_queue )
+	    {
+		m_play_queue.erase(i) ;
+		m_ListViewTracks->id_set_sort_order(id) ;		
 
-	    if(!m_play_queue.empty())
-	    {
-		apply_queue() ;
-	    }
-	    else
-	    {
-		m_rb1->set_active() ;
-		m_rb2->set_sensitive(false) ;
-	    }
+		if(!m_play_queue.empty())
+		{
+		    apply_queue() ;
+		}
+		else
+		{
+		    m_rb1->set_active() ;
+		    m_rb2->set_sensitive(!m_play_queue.empty()) ;
+		}
 
-	    if(m_rb2->get_active())
-	    {
-		private_->FilterModelTracks->regen_mapping_sort_order() ;
+		if(m_rb2->get_active())
+		{
+		    private_->FilterModelTracks->regen_mapping_sort_order() ;
+		}
 	    }
 
 	    play_track(t) ;
@@ -2775,7 +2862,7 @@ namespace MPX
 	    {
 		m_play_queue.insert(m_play_queue.begin(), id) ; 
 		apply_queue() ;
-		m_rb2->set_sensitive() ;
+		m_rb2->set_sensitive(!m_play_queue.empty()) ;
 	    }
 	    else
 	    {
@@ -2783,7 +2870,7 @@ namespace MPX
 		m_play_queue.push_back(id) ;
 		m_ListViewTracks->id_set_sort_order(id, m_play_queue.size()) ;
 		check_markov_queue_append_real(id) ;
-		m_rb2->set_sensitive() ;
+		m_rb2->set_sensitive(!m_play_queue.empty()) ;
 	    }
 	}
     }
@@ -3035,19 +3122,16 @@ namespace MPX
 
         private_->FilterModelAlbums->clear_constraints_artist() ;
         private_->FilterModelAlbums->clear_constraints_albums() ;
-        private_->FilterModelAlbums->clear_all_constraints_quiet() ;
+
         private_->FilterModelArtist->clear_constraints_artist() ;
+
         private_->FilterModelTracks->clear_synthetic_constraints_quiet() ;
 
         m_ListViewArtist->clear_selection() ;
         m_ListViewAlbums->clear_selection() ;
 
-	bool was_empty = m_Entry->get_text().empty() ;
-
         m_Entry->set_text("") ;
 	m_rb1->set_active() ;
-
-	std::string text_noaque ;
 
 	boost::optional<guint> id ;
 
@@ -3057,15 +3141,7 @@ namespace MPX
             id = boost::get<guint>((*m_track_current)[ATTRIBUTE_MPX_TRACK_ID].get()) ;
         }
 
-	if( was_empty )
-	{
-	    private_->FilterModelTracks->regen_mapping(id) ;
-	}
-	else
-	{
-	    private_->FilterModelTracks->process_filter("",id,text_noaque) ;
-	}
-
+	private_->FilterModelTracks->regen_mapping(id) ;
 	private_->FilterModelArtist->regen_mapping() ;
 	private_->FilterModelAlbums->regen_mapping() ;
 
@@ -3298,7 +3374,7 @@ namespace MPX
 	}
 
 	append_to_queue(v_) ;
-	m_rb2->set_sensitive() ;
+	m_rb2->set_sensitive(!m_play_queue.empty()) ;
     }
 
     void
@@ -3428,16 +3504,16 @@ namespace MPX
     {
 	API_pause_toggle() ;
 /*
-        if( m_main_window->is_visible() )
+        if( m_MainWindow->is_visible() )
         {
-            m_main_window->get_position( m_main_window_x, m_main_window_y ) ;
-            m_main_window->hide () ;
+            m_MainWindow->get_position( m_MainWindow_x, m_MainWindow_y ) ;
+            m_MainWindow->hide () ;
         }
         else
         {
-            m_main_window->move( m_main_window_x, m_main_window_y ) ;
-            m_main_window->show () ;
-            m_main_window->raise () ;
+            m_MainWindow->move( m_MainWindow_x, m_MainWindow_y ) ;
+            m_MainWindow->show () ;
+            m_MainWindow->raise () ;
         }
  */
 
@@ -3559,7 +3635,7 @@ void
     {
         m_play_queue.push_back(id) ;
 	m_ListViewTracks->id_set_sort_order(id, m_play_queue.size()) ;
-	m_rb2->set_sensitive() ;
+	m_rb2->set_sensitive(!m_play_queue.empty()) ;
     }
 
     std::vector<guint>

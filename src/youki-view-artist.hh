@@ -403,6 +403,14 @@ namespace Artist
             protected:
 
 		bool
+		on_enter_notify_event(
+		      GdkEventCrossing* G_GNUC_UNUSED
+		)
+		{
+		   //// grab_focus() ;
+		}
+
+		bool
 		on_focus_in_event(
 		    GdkEventFocus*
 		) ;

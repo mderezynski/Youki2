@@ -416,7 +416,7 @@ namespace Util
         using boost::algorithm::is_any_of;
         using boost::algorithm::find_first;
 
-        std::string&& nl = Glib::ustring(n).lowercase() ;
+        std::string nl = Glib::ustring(n).lowercase() ;
 
         for( std::size_t i = 0 ; i < h.size(); ++i )
         {
@@ -427,7 +427,7 @@ namespace Util
 		continue ;
             }
 
-    	    if (find_first (hl, nl))
+    	    if (find_first (hl, n))
             {
                 return true ;
             }

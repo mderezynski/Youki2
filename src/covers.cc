@@ -95,8 +95,8 @@ namespace MPX
         g_mkdir(path.get(), 0700);
 
         m_stores_all.push_back(StorePtr(new InlineCovers()));
-        m_stores_all.push_back(StorePtr(new LastFMCovers()));
         m_stores_all.push_back(StorePtr(new MusicBrainzCovers()));
+        m_stores_all.push_back(StorePtr(new LastFMCovers()));
 
 	for( guint n = 0 ; n < m_stores_all.size(); ++n )
 	{

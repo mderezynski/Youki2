@@ -135,6 +135,8 @@ namespace Tracks
 	typedef std::vector<guint>			IdVector_t ;
 	typedef boost::shared_ptr<IdVector_t>		IdVector_sp ;
 
+	typedef std::map<guint, Model_t::const_iterator>IdIterMap_t ;
+
         struct Model_t_iterator_equal
         : std::binary_function<Model_t::iterator, Model_t::iterator, bool>
         {
@@ -247,43 +249,30 @@ namespace Tracks
                     , b->Track 
                 } ;
 
-                if( order_artist_a < order_artist_b)
-                    return true ;
-
-                if( order_artist_b < order_artist_a)
-                    return false ;
-
-                if( order_date_a < order_date_b )
-                    return true ;
-
-                if( order_date_b < order_date_a )
-                    return false ;
-
-                if( order_track[0] < order_track[1] )
-                    return true ;
-
-                if( order_track[1] < order_track[0] )
-                    return false ;
-
-                if( order_album_a < order_album_b )
-                    return true ;
-
-                if( order_album_b < order_album_a )
-                    return false ;
-
 		if( t_a && t_b && t_a->has(ATTRIBUTE_DISCNR) && t_b->has(ATTRIBUTE_DISCNR))
 		{
-			guint discnr_a = boost::get<guint>((*t_a)[ATTRIBUTE_DISCNR].get()) ;	
-			guint discnr_b = boost::get<guint>((*t_a)[ATTRIBUTE_DISCNR].get()) ;	
+		    guint discnr_a = boost::get<guint>((*t_a)[ATTRIBUTE_DISCNR].get()) ;	
+		    guint discnr_b = boost::get<guint>((*t_b)[ATTRIBUTE_DISCNR].get()) ;	
 
-	                if( discnr_a < discnr_b )
-        	            return true ;
+		    return(
 
-                	if( discnr_b < discnr_a )
-	                    return false ;
+			  ( order_artist_a < order_artist_b)
+			&&( order_date_a < order_date_b )
+			&&( order_album_a < order_album_b )
+			&&( discnr_a < discnr_b )
+			&&( order_track[0] < order_track[1] )
+		    ) ;
 		}
+		else
+		{
+		    return(
 
-                return false ;
+			  ( order_artist_a < order_artist_b)
+			&&( order_date_a < order_date_b )
+			&&( order_album_a < order_album_b )
+			&&( order_track[0] < order_track[1] )
+		    ) ;
+		}
             }
         };
 
@@ -291,10 +280,11 @@ namespace Tracks
         : public sigc::trackable 
         {
                 Model_sp		m_base_model;
-		bool			m_FLAG_queue ;
                 guint			m_upper_bound ;
-
+		bool			m_FLAG_queue ;
                 Signal2			m_SIGNAL__changed;
+	
+		IdIterMap_t		m_iter_map ;
 
                 DataModel()
 		: m_FLAG_queue(false)
@@ -371,6 +361,8 @@ namespace Tracks
 		    nr->Track = r.count("track") ? get<guint>(r["track"]) : 0 ;
 
                     m_base_model->push_back(ModelData_sp(nr)) ;
+
+		    m_iter_map.insert(std::make_pair(nr->ID, m_base_model->end() - 1)) ;
                 }
         };
 
@@ -717,15 +709,17 @@ namespace Tracks
 		    nr->Time = time ; 
 		    nr->Track = track_n ;
 
-                    m_base_model->insert(
+		    Model_t::iterator i =
                           std::upper_bound(
                               m_base_model->begin()
                             , m_base_model->end()
                             , nrsp 
                             , order
-                          )
-                        , nrsp 
                     ) ;
+
+                    m_base_model->insert( i, nrsp ) ;
+
+		    m_iter_map.insert(std::make_pair(nr->ID, i)) ;
                 }
  
                 virtual SearchController::FilterMode 
@@ -841,6 +835,27 @@ namespace Tracks
 			m_mapping_identity->push_back( i ) ;
                     }
                 }
+
+		virtual void
+		regen_mapping_static_projection(
+		      const IdVector_t&	v 
+		)
+		{
+                    RowRowMapping_sp new_mapping( new RowRowMapping_t ), new_mapping_unfiltered( new RowRowMapping_t ) ;
+
+		    new_mapping->reserve( m_base_model->size() ) ;
+		    new_mapping_unfiltered->reserve( m_base_model->size() ) ;
+
+		    for( auto id : v )
+		    {
+			new_mapping->push_back( m_iter_map[id] ) ;
+			new_mapping_unfiltered->push_back( m_iter_map[id] ) ;
+		    }
+
+		    m_mapping = new_mapping ;
+		    m_mapping_unfiltered = new_mapping_unfiltered ;
+		    m_SIGNAL__changed.emit( 0, true ) ; 
+		}
 
                 virtual void
                 regen_mapping_sort_order(
@@ -1000,7 +1015,7 @@ namespace Tracks
                                 continue ;
                             }
 
-                            if( m_cache_enabled ) 
+                            if( m_cache_enabled )
                             {
                                 FragmentCache_t::iterator cache_iter = m_fragment_cache.find( m_frags[n] ) ;
 
@@ -1242,7 +1257,7 @@ namespace Tracks
 
                                 vec[0] = r->Artist ;
                                 vec[1] = r->Album ;
-                                vec[2] = r->Title ;
+                                vec[2] = r->Title ; 
                                 vec[3] = r->AlbumArtist ;
 
                                 if( Util::match_vec( f, vec ))
@@ -1261,7 +1276,7 @@ namespace Tracks
 
                             if(
                                 m_cache_enabled
-                                        &&
+					&&
                                 m_frags.size() == 1
                                         &&
                                 m_constraints_ext.empty()
@@ -2117,6 +2132,14 @@ namespace Tracks
                     m_row__button_press.reset() ; 
                     return true ;
                 }
+
+		bool
+		on_enter_notify_event(
+		      GdkEventCrossing* G_GNUC_UNUSED
+		)
+		{
+		   //// grab_focus() ;
+		}
 
                 bool
                 on_motion_notify_event(
@@ -3344,7 +3367,7 @@ namespace Tracks
 
                     set_can_focus(true);
 
-                    add_events(Gdk::EventMask(GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_EXPOSURE_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_LEAVE_NOTIFY_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_MOTION_MASK | GDK_SCROLL_MASK ));
+                    add_events(Gdk::EventMask(GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_EXPOSURE_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_LEAVE_NOTIFY_MASK | GDK_ENTER_NOTIFY_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_MOTION_MASK | GDK_SCROLL_MASK ));
 
                     signal_query_tooltip().connect(
                         sigc::mem_fun(
@@ -3431,11 +3454,11 @@ namespace Tracks
                         sigc::mem_fun(*this, &Class::on_remove_track_from_queue)) ;
                     m_ActionGroup->add( Gtk::Action::create("ContextClearQueue", "Clear Queue"),
                         sigc::mem_fun(*this, &Class::on_clear_queue)) ;
-                    m_ActionGroup->add( Gtk::Action::create("ContextSaveXSPF", "Save Queue to .xspf Playlist"),
+                    m_ActionGroup->add( Gtk::Action::create("ContextSaveXSPF", "Save Queue to XSPF Playlist"),
                         sigc::mem_fun(*this, &Class::on_save_xspf)) ;
-                    m_ActionGroup->add( Gtk::Action::create("ContextXSPFSaveHistory", "Save History to .xspf Playlist"),
+                    m_ActionGroup->add( Gtk::Action::create("ContextXSPFSaveHistory", "Save History to XSPF Playlist"),
                         sigc::mem_fun(*this, &Class::on_save_xspf_history)) ;
-                    m_ActionGroup->add( Gtk::Action::create("ContextLoadXSPF", "Load .xspf into Queue"),
+                    m_ActionGroup->add( Gtk::Action::create("ContextLoadXSPF", "Load XSPF Playlist"),
                         sigc::mem_fun(*this, &Class::on_load_xspf)) ;
                     m_ActionGroup->add( Gtk::Action::create("ContextQueueOpArtist", "Top Tracks for Artist"),
                         sigc::mem_fun(*this, &Class::on_enqueue_toptracks)) ;

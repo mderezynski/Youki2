@@ -180,6 +180,9 @@ namespace MPX
             void
             populate_volumes() ;
 
+	    void
+	    RebuildFSTree() ;
+
             void
             build_fstree(
                 const std::string&
@@ -306,9 +309,10 @@ namespace MPX
             Gtk::Notebook   * m_notebook;
             Gtk::Statusbar  * m_Statusbar ;
             Gtk::Widget     * m_VboxInner ;
-	        Gtk::Label	    * m_RescanTimeoutLabel ;
+	    Gtk::Label	    * m_RescanTimeoutLabel ;
             Gtk::Button     * m_ButtonScan ;
-	        Gtk::ToggleButton * m_ButtonPauseRescan ;
+	    Gtk::ToggleButton * m_ButtonPauseRescan ;
+	    Gtk::Button	    * m_ButtonFSTree ;
 
             Glib::Timer                     m_RescanTimer ;
 

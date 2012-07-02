@@ -98,31 +98,10 @@ namespace Albums
 	    bool operator() (const Album_sp& a,
 			     const Album_sp& b)
 	    {
-		if( !a->album_id ) 
-		    return true ;
-
-		if( !b->album_id ) 
-		    return false ;
-
-		if( a->album_artist < b->album_artist )
-		    return true ;
-
-		if( b->album_artist < a->album_artist )
-		    return false ;
-
-		if( a->year < b->year )
-		    return true ;
-
-		if( b->year < a->year )
-		    return false ;
-
-		if( a->album < b->album )
-			return true ;
-
-		if( b->album < a->album )
-			return false ;
-
-		return false ;
+		return(( a->album_artist < b->album_artist )
+		    && ( a->year < b->year )
+		    && ( a->album < b->album )
+		) ;
 	    }
 	} ;
 
@@ -458,6 +437,14 @@ class Class
  		on_vadj_prop_changed() ;
 
 	    protected:    
+
+		virtual bool
+		on_enter_notify_event(
+		      GdkEventCrossing* G_GNUC_UNUSED
+		)
+		{
+		   //// grab_focus() ;
+		}
 
 		virtual bool
 		on_motion_notify_event(

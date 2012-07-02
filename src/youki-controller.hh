@@ -27,6 +27,10 @@
 #include "ld-find-nearest.hh"
 #include "id-history.hh"
 
+#if 0
+#include "playlist-manager.hh"
+#endif
+
 #include <sigx/sigx.h>
 
 namespace MPX
@@ -222,10 +226,10 @@ namespace MPX
             Private                         * private_ ;
 
             Glib::RefPtr<Gtk::StatusIcon>     m_status_icon ;
-            MainWindow                      * m_main_window ;
+            MainWindow                      * m_MainWindow ;
 
-            int                               m_main_window_x 
-                                            , m_main_window_y ;
+            int                               m_MainWindow_x 
+                                            , m_MainWindow_y ;
             
             YoukiSpectrumTitleinfo          * m_main_info ;
             KoboPosition                    * m_main_position ;
@@ -261,7 +265,7 @@ namespace MPX
 
             Gtk::VBox                       * m_VBox ;
             Gtk::Notebook                   * m_NotebookPlugins ;
-	    Gtk::Image			    * m_AQUE_Spinner ;
+	    Gtk::Image			    * m_ActivitySpinner ;
 	    Gtk::EventBox		    * m_EventBox_Nearest ;
 
 	    Gtk::InfoBar		    * m_InfoBar ;
@@ -278,8 +282,13 @@ namespace MPX
 	    StrV			      m_nearest__artists ;
 	    StrV			      m_nearest__artists_popular ;
 
-	    typedef boost::shared_ptr<LDFindNearest>		LDFN_p ;
+#if 0
+	    PlaylistManager		    * m_PlaylistManager ;
+	    PlaylistGUI			    * m_PlaylistGUI ;
+	    Gtk::ScrolledWindow		    * m_ScrolledWindowPlaylists ;
+#endif
 
+	    typedef boost::shared_ptr<LDFindNearest>		LDFN_p ;
 	    typedef std::unordered_map<std::string, LDFN_p>	StrLDFN_map_t ;
 	    typedef std::unordered_set<std::string>		StrSet_t ;
 	    typedef std::unordered_map<std::string, StrSet_t>	StrSet_map_t ;
@@ -394,6 +403,11 @@ namespace MPX
 
 	    void
 	    handle_model_changed(guint,bool) ;
+
+#if 0
+	    void
+	    handle_playlist_selected(const Playlist_sp&) ;
+#endif
 
 	    bool
 	    handle_keytimer() ;
@@ -683,7 +697,7 @@ namespace MPX
         protected: // DBUS
 
             virtual void
-            Raise(){ m_main_window->present(); } 
+            Raise(){ m_MainWindow->present(); } 
 
             virtual void
             Quit(){ }
