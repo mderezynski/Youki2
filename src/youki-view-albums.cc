@@ -771,6 +771,22 @@ namespace Albums
 
 		//////////
 
+		if( selected )
+		{
+		    RoundedRectangle(
+			  cairo
+			, 5 
+			, 3 
+			, 247
+			, 86
+			, m_rounding
+		    ) ;
+		    cairo->set_source(m_image_lensflare,0,0) ;
+		    cairo->fill() ;
+		}
+
+		//////////
+
 		cairo->save() ;
 		Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(selected?c5:Util::make_rgba(0,0,0,1),selected?.80:.5)) ;
 		cairo->rectangle(
@@ -1373,11 +1389,7 @@ namespace Albums
 		m_SIGNAL_start_playback.emit() ;
 	    }
 
-	    if( (event->button == 1) && m_selection && (get<Selection::INDEX>(m_selection.get()) != d))
-	    {
-	    }
-
-	    if( event->button == 1 && (!m_selection || (get<Selection::INDEX>(m_selection.get()) != d)))
+	    if( (!m_selection || (get<Selection::INDEX>(m_selection.get()) != d)))
 	    {
 		if( ModelExtents( d ))
 		{

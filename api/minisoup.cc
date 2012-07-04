@@ -156,10 +156,22 @@ namespace MPX
 	: m_post        (post)
 	, m_url         (url)
 	, m_block_reply (false)
+	, m_finished	(false)
 
     {
       m_session = soup_session_async_new ();
       m_message = soup_message_new (m_post ? "POST" : "GET", m_url.c_str());
+      g_signal_connect(G_OBJECT(m_session), "finished", G_CALLBACK(on_finished), this) ;
+    }
+
+    void
+    Request::on_finished(
+	  SoupMessage* msg
+	, gpointer     data
+    )
+    {
+	Request & request = (*(reinterpret_cast<Request*>(data)));
+	request.m_finished = true ;
     }
 
     Glib::RefPtr<Request>
@@ -175,8 +187,14 @@ namespace MPX
       m_block_reply = true;
       m_message_lock.unlock ();
 
-      cancel ();
+      cancel();
       g_object_unref (m_session);
+    }
+
+    bool
+    Request::is_finished()
+    {
+	return m_finished ;
     }
 
     guint

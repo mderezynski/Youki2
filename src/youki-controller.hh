@@ -475,6 +475,10 @@ namespace MPX
             on_play_stream_switched(        
             ) ;
 
+	    void 
+            on_play_stream_switched_real_idle(        
+            ) ;
+
             void
             on_play_metadata(        
                 GstMetadataField

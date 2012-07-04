@@ -107,6 +107,7 @@ namespace Artist
                 guint		    m_upper_bound ;
 
                 Signal_1	    m_SIGNAL__changed ;
+                Signal_0	    m_SIGNAL__redraw ;
 
 		ArtistImages	  * m_ArtistImages ;
 
@@ -133,6 +134,12 @@ namespace Artist
                 signal_changed()
 		{
 		    return m_SIGNAL__changed ;
+		}
+
+		virtual Signal_0&
+		signal_redraw()
+		{
+		    return m_SIGNAL__redraw ;
 		}
 
                 virtual void
@@ -550,6 +557,9 @@ namespace Artist
 
 		void
 		on_jump_to_selected() ;
+
+		void
+		handle_get_artist_image() ;
 
                 void
                 find_next_match() ;

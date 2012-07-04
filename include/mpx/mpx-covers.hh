@@ -29,6 +29,8 @@
 #include <config.h>
 #endif
 
+#include <queue>
+
 #include "mpx/mpx-minisoup.hh"
 #include "mpx/mpx-main.hh"
 #include "mpx/mpx-covers-stores.hh"
@@ -47,6 +49,7 @@
 #include <sigx/sigx.h>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/tuple/tuple.hpp>
 
 namespace MPX
 {
@@ -86,6 +89,8 @@ namespace MPX
             Covers () ;
             virtual ~Covers() {}
 
+	    typedef boost::tuple<RequestQualifier, bool, bool>   CacheTuple ;
+
             sigx::request_f<const RequestQualifier&, bool, bool> cache ;
             SignalGotCover_xt signal_got_cover ;
 	    SignalNoCover_xt signal_no_cover ;
@@ -115,6 +120,9 @@ namespace MPX
             std::string
             get_thumb_path (std::string /*mbid*/);
 
+	    bool
+	    queue_process_idle() ;
+
         protected:
 
             void
@@ -131,16 +139,21 @@ namespace MPX
 	      , bool			    overwrite
             ) ;
 
+	public:
+
             bool
             fetch_back1(
                   const std::string&                      /*mbid*/
                 , Glib::RefPtr<Gdk::Pixbuf>&              /*cover*/
-                , int                                     /*size*/
+                , int                                     /*size*/ = -1
             );
+
+	protected:
 
             PixbufCache                 m_pixbuf_cache ;
             StoresVec                   m_stores_all ;
 	    Glib::RefPtr<Gdk::Pixbuf>   m_default_cover ;
+	    std::queue<CacheTuple>	m_fetch_queue ;
     };
 }
 

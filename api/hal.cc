@@ -186,7 +186,6 @@ namespace MPX
 
         } catch(std::exception& cxe)
         {
-	    g_message("Exception in Volume ctor: %s", cxe.what()) ;
         }
     }
 
@@ -579,7 +578,6 @@ namespace MPX
         }
         catch( ... )
         {
-            g_message("%s: Couldn't create HAL Volume from UDI", G_STRFUNC);
             return;
         }
 
@@ -587,7 +585,6 @@ namespace MPX
 
         if( !(volume_hal_instance->get_fsusage() == Hal::VOLUME_USAGE_MOUNTABLE_FILESYSTEM) )
         {
-            g_message("%s: Got volume UDI, but is not mountable", G_STRFUNC);
             return;
         }
 
@@ -600,12 +597,10 @@ namespace MPX
             m_volumes.erase( volume_key ) ;
             m_volumes_mounted.erase( volume_key ) ;
 
-            g_message("%s: Volume removed: %s", G_STRFUNC,udi.c_str());
             signal_volume_removed_.emit( volume );
         }
         catch( ... )
         {
-            g_message("%s: Unknown error", G_STRFUNC);
         }
     }
 
@@ -620,7 +615,6 @@ namespace MPX
         }
         catch( ... )
         {
-            g_message("%s: Couldn't create HAL Volume from UDI", G_STRFUNC);
             return;
         }
 
@@ -643,8 +637,6 @@ namespace MPX
                     &MPX::HAL::device_property
             ));
 
-            g_message("%s: Volume added: %s", G_STRFUNC,udi.c_str());
-
             if(volume_hal_instance->is_mounted())
             {
                 m_mounted_paths.insert( volume_hal_instance->get_mount_point() ) ;
@@ -652,7 +644,6 @@ namespace MPX
             }
 
 	    volume.mount_point = volume_hal_instance->get_mount_point() ; 
-	    g_message("mp: %s", volume.mount_point.c_str()) ;
 
             volume_register( volume );
             volume_process( udi );
@@ -662,7 +653,6 @@ namespace MPX
         }
         catch( ... )
         {
-            g_message("%s: Unknown error", G_STRFUNC);
         }
     }
 
@@ -690,7 +680,6 @@ namespace MPX
             }
         } catch( UnableToProbeDeviceError & cxe )
         {
-            g_message("%s: Device with udi '%s' doesn't exist", G_STRFUNC, udi.c_str());
         }
     }
 
@@ -701,12 +690,10 @@ namespace MPX
         {
             if( m_context->device_query_capability( udi, "volume" ) )
             {
-                g_message("%s: Got Volume removed: %s", G_STRFUNC, udi.c_str());
                 volume_remove( udi );
             }
         } catch( UnableToProbeDeviceError & cxe )
         {
-            g_message("%s: Device with udi '%s' doesn't exist", G_STRFUNC, udi.c_str());
         }
     }
 

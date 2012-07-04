@@ -365,7 +365,7 @@ namespace MPX
         ));
 #endif
 
-        Glib::signal_timeout().connect( sigc::mem_fun(*this, &MLibManager::on_rescan_timeout), 1000 );
+//        Glib::signal_timeout().connect( sigc::mem_fun(*this, &MLibManager::on_rescan_timeout), 1000 );
         m_RescanTimer.start();
 
         m_ButtonPauseRescan->set_sensitive( mcs->key_get<bool>("library","rescan-in-intervals")) ;
@@ -760,6 +760,7 @@ namespace MPX
     void
     MLibManager::push_message(std::string const& message)
     {
+#if 0
         m_Statusbar->pop();
         m_Statusbar->push(message);
 
@@ -768,6 +769,7 @@ namespace MPX
 
         while (gtk_events_pending())
             gtk_main_iteration();
+#endif
     }
 
     void

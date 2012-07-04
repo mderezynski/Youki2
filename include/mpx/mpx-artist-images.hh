@@ -70,8 +70,11 @@ namespace MPX
 
 	    Glib::RefPtr<Gdk::Pixbuf>
             get_image(
-		const std::string&
+		const std::string& /*mbid*/
 	    ) ;
+
+	    sigx::request_f<const std::string&, const std::string&, bool> 
+	    get_image_async ;
 
         protected:
 
@@ -101,6 +104,13 @@ namespace MPX
             on_get_image(
                   const std::string&
             ) ;
+
+	    void
+	    on_get_image_async(
+		  const std::string&
+		, const std::string&
+		, bool = true
+	    ) ;
 
             // internal api
 

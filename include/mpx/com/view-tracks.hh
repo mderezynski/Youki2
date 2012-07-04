@@ -249,30 +249,43 @@ namespace Tracks
                     , b->Track 
                 } ;
 
+                if( order_artist_a < order_artist_b)
+                    return true ;
+
+                if( order_artist_b < order_artist_a)
+                    return false ;
+
+                if( order_date_a < order_date_b )
+                    return true ;
+
+                if( order_date_b < order_date_a )
+                    return false ;
+
+                if( order_track[0] < order_track[1] )
+                    return true ;
+
+                if( order_track[1] < order_track[0] )
+                    return false ;
+
+                if( order_album_a < order_album_b )
+                    return true ;
+
+                if( order_album_b < order_album_a )
+                    return false ;
+
 		if( t_a && t_b && t_a->has(ATTRIBUTE_DISCNR) && t_b->has(ATTRIBUTE_DISCNR))
 		{
-		    guint discnr_a = boost::get<guint>((*t_a)[ATTRIBUTE_DISCNR].get()) ;	
-		    guint discnr_b = boost::get<guint>((*t_b)[ATTRIBUTE_DISCNR].get()) ;	
+			gint64 discnr_a = boost::get<gint64>((*t_a)[ATTRIBUTE_DISCNR].get()) ;	
+			gint64 discnr_b = boost::get<gint64>((*t_a)[ATTRIBUTE_DISCNR].get()) ;	
 
-		    return(
+	                if( discnr_a < discnr_b )
+        	            return true ;
 
-			  ( order_artist_a < order_artist_b)
-			&&( order_date_a < order_date_b )
-			&&( order_album_a < order_album_b )
-			&&( discnr_a < discnr_b )
-			&&( order_track[0] < order_track[1] )
-		    ) ;
+                	if( discnr_b < discnr_a )
+	                    return false ;
 		}
-		else
-		{
-		    return(
 
-			  ( order_artist_a < order_artist_b)
-			&&( order_date_a < order_date_b )
-			&&( order_album_a < order_album_b )
-			&&( order_track[0] < order_track[1] )
-		    ) ;
-		}
+                return false ;
             }
         };
 
@@ -2133,14 +2146,6 @@ namespace Tracks
                     return true ;
                 }
 
-		bool
-		on_enter_notify_event(
-		      GdkEventCrossing* G_GNUC_UNUSED
-		)
-		{
-		   //// grab_focus() ;
-		}
-
                 bool
                 on_motion_notify_event(
                     GdkEventMotion* event
@@ -2614,14 +2619,14 @@ namespace Tracks
                     , bool    size_changed
                 )
                 {
+		    ModelExtents = Interval<guint> (
+			  Interval<guint>::IN_EX
+			, 0
+			, m_model->size()
+		    ) ;
+
                     if( size_changed ) 
                     {
-                        ModelExtents = Interval<guint> (
-			      Interval<guint>::IN_EX
-			    , 0
-			    , m_model->size()
-                        ) ;
-
                         configure_vadj(
                               m_model->size()+1
                             , get_page_size()
@@ -2656,6 +2661,7 @@ namespace Tracks
                     , const Glib::RefPtr<Gtk::Tooltip>&     tooltip
                 )
                 {
+#if 0
                     guint d = (double( tooltip_y ) - m_height__headers) / double(m_height__row) ;
 
 		    if(!ModelExtents(d+get_upper_row())) return false ;
@@ -2664,6 +2670,7 @@ namespace Tracks
                     const MPX::Track& track = *(t.get()) ;
 		    tooltip->set_text( boost::get<std::string>(track[ATTRIBUTE_TITLE].get())) ;
                     return true ;
+#endif
                 }
 
             public:
@@ -3369,6 +3376,7 @@ namespace Tracks
 
                     add_events(Gdk::EventMask(GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK | GDK_BUTTON_PRESS_MASK | GDK_EXPOSURE_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_LEAVE_NOTIFY_MASK | GDK_ENTER_NOTIFY_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_BUTTON_MOTION_MASK | GDK_SCROLL_MASK ));
 
+#if 0
                     signal_query_tooltip().connect(
                         sigc::mem_fun(
                               *this
@@ -3376,6 +3384,7 @@ namespace Tracks
                     )) ;
 
                     set_has_tooltip(true) ;
+#endif
 
                     m_SearchEntry = Gtk::manage( new Gtk::Entry ) ;
                     m_SearchEntry->show() ;

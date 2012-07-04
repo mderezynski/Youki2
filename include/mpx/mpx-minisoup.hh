@@ -145,6 +145,9 @@ namespace MPX
             virtual
             guint status();
 
+	    virtual
+	    bool is_finished() ;
+
             virtual
             guint message_status();
 
@@ -162,6 +165,9 @@ namespace MPX
 
             Request (std::string const& url, bool post = false);
 
+	    static void
+	    on_finished(SoupMessage*,gpointer) ;
+
             bool        m_post;
             std::string m_url;
 
@@ -170,6 +176,8 @@ namespace MPX
 
             bool          m_block_reply;
             Glib::Mutex   m_message_lock;
+
+	    bool	  m_finished ;
 
             static void
             restarted (SoupMessage* /*message*/, gpointer /*data*/);

@@ -145,6 +145,11 @@ extern "C" bool _get (std::string const& filename, Track & track)
           track[mb_metadata_wma[n].datum] = attrMap[mb_metadata_wma[n].id][0].toString().toCString(true);
   }
 
+  track[ATTRIBUTE_TRACK] = tag->track() ;
+  track[ATTRIBUTE_ARTIST] = tag->artist().toCString(true) ;
+  track[ATTRIBUTE_ALBUM] = tag->album().toCString(true) ;
+  track[ATTRIBUTE_TITLE] = tag->title().toCString(true) ;
+
   return true;
 }
 

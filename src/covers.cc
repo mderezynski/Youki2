@@ -80,6 +80,8 @@ namespace MPX
     {
         SignalGotCover_t GotCover ;
 	SignalNoCover_t NoCover ;
+
+	sigc::connection ConnIdle ;
     } ;
 
     Covers::Covers ()
@@ -118,6 +120,21 @@ namespace MPX
         m_ThreadData.set( new ThreadData ) ;
     }
 
+    bool
+    Covers::queue_process_idle()
+    {
+	if(!m_fetch_queue.empty())
+	{
+	    CacheTuple& tup = m_fetch_queue.front() ;
+	    handle_cache(boost::get<0>(tup), boost::get<1>(tup), boost::get<2>(tup)) ;
+	    m_fetch_queue.pop() ;
+	}
+	else
+	    return false ;
+
+	return true ;
+    }
+
     void
     Covers::on_cache(
           const RequestQualifier& qual
@@ -125,19 +142,15 @@ namespace MPX
 	, bool			  overwrite
     )
     {
-/*
-        maincontext()->signal_idle().connect(
-            sigc::bind(
-            sigc::mem_fun(
-                  *this
-                , &Covers::handle_cache
-           )
-            , qual
-            , acquire
-	    , overwrite
-        )) ;
-*/
-	handle_cache( qual, acquire, overwrite ) ;
+        ThreadData * pthreaddata = m_ThreadData.get() ;
+
+	CacheTuple tup (qual, acquire, overwrite ) ;
+	m_fetch_queue.push(tup) ;
+
+	if(!pthreaddata->ConnIdle)
+	{
+	    pthreaddata->ConnIdle = maincontext()->signal_idle().connect( sigc::mem_fun( *this, &Covers::queue_process_idle )) ;
+	}
     }
 
     void

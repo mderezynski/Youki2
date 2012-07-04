@@ -98,10 +98,25 @@ namespace Albums
 	    bool operator() (const Album_sp& a,
 			     const Album_sp& b)
 	    {
-		return(( a->album_artist < b->album_artist )
-		    && ( a->year < b->year )
-		    && ( a->album < b->album )
-		) ;
+                if( a->album_artist < b->album_artist )
+                    return true ;
+
+                if( b->album_artist < a->album_artist )
+                    return false ;
+
+                if( a->year < b->year )
+                    return true ;
+
+                if( b->year < a->year )
+                    return false ;
+
+                if( a->album < b->album )
+                    return true ;
+
+                if( b->album < a->album )
+                    return false ;
+
+                return false ;
 	    }
 	} ;
 

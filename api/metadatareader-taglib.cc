@@ -270,11 +270,14 @@ namespace MPX
         std::string type;
 
         try{
-            if( typefind( uri, type ))
+    
+	    type = boost::get<std::string>((track)[ATTRIBUTE_TYPE].get()) ;
+
+            //if( typefind( uri, type ))
             {
                 TaglibPluginsMap::const_iterator i = m_taglib_plugins.find( type );
 
-                if (i != m_taglib_plugins.end() && i->second->get && i->second->get( uri, track ))
+                if (i != std::end(m_taglib_plugins) && i->second->get && i->second->get( uri, track ))
                 {
                     track[ATTRIBUTE_LOCATION] = uri;
 

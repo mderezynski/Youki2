@@ -42,8 +42,10 @@ namespace Artist
 
 //		Util::cairo_image_surface_blur( s1, 1 ) ;
 
-		boost::get<3>(*(i1->second)) = s1; //std::move(s1) ; 
-		boost::get<4>(*(i1->second)) = s2; //std::move(s2) ; 
+		boost::get<3>(*(i1->second)) = std::move(s1) ; 
+		boost::get<4>(*(i1->second)) = std::move(s2) ; 
+
+		m_SIGNAL__redraw.emit() ;
 	    }
     }
 
@@ -114,26 +116,10 @@ namespace Artist
 	    , const boost::optional<guint>& artist_id
 	)
 	{
-	    Glib::RefPtr<Gdk::Pixbuf> icon = get_icon(artist_mbid) ; 
-	    
 	    Cairo::RefPtr<Cairo::ImageSurface>
 		  s1
 		, s2
 	    ;
-
-	    if( icon )
-	    {
-		Glib::RefPtr<Gdk::Pixbuf> icon_desaturated_1 = icon->copy() ; 
-		Glib::RefPtr<Gdk::Pixbuf> icon_desaturated_2 = icon->copy() ;
-
-		icon->saturate_and_pixelate(icon_desaturated_1, 0.85, false) ;
-		icon->saturate_and_pixelate(icon_desaturated_2, 0.85, false) ;
-
-		s1 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_1) ;
-		s2 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_2) ;
-
-//		Util::cairo_image_surface_blur( s1, 1 ) ;
-	    }
 
 	    Row_t r (
 		  artist
@@ -152,6 +138,8 @@ namespace Artist
 		m_iter_map.insert(std::make_pair(*artist_id, i));
 		m_mbid_map.insert(std::make_pair(artist_mbid, i)) ;
 	    }
+
+	    m_ArtistImages->get_image_async(artist,artist_mbid,false) ; 
 	}
 
 	void
@@ -165,26 +153,10 @@ namespace Artist
 	{
 	    static OrderFunc order ;
 
-	    Glib::RefPtr<Gdk::Pixbuf> icon = get_icon(artist_mbid) ; 
-	    
 	    Cairo::RefPtr<Cairo::ImageSurface>
 		  s1
 		, s2
 	    ;
-
-	    if( icon )
-	    {
-		Glib::RefPtr<Gdk::Pixbuf> icon_desaturated_1 = icon->copy() ; 
-		Glib::RefPtr<Gdk::Pixbuf> icon_desaturated_2 = icon->copy() ;
-
-		icon->saturate_and_pixelate(icon_desaturated_1, 0.85, false) ;
-		icon->saturate_and_pixelate(icon_desaturated_2, 0.85, false) ;
-
-		s1 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_1) ;
-		s2 = Util::cairo_image_surface_from_pixbuf(icon_desaturated_2) ;
-
-//		Util::cairo_image_surface_blur( s1, 1 ) ;
-	    }
 
 	    Row_t r (
 		  artist
@@ -195,7 +167,7 @@ namespace Artist
 	    ) ;
 
 	    Model_t::iterator i = m_base_model->insert(
-		  std::lower_bound(
+		  std::upper_bound(
 			m_base_model->begin()
 		      , m_base_model->end()
 		      , r
@@ -207,10 +179,10 @@ namespace Artist
 	    if( artist_id )
 	    {
 		m_iter_map.insert(std::make_pair(*artist_id, i ));
-		m_mbid_map.insert(std::make_pair(artist_mbid, i)) ;
+		m_mbid_map.insert(std::make_pair( artist_mbid, i)) ;
 	    }
 
-	    m_ArtistImages->recache_single_image(artist,artist_mbid) ;
+	    m_ArtistImages->get_image_async(artist,artist_mbid,true) ; 
 	}
 
 	void
@@ -693,6 +665,21 @@ namespace Artist
 
 //////////////////////////
 
+	void
+	Class::handle_get_artist_image()
+	{
+	    if(m_selection)
+	    {
+		guint index = boost::get<2>(*m_selection) ;
+		const Row_t& r = m_model->row(index) ;
+
+		std::string name = boost::get<0>(r) ;
+		std::string mbid = boost::get<2>(r) ;
+
+		m_model->m_ArtistImages->get_image_async(name,mbid,true) ; 
+	    }
+	}
+	
 	void
 	Class::on_jump_to_selected()
 	{
@@ -1539,6 +1526,12 @@ namespace Artist
 		    &Class::on_model_changed
 	    ));
 
+	    m_model->signal_redraw().connect(
+		sigc::mem_fun(
+		    *this,
+		    &Gtk::Widget::queue_draw
+	    ));
+
 	    on_model_changed(0) ;
 	    queue_resize() ;
 	}
@@ -1815,6 +1808,8 @@ namespace Artist
 	    m_refActionGroup->add( Gtk::Action::create("ContextMenu", "Context Menu"));
 	    m_refActionGroup->add( Gtk::Action::create("ContextJumpToSelected", "Jump to Selected Artist"),
 		sigc::mem_fun(*this, &Class::on_jump_to_selected));
+	    m_refActionGroup->add( Gtk::Action::create("ContextFetchArtistImage", "(Re-)fetch Artist Image"),
+		sigc::mem_fun(*this, &Class::handle_get_artist_image));
 
 	    m_refUIManager = Gtk::UIManager::create();
 	    m_refUIManager->insert_action_group(m_refActionGroup);
@@ -1823,6 +1818,7 @@ namespace Artist
 	    "<ui>"
 	    "   <popup name='PopupMenu'>"
 	    "       <menuitem action='ContextJumpToSelected'/>"
+	    "       <menuitem action='ContextFetchArtistImage'/>"
 	    "   </popup>"
 	    "</ui>";
 

@@ -161,7 +161,7 @@ namespace MPX
 		) ; 
 
 		cairo->move_to(
-		      a.get_width() - width - 10 - (m_cover ? 108 : 0)
+		      a.get_width() - width - 10 - 108 
 		    , 6 
 		) ;
 
@@ -331,7 +331,9 @@ namespace MPX
 	r.x = get_allocated_width() - 110 ; 
 	r.y = 1 ;
 	r.width = 109 ; 
-	r.height = 109 ; 
+	r.height = 108 ; 
+
+	cairo->push_group() ;
 
 	Gdk::Cairo::set_source_pixbuf(
 	      cairo
@@ -350,15 +352,6 @@ namespace MPX
 	) ;
 	cairo->fill() ;
 
-	RoundedRectangle(
-	      cairo
-	    , r.x 
-	    , r.y
-	    , r.width
-	    , r.height 
-	    , rounding
-	    , MPX::CairoCorners::CORNERS(5)
-	) ;
 	Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create(
 	      r.x + r.width/2.
 	    , r.y 
@@ -370,31 +363,42 @@ namespace MPX
 	    , 1. 
 	    , 1. 
 	    , 1. 
-	    , 0.2
+	    , 0.9
 	) ;
 	gradient->add_color_stop_rgba(
 	      .6 
 	    , 1. 
 	    , 1. 
 	    , 1. 
-	    , 0.1 
+	    , 0.75 
 	) ;
 	gradient->add_color_stop_rgba(
 	      .88 
 	    , 1. 
 	    , 1. 
 	    , 1. 
-	    , 0.1 
+	    , 0.70 
 	) ;
 	gradient->add_color_stop_rgba(
 	      1. 
 	    , 1. 
 	    , 1. 
 	    , 1. 
-	    , 0.2 
+	    , 0.72 
 	) ;
-	cairo->set_source(gradient) ;
-	cairo->fill() ;
+	cairo->pop_group_to_source() ;
+
+	RoundedRectangle(
+	      cairo
+	    , r.x 
+	    , r.y
+	    , r.width
+	    , r.height 
+	    , rounding
+	    , MPX::CairoCorners::CORNERS(10)
+	) ;
+
+	cairo->mask(gradient) ;
         cairo->restore() ;
     }
 }

@@ -15,8 +15,6 @@
 
 #include "mpx/util-file.hh"
 
-#include "mpx/metadatareader-taglib.hh"
-
 #include "mpx/xml/xmltoc++.hh"
 #include "xmlcpp/mb-artist-basic-1.0.hxx"
 
@@ -403,6 +401,8 @@ MPX::LibraryScannerThread_MLibMan::LibraryScannerThread_MLibMan(
                 , signal_reload
                 , signal_message
     ); 
+
+    m_taglib = services->get<MetadataReaderTagLib>("mpx-service-taglib") ;
 }
 
 MPX::LibraryScannerThread_MLibMan::~LibraryScannerThread_MLibMan ()
@@ -1237,7 +1237,7 @@ MPX::LibraryScannerThread_MLibMan::insert_file_no_mtime_check(
             return ;
         }
 
-        if( !services->get<MetadataReaderTagLib>("mpx-service-taglib")->get( uri, t )) // Failed to read metadata at all?
+        if( !m_taglib->get( uri, t )) // Failed to read metadata at all?
         {
             // If so, the track is erroneous
             add_erroneous_track( uri, _("Could not acquire metadata (using taglib-gio)")) ;

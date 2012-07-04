@@ -416,18 +416,18 @@ namespace Util
         using boost::algorithm::is_any_of;
         using boost::algorithm::find_first;
 
-        std::string nl = Glib::ustring(n).lowercase() ;
+        Glib::ustring&& nl = Glib::ustring(n).casefold() ;
 
         for( std::size_t i = 0 ; i < h.size(); ++i )
         {
-	    const std::string& hl = Glib::ustring(h[i]).lowercase() ;
+	    Glib::ustring&& hl = Glib::ustring(h[i]).casefold() ;
 
-	    if (hl.length() < 1)
+	    if(hl.length() < 1)
             {
 		continue ;
             }
 
-    	    if (find_first (hl, n))
+    	    if(hl.find(nl) != Glib::ustring::npos)
             {
                 return true ;
             }

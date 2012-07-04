@@ -55,6 +55,13 @@ MPX::ArtistImages::ArtistImages(
             )
   )
 
+, get_image_async(
+	    sigc::mem_fun(
+	        *this,
+		&ArtistImages::on_get_image_async
+	    )
+  )
+
 , m_SQL(new SQL::SQLDB(*(services->get<Library>("mpx-service-library")->get_sql_db())))
 
 {
@@ -104,11 +111,15 @@ MPX::ArtistImages::get_image_by_mbid(
         StrV m;
 
         split( m, image_url, is_any_of("/") );
+
         std::string image_url_126s = (boost::format("http://userserve-ak.last.fm/serve/126s/%s") % m[m.size()-1]).str();
+
+	g_message("%s: URL: '%s'", G_STRLOC, image_url_126s.c_str()) ;
 
         artist_image = Util::get_image_from_uri( image_url_126s );
 
     } catch(...) {
+	g_message("%s: exception", G_STRLOC) ;
     }
 
     return artist_image ;
@@ -241,4 +252,59 @@ MPX::ArtistImages::on_get_image (
     }
 
     return Glib::RefPtr<Gdk::Pixbuf>(0) ;
+}
+
+void
+MPX::ArtistImages::on_get_image_async(
+      const std::string& name
+    , const std::string& mbid
+    , bool		 acquire
+)
+{
+    ThreadData * pthreaddata = m_ThreadData.get();
+
+    g_message("%s", G_STRFUNC) ;
+
+    if( m_pixbuf_cache.find( mbid ) == m_pixbuf_cache.end() )
+    {
+	g_message("%s: Not in Cache...",G_STRFUNC) ;
+
+        const std::string& thumb_path = build_filename( m_base_path, mbid + std::string(".png" ));
+	Glib::RefPtr<Gdk::Pixbuf> artist_image ;
+
+	try{
+	    artist_image = Gdk::Pixbuf::create_from_file( thumb_path ); 
+	} catch(Glib::FileError){}
+
+	if( artist_image )
+	{
+	    m_pixbuf_cache.insert( std::make_pair( mbid, artist_image ));
+	    pthreaddata->GotArtistImage.emit( mbid, artist_image );
+	}
+	else
+	if( acquire )
+	{
+	    g_message("%s: Not on Disk...", G_STRFUNC) ;
+	    g_message("%s: Getting it from the clouds...", G_STRFUNC) ;
+
+	    artist_image = get_image_by_mbid(mbid,name) ;	
+
+	    if( artist_image )
+	    {
+		g_message("%s: ...got it", G_STRFUNC) ;
+		m_pixbuf_cache.insert( std::make_pair( mbid, artist_image ));
+		try{
+		    artist_image->save( thumb_path, "png" );
+		}catch(Glib::FileError&){}
+		pthreaddata->GotArtistImage.emit( mbid, artist_image );
+		return ;
+	    }
+
+	    g_message("%s: ...NOPE", G_STRFUNC) ;
+	}
+    }
+    else
+    {
+	pthreaddata->GotArtistImage.emit( mbid, m_pixbuf_cache.find(mbid)->second ) ;
+    }
 }

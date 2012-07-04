@@ -404,6 +404,10 @@ MPX::LibraryScannerThread_MLibMan::LibraryScannerThread_MLibMan(
 #endif // HAVE_HAL
 , m_Flags(flags)
 {
+
+
+
+
     m_Connectable =
         new ScannerConnectable(
                   signal_scan_start
@@ -417,7 +421,76 @@ MPX::LibraryScannerThread_MLibMan::LibraryScannerThread_MLibMan(
                 , signal_reload
                 , signal_message
     ); 
+
+
+
+
+
+    //
+    // precache album IDs
+    //
+
+    using boost::get ;
+    
+    SQL::RowV v;
+    std::string select_album_f ("SELECT DISTINCT id, album_artist_j, mb_album_id, mb_release_date, mb_release_country FROM album GROUP BY (id)") ; 
+    m_SQL->get(v, select_album_f ) ;
+
+    for( auto& r : v )
+    {
+	insert_mb_album_tuple(r) ;
+    }
 }
+
+
+void
+MPX::LibraryScannerThread_MLibMan::insert_mb_album_tuple(
+    SQL::Row& r
+)
+{
+    guint album_artist_j = get<guint>(r["album_artist_j"]) ;	
+    guint id = get<guint>(r["id"]) ;	
+
+
+
+
+    /////
+
+    OVariant mb_album_id ; 
+
+    if( r.find("mb_album_id") != std::end(r))
+    {
+	mb_album_id = get<std::string>(r["mb_album_id"]) ; 
+    }
+
+
+
+    /////
+
+    OVariant mb_release_country ; 
+
+    if( r.find("mb_release_country") != std::end(r))
+    {
+	mb_release_country = get<std::string>(r["mb_release_country"]) ; 
+    }
+
+
+
+    /////
+
+    OVariant mb_release_date ; 
+
+    if( r.find("mb_release_date") != std::end(r))
+    {
+	mb_release_date = get<std::string>(r["mb_release_date"]) ; 
+    }
+
+
+    AlbumIDCached_t&& tuple = AlbumIDCached_t( album_artist_j, mb_album_id, mb_release_country, mb_release_date ) ; 
+
+    m_AlbumIDCache.insert(std::make_pair(tuple, id)) ;
+}
+
 
 MPX::LibraryScannerThread_MLibMan::~LibraryScannerThread_MLibMan ()
 {
@@ -489,7 +562,7 @@ MPX::LibraryScannerThread_MLibMan::cache_mtimes(
     {
         m_MTIME_Map.insert(
             std::make_pair(
-                  boost::make_tuple(
+                  std::make_tuple(
                       get<guint>((*i)["device_id"])
                     , get<std::string>((*i)["hal_vrp"])
                   )
@@ -744,12 +817,15 @@ MPX::LibraryScannerThread_MLibMan::on_add(
                         
             if( !(std::distance(collection.begin(), i2) % 50) )
             {
+		g_message("Processed %d tracks of %d", guint(std::distance(collection.begin(), i2)), guint(m_ScanSummary.FilesTotal)) ;
+#if 0
                 pthreaddata->Message.emit(
                     (boost::format(_("Collecting Tracks: %u of %u"))
                         % guint(std::distance(collection.begin(), i2))
                         % guint(m_ScanSummary.FilesTotal)
                     ).str()
                 ) ;
+#endif
             }
         }
     }
@@ -1081,8 +1157,25 @@ MPX::LibraryScannerThread_MLibMan::get_album_id (Track& track, guint album_artis
 
     EntityInfo info ( 0, MPX::LibraryScannerThread_MLibMan::ENTITY_IS_UNDEFINED ) ;
 
-    if( track.has( ATTRIBUTE_MB_ALBUM_ID ))
+    if(track.has( ATTRIBUTE_MB_ALBUM_ID ))
     {
+      auto i = m_AlbumIDCache.find(AlbumIDCached_t(
+	      album_artist_id
+	    , track[ATTRIBUTE_MB_ALBUM_ID]	    
+	    , track[ATTRIBUTE_MB_RELEASE_COUNTRY]	    
+	    , track[ATTRIBUTE_MB_RELEASE_DATE]	    
+      )) ;
+
+      if( i != std::end(m_AlbumIDCache))
+      {
+        info = EntityInfo(
+	      i->second 
+	    , MPX::LibraryScannerThread_MLibMan::ENTITY_IS_NOT_NEW
+	) ;
+
+	return info ;
+      }
+
       char const* select_album_f ("SELECT album, id, mb_album_id FROM album WHERE (%s = '%q') AND (%s %s) AND (%s %s) AND (%s = %u);"); 
 
       sql = mprintf (select_album_f,
@@ -1227,11 +1320,21 @@ MPX::LibraryScannerThread_MLibMan::get_album_id (Track& track, guint album_artis
 
 	guint album_id = m_SQL->exec_sql( sql ) ;
 
+	AlbumIDCached_t tup (
+	      album_artist_id
+	    , track[ATTRIBUTE_MB_ALBUM_ID]
+	    , track[ATTRIBUTE_MB_RELEASE_COUNTRY]
+	    , track[ATTRIBUTE_MB_RELEASE_DATE]
+	) ;
+
+	m_AlbumIDCache.insert(std::make_pair(tup, album_id)) ; 
+
         info = EntityInfo(
             album_id 
           , MPX::LibraryScannerThread_MLibMan::ENTITY_IS_NEW
         ) ;
 
+#if 0
 	if( track.has(ATTRIBUTE_GENRE))
 	{
         	using boost::algorithm::split;
@@ -1282,6 +1385,7 @@ MPX::LibraryScannerThread_MLibMan::get_album_id (Track& track, guint album_artis
 			}
 		}
 	}
+#endif
 
     }
 
@@ -1295,7 +1399,7 @@ MPX::LibraryScannerThread_MLibMan::get_track_mtime(
 {
     Duplet_MTIME_t::const_iterator i =
          m_MTIME_Map.find(
-            boost::make_tuple(
+            std::make_tuple(
                 get<guint>(track[ATTRIBUTE_MPX_DEVICE_ID].get())
               , get<std::string>(track[ATTRIBUTE_VOLUME_RELATIVE_PATH].get())
     )) ;
@@ -1385,7 +1489,7 @@ MPX::LibraryScannerThread_MLibMan::insert_file_no_mtime_check(
     , bool               update
 )
 {
-    Track& t = *(track.get()) ;
+    Track& t = *track ; 
 
     try{
         try{
@@ -1407,7 +1511,7 @@ MPX::LibraryScannerThread_MLibMan::insert_file_no_mtime_check(
         }
         else
         try{
-            create_insertion_track( t, uri, insert_path, update ) ;
+            create_insertion_track( track, uri, insert_path, update ) ;
         }
         catch( ScanError & cxe )
         {
@@ -1507,7 +1611,7 @@ MPX::LibraryScannerThread_MLibMan::create_insertion_sql(
 
 void
 MPX::LibraryScannerThread_MLibMan::create_insertion_track(
-      Track&             track
+      Track_sp&          t
     , const std::string& uri
     , const std::string& insert_path
     , bool               update
@@ -1519,6 +1623,8 @@ MPX::LibraryScannerThread_MLibMan::create_insertion_track(
     }
 
     ThreadData * pthreaddata = m_ThreadData.get() ;
+
+    Track& track = *t ;
 
     if( !(track.has(ATTRIBUTE_ALBUM) && track.has(ATTRIBUTE_ARTIST) && track.has(ATTRIBUTE_TITLE)) ) // Does this track lack mandatory metadata?
     {
@@ -1552,7 +1658,7 @@ MPX::LibraryScannerThread_MLibMan::create_insertion_track(
     p->TrackNumber    = get<guint>(track[ATTRIBUTE_TRACK].get()) ;
     p->Type           = get<std::string>(track[ATTRIBUTE_TYPE].get()) ;
     p->Update         = update ;
-    p->Track          = Track_sp( new Track( track )) ;
+    p->Track          = t ; 
 
     if( p->Album.second == ENTITY_IS_NEW )
     {
@@ -1564,12 +1670,12 @@ MPX::LibraryScannerThread_MLibMan::create_insertion_track(
         m_AlbumArtistIDs.insert( p->AlbumArtist.first ) ;
     }
 
-    m_InsertionTracks[p->Album.first][p->Artist.first][p->Title][p->TrackNumber].push_back( p ) ;
+    m_InsertionTracks.push_back(p) ;
 }
 
 MPX::LibraryScannerThread_MLibMan::TrackInfo_p
 MPX::LibraryScannerThread_MLibMan::prioritize(
-    const TrackInfo_p_Vector& v
+    const TrackInfo_v_sp& v
 )
 {
     if( v.size() == 1 )
@@ -1577,7 +1683,7 @@ MPX::LibraryScannerThread_MLibMan::prioritize(
         return v[0] ;
     }
 
-    TrackInfo_p_Vector v2 ;
+    TrackInfo_v_sp v2 ;
 
     // This is basically an awkward way to sort the tracks by MIME type in the current preference
     // order
@@ -1586,7 +1692,7 @@ MPX::LibraryScannerThread_MLibMan::prioritize(
     {
             for( MIME_Types_t::const_iterator t = m_MIME_Types.begin(); t != m_MIME_Types.end(); ++t )
             {
-                for( TrackInfo_p_Vector::const_iterator i = v.begin(); i != v.end(); ++i )
+                for( TrackInfo_v_sp::const_iterator i = v.begin(); i != v.end(); ++i )
                 {
                     if( (*i)->Type == (*t) )
                     {
@@ -1619,7 +1725,7 @@ MPX::LibraryScannerThread_MLibMan::prioritize(
         TrackInfo_p p_highest_bitrate ;
         guint      bitrate = 0 ;
 
-        for( TrackInfo_p_Vector::const_iterator i = v2.begin(); i != v2.end(); ++i )
+        for( TrackInfo_v_sp::const_iterator i = v2.begin(); i != v2.end(); ++i )
         {
             guint c_bitrate = get<guint>((*(*i)->Track.get())[ATTRIBUTE_BITRATE].get()) ;
 
@@ -1643,25 +1749,15 @@ MPX::LibraryScannerThread_MLibMan::process_insertion_list()
 
     guint tracks = 0 ;
 
-    for( Map_L1::const_iterator l1 = m_InsertionTracks.begin(); l1 != m_InsertionTracks.end(); ++l1 ) {
-
-    for( Map_L2::const_iterator l2 = (l1->second).begin(); l2 != (l1->second).end(); ++l2 ) {
-    for( Map_L3::const_iterator l3 = (l2->second).begin(); l3 != (l2->second).end(); ++l3 ) {
-    for( Map_L4::const_iterator l4 = (l3->second).begin(); l4 != (l3->second).end(); ++l4 ) {
-
-
-                    const TrackInfo_p_Vector& v = (*l4).second ; 
-
+    for( auto& p : m_InsertionTracks )
+    {
                     std::string location ;
     
-                    if( !v.empty() )
                     try{
 
-                        TrackInfo_p p = prioritize( v ) ;
+                        location = get<std::string>((*(p->Track))[ATTRIBUTE_LOCATION].get()) ;
 
-                        location = get<std::string>((*(p->Track.get()))[ATTRIBUTE_LOCATION].get()) ;
-
-                        switch( insert( p, v ) ) 
+                        switch(insert( p )) 
                         {
                             case SCAN_RESULT_OK:
                                  pthreaddata->Message.emit(
@@ -1692,9 +1788,6 @@ MPX::LibraryScannerThread_MLibMan::process_insertion_list()
                         add_erroneous_track( location, (boost::format (_("Error inserting file: %s")) % cxe.what()).str() ) ;
                     }
 
-    }
-    }
-    }
     }
        
     m_InsertionTracks.clear(); 
@@ -1780,12 +1873,11 @@ MPX::LibraryScannerThread_MLibMan::compare_types(
 ScanResult
 MPX::LibraryScannerThread_MLibMan::insert(
       const TrackInfo_p& p
-    , const TrackInfo_p_Vector& v
 )
 {
   ThreadData * pthreaddata = m_ThreadData.get() ;
 
-  Track & track = *(p->Track.get()) ;
+  Track& track = *(p->Track) ;
 
   m_ProcessedAlbums.insert( p->Album.first ) ;
 
@@ -1837,7 +1929,7 @@ MPX::LibraryScannerThread_MLibMan::insert(
         const guint&       id              = get<guint>(rv[0]["id"]) ;
         const guint&       bitrate_datarow = get<guint>(rv[0]["bitrate"]) ;
         const guint&       bitrate_track   = get<guint>(track[ATTRIBUTE_BITRATE].get()) ;
-        const std::string&  type            = get<std::string>(rv[0]["type"]) ;
+        const std::string& type            = get<std::string>(rv[0]["type"]) ;
 
         track[ATTRIBUTE_MPX_TRACK_ID] = id ; 
 
@@ -2088,11 +2180,12 @@ MPX::LibraryScannerThread_MLibMan::update_albums(
     for( IdSet_t::const_iterator i = m_ProcessedAlbums.begin(); i != m_ProcessedAlbums.end() ; ++i )
     {
         update_album( (*i) ) ;
-
+#if 0
         if( !(std::distance(m_ProcessedAlbums.begin(), i) % 50) )
         {
             pthreaddata->Message.emit((boost::format(_("Additional Metadata Update: %u of %u")) % std::distance(m_ProcessedAlbums.begin(), i) % m_ProcessedAlbums.size() ).str()) ;
         }
+#endif
     }
 
     m_ProcessedAlbums.clear() ;

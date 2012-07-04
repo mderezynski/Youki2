@@ -32,8 +32,15 @@
 #include <sigx/signal_f.h>
 #include <sigx/request_f.h>
 #include <map>
+#include <set>
+#include <unordered_map>
+#include <unordered_set>
+#if 0
 #include <boost/tuple/tuple.hpp>
 #include <boost/tuple/tuple_comparison.hpp>
+#endif
+#include <tuple>
+#include <boost/optional.hpp>
 #include "mpx/mpx-covers.hh"
 #include "mpx/mpx-main.hh"
 #include "mpx/mpx-sql.hh"
@@ -44,6 +51,13 @@
 #ifdef HAVE_HAL
 #include "mpx/i-youki-hal.hh"
 #endif // HAVE_HAL
+
+namespace MPX
+{
+    typedef boost::optional<std::string>			OString_t ;
+    typedef std::tuple<guint, OVariant, OVariant, OVariant>	AlbumIDCached_t ;
+    typedef std::map<AlbumIDCached_t, guint>			IDCacheAlbum_t ;
+}
 
 namespace MPX
 {
@@ -294,20 +308,28 @@ namespace MPX
             };
  
             typedef boost::shared_ptr<TrackInfo>    TrackInfo_p;
-            typedef std::vector<TrackInfo_p>        TrackInfo_p_Vector;
+            typedef std::vector<TrackInfo_p>        TrackInfo_v_sp;
 
-            typedef std::map<guint,       TrackInfo_p_Vector>   Map_L4;
+#if 0
+            typedef std::map<guint,       TrackInfo_v_sp>   Map_L4;
             typedef std::map<std::string, Map_L4>               Map_L3;
             typedef std::map<guint,       Map_L3>               Map_L2;
             typedef std::map<guint,       Map_L2>               Map_L1;
+#endif
 
-            //typedef std::map<guint , std::map<guint, std::map<std::string, TrackInfo_p_Vector> > > InsertionTracks_t;
+            //typedef std::map<guint , std::map<guint, std::map<std::string, TrackInfo_v_sp> > > InsertionTracks_t;
 
-            Map_L1      m_InsertionTracks;
+	    typedef std::tuple<guint, guint, std::string, guint> InsertionKey_t ; 
+	    typedef std::map<InsertionKey_t, TrackInfo_v_sp> InsertionMap_t ;
 
-            typedef boost::tuple<guint, std::string>  FileDuplet_t;
+//	    InsertionMap_t m_InsertionTracks ;
+            // Map_L1      m_InsertionTracks;
+    
+	    TrackInfo_v_sp m_InsertionTracks ;
+
+            typedef std::tuple<guint, std::string>    FileDuplet_t;
             typedef std::map<FileDuplet_t, time_t>    Duplet_MTIME_t;
-            typedef std::set<guint>                   IdSet_t;
+            typedef std::unordered_set<guint>	      IdSet_t;
 
             IdSet_t                                 m_AlbumIDs, m_AlbumArtistIDs; 
             IdSet_t                                 m_ProcessedAlbums;
@@ -327,7 +349,7 @@ namespace MPX
 
             void
             create_insertion_track(
-                  Track&             track
+                  Track_sp&          track
                 , const std::string& uri
                 , const std::string& insert_path
                 , bool               update
@@ -357,13 +379,12 @@ namespace MPX
 
             TrackInfo_p
             prioritize(
-                  const TrackInfo_p_Vector&
+                  const TrackInfo_v_sp&
             ) ;
 
             ScanResult
             insert(
                   const TrackInfo_p&
-                , const TrackInfo_p_Vector&
             ) ;
 
             void
@@ -415,20 +436,28 @@ namespace MPX
 
         private:
 
-            ScannerConnectable                    * m_Connectable ;
+	    IDCacheAlbum_t			    m_AlbumIDCache ;
 
+            ScannerConnectable                    * m_Connectable ;
             struct ThreadData;
             Glib::Private<ThreadData>               m_ThreadData ;
-
             MPX::Library_MLibMan                  & m_Library_MLibMan;
             boost::shared_ptr<MPX::SQL::SQLDB>      m_SQL ;
 #ifdef HAVE_HAL
             const IHAL                            & m_HAL ;
 #endif // HAVE_HAL
-            guint                                  m_Flags ;
-
+            guint                                   m_Flags ;
             ScanSummary                             m_ScanSummary ;
-	};
+
+
+	private:
+    
+	    void
+	    insert_mb_album_tuple(
+		 SQL::Row&
+	    ) ;
+	    
+    } ;
 }
 
 #endif

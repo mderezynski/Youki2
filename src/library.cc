@@ -492,7 +492,7 @@ namespace MPX
                     , time_t            time_
                 )
                 {
-                        const MPX::Track& t = (*track.get()) ;
+                        const MPX::Track& t = (*track) ;
 
                         guint track_id = get<guint>(t[ATTRIBUTE_MPX_TRACK_ID].get()) ;
                         guint artist_id = get<guint>(t[ATTRIBUTE_MPX_ARTIST_ID].get()) ;
@@ -628,109 +628,109 @@ namespace MPX
                                 if( m_Flags & F_USING_HAL )
                                 {
                                     if( row.count("device_id") )
-                                            (*track.get())[ATTRIBUTE_MPX_DEVICE_ID] = get<guint>(row["device_id"]);
+                                            (*track)[ATTRIBUTE_MPX_DEVICE_ID] = get<guint>(row["device_id"]);
 
                                     if( row.count("hal_vrp") )
-                                            (*track.get())[ATTRIBUTE_VOLUME_RELATIVE_PATH] = get<std::string>(row["hal_vrp"]);
+                                            (*track)[ATTRIBUTE_VOLUME_RELATIVE_PATH] = get<std::string>(row["hal_vrp"]);
 
-                                    (*track.get())[ATTRIBUTE_LOCATION] = trackGetLocation( track ); 
-                                    g_assert( (*track.get()).has(ATTRIBUTE_LOCATION) );
+                                    (*track)[ATTRIBUTE_LOCATION] = trackGetLocation( track ); 
+                                    g_assert( (*track).has(ATTRIBUTE_LOCATION) );
                                 }
                                 else
 #endif
                                 if( row.count("location") )
                                 {
-                                    (*track.get())[ATTRIBUTE_LOCATION] = get<std::string>(row["location"]);
+                                    (*track)[ATTRIBUTE_LOCATION] = get<std::string>(row["location"]);
                                 }
                         }
 
                         if( row.count("id") )
                         {
-                            (*track.get())[ATTRIBUTE_MPX_TRACK_ID] = get<guint>(row["id"]);
+                            (*track)[ATTRIBUTE_MPX_TRACK_ID] = get<guint>(row["id"]);
                         }
 
                         if( all_metadata )
                         {
                                 if( row.count("album_artist") )
-                                        (*track.get())[ATTRIBUTE_ALBUM_ARTIST] = get<std::string>(row["album_artist"]);
+                                        (*track)[ATTRIBUTE_ALBUM_ARTIST] = get<std::string>(row["album_artist"]);
 
                                 if( row.count("album_artist_sortname") )
-                                        (*track.get())[ATTRIBUTE_ALBUM_ARTIST_SORTNAME] = get<std::string>(row["album_artist_sortname"]);
+                                        (*track)[ATTRIBUTE_ALBUM_ARTIST_SORTNAME] = get<std::string>(row["album_artist_sortname"]);
 
                                 if( row.count("artist") )
-                                        (*track.get())[ATTRIBUTE_ARTIST] = get<std::string>(row["artist"]);
+                                        (*track)[ATTRIBUTE_ARTIST] = get<std::string>(row["artist"]);
 
                                 if( row.count("album") )
-                                        (*track.get())[ATTRIBUTE_ALBUM] = get<std::string>(row["album"]);
+                                        (*track)[ATTRIBUTE_ALBUM] = get<std::string>(row["album"]);
 
                                 if( row.count("track") )
-                                        (*track.get())[ATTRIBUTE_TRACK] = guint(get<guint>(row["track"]));
+                                        (*track)[ATTRIBUTE_TRACK] = guint(get<guint>(row["track"]));
 
                                 if( row.count("title") )
-                                        (*track.get())[ATTRIBUTE_TITLE] = get<std::string>(row["title"]);
+                                        (*track)[ATTRIBUTE_TITLE] = get<std::string>(row["title"]);
 
                                 if( row.count("album_genre") )
-                                        (*track.get())[ATTRIBUTE_GENRE] = get<std::string>(row["album_genre"]);
+                                        (*track)[ATTRIBUTE_GENRE] = get<std::string>(row["album_genre"]);
 
                                 if( row.count("label") )
-                                        (*track.get())[ATTRIBUTE_LABEL] = get<std::string>(row["label"]);
+                                        (*track)[ATTRIBUTE_LABEL] = get<std::string>(row["label"]);
 
                                 if( row.count("time") )
-                                        (*track.get())[ATTRIBUTE_TIME] = guint(get<guint>(row["time"]));
+                                        (*track)[ATTRIBUTE_TIME] = guint(get<guint>(row["time"]));
 
                                 if( row.count("mb_artist_id") )
-                                        (*track.get())[ATTRIBUTE_MB_ARTIST_ID] = get<std::string>(row["mb_artist_id"]);
+                                        (*track)[ATTRIBUTE_MB_ARTIST_ID] = get<std::string>(row["mb_artist_id"]);
 
                                 if( row.count("mb_track_id") )
-                                        (*track.get())[ATTRIBUTE_MB_TRACK_ID] = get<std::string>(row["mb_track_id"]);
+                                        (*track)[ATTRIBUTE_MB_TRACK_ID] = get<std::string>(row["mb_track_id"]);
 
                                 if( row.count("mb_album_artist_id") )
-                                        (*track.get())[ATTRIBUTE_MB_ALBUM_ARTIST_ID] = get<std::string>(row["mb_album_artist_id"]);
+                                        (*track)[ATTRIBUTE_MB_ALBUM_ARTIST_ID] = get<std::string>(row["mb_album_artist_id"]);
 
                                 if( row.count("mb_release_country") )
-                                        (*track.get())[ATTRIBUTE_MB_RELEASE_COUNTRY] = get<std::string>(row["mb_release_country"]);
+                                        (*track)[ATTRIBUTE_MB_RELEASE_COUNTRY] = get<std::string>(row["mb_release_country"]);
 
                                 if( row.count("mb_release_type") )
-                                        (*track.get())[ATTRIBUTE_MB_RELEASE_TYPE] = get<std::string>(row["mb_release_type"]);
+                                        (*track)[ATTRIBUTE_MB_RELEASE_TYPE] = get<std::string>(row["mb_release_type"]);
 
                                 if( row.count("mb_album_id") )
-                                        (*track.get())[ATTRIBUTE_MB_ALBUM_ID] = get<std::string>(row["mb_album_id"]);
+                                        (*track)[ATTRIBUTE_MB_ALBUM_ID] = get<std::string>(row["mb_album_id"]);
 
                                 if( row.count("musicip_puid") )
-                                        (*track.get())[ATTRIBUTE_MUSICIP_PUID] = get<std::string>(row["musicip_puid"]);
+                                        (*track)[ATTRIBUTE_MUSICIP_PUID] = get<std::string>(row["musicip_puid"]);
 
                                 if( row.count("date") )
-                                        (*track.get())[ATTRIBUTE_DATE] = get<guint>(row["date"]);
+                                        (*track)[ATTRIBUTE_DATE] = get<guint>(row["date"]);
 
                                 if( row.count("amazon_asin") )
-                                        (*track.get())[ATTRIBUTE_ASIN] = get<std::string>(row["amazon_asin"]);
+                                        (*track)[ATTRIBUTE_ASIN] = get<std::string>(row["amazon_asin"]);
 
                                 if( row.count("mpx_album_id") )
-                                        (*track.get())[ATTRIBUTE_MPX_ALBUM_ID] = get<guint>(row["album_j"]);
+                                        (*track)[ATTRIBUTE_MPX_ALBUM_ID] = get<guint>(row["album_j"]);
 
                                 if( row.count("mpx_artist_id") )
-                                        (*track.get())[ATTRIBUTE_MPX_ARTIST_ID] = get<guint>(row["artist_j"]);
+                                        (*track)[ATTRIBUTE_MPX_ARTIST_ID] = get<guint>(row["artist_j"]);
 
                                 if( row.count("mpx_album_artist_id") )
-                                        (*track.get())[ATTRIBUTE_MPX_ALBUM_ARTIST_ID] = get<guint>(row["mpx_album_artist_id"]);
+                                        (*track)[ATTRIBUTE_MPX_ALBUM_ARTIST_ID] = get<guint>(row["mpx_album_artist_id"]);
 
                                 if( row.count("type") )
-                                        (*track.get())[ATTRIBUTE_TYPE] = get<std::string>(row["type"]);
+                                        (*track)[ATTRIBUTE_TYPE] = get<std::string>(row["type"]);
 
                                 if( row.count("bitrate") )
-                                        (*track.get())[ATTRIBUTE_BITRATE] = get<guint>(row["bitrate"]);
+                                        (*track)[ATTRIBUTE_BITRATE] = get<guint>(row["bitrate"]);
 
                                 if( row.count("samplerate") )
-                                        (*track.get())[ATTRIBUTE_SAMPLERATE] = get<guint>(row["samplerate"]);
+                                        (*track)[ATTRIBUTE_SAMPLERATE] = get<guint>(row["samplerate"]);
 
                                 if( row.count("type") )
-                                        (*track.get())[ATTRIBUTE_TYPE] = get<std::string>(row["type"]);
+                                        (*track)[ATTRIBUTE_TYPE] = get<std::string>(row["type"]);
 
                                 if( row.count("audio_quality") )
-                                        (*track.get())[ATTRIBUTE_QUALITY] = get<guint>(row["audio_quality"]);
+                                        (*track)[ATTRIBUTE_QUALITY] = get<guint>(row["audio_quality"]);
 
                                 if( row.count("discnr") )
-                                        (*track.get())[ATTRIBUTE_DISCNR] = get<guint>(row["discnr"]);
+                                        (*track)[ATTRIBUTE_DISCNR] = get<guint>(row["discnr"]);
                         }
 
                         return track;
