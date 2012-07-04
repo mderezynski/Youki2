@@ -33,6 +33,7 @@
 #include <gdk/gdkkeysyms.h>
 #include <gdkmm/general.h>
 #include <cairomm/cairomm.h>
+#include <boost/format.hpp>
 #include <cmath>
 
 #include "mpx/util-graphics.hh"
@@ -49,12 +50,12 @@ namespace
     int const animation_fps = 24;
     int const animation_frame_period_ms = 1000 / animation_fps;
 
-    int const    text_size_px           = 14 ;
-    double const text_fade_in_time      = 0.2 ;
-    double const text_fade_out_time     = 0.05 ;
-    double const text_hold_time         = 5. ; 
+    int const    text_size_px           = 18 ;
+    double const text_fade_in_time      = 0.05 ;
+    double const text_fade_out_time     = 0.15 ;
+    double const text_hold_time         = 0.8 ; 
     double const text_time              = text_fade_in_time + text_fade_out_time + text_hold_time;
-    double const text_full_alpha        = 0.90 ;
+    double const text_full_alpha        = 1. ;
     double const initial_delay          = 0.0 ;
 
 }
@@ -67,22 +68,32 @@ namespace MPX
         return (1.0 - std::cos (x * G_PI)) / 2.0;
     }
 
-    std::string
-    KoboTitleInfo::get_text_at_time ()
+    guint
+    KoboTitleInfo::get_text_at_time(std::string& text)
     {
         if( !m_info.empty() )
         {
-            unsigned int line = std::fmod( ( m_current_time / text_time ), m_info.size() ) ;
-            return m_info[line];
+            guint line = std::fmod( ( m_current_time / text_time ), m_info.size() ) ;
+
+	    if( line == 0 )
+		text = m_info[0];
+	    else
+	    if( line == 1 )
+		text = m_info[2];
+	    else
+		return 3 ;
+
+	    return (m_current_time/text_time) ;
         }
         else
         {
-            return "";
+            text.clear() ; 
+	    return 0 ;
         }
     }
 
     double
-    KoboTitleInfo::get_text_alpha_at_time ()
+    KoboTitleInfo::get_text_alpha_at_time()
     {
         {
             double offset = m_tmod ; 
@@ -102,30 +113,27 @@ namespace MPX
         }
     }
 
-    KoboTitleInfo::KoboTitleInfo ()
+    KoboTitleInfo::KoboTitleInfo()
     : m_tmod( m_current_time, text_time )
     {
         m_theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;
 
-//        set_app_paintable (true);
-        add_events( Gdk::BUTTON_PRESS_MASK ) ;
+	set_app_paintable (true);
+        add_events( Gdk::EventMask(Gdk::BUTTON_PRESS_MASK | Gdk::ENTER_NOTIFY_MASK | Gdk::LEAVE_NOTIFY_MASK )) ;
 
-//        set_colormap (Gdk::Screen::get_default()->get_rgba_colormap());
-
-        m_timer.stop ();
-        m_timer.reset ();
-
-        set_size_request( -1, 28 ) ;
+        m_timer.stop();
+        m_timer.reset();
+        set_size_request( -1, 38 ) ;
     }
 
     void
-    KoboTitleInfo::clear ()
+    KoboTitleInfo::clear()
     {
         m_info.clear() ;
-        m_timer.stop () ;
-        m_timer.reset () ;
-        m_update_connection.disconnect ();
-        queue_draw () ;
+        m_timer.stop() ;
+        m_timer.reset() ;
+        m_update_connection.disconnect();
+        queue_draw() ;
     }
 
     void
@@ -139,53 +147,51 @@ namespace MPX
         start_time              = initial_delay;
         end_time                = start_time + total_animation_time;
 
-        m_timer.reset () ;
+        m_timer.reset() ;
 
         if( !m_update_connection )
         {
-          m_timer.start ();
-          m_update_connection = Glib::signal_timeout ().connect (sigc::mem_fun (this, &KoboTitleInfo::update_frame),
+          m_timer.start();
+          m_update_connection = Glib::signal_timeout().connect (sigc::mem_fun (this, &KoboTitleInfo::update_frame),
                                                                  animation_frame_period_ms);
         }
     }
 
     bool
-    KoboTitleInfo::on_expose_event (GdkEventExpose *event)
+    KoboTitleInfo::on_draw(const Cairo::RefPtr<Cairo::Context>& cairo)
     {
-        draw_frame ();
-        return false;
-    }
-
-    void
-    KoboTitleInfo::draw_frame ()
-    {
-        Cairo::RefPtr<Cairo::Context> cairo = get_window ()->create_cairo_context () ;
-
         const Gtk::Allocation& a = get_allocation() ;
+
         const ThemeColor& c_base = m_theme->get_color( THEME_COLOR_BACKGROUND ) ; // all hail to the C-Base!
-        const ThemeColor& c_info = m_theme->get_color( THEME_COLOR_INFO_AREA ) ; 
+
+        ThemeColor c_info ;
+
+	if( m_color )
+	    c_info = m_color.get() ;
+	else
+	    c_info = m_theme->get_color( THEME_COLOR_INFO_AREA ) ; 
 
         GdkRectangle r ;
-        r.x = 1 ;
+        r.x = 2 ;
         r.y = 1 ;
-        r.width = a.get_width() - 2 ;
+        r.width = a.get_width() - 6 ;
         r.height = a.get_height() - 2 ; 
 
         cairo->set_operator(Cairo::OPERATOR_SOURCE) ;
         cairo->set_source_rgba(
-              c_base.r
-            , c_base.g
-            , c_base.b
-            , c_base.a
+              c_base.get_red()
+            , c_base.get_green()
+            , c_base.get_blue()
+            , 1 
         ) ;
-        cairo->paint () ;
+        cairo->paint() ;
 
         cairo->set_operator( Cairo::OPERATOR_OVER ) ;
         cairo->set_source_rgba(
-              c_info.r 
-            , c_info.g
-            , c_info.b
-            , c_info.a
+              c_info.get_red() 
+            , c_info.get_green()
+            , c_info.get_blue()
+            , 1 
         ) ;
         RoundedRectangle(
               cairo
@@ -193,12 +199,16 @@ namespace MPX
             , r.y
             , r.width 
             , r.height 
-            , 4. 
+            , 2. 
         ) ;
-        cairo->fill () ;
+        cairo->fill() ;
 
-        Gdk::Color cgdk ;
-        cgdk.set_rgb_p( 0.25, 0.25, 0.25 ) ; 
+        Gdk::RGBA cgdk ;
+
+	if( m_color )
+	    cgdk = m_color.get() ;
+	else
+	    cgdk = Util::make_rgba( 0.25, 0.25, 0.25, 1 ) ; 
 
         Cairo::RefPtr<Cairo::LinearGradient> gradient = Cairo::LinearGradient::create(
               r.x + r.width / 2
@@ -212,38 +222,39 @@ namespace MPX
         double alpha = 1. ;
         
         Util::color_to_hsb( cgdk, h, s, b ) ;
-        b *= 1.05 ;
+        b *= 0.80 ; 
         s *= 0.55 ;
-        Gdk::Color c1 = Util::color_from_hsb( h, s, b ) ;
+        Gdk::RGBA c1 = Util::color_from_hsb( h, s, b ) ;
 
         Util::color_to_hsb( cgdk, h, s, b ) ;
+	b *= 0.75 ;
         s *= 0.55 ;
-        Gdk::Color c2 = Util::color_from_hsb( h, s, b ) ;
+        Gdk::RGBA c2 = Util::color_from_hsb( h, s, b ) ;
 
         Util::color_to_hsb( cgdk, h, s, b ) ;
-        b *= 0.9 ;
+        b *= 0.60 ;
         s *= 0.60 ;
-        Gdk::Color c3 = Util::color_from_hsb( h, s, b ) ;
+        Gdk::RGBA c3 = Util::color_from_hsb( h, s, b ) ;
 
         gradient->add_color_stop_rgba(
               0
-            , c1.get_red_p()
-            , c1.get_green_p()
-            , c1.get_blue_p()
+            , c1.get_red()
+            , c1.get_green()
+            , c1.get_blue()
             , alpha / 1.05
         ) ;
         gradient->add_color_stop_rgba(
               .20
-            , c2.get_red_p()
-            , c2.get_green_p()
-            , c2.get_blue_p()
+            , c2.get_red()
+            , c2.get_green()
+            , c2.get_blue()
             , alpha / 1.05
         ) ;
         gradient->add_color_stop_rgba(
               1 
-            , c3.get_red_p()
-            , c3.get_green_p()
-            , c3.get_blue_p()
+            , c3.get_red()
+            , c3.get_green()
+            , c3.get_blue()
             , alpha
         ) ;
         cairo->set_source( gradient ) ;
@@ -254,56 +265,9 @@ namespace MPX
             , r.y 
             , r.width 
             , r.height 
-            , 4. 
+            , 2. 
         ) ;
         cairo->fill(); 
-
-/*
-        ThemeColor c ;
-
-        c.r = cgdk.get_red_p() ;
-        c.g = cgdk.get_green_p() ;
-        c.b = cgdk.get_blue_p() ;
-
-        gradient = Cairo::LinearGradient::create(
-              r.x + r.width / 2
-            , r.y  
-            , r.x + r.width / 2
-            , r.y + r.height 
-        ) ;
-        gradient->add_color_stop_rgba(
-              0
-            , c.r
-            , c.g
-            , c.b
-            , alpha / 3.2 
-        ) ;
-        gradient->add_color_stop_rgba(
-              0.5
-            , c.r
-            , c.g
-            , c.b
-            , alpha / 2.8 
-        ) ;
-        gradient->add_color_stop_rgba(
-              1 
-            , c.r
-            , c.g
-            , c.b
-            , alpha / 2.4 
-        ) ;
-        cairo->set_source( gradient ) ;
-        cairo->set_operator( Cairo::OPERATOR_OVER ) ;
-        RoundedRectangle(
-              cairo
-            , r.x 
-            , r.y
-            , r.width
-            , r.height
-            , 4.
-        ) ;
-        cairo->fill() ;
-*/
 
         cairo->set_source_rgba( 0.15, 0.15, 0.15, 1. ) ; 
         cairo->set_line_width( 0.75 ) ;
@@ -313,75 +277,160 @@ namespace MPX
             , r.y 
             , r.width 
             , r.height 
-            , 4. 
+            , 2. 
         ) ;
-        cairo->stroke() ;
+        cairo->stroke_preserve() ;
+	cairo->clip() ;
+
+	if( m_cover )
+	{
+	    auto gradient = Cairo::LinearGradient::create(
+		  r.x 
+		, r.y + (r.height/2) 
+		, r.x + 300 
+		, r.y + (r.height/2) 
+	    ) ;
+
+	    gradient->add_color_stop_rgba(
+		  0
+		, 0 
+		, 0 
+		, 0 
+		, 1 
+	    ) ;
+	    gradient->add_color_stop_rgba(
+		  .83 
+		, 0 
+		, 0 
+		, 0 
+		, 1 
+	    ) ;
+	    gradient->add_color_stop_rgba(
+		  1 
+		, 0 
+		, 0 
+		, 0 
+		, 0 
+	    ) ;
+	    RoundedRectangle( cairo, r.x, r.y, 300, 36, 2. ) ;
+	    Gdk::Cairo::set_source_pixbuf( cairo, m_cover, r.x, r.y-124 ) ;
+	    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
+	    cairo->mask(gradient) ;
+	}
 
         {
-            m_current_time = m_timer.elapsed () ;
-
             int text_size_pt = static_cast<int>( (text_size_px * 72) / Util::screen_get_y_resolution( Gdk::Screen::get_default() )) ;
-
+            const ThemeColor& cgdk = m_theme->get_color( THEME_COLOR_TEXT_SELECTED ) ; 
             Pango::FontDescription font_desc = get_style_context()->get_font() ;
-            font_desc.set_size( text_size_pt * PANGO_SCALE ) ;
-            font_desc.set_weight( Pango::WEIGHT_BOLD ) ;
 
-            std::string text  = get_text_at_time() ;
-            double      alpha = get_text_alpha_at_time() ;
+            m_current_time = m_timer.elapsed() ;
+
+            font_desc.set_size( text_size_pt * PANGO_SCALE ) ;
+            //font_desc.set_weight( Pango::WEIGHT_BOLD ) ;
+
+            std::string text ; 
+
+	    guint   line = get_text_at_time( text ) ;
+            double alpha = get_text_alpha_at_time() ;
 
             Glib::RefPtr<Pango::Layout> layout = Glib::wrap( pango_cairo_create_layout( cairo->cobj() )) ;
 
             layout->set_font_description( font_desc ) ;
-            layout->set_text( text ) ;
+
+	    if( line > 2 )
+	    {
+		m_update_connection.disconnect() ;
+		layout->set_markup((boost::format("<b>%s</b>  •  %s  •  <b>%s</b>")
+		    % Glib::Markup::escape_text(m_info[0])
+		    % Glib::Markup::escape_text(m_info[1])
+		    % Glib::Markup::escape_text(m_info[2])
+	    ).str()) ;
+	    }
+	    else
+	    {
+		layout->set_markup((boost::format("<b>%s</b>") % Glib::Markup::escape_text(text)).str()) ;
+	    }
 
             int width, height;
             layout->get_pixel_size( width, height ) ;
 
             cairo->set_operator( Cairo::OPERATOR_OVER ) ;
-
             cairo->move_to(
-                  (a.get_width() - width) / 2 - 50
+                  (a.get_width() - width) / 2 
                 , (a.get_height() - height) / 2 
             ) ;
 
-            const ThemeColor& c_text = m_theme->get_color( THEME_COLOR_TEXT_SELECTED ) ; 
-
-            Gdk::Color cgdk ;
-            cgdk.set_rgb_p( c_text.r, c_text.g, c_text.b ) ;
-
-            pango_cairo_layout_path( cairo->cobj(), layout->gobj() ) ;
-
             cairo->set_source_rgba(
-                  c_text.r 
-                , c_text.g 
-                , c_text.b 
-                , alpha
+                  cgdk.get_red()
+                , cgdk.get_green()
+                , cgdk.get_blue() 
+                , ((line>2)?1:alpha)
             ) ; 
-            cairo->fill_preserve() ;
-
-            double h,s,b ;
-            Util::color_to_hsb( cgdk, h, s, b ) ;
-            b *= 0.7 ;
-            s *= 0.75 ;
-            Gdk::Color c1 = Util::color_from_hsb( h, s, b ) ;
-
-            cairo->set_source_rgba(
-                  c1.get_red_p() 
-                , c1.get_green_p() 
-                , c1.get_blue_p() 
-                , alpha
-            ) ; 
-            cairo->set_line_width( 0.5 ) ;
-            cairo->stroke() ;
+            pango_cairo_show_layout(cairo->cobj(), layout->gobj()) ;
         }
+
+	return true ;
     }
 
     bool
-    KoboTitleInfo::update_frame ()
+    KoboTitleInfo::update_frame()
     {
-        queue_draw ();
-
+        queue_draw() ;
         return true;
     }
+
+    bool
+    KoboTitleInfo::on_button_press_event(
+        GdkEventButton* event 
+    )
+    {
+	if( event->button == 1 )
+	{
+		guint w = get_allocation().get_width() ;
+		guint l = 0 ; 
+		guint c = w/3 ; 
+		guint r = 2*w/3 ;
+
+		TapArea area ;
+
+		guint x = event->x ;
+
+		if( x >= l && x < c ) 
+		{
+		    area = TAP_LEFT ;
+		}
+		else
+		if( x >= c && x < r )
+		{
+		    area = TAP_CENTER ;
+		}
+		else
+		{
+		    area = TAP_RIGHT ;
+		}
+
+		m_SIGNAL__area_tapped.emit( area ) ;
+	} 
+
+        return true ;
+    }
+
+    void
+    KoboTitleInfo::set_cover(
+          Glib::RefPtr<Gdk::Pixbuf> cover
+    )
+    {
+	if( cover )
+        {
+	    m_cover = cover->scale_simple( 300, 300, Gdk::INTERP_BILINEAR ) ;
+	}
+	else
+	{
+	    m_cover = cover ; 
+	}
+
+	queue_draw() ;
+    }
+
 
 } // namespace MPX

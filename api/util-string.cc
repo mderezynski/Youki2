@@ -412,20 +412,11 @@ namespace Util
         , const std::vector<std::string>& h
     )
     {
-        using boost::algorithm::split;
-        using boost::algorithm::is_any_of;
-        using boost::algorithm::find_first;
-
         Glib::ustring&& nl = Glib::ustring(n).casefold() ;
 
         for( std::size_t i = 0 ; i < h.size(); ++i )
         {
 	    Glib::ustring&& hl = Glib::ustring(h[i]).casefold() ;
-
-	    if(hl.length() < 1)
-            {
-		continue ;
-            }
 
     	    if(hl.find(nl) != Glib::ustring::npos)
             {

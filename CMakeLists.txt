@@ -222,8 +222,8 @@ ELSEIF(CMAKE_C_COMPILER_ID STREQUAL "Clang")
   SET(CXX_LANG_FLAGS "")
 ENDIF()
 
-SET(CMAKE_C_FLAGS   "${COMMON_FLAGS} ${C_LANG_FLAGS} ${COMPILER_FLAGS} -ggdb3 -fno-inline -O0 -pg -ftest-coverage -fprofile-arcs")
-SET(CMAKE_CXX_FLAGS "${COMMON_FLAGS} ${CXX_LANG_FLAGS} ${COMPILER_FLAGS} -ggdb3 -fno-inline -O0 -pg -ftest-coverage -fprofile-arcs")
+SET(CMAKE_C_FLAGS   "${COMMON_FLAGS} ${C_LANG_FLAGS} ${COMPILER_FLAGS} -ggdb3 -O0")
+SET(CMAKE_CXX_FLAGS "${COMMON_FLAGS} ${CXX_LANG_FLAGS} ${COMPILER_FLAGS} -ggdb3 -O0")
 
 # Profile build C/C++ flags
 SET(CMAKE_C_FLAGS_PROFILE   "-ggdb3 -pg -fprofile-arcs -ftest-coverage")

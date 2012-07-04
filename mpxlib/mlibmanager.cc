@@ -760,10 +760,9 @@ namespace MPX
     void
     MLibManager::push_message(std::string const& message)
     {
-#if 0
         m_Statusbar->pop();
         m_Statusbar->push(message);
-
+#if 0
         m_TextBufferDetails->insert(m_TextBufferDetails->end(), message);
         m_TextBufferDetails->insert(m_TextBufferDetails->end(), "\n");
 

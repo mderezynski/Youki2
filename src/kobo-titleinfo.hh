@@ -25,6 +25,7 @@
 #ifndef KOBO_TITLEINFO_HH
 #define KOBO_TITLEINFO_HH
 
+#include <gtkmm.h>
 #include <glibmm/timer.h>
 #include <gdkmm/pixbuf.h>
 #include <gtkmm/drawingarea.h>
@@ -32,9 +33,19 @@
 #include "mpx/algorithm/modulo.hh"
 #include "mpx/i-youki-theme-engine.hh"
 #include <boost/shared_ptr.hpp>
+#include <boost/optional.hpp>
 
 namespace MPX
 {
+  typedef boost::optional<Gdk::RGBA> Color_opt_t ;
+
+  enum TapArea
+  {
+      TAP_LEFT
+    , TAP_CENTER
+    , TAP_RIGHT
+  };
+
   class KoboTitleInfo : public Gtk::DrawingArea
   {
     public:
@@ -47,12 +58,41 @@ namespace MPX
         ) ;
 
         void
-        clear () ;
+        set_cover(
+              Glib::RefPtr<Gdk::Pixbuf>
+        ) ;
+
+        void
+        clear() ;
   
+	sigc::signal<void, int>&
+	signal_tapped()
+	{
+	  return m_SIGNAL__area_tapped ;
+	}
+
+	void
+	set_color(
+	      const Color_opt_t& v = Color_opt_t()
+	)
+	{
+	    m_color = v ;
+	    queue_draw() ;
+	}
+
     protected:
 
+	sigc::signal<void, int>	m_SIGNAL__area_tapped ;
+
+	Color_opt_t m_color ;
+
         virtual bool
-        on_expose_event (GdkEventExpose *event);
+        on_draw(const Cairo::RefPtr<Cairo::Context>&) ;
+
+	bool
+	on_button_press_event(
+	    GdkEventButton* event 
+	) ;
 
     private:
 
@@ -61,6 +101,7 @@ namespace MPX
         double end_time ; 
 
         std::vector<std::string>    m_info ;
+	Glib::RefPtr<Gdk::Pixbuf>   m_cover ;
 
         sigc::connection            m_update_connection;
 
@@ -70,20 +111,17 @@ namespace MPX
 
         boost::shared_ptr<IYoukiThemeEngine>  m_theme ;
 
-        void
-        draw_frame ();
-
         bool
         update_frame ();
 
         double
         cos_smooth (double x) ;
 
-        std::string 
-        get_text_at_time () ;
+	guint
+        get_text_at_time(std::string&) ;
 
         double
-        get_text_alpha_at_time () ;
+        get_text_alpha_at_time() ;
   };
 
 } // MPX

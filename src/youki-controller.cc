@@ -383,11 +383,13 @@ namespace MPX
                 , &YoukiController::on_play_stream_switched
         )) ;
 
+#if 0
         m_play->signal_metadata().connect(
             sigc::mem_fun(
                   *this
                 , &YoukiController::on_play_metadata
         )) ;
+#endif
 
 	//////////
 
@@ -609,7 +611,7 @@ namespace MPX
 	Controls_Align->set_padding( 0, 2, 0, 2 ) ;
 
         m_VBox_Bottom = Gtk::manage( new Gtk::VBox ) ;
-        m_VBox_Bottom->set_spacing(0) ;
+        m_VBox_Bottom->set_spacing(2) ;
 
 	Gtk::VBox* VBox2 = Gtk::manage( new Gtk::VBox ) ;
 	VBox2->set_border_width(0) ;
@@ -782,14 +784,14 @@ namespace MPX
         m_ScrolledWinTracks->set_kinetic_scrolling() ;
 
         m_main_position = Gtk::manage( new KoboPosition ) ;
-	m_main_position->set_size_request( -1, 21 ) ;
+	m_main_position->set_size_request( -1, 23 ) ;
         m_main_position->signal_seek_event().connect(
             sigc::mem_fun(
                   *this
                 , &YoukiController::on_position_seek
         )) ;
 
-        m_main_info = new YoukiSpectrumTitleinfo ;
+        m_main_info = new KoboTitleInfo ;
         m_main_info->signal_tapped().connect(
             sigc::mem_fun(
                   *this
@@ -798,13 +800,14 @@ namespace MPX
 
         VBox2->pack_start( *Entry_Align, false, false, 0 ) ;
         VBox2->pack_start( *HBox_Main_Align, true, true, 0 ) ;
+//        VBox2->pack_start( *m_main_info, false, true, 0 ) ;
         VBox2->pack_start( *m_VBox_Bottom, false, false, 0 ) ;
 
-//	m_VBox_Bottom->pack_start( *m_main_info, false, false, 0 ) ;
+        m_VBox_Bottom->pack_start( *m_main_info, false, true, 0 ) ;
         m_VBox_Bottom->pack_start( *Controls_Align, false, false, 0 ) ;
 
         m_main_volume = Gtk::manage( new KoboVolume ) ;
-	m_main_volume->set_size_request( 204, 21 ) ;
+	m_main_volume->set_size_request( 204, 23 ) ;
         m_main_volume->set_volume(
             m_play->property_volume().get_value()
         ) ;
@@ -1072,7 +1075,7 @@ namespace MPX
 	m_VBox_TL->pack_start( *HBox_TL, false, true, 0 ) ; 
 	m_VBox_TL->pack_start( *m_InfoBar, false, true, 0 ) ; 
 	m_VBox_TL->pack_start( *m_ScrolledWinTracks, true, true, 0 ) ; 
-	m_VBox_TL->pack_start( *m_main_info, false, true, 0 ) ;
+//	m_VBox_TL->pack_start( *m_main_info, false, true, 0 ) ;
 
         m_HBox_Main->pack_start( *m_ScrolledWinArtist, false, true, 0 ) ;
         m_HBox_Main->pack_start( *m_ScrolledWinAlbums, false, true, 0 ) ;
@@ -2160,10 +2163,10 @@ namespace MPX
 		    ))
 		    {
 			Gdk::RGBA c = Util::pick_color_for_pixbuf(cover) ;
-
 			m_main_info->set_cover( cover ) ;
 			m_main_info->set_color(c) ;
-			m_main_position->set_color(c) ;
+
+//			m_main_position->set_color(c) ;
 		    }
 	    }
 	}
@@ -2519,10 +2522,9 @@ namespace MPX
                 m_seek_position.reset() ; 
 
                 m_main_info->clear() ;
-
 		m_main_info->set_color() ;
-		m_main_position->set_color() ;
 
+		m_main_position->set_color() ;
 		m_main_position->unpause() ;
                 m_main_position->set_position( 0, 0 ) ;
 
@@ -2670,24 +2672,19 @@ namespace MPX
 
                 if( have_cover )
                 {
-//		    Gdk::RGBA c = Util::pick_color_for_pixbuf(cover) ;
-
-                    m_main_info->set_cover( cover ) ;
-/*
+		    Gdk::RGBA c = Util::pick_color_for_pixbuf(cover) ;
+		    m_main_info->set_cover( cover ) ;
 		    m_main_info->set_color(c) ;
-		    m_main_position->set_color(c) ;
-*/
 
+//		    m_main_position->set_color(c) ;
 		    goto skip1 ;
                 }
         }
 
 	m_main_info->set_cover( Glib::RefPtr<Gdk::Pixbuf>(0) ) ;
-
-/*
 	m_main_info->set_color() ;
-	m_main_position->set_color() ;
-*/
+
+//	m_main_position->set_color() ;
 	
 	skip1:
 
@@ -2801,6 +2798,7 @@ namespace MPX
 	}
     }
 
+#if 0
     void
     YoukiController::on_play_metadata(
             GstMetadataField    field
@@ -2812,13 +2810,14 @@ namespace MPX
         {
 		guint r = m.m_audio_bitrate.get() ;
 		r /= 1000 ;
-		m_main_info->set_bitrate( r ) ; 
+		//m_main_info->set_bitrate( r ) ; 
         }
         else if( field == FIELD_AUDIO_CODEC )
         {
-		m_main_info->set_codec( m.m_audio_codec.get() ) ;
+		//m_main_info->set_codec( m.m_audio_codec.get() ) ;
         }
     }
+#endif
 
     void
     YoukiController::handle_tracklist_track_activated(

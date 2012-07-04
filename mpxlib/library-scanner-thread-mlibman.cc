@@ -815,17 +815,14 @@ MPX::LibraryScannerThread_MLibMan::on_add(
             (*t)[ATTRIBUTE_MTIME] = mtime1 ; // Update the mtime in the track we're "building"
             insert_file_no_mtime_check( t, *i2, insert_path_sql, true ) ;
                         
-            if( !(std::distance(collection.begin(), i2) % 50) )
+            if( !(std::distance(collection.begin(), i2) % 10) )
             {
-		g_message("Processed %d tracks of %d", guint(std::distance(collection.begin(), i2)), guint(m_ScanSummary.FilesTotal)) ;
-#if 0
                 pthreaddata->Message.emit(
                     (boost::format(_("Collecting Tracks: %u of %u"))
                         % guint(std::distance(collection.begin(), i2))
                         % guint(m_ScanSummary.FilesTotal)
                     ).str()
                 ) ;
-#endif
             }
         }
     }
@@ -1934,19 +1931,19 @@ MPX::LibraryScannerThread_MLibMan::insert(
         track[ATTRIBUTE_MPX_TRACK_ID] = id ; 
 
         if(
-            (
+            (!m_PrioritizeByFileType ||(
               m_PrioritizeByFileType
                     &&
               compare_types( p->Type, type )
-            )
+            ))
 
-                    ||
+		    && 
 
-            (
+            (!m_PrioritizeByBitrate || (
               m_PrioritizeByBitrate
                     &&
               bitrate_track > bitrate_datarow
-            )
+            ))
         )
         try{
                 m_SQL->exec_sql( create_update_sql( track, p->Album.first, p->Artist.first ) + ( boost::format( " WHERE id = '%u'" ) % id ).str() ); 
@@ -2177,15 +2174,16 @@ MPX::LibraryScannerThread_MLibMan::update_albums(
 {
     ThreadData * pthreaddata = m_ThreadData.get() ;
 
+    guint c = 0 ;
     for( IdSet_t::const_iterator i = m_ProcessedAlbums.begin(); i != m_ProcessedAlbums.end() ; ++i )
     {
         update_album( (*i) ) ;
-#if 0
-        if( !(std::distance(m_ProcessedAlbums.begin(), i) % 50) )
+	++c ;
+
+        if( !(c % 5) )
         {
-            pthreaddata->Message.emit((boost::format(_("Additional Metadata Update: %u of %u")) % std::distance(m_ProcessedAlbums.begin(), i) % m_ProcessedAlbums.size() ).str()) ;
+            pthreaddata->Message.emit((boost::format(_("Additional Metadata Update: %u of %u")) % c % m_ProcessedAlbums.size() ).str()) ;
         }
-#endif
     }
 
     m_ProcessedAlbums.clear() ;

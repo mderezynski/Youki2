@@ -127,7 +127,7 @@ namespace MPX
               a.get_width() / 2 
             , 1 
             , a.get_width() / 2 
-            , 19
+            , 21
         ) ;
 
         position_bar_back_gradient->add_color_stop_rgba(
@@ -161,7 +161,7 @@ namespace MPX
             , 1 
             , 1 
             , w
-            , 19
+            , 21
             , rounding 
         ) ;
 
@@ -183,7 +183,7 @@ namespace MPX
             r.x         = 1 ; 
             r.y         = 1 ; 
             r.width     = w * percent ; 
-            r.height    = 19 ; 
+            r.height    = 21 ; 
 
             cairo->save () ;
 
@@ -284,7 +284,7 @@ namespace MPX
 		r1.y      = (a.get_height() - r1.height) / 2 ; 
 		r1.x      = 3 ; 
 
-		cairo->rectangle( 1, 1, w * percent, 19 ) ; 
+		cairo->rectangle( 1, 1, w * percent, 21 ) ; 
 		cairo->clip() ;
 
 		if( alpha ) 
@@ -308,7 +308,7 @@ namespace MPX
 		pango_cairo_show_layout( cairo->cobj(), layout->gobj() ) ;
 
 		cairo->reset_clip() ;
-		cairo->rectangle( 1+w*percent, 1, 1+(2*(ri.get_width()/PANGO_SCALE)), 19 ) ; 
+		cairo->rectangle( 1+w*percent, 1, 1+(2*(ri.get_width()/PANGO_SCALE)), 21 ) ; 
 		cairo->clip() ;
 
 		cairo->move_to(
@@ -390,7 +390,7 @@ namespace MPX
             r.x      = 1 ;
             r.y      = 1 ;
             r.width  = a.get_width() - 2 ;
-            r.height = 19 ; 
+            r.height = 21 ; 
 
             m_theme->draw_focus(
                   cairo

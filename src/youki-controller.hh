@@ -20,7 +20,7 @@
 #include "kobo-main.hh"
 #include "kobo-position.hh"
 #include "kobo-volume.hh"
-#include "youki-spectrum-titleinfo.hh"
+#include "kobo-titleinfo.hh"
 
 #include "mpx-mlibman-dbus-proxy-actual.hh"
 
@@ -231,7 +231,8 @@ namespace MPX
             int                               m_MainWindow_x 
                                             , m_MainWindow_y ;
             
-            YoukiSpectrumTitleinfo          * m_main_info ;
+//            YoukiSpectrumTitleinfo          * m_main_info ;
+	    KoboTitleInfo		    * m_main_info ;
             KoboPosition                    * m_main_position ;
             KoboVolume                      * m_main_volume ;
 
@@ -479,10 +480,12 @@ namespace MPX
             on_play_stream_switched_real_idle(        
             ) ;
 
+#if 0
             void
             on_play_metadata(        
                 GstMetadataField
             ) ;
+#endif
 
             void
             handle_tracklist_track_activated(

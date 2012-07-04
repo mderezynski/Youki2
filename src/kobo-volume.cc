@@ -119,7 +119,7 @@ namespace MPX
               a.get_width() / 2 
             , 1 
             , a.get_width() / 2 
-            , 19
+            , 21
         ) ;
 
 	Cairo::RefPtr<Cairo::LinearGradient> volume_bar_gradient = Cairo::LinearGradient::create(
@@ -159,7 +159,7 @@ namespace MPX
             , 1 
             , 1 
             , w
-            , 19
+            , 21
             , rounding 
         ) ;
         cairo->fill() ;
@@ -167,7 +167,7 @@ namespace MPX
 	r.x      = 1 ; 
 	r.y      = 1 ; 
 	r.width  = fmax( 0, (a.get_width()-2) * double(percent)) ;
-	r.height = 19 ; 
+	r.height = 21 ; 
 
 	cairo->save() ;
 	volume_bar_gradient->add_color_stop_rgba(
@@ -213,12 +213,12 @@ namespace MPX
 	    cairo->set_source(
 		  m_image_mute 
 		, a.get_width() - 4 - m_image_mute->get_width()
-		, 2
+		, 4
 	    ) ;
 
 	    cairo->rectangle(
 		  a.get_width() - 4 - m_image_mute->get_width()
-		, 2
+		, 4
 		, m_image_mute->get_width()
 		, m_image_mute->get_height()
 	    ) ;
@@ -277,11 +277,11 @@ namespace MPX
 		r1.y      = C(a.get_height(), r1.height) ; 
 		r1.x      = 3 ; 
 
-		cairo->rectangle( 1, 1, w * percent, 19 ) ; 
+		cairo->rectangle( 1, 1, w * percent, 21 ) ; 
 		cairo->clip() ;
 
 		cairo->set_source( s, r1.x+1, r1.y+1 ) ;
-		cairo->rectangle( r1.x+1, r1.y+1, r1.width, 19 ) ;
+		cairo->rectangle( r1.x+1, r1.y+1, r1.width, 21 ) ;
 		cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 		cairo->fill() ;
 
@@ -299,7 +299,7 @@ namespace MPX
 
 		cairo->reset_clip() ;
 
-		cairo->rectangle( 1+w*percent, 1, 1+(2*(r1.width)), 19 ) ; 
+		cairo->rectangle( 1+w*percent, 1, 1+(2*(r1.width)), 21 ) ; 
 		cairo->clip() ;
 
 		cairo->set_source_rgba(
@@ -326,7 +326,7 @@ namespace MPX
 		r1.x      = r.width - r1.width - 2 ;
 
 		cairo->set_source( s, r1.x+1, r1.y+1 ) ;
-		cairo->rectangle( r1.x+1, r1.y+1, r1.width, 19 ) ;
+		cairo->rectangle( r1.x+1, r1.y+1, r1.width, 21 ) ;
 		cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 		cairo->fill() ;
 
