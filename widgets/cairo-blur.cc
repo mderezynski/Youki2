@@ -439,7 +439,8 @@ render_text_shadow(
 	, layout->gobj()
     ) ;
 
-    Util::cairo_image_surface_blur( s, radius ) ; 
+    cairo_surface_t* blurred = blur_image_surface( static_cast<cairo_surface_t*>(s->cobj()), radius, 8. ) ;
+    s = Cairo::RefPtr<Cairo::ImageSurface>(new Cairo::ImageSurface( blurred, false )) ;
 
     cairo->move_to(
 	  x 

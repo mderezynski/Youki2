@@ -21,6 +21,7 @@
 #include "kobo-position.hh"
 #include "kobo-volume.hh"
 #include "kobo-titleinfo.hh"
+#include "webkit-album-info.hh"
 
 #include "mpx-mlibman-dbus-proxy-actual.hh"
 
@@ -231,10 +232,11 @@ namespace MPX
             int                               m_MainWindow_x 
                                             , m_MainWindow_y ;
             
-//            YoukiSpectrumTitleinfo          * m_main_info ;
 	    KoboTitleInfo		    * m_main_info ;
             KoboPosition                    * m_main_position ;
             KoboVolume                      * m_main_volume ;
+
+	    AlbumInfo			    * m_album_info ;
 
             View::Artist::Class             * m_ListViewArtist ;
             View::Albums::Class             * m_ListViewAlbums ;
@@ -446,6 +448,10 @@ namespace MPX
 
 	    void
 	    handle_shuffle_toggled(
+	    ) ;
+
+	    void
+	    handle_display_album_info(
 	    ) ;
 
         protected:

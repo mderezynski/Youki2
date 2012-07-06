@@ -39,6 +39,7 @@
 #include "mpx/util-graphics.hh"
 #include "mpx/util-ui.hh"
 #include "mpx/widgets/cairo-extensions.hh"
+#include "mpx/widgets/cairo-blur.hh"
 #include "mpx/i-youki-theme-engine.hh"
 
 #include "mpx/mpx-main.hh"
@@ -53,7 +54,7 @@ namespace
     int const    text_size_px           = 18 ;
     double const text_fade_in_time      = 0.05 ;
     double const text_fade_out_time     = 0.15 ;
-    double const text_hold_time         = 0.8 ; 
+    double const text_hold_time         = 2 ; 
     double const text_time              = text_fade_in_time + text_fade_out_time + text_hold_time;
     double const text_full_alpha        = 1. ;
     double const initial_delay          = 0.0 ;
@@ -76,9 +77,6 @@ namespace MPX
             guint line = std::fmod( ( m_current_time / text_time ), m_info.size() ) ;
 
 	    if( line == 0 )
-		text = m_info[0];
-	    else
-	    if( line == 1 )
 		text = m_info[2];
 	    else
 		return 3 ;
@@ -132,6 +130,8 @@ namespace MPX
         m_info.clear() ;
         m_timer.stop() ;
         m_timer.reset() ;
+	m_cover.reset() ;
+	m_color.reset() ;
         m_update_connection.disconnect();
         queue_draw() ;
     }
@@ -223,17 +223,17 @@ namespace MPX
         
         Util::color_to_hsb( cgdk, h, s, b ) ;
         b *= 0.80 ; 
-        s *= 0.55 ;
+        s *= 0.90 ;
         Gdk::RGBA c1 = Util::color_from_hsb( h, s, b ) ;
 
         Util::color_to_hsb( cgdk, h, s, b ) ;
 	b *= 0.75 ;
-        s *= 0.55 ;
+        s *= 0.85 ;
         Gdk::RGBA c2 = Util::color_from_hsb( h, s, b ) ;
 
         Util::color_to_hsb( cgdk, h, s, b ) ;
-        b *= 0.60 ;
-        s *= 0.60 ;
+        b *= 0.71 ;
+        s *= 0.82 ;
         Gdk::RGBA c3 = Util::color_from_hsb( h, s, b ) ;
 
         gradient->add_color_stop_rgba(
@@ -285,9 +285,9 @@ namespace MPX
 	if( m_cover )
 	{
 	    auto gradient = Cairo::LinearGradient::create(
-		  r.x 
+		  r.x + r.width - 300 
 		, r.y + (r.height/2) 
-		, r.x + 300 
+		, r.x + r.width 
 		, r.y + (r.height/2) 
 	    ) ;
 
@@ -296,10 +296,10 @@ namespace MPX
 		, 0 
 		, 0 
 		, 0 
-		, 1 
+		, 0 
 	    ) ;
 	    gradient->add_color_stop_rgba(
-		  .83 
+		  .17 
 		, 0 
 		, 0 
 		, 0 
@@ -310,23 +310,21 @@ namespace MPX
 		, 0 
 		, 0 
 		, 0 
-		, 0 
+		, 1 
 	    ) ;
-	    RoundedRectangle( cairo, r.x, r.y, 300, 36, 2. ) ;
-	    Gdk::Cairo::set_source_pixbuf( cairo, m_cover, r.x, r.y-124 ) ;
+	    RoundedRectangle( cairo, r.x+r.width-300, r.y, 300, 36, 2. ) ;
+	    Gdk::Cairo::set_source_pixbuf( cairo, m_cover, r.x+r.width-300, r.y-124 ) ;
 	    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 	    cairo->mask(gradient) ;
 	}
 
+	if( !m_info.empty() && (m_info.size() == 3))
         {
             int text_size_pt = static_cast<int>( (text_size_px * 72) / Util::screen_get_y_resolution( Gdk::Screen::get_default() )) ;
             const ThemeColor& cgdk = m_theme->get_color( THEME_COLOR_TEXT_SELECTED ) ; 
             Pango::FontDescription font_desc = get_style_context()->get_font() ;
 
             m_current_time = m_timer.elapsed() ;
-
-            font_desc.set_size( text_size_pt * PANGO_SCALE ) ;
-            //font_desc.set_weight( Pango::WEIGHT_BOLD ) ;
 
             std::string text ; 
 
@@ -335,15 +333,16 @@ namespace MPX
 
             Glib::RefPtr<Pango::Layout> layout = Glib::wrap( pango_cairo_create_layout( cairo->cobj() )) ;
 
+            font_desc.set_size( text_size_pt * PANGO_SCALE ) ;
             layout->set_font_description( font_desc ) ;
 
 	    if( line > 2 )
 	    {
 		m_update_connection.disconnect() ;
-		layout->set_markup((boost::format("<b>%s</b>  •  %s  •  <b>%s</b>")
+		layout->set_markup((boost::format("<b>%s</b>  <small>•</small>  <b>%s</b>  <small>•</small>  %s")
 		    % Glib::Markup::escape_text(m_info[0])
-		    % Glib::Markup::escape_text(m_info[1])
 		    % Glib::Markup::escape_text(m_info[2])
+		    % Glib::Markup::escape_text(m_info[1])
 	    ).str()) ;
 	    }
 	    else
@@ -354,12 +353,16 @@ namespace MPX
             int width, height;
             layout->get_pixel_size( width, height ) ;
 
+	    cairo->save() ;
             cairo->set_operator( Cairo::OPERATOR_OVER ) ;
-            cairo->move_to(
-                  (a.get_width() - width) / 2 
-                , (a.get_height() - height) / 2 
+            cairo->translate(
+                  (a.get_width()-width)/2.
+                , (a.get_height()-height)/2. 
             ) ;
 
+	    Util::render_text_shadow( layout, 1, 1, cairo, 2, ((line>2)?0.5:alpha/2.)) ;
+
+	    cairo->move_to(0,0) ;
             cairo->set_source_rgba(
                   cgdk.get_red()
                 , cgdk.get_green()
@@ -367,6 +370,8 @@ namespace MPX
                 , ((line>2)?1:alpha)
             ) ; 
             pango_cairo_show_layout(cairo->cobj(), layout->gobj()) ;
+
+	    cairo->restore() ;
         }
 
 	return true ;

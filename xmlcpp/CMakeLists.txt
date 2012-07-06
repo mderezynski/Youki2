@@ -11,6 +11,8 @@ SET(mpx_parsers_VERSION 0.0)
 SET(mpx_parsers_SOURCES
   mb-artist-basic-1.0.cxx
   mb-artist-basic-1.0.hxx
+  xsd-album-info-2.0.hxx
+  xsd-album-info-2.0.cxx
   xsd-artist-similar-2.0.cxx
   xsd-artist-similar-2.0.hxx
   xsd-artist-info-2.0.cxx

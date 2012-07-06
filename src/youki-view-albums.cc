@@ -1409,7 +1409,6 @@ namespace Albums
 
 	    if( event->button == 3 )
 	    {
-		m_refActionGroup->get_action("ContextJumpToSelected")->set_sensitive(bool(m_selection)) ;
 		m_pMenuPopup->popup(event->button, event->time);
 	    }
 	    else
@@ -2142,8 +2141,8 @@ namespace Albums
 		sigc::mem_fun(*this, &Class::on_show_only_this_artist));
 	    m_refActionGroup->add( Gtk::Action::create("ContextFetchCover", "(Re-)fetch Album Cover"),
 		sigc::mem_fun(*this, &Class::on_refetch_album_cover));
-	    m_refActionGroup->add( Gtk::Action::create("ContextJumpToSelected", "Jump to Selected Album"),
-		sigc::mem_fun(*this, &Class::on_jump_to_selected));
+	    m_refActionGroup->add( Gtk::Action::create("ContextDisplayInfo", "Display Album Info (Last.fm)"),
+		sigc::mem_fun(m_SIGNAL_display_album_info, &SignalVoid::emit));
 
 	    m_refUIManager = Gtk::UIManager::create();
 	    m_refUIManager->insert_action_group(m_refActionGroup);
@@ -2151,7 +2150,7 @@ namespace Albums
 	    std::string ui_info =
 	    "<ui>"
 	    "   <popup name='PopupMenu'>"
-	    "       <menuitem action='ContextJumpToSelected'/>"
+	    "       <menuitem action='ContextDisplayInfo'/>"
 	    "	    <separator/>"
 	    "       <menuitem action='ContextShowAlbum'/>"
 	    "       <menuitem action='ContextShowArtist'/>"

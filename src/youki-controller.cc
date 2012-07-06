@@ -773,6 +773,8 @@ namespace MPX
         m_ListViewArtist = Gtk::manage( new View::Artist::Class ) ;
         m_ListViewAlbums = Gtk::manage( new View::Albums::Class ) ;
 
+	m_ListViewAlbums->signal_display_album_info().connect(sigc::mem_fun(*this, &YoukiController::handle_display_album_info)) ;
+
 	Gtk::Widget * menubar = m_UIManager->get_widget( "/MenuBarMain" ) ;
 
         m_ScrolledWinArtist->set_shadow_type( Gtk::SHADOW_IN ) ;
@@ -1102,6 +1104,9 @@ namespace MPX
                 , &YoukiController::on_status_icon_clicked
         ))) ;
 
+	m_album_info = new AlbumInfo ;
+	m_album_info->hide() ;
+
 #if 0
 	m_view_history_pos = m_view_history.begin() ;
 	history_save() ;
@@ -1131,6 +1136,26 @@ namespace MPX
 	m_InfoBar->hide() ;
 	m_ActivitySpinner->hide() ; 
 //	m_ScrolledWindowPlaylists->hide() ;
+    }
+
+    void
+    YoukiController::handle_display_album_info(
+    )
+    {
+	auto idx = m_ListViewAlbums->get_selected_index() ;
+
+	if( idx )
+	{
+	    auto r = private_->FilterModelAlbums->row(*idx) ;
+
+	    AlbumInfo::Qualifier q ;
+
+	    q.MBID	    = r->mbid ; 
+	    q.Name_Album    = r->album ; 
+	    q.Name_Artist   = r->album_artist ; 
+
+	    m_album_info->display(q) ;
+	}
     }
 
     void
@@ -1744,13 +1769,13 @@ namespace MPX
 	    if(  sel_row_albums )
 	    {
 		auto a = private_->FilterModelAlbums->row(*sel_row_albums) ;
-		s += (boost::format("<small><b>%s</b> by <b>%s</b></small>") % Glib::Markup::escape_text(a->album) % Glib::Markup::escape_text(a->album_artist)).str() ;
+		s += (boost::format("<b>%s</b> <small>by</small> <b>%s</b>") % Glib::Markup::escape_text(a->album) % Glib::Markup::escape_text(a->album_artist)).str() ;
 	    }
 	    else
 	    if(  sel_row_artist )
 	    {
 		auto a = private_->FilterModelArtist->row(*sel_row_artist) ;
-		s += (boost::format("<small>Everything by <b>%s</b></small>") % Glib::Markup::escape_text(boost::get<0>(a))).str() ;
+		s += (boost::format("Everything <small>by</small> <b>%s</b>") % Glib::Markup::escape_text(boost::get<0>(a))).str() ;
 	    }
 	}
 
@@ -2522,7 +2547,6 @@ namespace MPX
                 m_seek_position.reset() ; 
 
                 m_main_info->clear() ;
-		m_main_info->set_color() ;
 
 		m_main_position->set_color() ;
 		m_main_position->unpause() ;
@@ -2540,7 +2564,6 @@ namespace MPX
                 m_main_position->set_position( 0, 0 ) ;
 		m_main_position->unpause() ;
                 m_seek_position.reset() ; 
-                m_main_info->clear() ;
                 m_MainWindow->queue_draw () ;    
 
                 break ;

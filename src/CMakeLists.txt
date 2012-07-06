@@ -27,6 +27,7 @@ INCLUDE_DIRECTORIES(
   ${SQLITE_INCLUDE_DIRS}
   ${STARTUP_NOTIFY_INCLUDE_DIRS}
   ${TAGLIB_INCLUDE_DIRS}
+  ${WEBKIT_INCLUDE_DIRS}
   ${X11_X11_INCLUDE_PATH}
   ${XML_INCLUDE_DIRS}
   ${XPROTO_INCLUDE_DIRS}
@@ -95,6 +96,8 @@ SET(youki_bin_SOURCES
   preferences.hh
   splash-screen.hh
   splash-screen.cc
+  webkit-album-info.hh
+  webkit-album-info.cc
   stock.cc
   main.cc
 )
@@ -144,6 +147,7 @@ TARGET_LINK_LIBRARIES(youki-bin
   ${SQLITE_LIBRARIES}
   ${STARTUP_NOTIFY_LIBRARIES}
   ${TAGLIB_LIBRARIES}
+  ${WEBKIT_LIBRARIES}
   ${XML_LIBRARIES}
   ${X11_X11_LIB}
   mconfig

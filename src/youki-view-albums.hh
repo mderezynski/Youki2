@@ -392,9 +392,14 @@ class Class
 
                 Column_sp_vector_t	    m_columns ;
 
-                Signal_0		    m_SIGNAL_selection_changed ;
-                Signal_0		    m_SIGNAL_find_accepted ;
-                Signal_0		    m_SIGNAL_start_playback ;
+                typedef sigc::signal<void, const std::string&>	SignalMBID ;
+                typedef sigc::signal<void, guint>		SignalID ; 
+		typedef sigc::signal<void>			SignalVoid ;
+
+                SignalVoid		    m_SIGNAL_selection_changed ;
+                SignalVoid		    m_SIGNAL_find_accepted ;
+                SignalVoid		    m_SIGNAL_start_playback ;
+		SignalVoid		    m_SIGNAL_display_album_info ;
 
                 Interval<guint>			    ModelExtents ;
 		Minus<int>			    ModelCount ;
@@ -424,12 +429,10 @@ class Class
 
 	    public:
 
-                typedef sigc::signal<void, const std::string&>	SignalMBID ;
-                typedef sigc::signal<void, guint>		SignalID ; 
-
                 SignalMBID _signal_0 ;
                 SignalMBID _signal_1 ;
                 SignalID   _signal_2 ;
+		SignalVoid _signal_3 ;
 
             protected:
 
@@ -598,22 +601,28 @@ class Class
                     return _signal_2 ;
                 }
 
-                Signal_0&
+                SignalVoid&
                 signal_selection_changed()
                 {
                     return m_SIGNAL_selection_changed ;
                 }
 
-                Signal_0&
+                SignalVoid&
                 signal_find_accepted()
                 {
                     return m_SIGNAL_find_accepted ;
                 }
 
-                Signal_0&
+                SignalVoid&
                 signal_start_playback()
                 {
                     return m_SIGNAL_start_playback ;
+                }
+
+                SignalVoid&
+                signal_display_album_info()
+                {
+                    return m_SIGNAL_display_album_info ;
                 }
 
                 void

@@ -77,13 +77,8 @@ namespace MPX
         {
 	    g_message("RemoteStore:: URL['%s']", url.c_str()) ;
 
-            auto request = Soup::Request::create( url ) ; 
+            auto request = Soup::RequestSync::create( url ) ; 
 	    request->run() ;
-
-	    while(!request->is_finished())
-	    {
-		g_usleep(50) ;
-	    }
 
 	    save_image(
 		  request->get_data_raw()
