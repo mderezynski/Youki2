@@ -205,8 +205,6 @@ MPX::ArtistImages::on_recache_images()
                 pthreaddata->GotArtistImage.emit( mbid, artist_image );
             }
         }
-
-	g_message("%s: Processed %u", G_STRLOC, std::distance( v.begin(), i)) ;
     }
 
     g_message("%s: Done recaching artists.", G_STRLOC) ;
