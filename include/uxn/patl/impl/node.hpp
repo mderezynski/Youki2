@@ -89,7 +89,7 @@ public:
     void set_parentid(node_type *parent, word_t id)
     {
 #ifdef PATL_ALIGNHACK
-        parentid_ = reinterpret_cast<word_t>(parent) | id;
+        parentid_ = reinterpret_cast<intptr_t>(parent) | id;
 #else
         parent_ = parent;
         tagsid_ &= 3;
@@ -101,7 +101,7 @@ public:
     void set_xlinktag(word_t id, const node_type *link, word_t tag)
     {
 #ifdef PATL_ALIGNHACK
-        linktag_[id] = reinterpret_cast<word_t>(link) | tag;
+        linktag_[id] = reinterpret_cast<intptr_t>(link) | tag;
 #else
         link_[id] = const_cast<node_type*>(link);
         tagsid_ &= ~(1 << id);
