@@ -414,7 +414,8 @@ namespace Artist
 		      GdkEventCrossing* G_GNUC_UNUSED
 		)
 		{
-		   //// grab_focus() ;
+		    //// grab_focus() ;
+		    return false ;
 		}
 
 		bool
