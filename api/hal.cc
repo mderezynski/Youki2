@@ -346,6 +346,7 @@ namespace MPX
 
         if( dbus_error_is_set( &error ) )
         {
+	    g_message("DBus Error: %s", error.message) ;
             dbus_error_free( &error );
             return false;
         }
@@ -403,6 +404,7 @@ namespace MPX
             }
             catch( MPX::SQL::SqlExceptionC & cxe )
             {
+		g_message("HAL SQL Exception: %s", cxe.what()) ;
                 return false;
             }
 

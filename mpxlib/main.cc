@@ -185,6 +185,8 @@ namespace MPX
 int
 main (int argc, char ** argv)
 {
+    create_user_dirs() ;
+
     setup_i18n();
 
     Glib::thread_init(0);
