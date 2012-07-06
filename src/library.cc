@@ -169,7 +169,7 @@ namespace MPX
 		}
 
         bool
-                Library::recache_covers_handler (SQL::RowV *v, std::size_t* position)
+                Library::recache_covers_handler (SQL::RowV *v, guint* position)
                 {
                         Row & r = (*v)[*position]; 
 
@@ -197,7 +197,7 @@ namespace MPX
                         getSQL(*v, "SELECT DISTINCT album_j, location, device_id, hal_volume_udi, hal_device_udi, hal_vrp, album.mb_album_id, album.amazon_asin, album_artist.album_artist, album.album "
                                    "FROM track JOIN album ON album_j = album.id JOIN album_artist ON album.album_artist_j = album_artist.id GROUP BY album_j");
 
-                        std::size_t * position = new std::size_t ;
+                        guint * position = new guint ;
 
                         *position = 0;
 
@@ -601,7 +601,7 @@ namespace MPX
                                             ratios.push_back(double(get<guint>((*i)["count"]))/double(v.size()));
                                         }
 
-                                        std::size_t row = MPX::rand(ratios);
+                                        guint row = MPX::rand(ratios);
 
                                         g_assert( row < v.size() );
 

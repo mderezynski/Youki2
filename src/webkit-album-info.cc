@@ -1,6 +1,8 @@
 #include "config.h"
 #include "webkit-album-info.hh"
 
+#include <future>
+
 #include <boost/format.hpp>
 #include "mpx/xml/xmltoc++.hh"
 #include "xmlcpp/xsd-album-info-2.0.hxx"
@@ -57,7 +59,20 @@ namespace MPX
 	    f_effective = (boost::format(f_mbid) % q.MBID).str() ; 
 
 	try{
-	    Xml = new Instance(f_effective) ;
+	    auto handle = std::async(std::launch::async, [&Xml, &f_effective]()
+	    {
+		Xml = new Instance(f_effective) ;
+	    }) ;
+
+	    while(!handle.wait_for(std::chrono::duration<int, std::milli>(40)))
+	    {
+		while(gtk_events_pending()) gtk_main_iteration() ;
+	    }
+
+	    if(!Xml)
+	    {
+		throw std::runtime_error("no document") ;
+	    }
 
 	    auto& album = Xml->xml().album() ;
 
@@ -100,7 +115,7 @@ namespace MPX
 	static const guchar CSS[] =
 	"body { font-size: 10pt; }\n"
 	"#div_img { width: 100%; text-align: center; }\n"
-	"#image { -webkit-border-radius: 4px; }\n"
+	"#image { -webkit-border-radius: 12px; border: 2px solid black; }\n"
 	"#wiki { "
 	" -webkit-border-radius: 8px; "
 	" background: -webkit-gradient(linear, 0% 100%, 0%, 0%,"
@@ -117,7 +132,7 @@ namespace MPX
 	g_free(css) ;
 	g_free(tmp) ;
 
-	resize( 400, 600 ) ;
+	resize( 400, 520 ) ;
 	set_position( Gtk::WIN_POS_CENTER ) ;
 	present() ;
     }
