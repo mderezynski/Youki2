@@ -120,7 +120,7 @@ public:
     algorithm_generic(const cont_type *cont, const node_type *q, word_t qid)
         : cont_(cont)
 #ifdef PATL_ALIGNHACK
-        , qq_(qid | reinterpret_cast<word_t>(q))
+        , qq_(qid | reinterpret_cast<intptr_t>(q))
 #else
         , q_(const_cast<node_type*>(q))
         , qid_(qid)
@@ -147,7 +147,7 @@ public:
 #ifdef PATL_ALIGNHACK
             qq_;
 #else
-            qid_ | reinterpret_cast<word_t>(q_);
+            qid_ | reinterpret_cast<intptr_t>(q_);
 #endif
     }
 
@@ -412,7 +412,7 @@ public:
     void init(const node_type *q, word_t qid)
     {
 #ifdef PATL_ALIGNHACK
-        qq_ = qid | reinterpret_cast<word_t>(q);
+        qq_ = qid | reinterpret_cast<intptr_t>(q);
 #else
         q_ = const_cast<node_type*>(q);
         qid_ = qid;
