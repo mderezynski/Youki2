@@ -413,8 +413,14 @@ namespace MPX
                 volume_insert( *n );
             }
         }
-        catch( ... )
+	catch( Glib::Error& cxe )
+	{
+	    g_message("HAL Error: %s", cxe.what().c_str()) ;
+	    return false ;
+	}
+        catch( std::exception& cxe )
         {
+	    g_message("HAL Error: %s", cxe.what()) ;
             return false;
         }
 
