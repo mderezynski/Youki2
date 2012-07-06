@@ -29,10 +29,6 @@
 #include "mpx/util-file.hh"
 #include "mpx/util-string.hh"
 
-#ifdef HAVE_HAL
-#include "mpx/i-youki-hal.hh"
-#endif // HAVE_HAL
-
 #include "mpx/i-youki-library.hh"
 
 namespace MPX
@@ -320,20 +316,13 @@ namespace MPX
             enum Flags
             {
                   F_NONE            = 0
-                , F_USING_HAL       = 1 << 0
             };
 
         private:
 
             SQL::SQLDB  * m_SQL ;
-
-#ifdef HAVE_HAL
-            IHAL        * m_HAL ;
-#endif // HAVE_HAL
-
-            guint        m_Flags ;
-
-	    std::string	 m_UUID ;
+            guint	  m_Flags ;
+	    std::string	  m_UUID ;
 
         protected:
 

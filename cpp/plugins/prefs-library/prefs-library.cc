@@ -152,53 +152,5 @@ namespace MPX
             sigc::mem_fun(*m_Library_QuarantineBox, &Gtk::Widget::set_sensitive),
             sigc::mem_fun(*m_Library_QuarantineInvalid, &Gtk::ToggleButton::get_active)
             ));
-
-#ifdef HAVE_HAL
-        m_Builder->get_widget("lib-use-hal-rb1", m_Library_UseHAL_Yes);
-        m_Builder->get_widget("lib-use-hal-rb2", m_Library_UseHAL_No);
-
-        if( mcs->key_get<bool>("library","use-hal") )
-            m_Library_UseHAL_Yes->set_active();
-        else
-            m_Library_UseHAL_No->set_active();
-
-        m_Library_UseHAL_Yes->signal_toggled().connect(
-            sigc::mem_fun(
-            *this,
-            &PrefsLibrary::on_library_use_hal_toggled
-            ));
-
-#else
-        m_Builder->get_widget("vbox135")->hide();
-#endif // HAVE_HAL
     }
-
-#ifdef HAVE_HAL
-    void
-        PrefsLibrary::on_library_use_hal_toggled()
-    {
-/*
-        boost::shared_ptr<ILibrary> l = services->get<Library>("mpx-service-library");
-
-        if( m_Library_UseHAL_Yes->get_active() )
-        {
-            m_Builder->get_widget("vbox135")->set_sensitive( false );
-            g_message("%s: Switching to HAL mode", G_STRLOC);
-            l->switch_mode( true );
-            mcs->key_set("library","use-hal", true);
-            m_Builder->get_widget("vbox135")->set_sensitive( true );
-        }
-        else
-        if( m_Library_UseHAL_No->get_active() )
-        {
-            m_Builder->get_widget("vbox135")->set_sensitive( false );
-            g_message("%s: Switching to NO HAL mode", G_STRLOC);
-            l->switch_mode( false );
-            mcs->key_set("library","use-hal", false);
-            m_Builder->get_widget("vbox135")->set_sensitive( true );
-        }
-*/
-    }
-#endif
-
 }  // namespace MPX

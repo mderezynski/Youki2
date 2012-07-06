@@ -51,10 +51,6 @@
 
 #include "mpx/util-file.hh"
 
-#ifdef HAVE_HAL
-#include "mpx/mpx-hal.hh"
-#endif // HAVE_HAL
-
 #include "library.hh"
 #include "play.hh"
 #include "plugin-manager-gui.hh"
@@ -180,10 +176,6 @@ namespace MPX
         mcs->key_register ("audio", "sink", std::string (DEFAULT_SINK));
         mcs->key_register ("audio", "accurate-seek", bool( false ));
 
-#ifdef HAVE_HAL
-        mcs->key_register ("audio", "hal-udi", std::string (""));
-#endif // HAVE_HAL
-
 #ifdef HAVE_ALSA
         mcs->key_register ("audio", "alsa-buffer-time", 200000);
         mcs->key_register ("audio", "device-alsa", std::string (DEFAULT_DEVICE_ALSA));
@@ -213,9 +205,6 @@ namespace MPX
         mcs->key_register ("library", "rescan-in-intervals", false);
         mcs->key_register ("library", "rescan-interval", 30); // in minutes
         mcs->key_register ("library", "quarantine-invalid", true);
-#ifdef HAVE_HAL
-        mcs->key_register ("library", "use-hal", true);
-#endif // HAVE_HAL
 
         mcs->domain_register ("pyplugs");
 
@@ -280,66 +269,47 @@ int main(int argc, char ** argv)
 
     Gtk::Settings::get_default()->property_gtk_tooltip_timeout().set_value( 1500 ) ;
 
-#ifdef HAVE_HAL
-    try{
+    splash->set_message(_("Starting Covers"),2/10.);
+    services->add(boost::shared_ptr<Covers>(new MPX::Covers));
+    services->get<Covers>("mpx-service-covers")->run() ;
 
-        splash->set_message(_("Starting HAL..."),1/10.);
-        services->add(boost::shared_ptr<HAL>(new MPX::HAL));
-#endif //HAVE_HAL
+    splash->set_message(_("Starting Library Manager..."), 2.5/10.);
+    info::backtrace::Youki::MLibMan_proxy_actual * p = new info::backtrace::Youki::MLibMan_proxy_actual( conn ) ;
+    p->Start() ;
+    services->add(boost::shared_ptr<info::backtrace::Youki::MLibMan_proxy_actual>( p ));
 
-        splash->set_message(_("Starting Covers"),2/10.);
-        services->add(boost::shared_ptr<Covers>(new MPX::Covers));
-        services->get<Covers>("mpx-service-covers")->run() ;
+    splash->set_message(_("Starting Library"),3/10.);
+    services->add(boost::shared_ptr<Library>(new MPX::Library));
 
-        splash->set_message(_("Starting Library Manager..."), 2.5/10.);
-        info::backtrace::Youki::MLibMan_proxy_actual * p = new info::backtrace::Youki::MLibMan_proxy_actual( conn ) ;
-        p->Start() ;
-        services->add(boost::shared_ptr<info::backtrace::Youki::MLibMan_proxy_actual>( p ));
+    splash->set_message(_("Starting Playback engine..."),5/10.);
+    services->add(boost::shared_ptr<Play>(new MPX::Play));
 
-        splash->set_message(_("Starting Library"),3/10.);
-        services->add(boost::shared_ptr<Library>(new MPX::Library));
+    splash->set_message(_("Starting Preferences..."),6/10.);
+    services->add(boost::shared_ptr<Preferences>(MPX::Preferences::create()));
 
-#if 0
-        splash->set_message(_("Precaching Covers..."),4/10.);
-        services->get<Library>("mpx-service-library")->recacheCovers() ;
-#endif
+    splash->set_message(_("Starting Theme Engine..."),6.5/10.);
+    services->add(boost::shared_ptr<YoukiThemeEngine>( new YoukiThemeEngine ));
 
-        splash->set_message(_("Starting Playback engine..."),5/10.);
-        services->add(boost::shared_ptr<Play>(new MPX::Play));
+    splash->set_message(_("Starting Youki..."),7.5/10.);
+    services->add(boost::shared_ptr<YoukiController>(new YoukiController ));
 
-        splash->set_message(_("Starting Preferences..."),6/10.);
-        services->add(boost::shared_ptr<Preferences>(MPX::Preferences::create()));
+    splash->set_message(_("Starting Plugins..."),8/10.);
+    services->add(boost::shared_ptr<PluginManager>(new MPX::PluginManager));
 
-        splash->set_message(_("Starting Theme Engine..."),6.5/10.);
-        services->add(boost::shared_ptr<YoukiThemeEngine>( new YoukiThemeEngine ));
+    splash->set_message(_("Starting Plugin Manager..."),9/10.);
+    services->add(boost::shared_ptr<PluginManagerGUI>(MPX::PluginManagerGUI::create()));
 
-        splash->set_message(_("Starting Youki..."),7.5/10.);
-        services->add(boost::shared_ptr<YoukiController>(new YoukiController ));
+    splash->set_message(_(""),10/10.);
 
-        splash->set_message(_("Starting Plugins..."),8/10.);
-        services->add(boost::shared_ptr<PluginManager>(new MPX::PluginManager));
+    gtk->add_window( *(services->get<YoukiController>("mpx-service-controller")->get_widget())) ;
 
-        splash->set_message(_("Starting Plugin Manager..."),9/10.);
-        services->add(boost::shared_ptr<PluginManagerGUI>(MPX::PluginManagerGUI::create()));
+    services->get<YoukiController>("mpx-service-controller")->get_widget()->show() ;
+    services->get<YoukiController>("mpx-service-controller")->get_widget()->present() ;
+    services->get<YoukiController>("mpx-service-controller")->get_widget()->raise() ;
 
-        splash->set_message(_(""),10/10.);
+    delete splash;
 
-	gtk->add_window( *(services->get<YoukiController>("mpx-service-controller")->get_widget())) ;
-
-        services->get<YoukiController>("mpx-service-controller")->get_widget()->show() ;
-        services->get<YoukiController>("mpx-service-controller")->get_widget()->present() ;
-        services->get<YoukiController>("mpx-service-controller")->get_widget()->raise() ;
-
-        delete splash;
-
-        gtk->run() ;
-#ifdef HAVE_HAL
-    }
-    catch( HAL::NotInitializedError& cxe )
-    {
-        g_message("%s: Critical! HAL Error: %s", G_STRLOC, cxe.what());
-    }
-#endif
+    gtk->run() ;
 
     services->get<Covers>("mpx-service-covers")->finish() ;
 

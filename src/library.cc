@@ -35,10 +35,6 @@
 #include "mpx/metadatareader-taglib.hh"
 #include "mpx/util-string.hh"
 
-#ifdef HAVE_HAL
-#include "mpx/i-youki-hal.hh"
-#endif // HAVE_HAL
-
 #include "library.hh"
 
 #undef PACKAGE
@@ -56,10 +52,6 @@ namespace MPX
         : Service::Base("mpx-service-library")
         , m_Flags(0)
         {
-#ifdef HAVE_HAL
-                m_HAL = services->get<IHAL>("mpx-service-hal").get() ;
-#endif // HAVE_HAL
-
                 const int MLIB_VERSION_CUR = 2;
                 const int MLIB_VERSION_REV = 0;
                 const int MLIB_VERSION_AGE = 0;
@@ -92,8 +84,6 @@ namespace MPX
 
 		    g_message(":: SQL UUID is [%s]", m_UUID.c_str()) ;
                 }
-
-                mcs->key_set<bool>("library","use-hal", bool(m_Flags & F_USING_HAL));
         }
 
         Library::~Library ()
@@ -105,16 +95,6 @@ namespace MPX
                       bool          use_hal
                 )
                 {
-                    if( !use_hal )
-                    {
-                        m_Flags &= ~F_USING_HAL ;
-                    }
-                    else
-                    {
-                        m_Flags |=  F_USING_HAL ;
-                    }
-
-                    execSQL((boost::format ("UPDATE meta SET flags = '%u' WHERE rowid = 1") % m_Flags).str());
                 }
 
 	void
@@ -247,43 +227,8 @@ namespace MPX
                 Library::getMetadata (const std::string& uri, Track & track)
                 {
                         services->get<MetadataReaderTagLib>("mpx-service-taglib")->get(uri, track);
-
                         track[ATTRIBUTE_LOCATION] = uri; 
-  
-#ifdef HAVE_HAL
-                        if( m_Flags & F_USING_HAL )
-                        {
-                                try{
-                                        URI u (uri);
-                                        if( u.get_protocol() == URI::PROTOCOL_FILE )
-                                        {
-                                                try{
-                                                        const Volume& volume = m_HAL->get_volume_for_uri (uri) ;
-
-                                                        track[ATTRIBUTE_MPX_DEVICE_ID] =
-                                                                m_HAL->get_id_for_volume( volume.volume_udi, volume.device_udi ) ;
-
-                                                        track[ATTRIBUTE_VOLUME_RELATIVE_PATH] =
-                                                                filename_from_uri (uri).substr (volume.mount_point.length()) ;
-                                                }
-                                                catch( IHAL::Exception& cxe )
-                                                {
-                                                        g_warning( "%s: %s", G_STRLOC, cxe.what() ); 
-                                                        throw FileQualificationError((boost::format("%s: %s") % uri % cxe.what()).str());
-                                                }
-                                                catch( Glib::ConvertError& cxe )
-                                                {
-                                                        g_warning( "%s: %s", G_STRLOC, cxe.what().c_str() ); 
-                                                        throw FileQualificationError((boost::format("%s: %s") % uri % cxe.what()).str());
-                                                }
-                                        }
-                                } catch( URI::ParseError )
-                                {
-                                        throw FileQualificationError((boost::format("URI Parse Error: %s") % uri).str());
-                                }
-                        }
-#endif // HAVE_HAL
-                }
+		}
 
         void
                 Library::trackSetLocation(
@@ -291,74 +236,15 @@ namespace MPX
                     , const std::string&  uri
                 )
                 {
-                        MPX::Track& track = *(t.get()) ;
-
-                        track[ATTRIBUTE_LOCATION] = uri;
-#ifdef HAVE_HAL
-                        if( m_Flags & F_USING_HAL )
-                        {
-                                try{
-                                        URI u (uri);
-                                        if( u.get_protocol() == URI::PROTOCOL_FILE )
-                                        {
-                                                try{
-                                                        const Volume& volume = m_HAL->get_volume_for_uri( uri ) ;
-
-                                                        track[ATTRIBUTE_MPX_DEVICE_ID] =
-                                                                m_HAL->get_id_for_volume( volume.volume_udi, volume.device_udi ) ;
-
-                                                        track[ATTRIBUTE_VOLUME_RELATIVE_PATH] =
-                                                                filename_from_uri( uri ).substr( volume.mount_point.length() ) ;
-                                                }
-                                                catch( IHAL::Exception & cxe )
-                                                {
-                                                        g_warning( "%s: %s", G_STRLOC, cxe.what() ); 
-                                                        throw FileQualificationError((boost::format("%s: %s") % uri % cxe.what()).str());
-                                                }
-                                                catch( Glib::ConvertError & cxe )
-                                                {
-                                                        g_warning( "%s: %s", G_STRLOC, cxe.what().c_str() ); 
-                                                        throw FileQualificationError((boost::format("%s: %s") % uri % cxe.what()).str());
-                                                }
-                                        }
-                                        else
-                                        {
-                                            throw FileQualificationError((boost::format("Unable to handle non-file:/// URI using HAL: %s") % uri).str());
-                                        }
-
-                                } catch( URI::ParseError )
-                                {
-                                    throw FileQualificationError((boost::format("URI Parse Error: %s") % uri).str());
-                                }
-                        }
-#endif // HAVE_HAL
+		    MPX::Track& track = *t ;
+		    track[ATTRIBUTE_LOCATION] = uri;
                 }
 
         std::string
                 Library::trackGetLocation( const Track_sp& t )
                 {
                     const MPX::Track& track = *t ;
-#ifdef HAVE_HAL
-                        if( m_Flags & F_USING_HAL )
-                        {
-                                try{
-                                        const guint&	   id = get<guint>(track[ATTRIBUTE_MPX_DEVICE_ID].get()) ;
-                                        const std::string& path = get<std::string>(track[ATTRIBUTE_VOLUME_RELATIVE_PATH].get()) ;
-                                        const std::string& mount_point = m_HAL->get_mount_point_for_id( id ) ;
-
-                                        return filename_to_uri( build_filename( Util::normalize_path(mount_point), path ) );
-
-                                } catch( IHAL::NoMountPathForVolumeError & cxe )
-                                {
-                                        g_message("%s: Error: What: %s", G_STRLOC, cxe.what());
-                                        throw FileQualificationError((boost::format("No available mountpoint for Track %u: %s") % get<guint>(track[ATTRIBUTE_MPX_TRACK_ID].get()) % cxe.what() ).str());
-                                }
-                        }
-                        else
-#endif // HAVE_HAL
-                        {
-                                return get<std::string>(track[ATTRIBUTE_LOCATION].get());
-                        }
+		    return get<std::string>(track[ATTRIBUTE_LOCATION].get());
                 }
 
         void
@@ -624,24 +510,10 @@ namespace MPX
 
                         if( !no_location )
                         {
-#ifdef HAVE_HAL
-                                if( m_Flags & F_USING_HAL )
-                                {
-                                    if( row.count("device_id") )
-                                            (*track)[ATTRIBUTE_MPX_DEVICE_ID] = get<guint>(row["device_id"]);
-
-                                    if( row.count("hal_vrp") )
-                                            (*track)[ATTRIBUTE_VOLUME_RELATIVE_PATH] = get<std::string>(row["hal_vrp"]);
-
-                                    (*track)[ATTRIBUTE_LOCATION] = trackGetLocation( track ); 
-                                    g_assert( (*track).has(ATTRIBUTE_LOCATION) );
-                                }
-                                else
-#endif
-                                if( row.count("location") )
-                                {
-                                    (*track)[ATTRIBUTE_LOCATION] = get<std::string>(row["location"]);
-                                }
+			    if( row.count("location") )
+			    {
+				(*track)[ATTRIBUTE_LOCATION] = get<std::string>(row["location"]);
+			    }
                         }
 
                         if( row.count("id") )

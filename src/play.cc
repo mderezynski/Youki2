@@ -808,15 +808,6 @@ namespace MPX
 					    NULL) ;
 		    }
 #endif //HAVE_SUN
-#ifdef HAVE_HAL
-		    else
-		    if( sink == "halaudiosink" )
-		    {
-			    g_object_set (G_OBJECT (sink_element), "udi",
-					    nullify_string (mcs->key_get <std::string> ("audio", "hal-udi")),
-					    NULL) ;
-		    }
-#endif //HAVE_HAL
 
 		    m_playbin2->property_audio_sink() = Glib::wrap( sink_element, true ) ; 
 

@@ -285,10 +285,10 @@ namespace MPX
 	if( m_cover )
 	{
 	    auto gradient = Cairo::LinearGradient::create(
-		  r.x + r.width - 300 
-		, r.y + (r.height/2) 
-		, r.x + r.width 
-		, r.y + (r.height/2) 
+		  (r.x + r.width - 300)
+		, r.y + (r.height/2)
+		, (r.x + r.width)
+		, r.y + (r.height/2)
 	    ) ;
 
 	    gradient->add_color_stop_rgba(
@@ -299,7 +299,7 @@ namespace MPX
 		, 0 
 	    ) ;
 	    gradient->add_color_stop_rgba(
-		  .17 
+		  .23 
 		, 0 
 		, 0 
 		, 0 
@@ -360,7 +360,7 @@ namespace MPX
                 , (a.get_height()-height)/2. 
             ) ;
 
-	    Util::render_text_shadow( layout, 1, 1, cairo, 2, ((line>2)?0.5:alpha/2.)) ;
+	    Util::render_text_shadow( layout, 1, 1, cairo, 2, ((line>2)?0.3:alpha/3.)) ;
 
 	    cairo->move_to(0,0) ;
             cairo->set_source_rgba(

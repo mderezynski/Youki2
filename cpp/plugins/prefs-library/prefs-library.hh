@@ -91,14 +91,6 @@ namespace MPX
         Gtk::HBox                   * m_Library_RescanIntervalBox ;
         Gtk::HBox                   * m_Library_QuarantineBox ;
 
-#ifdef HAVE_HAL
-        void
-        on_library_use_hal_toggled() ;
-
-        Gtk::RadioButton            * m_Library_UseHAL_Yes ;
-        Gtk::RadioButton            * m_Library_UseHAL_No ;
-#endif // hAVE_HAL
-
   } ; // class PrefsLibrary
 
 extern "C" MPX::PluginHolderBase*
