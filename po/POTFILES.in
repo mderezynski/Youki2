@@ -2,8 +2,6 @@ api/hal.cc
 api/minisoup.cc
 api/util-ui.cc
 api/xml.cc
-com/album-info-window.cc
-com/album-info-window.ui
 com/mb-import-album.cc
 com/mb-import-album.ui
 cpp/plugins/mmkeys/mmkeys.cc
@@ -28,8 +26,6 @@ python/plugins/musicbrainz-tools/musicbrainz-tools.glade
 python/plugins/ratings_export/ratings_export.glade
 python/plugins/trackinfo-webkit/trackinfo-webkit.glade
 remote/youki.cc
-src/dialog-about.cc
-src/dialog-equalizer.cc
 src/main.cc
 src/play.cc
 src/plugin-manager-gui.cc
