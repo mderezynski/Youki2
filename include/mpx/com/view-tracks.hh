@@ -2671,6 +2671,7 @@ namespace Tracks
 		    tooltip->set_text( boost::get<std::string>(track[ATTRIBUTE_TITLE].get())) ;
                     return true ;
 #endif
+		    return false ;
                 }
 
             public:
