@@ -129,8 +129,6 @@ namespace
 
 	    Instance* Xml = new Instance(Glib::ustring( u )) ;
 
-	    g_message("Size: %u", Xml->xml().similarartists().artist().size()) ;
-
 	    for( auto& artist : Xml->xml().similarartists().artist() )
 	    {
 		s.insert( artist.name() ) ; 
