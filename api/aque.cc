@@ -586,9 +586,16 @@ namespace AQE
                 }
                 else
                 {
-                    kv[VAL] = line ;
-                    line.clear() ;
-                    done_reading_pair = true ; 
+		    if( have_op )
+		    {
+			kv[VAL] = line ;
+			line.clear() ;
+			done_reading_pair = true ; 
+		    }
+		    else
+		    {
+			non_attr_strings.push_back(line) ;
+		    }
                 }
             }
             else
