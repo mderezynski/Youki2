@@ -34,7 +34,7 @@ namespace MPX
     {
     }
 
-    void
+    bool
     AlbumInfo::display(
 	const AlbumInfo::Qualifier& q
     )
@@ -87,10 +87,7 @@ namespace MPX
 	catch(std::exception& cxe) {
 	    g_message("%s: RuntimeError: %s", G_STRLOC, cxe.what()) ;
 	    delete Xml ;
-	}
-	catch(std::runtime_error& cxe){
-	    g_message("%s: RuntimeError: %s", G_STRLOC, cxe.what()) ;
-	    delete Xml ;
+	    return false ;
 	}
 
 	const std::string html = 
@@ -135,5 +132,7 @@ namespace MPX
 	resize( 400, 520 ) ;
 	set_position( Gtk::WIN_POS_CENTER ) ;
 	present() ;
+
+	return true ;
     }
 }

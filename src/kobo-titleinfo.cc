@@ -340,8 +340,8 @@ namespace MPX
 	    {
 		m_update_connection.disconnect() ;
 		layout->set_markup((boost::format("<b>%s</b>  <small>•</small>  <b>%s</b>  <small>•</small>  %s")
-		    % Glib::Markup::escape_text(m_info[0])
 		    % Glib::Markup::escape_text(m_info[2])
+		    % Glib::Markup::escape_text(m_info[0])
 		    % Glib::Markup::escape_text(m_info[1])
 	    ).str()) ;
 	    }

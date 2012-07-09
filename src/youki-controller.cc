@@ -71,6 +71,8 @@ namespace
     "	    <menuitem action='PlaybackControlActionMarkov'/>"
     "	    <menuitem action='PlaybackControlActionContinueCurrentAlbum'/>"
     "	    <menuitem action='PlaybackControlActionKeepQueue'/>"
+    "	    <separator/>"
+    "       <menuitem action='ContextStopAfterCurrent'/>"
     "	</menu>"
     "</menubar>"
     ""
@@ -1154,7 +1156,12 @@ namespace MPX
 	    q.Name_Album    = r->album ; 
 	    q.Name_Artist   = r->album_artist ; 
 
-	    m_album_info->display(q) ;
+	    m_InfoBar->hide() ;
+
+	    if(!m_album_info->display(q))
+	    {
+		infobar_set_message("No album details for this album.", Gtk::MESSAGE_INFO) ;
+	    }
 	}
     }
 
@@ -2110,6 +2117,7 @@ namespace MPX
         {
             case 0: /* track */
             {
+		m_ListViewTracks->clear_selection() ;
                 private_->FilterModelTracks->erase_track( id ) ; 
             }
             break ;
@@ -2258,7 +2266,13 @@ namespace MPX
         {
             SQL::RowV v ;
 	    m_library->getSQL(v, (boost::format("SELECT * FROM track_view WHERE track_view.id = '%u'") % n ).str()) ; 
-            private_->FilterModelTracks->insert_track( v[0], m_library->sqlToTrack( v[0], true, false )) ;
+
+	    if(!v.empty())
+	    {
+		private_->FilterModelTracks->insert_track( v[0], m_library->sqlToTrack( v[0], true, false )) ;
+	    }
+	    else
+		g_message("%s: No track with this ID[%u]", G_STRLOC, n) ;
         }
 
         m_new_tracks.clear() ;

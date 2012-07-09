@@ -595,8 +595,6 @@ MPX::LibraryScannerThread_MLibMan::on_scan_all(
 
     pthreaddata->ScanStart.emit() ;
 
-    m_SQL->exec_sql("BEGIN") ;
-
     m_ScanSummary = ScanSummary() ;
     boost::shared_ptr<Library_MLibMan> library = services->get<Library_MLibMan>("mpx-service-library") ;
     RowV v ;
@@ -684,8 +682,6 @@ MPX::LibraryScannerThread_MLibMan::on_scan_all(
     process_insertion_list() ;
     do_remove_dangling() ;
     update_albums() ;
-
-    m_SQL->exec_sql("COMMIT") ;
 
     pthreaddata->Message.emit(_("Rescan: Done")) ;
     pthreaddata->ScanSummary.emit( m_ScanSummary ) ;
@@ -1997,8 +1993,6 @@ MPX::LibraryScannerThread_MLibMan::do_remove_dangling ()
     IdSet idset2 ;
     SQL::RowV rows;
 
-    sql.exec_sql("BEGIN") ;
-
     /// CLEAR DANGLING ARTISTS
     idset1.clear() ;
     rows.clear() ;
@@ -2064,8 +2058,6 @@ MPX::LibraryScannerThread_MLibMan::do_remove_dangling ()
 	sql.exec_sql((delete_f % "album_artist" % id).str()) ;
 	pthreaddata->EntityDeleted( id, ENTITY_ALBUM_ARTIST ) ;
     }
-
-    sql.exec_sql("COMMIT") ;
 
     pthreaddata->Message.emit(_("Cleanup: Done")) ;
 }

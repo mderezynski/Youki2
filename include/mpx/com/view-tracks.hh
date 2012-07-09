@@ -275,8 +275,8 @@ namespace Tracks
 
 		if( t_a && t_b && t_a->has(ATTRIBUTE_DISCNR) && t_b->has(ATTRIBUTE_DISCNR))
 		{
-			gint64 discnr_a = boost::get<gint64>((*t_a)[ATTRIBUTE_DISCNR].get()) ;	
-			gint64 discnr_b = boost::get<gint64>((*t_a)[ATTRIBUTE_DISCNR].get()) ;	
+			gint64 discnr_a = boost::get<guint>((*t_a)[ATTRIBUTE_DISCNR].get()) ;	
+			gint64 discnr_b = boost::get<guint>((*t_b)[ATTRIBUTE_DISCNR].get()) ;	
 
 	                if( discnr_a < discnr_b )
         	            return true ;
@@ -2120,20 +2120,23 @@ namespace Tracks
 			m_ActionGroup->get_action("ContextSaveXSPF")->set_sensitive(!m_play_queue_ref.empty());
 			m_ActionGroup->get_action("ContextXSPFSaveHistory")->set_sensitive(!m_play_history_ref.empty());
 
-			auto m = dynamic_cast<Gtk::ImageMenuItem*>(m_UIManager->get_widget("/PopupMenuTrackList/YoukiDJ/ContextShowArtistSimilar")) ;
-			const std::string& a = (*(m_model->row(boost::get<1>(m_selection.get())))).Artist ;
-			m->set_label((boost::format("Artists similar to '%s'") % a).str()) ;
+			if( m_model->size() )
+			{
+			    auto m = dynamic_cast<Gtk::ImageMenuItem*>(m_UIManager->get_widget("/PopupMenuTrackList/YoukiDJ/ContextShowArtistSimilar")) ;
+			    const std::string& a = (*(m_model->row(boost::get<1>(m_selection.get())))).Artist ;
+			    m->set_label((boost::format("Artists similar to '%s'") % a).str()) ;
 
-			m = dynamic_cast<Gtk::ImageMenuItem*>(m_UIManager->get_widget("/PopupMenuTrackList/YoukiDJ/ContextQueueOpArtist")) ;
-			m->set_label((boost::format("Top Tracks for '%s'") % a).str()) ;
+			    m = dynamic_cast<Gtk::ImageMenuItem*>(m_UIManager->get_widget("/PopupMenuTrackList/YoukiDJ/ContextQueueOpArtist")) ;
+			    m->set_label((boost::format("Top Tracks for '%s'") % a).str()) ;
 
-			m = dynamic_cast<Gtk::ImageMenuItem*>(m_UIManager->get_widget("/PopupMenuTrackList/YoukiDJ/ContextQueueOpAlbum")) ;
-			const std::string& b = (*(m_model->row(boost::get<1>(m_selection.get())))).Album ;
-			m->set_label((boost::format("Top Tracks for '%s'") % b).str()) ;
+			    m = dynamic_cast<Gtk::ImageMenuItem*>(m_UIManager->get_widget("/PopupMenuTrackList/YoukiDJ/ContextQueueOpAlbum")) ;
+			    const std::string& b = (*(m_model->row(boost::get<1>(m_selection.get())))).Album ;
+			    m->set_label((boost::format("Top Tracks for '%s'") % b).str()) ;
 
 
-			m_row__button_press.reset() ;
-                        m_pMenuPopup->popup(event->button, event->time) ;                            
+			    m_row__button_press.reset() ;
+			    m_pMenuPopup->popup(event->button, event->time) ;                            
+			}
                     }
 
                     return true ;

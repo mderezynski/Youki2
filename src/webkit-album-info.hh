@@ -20,7 +20,7 @@ namespace MPX
 	    AlbumInfo() ;
 	    virtual ~AlbumInfo() ;
 
-	    void
+	    bool
 	    display(
 		const Qualifier&
 	    ) ;
