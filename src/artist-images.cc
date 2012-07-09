@@ -114,8 +114,6 @@ MPX::ArtistImages::get_image_by_mbid(
 
         std::string image_url_126s = (boost::format("http://userserve-ak.last.fm/serve/126s/%s") % m[m.size()-1]).str();
 
-	g_message("%s: URL: '%s'", G_STRLOC, image_url_126s.c_str()) ;
-
         artist_image = Util::get_image_from_uri( image_url_126s );
 
     } catch(...) {
@@ -261,12 +259,8 @@ MPX::ArtistImages::on_get_image_async(
 {
     ThreadData * pthreaddata = m_ThreadData.get();
 
-    g_message("%s", G_STRFUNC) ;
-
     if( m_pixbuf_cache.find( mbid ) == m_pixbuf_cache.end() )
     {
-	g_message("%s: Not in Cache...",G_STRFUNC) ;
-
         const std::string& thumb_path = build_filename( m_base_path, mbid + std::string(".png" ));
 	Glib::RefPtr<Gdk::Pixbuf> artist_image ;
 
@@ -282,9 +276,7 @@ MPX::ArtistImages::on_get_image_async(
 	else
 	if( acquire )
 	{
-	    g_message("%s: Not on Disk...", G_STRFUNC) ;
 	    g_message("%s: Getting it from the clouds...", G_STRFUNC) ;
-
 	    artist_image = get_image_by_mbid(mbid,name) ;	
 
 	    if( artist_image )

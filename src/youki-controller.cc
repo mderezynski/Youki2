@@ -1776,7 +1776,7 @@ namespace MPX
 	    if(  sel_row_albums )
 	    {
 		auto a = private_->FilterModelAlbums->row(*sel_row_albums) ;
-		s += (boost::format("<b>%s</b> <small>by</small> <b>%s</b>") % Glib::Markup::escape_text(a->album) % Glib::Markup::escape_text(a->album_artist)).str() ;
+		s += (boost::format("<b>%s</b>  <small>•</small>  %s") % Glib::Markup::escape_text(a->album_artist) % Glib::Markup::escape_text(a->album)).str() ;
 	    }
 	    else
 	    if(  sel_row_artist )

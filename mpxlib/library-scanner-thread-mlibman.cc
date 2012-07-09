@@ -25,10 +25,6 @@
 #include "library-scanner-thread-mlibman.hh"
 #include "library-mlibman.hh"
 
-#ifdef HAVE_HAL
-#include "mpx/i-youki-hal.hh"
-#endif // HAVE_HAL
-
 using boost::get ;
 using namespace MPX ;
 using namespace MPX::SQL ;
@@ -383,9 +379,6 @@ MPX::LibraryScannerThread_MLibMan::LibraryScannerThread_MLibMan(
 , scan_stop(sigc::mem_fun(*this, &LibraryScannerThread_MLibMan::on_scan_stop))
 , vacuum(sigc::mem_fun(*this, &LibraryScannerThread_MLibMan::on_vacuum))
 , set_priority_data(sigc::mem_fun(*this, &LibraryScannerThread_MLibMan::on_set_priority_data))
-#ifdef HAVE_HAL
-, vacuum_volume_list(sigc::bind(sigc::mem_fun(*this, &LibraryScannerThread_MLibMan::on_vacuum_volume_list), true))
-#endif // HAVE_HAL
 , update_statistics(sigc::mem_fun(*this, &LibraryScannerThread_MLibMan::on_update_statistics))
 , signal_scan_start(*this, m_ThreadData, &ThreadData::ScanStart)
 , signal_scan_end(*this, m_ThreadData, &ThreadData::ScanEnd)
@@ -399,9 +392,6 @@ MPX::LibraryScannerThread_MLibMan::LibraryScannerThread_MLibMan(
 , signal_message(*this, m_ThreadData, &ThreadData::Message)
 , m_Library_MLibMan(*obj_library)
 , m_SQL(new SQL::SQLDB(*((m_Library_MLibMan.get_sql_db()))))
-#ifdef HAVE_HAL
-, m_HAL( *(services->get<IHAL>("mpx-service-hal").get()) )
-#endif // HAVE_HAL
 , m_Flags(flags)
 {
 
@@ -599,36 +589,10 @@ MPX::LibraryScannerThread_MLibMan::on_scan_all(
     boost::shared_ptr<Library_MLibMan> library = services->get<Library_MLibMan>("mpx-service-library") ;
     RowV v ;
 
-#ifdef HAVE_HAL
-    try{
-        if (m_Flags & Library_MLibMan::F_USING_HAL)
-        { 
-            m_SQL->get(
-                v,
-                "SELECT id, device_id, hal_vrp, mtime, insert_path FROM track"
-            ) ;
-        }
-        else
-#endif
-        {
-            m_SQL->get(
-                v,
-                "SELECT id, location, mtime, insert_path FROM track"
-            ) ;
-        }
-#ifdef HAVE_HAL
-    }
-    catch( IHAL::Exception& cxe )
-    {
-        g_warning( "%s: %s", G_STRLOC, cxe.what() ); 
-        return ;
-    }
-    catch( Glib::ConvertError& cxe )
-    {
-        g_warning( "%s: %s", G_STRLOC, cxe.what().c_str() ); 
-        return ;
-    }
-#endif // HAVE_HAL
+    m_SQL->get(
+	v,
+	"SELECT id, location, mtime, insert_path FROM track"
+    ) ;
 
     for( RowV::iterator i = v.begin(); i != v.end(); ++i )
     {
@@ -725,60 +689,20 @@ MPX::LibraryScannerThread_MLibMan::on_add(
 
         // Collection from Filesystem
 
-#ifdef HAVE_HAL
-        try{
-#endif // HAVE_HAL
+	insert_path = Util::normalize_path( *i )  ;
+	insert_path_sql = insert_path ;
 
-            insert_path = Util::normalize_path( *i )  ;
+	collection.clear() ;
 
-#ifdef HAVE_HAL
-            try{
-                if (m_Flags & Library_MLibMan::F_USING_HAL)
-                { 
-                    const Volume&   volume          = m_HAL.get_volume_for_uri( *i ) ;
-                                    insert_path_sql = Util::normalize_path(Glib::filename_from_uri(*i).substr (volume.mount_point.length())) ;
-                }
-                else
-#endif // HAVE_HAL
+	try{
+	    Util::collect_audio_paths_recursive( insert_path, collection ) ;
+	} catch(std::exception&)
+	{
+	} catch(Glib::Error&)
+	{
+	}
 
-                {
-                                    insert_path_sql = insert_path ;
-                }
-
-#ifdef HAVE_HAL
-            }
-            catch(
-              IHAL::Exception&      cxe
-            )
-            {
-                g_warning( "%s: %s", G_STRLOC, cxe.what() ); 
-                continue ;
-            }
-            catch(
-              Glib::ConvertError&   cxe
-            )
-            {
-                g_warning( "%s: %s", G_STRLOC, cxe.what().c_str() ); 
-                continue ;
-            }
-#endif // HAVE_HAL
-
-            collection.clear() ;
-
-            try{
-                Util::collect_audio_paths_recursive( insert_path, collection ) ;
-            } catch(...) {}
-
-            m_ScanSummary.FilesTotal += collection.size() ;
-
-#ifdef HAVE_HAL
-        }
-        catch( Glib::ConvertError & cxe )
-        {
-            g_warning("%s: %s", G_STRLOC, cxe.what().c_str()) ;
-            continue ;
-        }
-#endif // HAVE_HAL
+	m_ScanSummary.FilesTotal += collection.size() ;
 
         // Collect + Process Tracks
 
@@ -848,56 +772,17 @@ MPX::LibraryScannerThread_MLibMan::on_scan_list_quick_stage_1(
         std::string insert_path  ;
         std::string insert_path_sql  ;
 
-#ifdef HAVE_HAL
-        try{
-#endif // HAVE_HAL
-
             RowV v ;
             insert_path = Util::normalize_path( *i )  ;
 
-#ifdef HAVE_HAL
+	    insert_path_sql = insert_path ; 
 
-            try{
-                if (m_Flags & Library_MLibMan::F_USING_HAL)
-                { 
-                    const Volume&   volume          = m_HAL.get_volume_for_uri (*i)  ;
-                    guint          device_id       = m_HAL.get_id_for_volume( volume.volume_udi, volume.device_udi )  ;
-                                    insert_path_sql = Util::normalize_path(Glib::filename_from_uri(*i).substr(volume.mount_point.length()))  ;
-
-                    m_SQL->get(
-                        v,
-                        mprintf( 
-                              "SELECT id, device_id, hal_vrp, mtime FROM track WHERE device_id ='%u' AND insert_path ='%q'"
-                            , device_id 
-                            , insert_path_sql.c_str())
-                    ) ;
-                }
-                else
-#endif
-                {
-                    insert_path_sql = insert_path ; 
-
-                    m_SQL->get(
-                        v,
-                        mprintf( 
-                              "SELECT id, location, mtime FROM track WHERE insert_path ='%q'"
-                            , insert_path_sql.c_str())
-                    ) ;
-                }
-
-#ifdef HAVE_HAL
-            }
-            catch( IHAL::Exception& cxe )
-            {
-                g_warning( "%s: %s", G_STRLOC, cxe.what() ); 
-                continue ;
-            }
-            catch( Glib::ConvertError& cxe )
-            {
-                g_warning( "%s: %s", G_STRLOC, cxe.what().c_str() ); 
-                continue ;
-            }
-#endif // HAVE_HAL
+	    m_SQL->get(
+		v,
+		mprintf( 
+		      "SELECT id, location, mtime FROM track WHERE insert_path ='%q'"
+		    , insert_path_sql.c_str())
+	    ) ;
 
             for( RowV::iterator i = v.begin(); i != v.end(); ++i )
             {
@@ -923,14 +808,6 @@ MPX::LibraryScannerThread_MLibMan::on_scan_list_quick_stage_1(
                     pthreaddata->Message.emit((boost::format(_("Checking Files for Presence: %u / %u")) % std::distance(v.begin(), i) % v.size()).str()) ;
                 }
             }
-
-#ifdef HAVE_HAL
-        }
-        catch( Glib::ConvertError & cxe )
-        {
-            g_warning("%s: %s", G_STRLOC, cxe.what().c_str()) ;
-        }
-#endif // HAVE_HAL
     }
 }
 
@@ -1410,42 +1287,19 @@ MPX::LibraryScannerThread_MLibMan::get_track_id (Track& track) const
 {
     RowV v ;
 
-#ifdef HAVE_HAL
-    if( m_Flags & Library_MLibMan::F_USING_HAL )
+    static boost::format select_f ("SELECT id FROM track WHERE %s='%s';") ;
+
+    if( !(track.has(ATTRIBUTE_LOCATION)) )
     {
-        static boost::format select_f ("SELECT id FROM track WHERE %s='%u' AND %s='%s';") ;
-
-        if( !(track.has(ATTRIBUTE_MPX_DEVICE_ID) && track.has(ATTRIBUTE_VOLUME_RELATIVE_PATH)))
-        {
-            return 0 ;
-        }
-         
-        m_SQL->get(
-                v
-              , (select_f % attrs[ATTRIBUTE_MPX_DEVICE_ID].id
-                          % get<guint>(track[ATTRIBUTE_MPX_DEVICE_ID].get())
-                          % attrs[ATTRIBUTE_VOLUME_RELATIVE_PATH].id
-                          % mprintf ("%q", Util::normalize_path(get<std::string>(track[ATTRIBUTE_VOLUME_RELATIVE_PATH].get())).c_str())
-                ).str()
-        ) ;
+	return 0 ;
     }
-    else
-#endif
-    {
-        static boost::format select_f ("SELECT id FROM track WHERE %s='%s';") ;
 
-        if( !(track.has(ATTRIBUTE_LOCATION)) )
-        {
-            return 0 ;
-        }
-
-        m_SQL->get(
-                v
-              , (select_f % attrs[ATTRIBUTE_LOCATION].id 
-                          % mprintf ("%q", get<std::string>(track[ATTRIBUTE_LOCATION].get()).c_str())
-                ).str()
-        ) ;
-    }
+    m_SQL->get(
+	    v
+	  , (select_f % attrs[ATTRIBUTE_LOCATION].id 
+		      % mprintf ("%q", get<std::string>(track[ATTRIBUTE_LOCATION].get()).c_str())
+	    ).str()
+    ) ;
 
     if( v.size() && ( v[0].count("id") != 0 ))
     {
@@ -2070,7 +1924,7 @@ MPX::LibraryScannerThread_MLibMan::on_vacuum()
   pthreaddata->ScanStart.emit() ;
 
   RowV rows;
-  m_SQL->get (rows, "SELECT id, device_id, hal_vrp, location FROM track"); // FIXME: We shouldn't need to do this here, it should be transparent (HAL vs. non HAL)
+  m_SQL->get (rows, "SELECT id, insert_path, location FROM track");
 
   for( RowV::iterator i = rows.begin(); i != rows.end(); ++i )
   {
@@ -2102,64 +1956,6 @@ MPX::LibraryScannerThread_MLibMan::on_vacuum()
   pthreaddata->ScanEnd.emit() ;
 }
 
-#ifdef HAVE_HAL
-void
-MPX::LibraryScannerThread_MLibMan::on_vacuum_volume_list(
-      const VolumeKey_v&    volumes
-    , bool                    do_signal
-)
-{
-  ThreadData * pthreaddata = m_ThreadData.get() ;
-    
-  if( do_signal )
-      pthreaddata->ScanStart.emit() ;
-
-
-  for( VolumeKey_v::const_iterator i = volumes.begin(); i != volumes.end(); ++i )
-  {
-          guint device_id = m_HAL.get_id_for_volume( (*i).first, (*i).second )  ;
-
-          RowV rows;
-          m_SQL->get(
-              rows,
-              (boost::format ("SELECT * FROM track WHERE device_id = '%u'")
-                      % device_id 
-              ).str()) ;
-
-          for( RowV::iterator i = rows.begin(); i != rows.end(); ++i )
-          {
-                  std::string uri = get<std::string>((*(m_Library_MLibMan.sqlToTrack( *i, false )))[ATTRIBUTE_LOCATION].get()) ;
-
-                  if( !uri.empty() )
-                  {
-                      if( (!(std::distance(rows.begin(), i) % 50)) )
-                      {
-                              pthreaddata->Message.emit((boost::format(_("Checking files for presence: %u / %u")) % std::distance(rows.begin(), i) % rows.size()).str()) ;
-                      }
-
-                      try{
-                              Glib::RefPtr<Gio::File> file = Gio::File::create_for_uri(uri) ;
-                              if( !file->query_exists() )
-                              {
-                                      m_SQL->exec_sql((boost::format ("DELETE FROM track WHERE id = '%u'") % get<guint>((*i)["id"])).str()); 
-                                      pthreaddata->EntityDeleted( get<guint>((*i)["id"]), ENTITY_TRACK ) ;
-                              }
-                      } catch(Glib::Error) {
-                                g_message(G_STRLOC ": Error while trying to test URI '%s' for presence", uri.c_str()) ;
-                      }
-                  }
-          }
-  }
-
-  do_remove_dangling () ;
-
-  pthreaddata->Message.emit(_("Vacuum Process: Done")) ;
-
-  if( do_signal )
-      pthreaddata->ScanEnd.emit() ;
-}
-#endif // HAVE_HAL
-
 void
 MPX::LibraryScannerThread_MLibMan::update_albums(
 )
@@ -2167,6 +1963,7 @@ MPX::LibraryScannerThread_MLibMan::update_albums(
     ThreadData * pthreaddata = m_ThreadData.get() ;
 
     guint c = 0 ;
+
     for( IdSet_t::const_iterator i = m_ProcessedAlbums.begin(); i != m_ProcessedAlbums.end() ; ++i )
     {
         update_album( (*i) ) ;

@@ -603,6 +603,9 @@ namespace MPX
 
                                 if( row.count("discnr") )
                                         (*track)[ATTRIBUTE_DISCNR] = get<guint>(row["discnr"]);
+
+                                if( row.count("discnr") )
+                                        (*track)[ATTRIBUTE_INSERT_DATE] = get<guint>(row["insert_date"]);
                         }
 
                         return track;

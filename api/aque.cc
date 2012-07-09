@@ -3,6 +3,7 @@
 #include <vector>
 #include <future>
 #include <ratio>
+#include <ctime>
 
 #include <glibmm/ustring.h>
 #include <gtk/gtk.h>
@@ -349,13 +350,42 @@ namespace
                 }
             }
             else
+            if( attribute == "added-at" )
+            {
+                try{
+			StrV v ;
+			boost::algorithm::split( v, value, boost::algorithm::is_any_of(".")) ;
+
+			if( v.size() == 3 )
+			{
+			    GDate * date = g_date_new() ;
+			    g_date_set_parse(date, value.c_str()) ;
+
+			    if(g_date_valid(date))
+			    {
+				struct tm tm ;
+				g_date_to_struct_tm(date, &tm) ;
+
+				guint epoch = mktime(&tm) ;
+
+				c.TargetValue = (guint)epoch ; 
+				c.TargetAttr = ATTRIBUTE_INSERT_DATE ;
+
+				constraints.push_back(c) ;
+			    }
+			}
+
+                } catch( boost::bad_lexical_cast ) {
+                }
+            }
+            else
             if( attribute == "year" )
             {
                 try{
                         c.TargetValue = (unsigned int)(boost::lexical_cast<int>(value)) ;
                         c.TargetAttr = ATTRIBUTE_DATE ;
-
                         constraints.push_back(c) ;
+
                 } catch( boost::bad_lexical_cast ) {
                 }
             }
