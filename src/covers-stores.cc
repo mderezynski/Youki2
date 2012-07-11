@@ -86,7 +86,7 @@ namespace MPX
 
 	    while(!handle.wait_for(std::chrono::duration<int, std::milli>(40)))
 	    {
-		while(gtk_events_pending()) gtk_main_iteration() ;
+		g_usleep(10) ;
 	    }
 
 	    save_image(
