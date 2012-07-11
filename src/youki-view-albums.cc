@@ -482,14 +482,32 @@ namespace Albums
 				    Gdk::Pixbuf::create_from_file(
 					    Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "new.png" ))) ;
 
-	    m_image_dotmask = Util::cairo_image_surface_from_pixbuf(
-				    Gdk::Pixbuf::create_from_file(
-					    Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "dotmask.png" ))) ;
-
 	    m_image_album_loading = Gdk::PixbufAnimation::create_from_file(
 					    Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "album-cover-loading.gif" )) ;
 
 	    m_image_album_loading_iter = m_image_album_loading->get_iter(NULL) ;
+
+	    auto s = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, 248, 89 ) ;
+	    auto c = Cairo::Context::create(s) ;
+
+	    c->set_operator(Cairo::OPERATOR_CLEAR) ;
+	    c->paint() ;
+
+	    c->set_operator(Cairo::OPERATOR_SOURCE) ;
+	    RoundedRectangle(
+		  c
+		, 3
+		, 3
+		, 242
+		, 83
+		, 3.
+	    ) ;
+	    c->set_source_rgba(0.6,0.6,0.6,0.7) ;
+	    c->fill() ;
+	    
+	    Util::cairo_image_surface_blur( s, 2 ) ;
+
+	    m_image_shadow = s ;
 	}
 
 	void

@@ -125,7 +125,7 @@ namespace MPX
         inline GstElement*
                 Play::control_pipe() const
                 {
-                    return GST_ELEMENT(m_playbin2->gobj()) ; 
+                    return GST_ELEMENT(m_playbin2) ; 
                 }
 
         void
@@ -334,7 +334,7 @@ namespace MPX
         void
                 Play::on_volume_changed ()
                 {
-		    m_playbin2->property_volume() = property_volume().get_value() / 100. ;
+		    g_object_set(G_OBJECT(m_playbin2), "volume", (property_volume().get_value()/100.), NULL) ;
                 }
 
         void
@@ -356,7 +356,7 @@ namespace MPX
                         return ;
                     }
 
-		    m_playbin2->property_uri() = uri ;
+		    g_object_set(G_OBJECT(m_playbin2), "uri", Glib::ustring(uri).c_str(), NULL) ;
                 }
 
         void
@@ -728,7 +728,7 @@ namespace MPX
         void
                 Play::create_bins()
                 {
-		    m_playbin2 = Gst::PlayBin2::create("pipeline") ;
+		    m_playbin2 = gst_element_factory_make("playbin2", "pipeline") ;
 
 		    std::string sink = mcs->key_get<std::string>("audio", "sink") ;
 		    GstElement* sink_element = gst_element_factory_make(sink.c_str(), "sink") ;
@@ -809,7 +809,7 @@ namespace MPX
 		    }
 #endif //HAVE_SUN
 
-		    m_playbin2->property_audio_sink() = Glib::wrap( sink_element, true ) ; 
+		    g_object_set(G_OBJECT(m_playbin2),"audio-sink", sink_element, NULL) ;
 
 		    property_volume() = mcs->key_get <int> ("mpx", "volume") ;
 		    property_sane_ = true ;

@@ -992,6 +992,7 @@ namespace MPX
                 {
                         Track_sp track (new Track);
 
+                        if( !no_location )
                         {
 #ifdef HAVE_HAL
                                 if( m_Flags& F_USING_HAL )
@@ -1006,16 +1007,11 @@ namespace MPX
 
                                     g_assert( (*track.get()).has(ATTRIBUTE_LOCATION) );
                                 }
+                                else
 #endif
-
                                 if( row.count("location") )
                                 {
                                     (*track.get())[ATTRIBUTE_LOCATION] = get<std::string>(row["location"]);
-                                }
-
-                                if( row.count("insert_path") )
-                                {
-                                    (*track.get())[ATTRIBUTE_LOCATION] = get<std::string>(row["insert_path"]);
                                 }
                         }
 

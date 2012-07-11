@@ -46,8 +46,6 @@
 #include <gst/interfaces/mixertrack.h>
 #include <gst/interfaces/mixeroptions.h>
 
-#include <gstreamermm.h>
-
 #include <sigc++/sigc++.h>
 #include <glibmm/ustring.h>
 #include <glibmm/refptr.h>
@@ -76,14 +74,13 @@ namespace MPX
         struct Message
     	{
 	    	int         id ;
-
     		PlayStatus  status ;
 	    	std::string stream ;
-		    std::string type ;
+		std::string type ;
 
     		Message()
-            : id( -1 )
-            {}
+		: id( -1 )
+		{}
     	} ;
     
         class Play
@@ -124,7 +121,7 @@ namespace MPX
                         sigc::connection    m_conn_stream_position ;
                         bool                m_accurate_seek ;
 
-			Glib::RefPtr<Gst::PlayBin2> m_playbin2 ;
+			GstElement        * m_playbin2 ;
     
                 private:
 

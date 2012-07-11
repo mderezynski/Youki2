@@ -48,6 +48,10 @@
 #include "mpx/util-string.hh"
 #include "mpx/util-file.hh"
 
+#ifdef HAVE_HAL
+#include "mpx/i-youki-hal.hh"
+#endif // HAVE_HAL
+
 namespace MPX
 {
     typedef boost::optional<std::string>			OString_t ;
@@ -99,6 +103,7 @@ namespace MPX
 
     EXCEPTION(ScanError)
 
+    class IHAL ;
     class Library_MLibMan ;
     class MetadataReaderTagLib ;
 
@@ -136,6 +141,9 @@ namespace MPX
             sigx::request_f<>                                               scan_stop ;
             sigx::request_f<>                                               vacuum ;
             sigx::request_f<const std::vector<std::string>&, bool, bool>    set_priority_data ;
+#ifdef HAVE_HAL
+            sigx::request_f<const VolumeKey_v&>                        vacuum_volume_list ;
+#endif // HAVE_HAL
             sigx::request_f<>                                               update_statistics ;
 
             signal_scan_start_x             signal_scan_start ;
@@ -221,6 +229,13 @@ namespace MPX
             void on_scan_stop() ;
 
             void on_vacuum ();
+
+#ifdef HAVE_HAL
+            void on_vacuum_volume_list(
+                  const VolumeKey_v&
+                , bool = true
+            );
+#endif // HAVE_HAL
 
             void on_update_statistics ();
 
@@ -428,6 +443,9 @@ namespace MPX
             Glib::Private<ThreadData>               m_ThreadData ;
             MPX::Library_MLibMan                  & m_Library_MLibMan;
             boost::shared_ptr<MPX::SQL::SQLDB>      m_SQL ;
+#ifdef HAVE_HAL
+            const IHAL                            & m_HAL ;
+#endif // HAVE_HAL
             guint                                   m_Flags ;
             ScanSummary                             m_ScanSummary ;
 

@@ -251,8 +251,6 @@ int main(int argc, char ** argv)
 
     gst_init(&argc, &argv);
 
-    Gst::init() ;
-
 //  mpx_py_init() ;
 
     register_default_stock_icons();
