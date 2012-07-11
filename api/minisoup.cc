@@ -28,6 +28,7 @@
 #include <boost/format.hpp>
 
 #include "mpx/mpx-minisoup.hh"
+
 using namespace Glib;
 
 namespace MPX
@@ -93,7 +94,7 @@ namespace MPX
     guint
     RequestSync::get_data_size ()
     {
-      return m_message->response_body->length;
+      return strlen(m_message->response_body->data) ;
     }
 
     void
@@ -161,7 +162,6 @@ namespace MPX
     {
       m_session = soup_session_async_new ();
       m_message = soup_message_new (m_post ? "POST" : "GET", m_url.c_str());
-      g_signal_connect(G_OBJECT(m_session), "finished", G_CALLBACK(on_finished), this) ;
     }
 
     void
@@ -170,7 +170,7 @@ namespace MPX
 	, gpointer     data
     )
     {
-	Request & request = (*(reinterpret_cast<Request*>(data)));
+	Request& request = (*(reinterpret_cast<Request*>(data)));
 	request.m_finished = true ;
     }
 
@@ -218,15 +218,14 @@ namespace MPX
     guint
     Request::get_data_size ()
     {
-      return m_message->response_body->length;
+      return strlen(m_message->response_body->data) ;
     }
 
     void
     Request::run ()
     {
-      g_signal_connect (G_OBJECT (m_message), "restarted", G_CALLBACK (restarted), this);
-      g_signal_connect (G_OBJECT (m_message), "got-body", G_CALLBACK (got_body), this);
-      soup_session_queue_message (m_session, m_message, SoupSessionCallback (got_answer), this);
+      g_signal_connect(G_OBJECT(m_message), "finished",  G_CALLBACK(got_body), this) ;
+      soup_session_queue_message(m_session, m_message, SoupSessionCallback(got_answer), this);
     }
 
     void
@@ -271,12 +270,7 @@ namespace MPX
     {
       Request & request = (*(reinterpret_cast<Request*>(data)));
 
-      request.m_message_lock.lock ();
-      bool block = request.m_block_reply;
-      request.m_message_lock.unlock ();
-
-      if( block )
-        return;
+      request.m_finished = true ;
 
       request.Signals.Callback.emit(
                                       request.m_message->response_body->data, 

@@ -75,25 +75,19 @@ namespace MPX
     {
         if( can_load_artwork( rql ) )
         {
-	    g_message("RemoteStore:: URL['%s']", url.c_str()) ;
+	    auto session = soup_session_sync_new() ;
+	    auto message = soup_message_new("GET", url.c_str()) ;
 
-            auto request = Soup::RequestSync::create( url ) ; 
+	    soup_session_send_message(SOUP_SESSION(session), SOUP_MESSAGE(message)) ;
 
-	    auto handle = std::async(
-		  std::launch::async
-		, [&request](){ request->run(); }
-	    ) ;
-
-	    while(!handle.wait_for(std::chrono::duration<int, std::milli>(40)))
+	    if( message->status_code == 200 )
 	    {
-		g_usleep(10) ;
+		save_image(
+		      message->response_body->data 
+		    , message->response_body->length 
+		    , rql
+		) ;
 	    }
-
-	    save_image(
-		  request->get_data_raw()
-		, request->get_data_size()
-		, rql
-	    ) ;
         }
     }
 
@@ -167,25 +161,28 @@ namespace MPX
     {
         m_state = FETCH_STATE_NOT_FETCHED ;
 
-        request = Soup::RequestSync::create( get_url( rql ));
-
 	g_message("LastFMCovers: running HTTP request...") ;
 
-	int code = request->run() ;
+        std::string url = get_url(rql) ;
 
-        if( code == 200 )
+	auto session = soup_session_sync_new() ;
+	auto message = soup_message_new("GET", url.c_str()) ;
+
+	soup_session_send_message(SOUP_SESSION(session), SOUP_MESSAGE(message)) ;
+
+        if( message->status_code == 200 )
         {
 	    g_message("LastFMCovers: HTTP 200, parsing XML...") ;
-    
+   
 	    try
             {
                 std::string album ;
 
                 album = xpath_get_text(
-                    request->get_data_raw(),
-                    request->get_data_size(),
-		    "//album/name",
-                    "" 
+		      message->response_body->data 
+                    , message->response_body->length 
+		    , "//album/name"
+                    , "" 
                 ); 
 
 		if( album.empty() )
@@ -205,7 +202,12 @@ namespace MPX
                     return;
                 }
 	    }
-            catch( std::runtime_error& ) {}
+            catch( std::runtime_error& cxe )
+	    {
+		g_message("%s: Exception: %s", G_STRLOC, cxe.what()) ;
+		request_failed() ;
+		return ;
+	    }
 
 	    std::vector<std::string> sizes { "extralarge", "large", "normal" } ;
 
@@ -214,11 +216,13 @@ namespace MPX
                 try
                 {
                     std::string image_url = xpath_get_text(
-                        request->get_data_raw(),
-                        request->get_data_size(),
-                        (boost::format("//image[@size='%s']") % s).str().c_str(),
-                        ""
+			  message->response_body->data 
+                        , message->response_body->length 
+                        , (boost::format("//image[@size='%s']") % s).str().c_str()
+                        , ""
                     ) ;
+
+		    g_message("%s: size {%s}, image_url: %s", G_STRLOC, s.c_str(), image_url.c_str()) ;
 
 		    if(!image_url.empty())
 		    {
@@ -228,7 +232,12 @@ namespace MPX
 			return ;
 		    }
                 } 
-                catch( std::runtime_error& ) {}
+                catch( std::runtime_error& cxe)
+		{
+		    g_message("%s: Exception: %s", G_STRLOC, cxe.what()) ;
+		    request_failed() ;
+		    return ;
+		}
             }
         }
 
@@ -258,44 +267,53 @@ namespace MPX
 
 	std::string url = get_url( rql ) ;
 
-	g_message("%s: MusicBrainzCovers:URL [%s]",G_STRLOC,url.c_str()) ;
+	auto session = soup_session_sync_new() ;
+	auto message = soup_message_new("GET", url.c_str()) ;
 
-        request = Soup::RequestSync::create(url) ;
+	soup_session_send_message(SOUP_SESSION(session), SOUP_MESSAGE(message)) ;
 
-	int code = request->run() ;
-
-        if( code == 200 )
+        if( message->status_code == 200 )
         {
 	    std::string image_url;
 
 	    try
             {
 		image_url = xpath_get_text(
-		    request->get_data_raw(),
-		    request->get_data_size(),
-		    "/mb:metadata/mb:release/mb:relation-list//mb:relation[@type='CoverArtLink']/@target",
-		    "mb=http://musicbrainz.org/ns/mmd-1.0# ext=http://musicbrainz.org/ns/ext-1.0#"
+		      message->response_body->data 
+		    , message->response_body->length 
+		    , "/mb:metadata/mb:release/mb:relation-list//mb:relation[@type='CoverArtLink']/@target"
+		    , "mb=http://musicbrainz.org/ns/mmd-1.0# ext=http://musicbrainz.org/ns/ext-1.0#"
 		); 
 	    }
-            catch( std::runtime_error& ) {}
+            catch( std::runtime_error& cxe )
+	    {
+		g_message("%s: Exception: %s", G_STRLOC, cxe.what()) ;
+		request_failed() ;
+		return ;
+	    }
 
 	    if( !image_url.empty() )
 	    {
 		RemoteStore::fetch_image( image_url, rql ) ;
 		return ;
 	    }
-	    // try ASIN
 
+	    // Try ASIN
 	    std::string asin ;
 
 	    try{
 		asin = xpath_get_text(
-		    request->get_data_raw(),
-		    request->get_data_size(),
-		    "/mb:metadata/mb:release/mb:asin",
-		    "mb=http://musicbrainz.org/ns/mmd-1.0# ext=http://musicbrainz.org/ns/ext-1.0#"
+		      message->response_body->data 
+		    , message->response_body->length 
+		    , "/mb:metadata/mb:release/mb:asin"
+		    , "mb=http://musicbrainz.org/ns/mmd-1.0# ext=http://musicbrainz.org/ns/ext-1.0#"
 		); 
-	    }catch( std::runtime_error& ) {}
+            } catch( std::runtime_error& cxe )
+	    {
+		g_message("%s: Exception: %s", G_STRLOC, cxe.what()) ;
+		request_failed() ;
+		return ;
+	    }
 
 	    if( !asin.empty() )
 	    {

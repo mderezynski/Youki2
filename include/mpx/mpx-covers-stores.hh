@@ -26,6 +26,9 @@
 #define MPX_COVERS_STORES_HH
 
 #include <string>
+#include <unordered_map>
+#include <glibmm.h>
+
 #include "mpx/mpx-minisoup.hh"
 
 namespace MPX
@@ -43,7 +46,7 @@ namespace MPX
         std::string uri ;
         std::string artist ;
         std::string album ;
-        guint      id ;
+        guint	    id ;
     } ;
 
     class CoverStore
@@ -108,19 +111,35 @@ namespace MPX
 
 	protected:
 
-	    Soup::RequestSyncRefP request ;
+	    void
+	    data_cb(
+		  const char*	data
+		, guint		size
+		, guint		httpcode
+		, const RequestQualifier& rql
+	    ) ; 
+
+	    typedef std::unordered_map<guint, Soup::RequestRefP> RequestMap_t ;
+    
+	    RequestMap_t    m_requests ;
     };
 
    class LastFMCovers : public RemoteStore
     {
 	public:
 
-	    LastFMCovers() {} 
-
 	    virtual void
 	    load_artwork(const RequestQualifier&) ;
 
 	protected:
+
+	    void
+	    data1_cb(
+		  const char*	data
+		, guint		size
+		, guint		httpcode
+		, const RequestQualifier& rql
+	    ) ; 
 
 	    virtual std::string
 	    get_url(const RequestQualifier&);
@@ -129,15 +148,22 @@ namespace MPX
     class MusicBrainzCovers : public RemoteStore
     {
 	public:
-	    MusicBrainzCovers() {}
 
 	    void
 	    load_artwork(const RequestQualifier&);
 
 	protected:
 
-	    virtual
-	    std::string
+	    void
+	    data1_cb(
+		  const char*	data
+		, guint		size
+		, guint		httpcode
+		, const RequestQualifier& rql
+	    ) ; 
+
+
+	    virtual std::string
 	    get_url(const RequestQualifier&); 
     };
 
@@ -153,8 +179,8 @@ namespace MPX
     {
 	public:
 
-        void
-        load_artwork(const RequestQualifier&);
+	    void
+	    load_artwork(const RequestQualifier&);
     };
 }
 
