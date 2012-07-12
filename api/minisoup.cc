@@ -218,7 +218,7 @@ namespace MPX
     guint
     Request::get_data_size ()
     {
-      return strlen(m_message->response_body->data) ;
+      return m_message->response_body->length ;
     }
 
     void

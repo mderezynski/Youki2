@@ -1,4 +1,9 @@
+#include "config.h"
+
+#include "mpx/mpx-artist-images.hh"
+
 #include <queue>
+#include <future>
 #include <boost/ref.hpp>
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
@@ -277,6 +282,7 @@ MPX::ArtistImages::on_get_image_async(
 	if( acquire )
 	{
 	    g_message("%s: Getting it from the clouds...", G_STRFUNC) ;
+
 	    artist_image = get_image_by_mbid(mbid,name) ;	
 
 	    if( artist_image )

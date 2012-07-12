@@ -224,31 +224,34 @@ namespace
 
 namespace MPX
 {
-  namespace Util
-  {
+namespace Util
+{
     Glib::RefPtr<Gdk::Pixbuf>
     get_image_from_uri(
         const std::string& uri
     )
     {
-      Glib::RefPtr<Gdk::Pixbuf> image = Glib::RefPtr<Gdk::Pixbuf>(0) ;
+	Glib::RefPtr<Gdk::Pixbuf> image = Glib::RefPtr<Gdk::Pixbuf>(0) ;
 
-      try{
+	try{
           URI u( uri ) ;
           if( u.get_protocol() == URI::PROTOCOL_HTTP )
           {
-              Soup::RequestSyncRefP request = Soup::RequestSync::create( Glib::ustring (u) ) ;
-              guint code = request->run(); 
+		auto request = Soup::Request::create(Glib::ustring(u)) ;
+		request->run(); 
 
-              if( code == 200 )
-              try{
+		while(!request->is_finished())
+		    g_usleep(20) ;
+
+		if( request->status() == 200 )
+		try{
                     Glib::RefPtr<Gdk::PixbufLoader> loader = Gdk::PixbufLoader::create() ;
                     loader->write( reinterpret_cast<const guint8*>(request->get_data_raw()), request->get_data_size() ) ;
                     loader->close() ;
                     image = loader->get_pixbuf() ;
-              } catch( Gdk::PixbufError & cxe ) {
+		} catch( Gdk::PixbufError & cxe ) {
                     g_message("%s: Gdk::PixbufError: %s", G_STRLOC, cxe.what().c_str()) ;
-              }
+		}
           }
           else if( u.get_protocol() == URI::PROTOCOL_FILE ) 
           {

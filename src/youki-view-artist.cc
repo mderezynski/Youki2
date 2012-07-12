@@ -529,6 +529,7 @@ namespace Artist
 	    {
 		Glib::RefPtr<Gdk::Pixbuf> pb = Util::cairo_image_surface_to_pixbuf(surface) ;
 		c = Util::pick_color_for_pixbuf(pb) ;
+		(*c).set_alpha(1) ;
 	    }
 
 	    cairo->save() ;
@@ -552,8 +553,8 @@ namespace Artist
 		    , m_rounding
 		) ;
 
-	    cairo->set_line_width(selected?2:1) ;
-	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(0.,0.,0.,.95)) ; 
+	    cairo->set_line_width(selected?4:1) ;
+	    Gdk::Cairo::set_source_rgba(cairo, selected?(*c):Util::make_rgba(0.,0.,0.,.95)) ; 
 	    cairo->stroke() ;
 	    cairo->restore() ;
 
