@@ -804,7 +804,6 @@ namespace MPX
 
         VBox2->pack_start( *Entry_Align, false, false, 0 ) ;
         VBox2->pack_start( *HBox_Main_Align, true, true, 0 ) ;
-//        VBox2->pack_start( *m_main_info, false, true, 0 ) ;
         VBox2->pack_start( *m_VBox_Bottom, false, false, 0 ) ;
 
         m_VBox_Bottom->pack_start( *m_main_info, false, true, 0 ) ;
@@ -1074,7 +1073,7 @@ namespace MPX
         )) ;
 
 	m_ListViewArtist->set_size_request( 152, -1 ) ;
-	m_ListViewAlbums->set_size_request( 268, -1 ) ;
+	m_ListViewAlbums->set_size_request( 272 /*268*/, -1 ) ;
 
 	m_VBox_TL->pack_start( *HBox_TL, false, true, 0 ) ; 
 	m_VBox_TL->pack_start( *m_InfoBar, false, true, 0 ) ; 

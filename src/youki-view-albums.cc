@@ -739,7 +739,7 @@ namespace Albums
 
 	    //////////
 
-	    if( !album->caching )
+	    if(1) // !album->caching )
 	    {
 		RoundedRectangle(
 		      cairo
@@ -789,7 +789,7 @@ namespace Albums
 
 		//////////
 
-		if( selected )
+		if(0) // ( selected )
 		{
 		    RoundedRectangle(
 			  cairo
@@ -807,11 +807,14 @@ namespace Albums
 
 		cairo->save() ;
 		Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(selected?c5:Util::make_rgba(0,0,0,1),selected?.80:.5)) ;
-		cairo->rectangle(
-		      5
-		    , 38
+		RoundedRectangle(
+		      cairo
+		    , 5
+		    , 49
 		    , 247  
 		    , 42 
+		    , m_rounding
+		    , MPX::CairoCorners::CORNERS(12)
 		) ;
 		cairo->fill() ;
 
@@ -855,7 +858,8 @@ namespace Albums
 
 		cairo->restore() ;
 	    }
-	    else
+
+	    if( album->caching )
 	    {
 		cairo->save() ;
 		cairo->translate(14,12) ;
@@ -873,7 +877,7 @@ namespace Albums
 	    //////////
 
 	    cairo->save() ;
-	    cairo->translate(16,58) ;
+	    cairo->translate(16,69) ;
 	    layout[L2]->set_text( album->album ) ;
 	    layout[L2]->get_pixel_size( width, height );
 	    cairo->move_to(
@@ -887,7 +891,7 @@ namespace Albums
 	    //////////
 
 	    cairo->save() ;
-	    cairo->translate(16,41) ;
+	    cairo->translate(16,52) ;
 	    layout[L1]->set_text( album->album_artist );
 	    layout[L1]->get_pixel_size( width, height );
 	    cairo->move_to(

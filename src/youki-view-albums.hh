@@ -20,6 +20,7 @@
 #include "mpx/algorithm/adder.hh"
 
 #include "mpx/com/viewmetrics.hh"
+
 #include "mpx/i-youki-theme-engine.hh"
 
 namespace

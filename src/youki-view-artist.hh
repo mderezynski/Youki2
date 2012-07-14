@@ -31,9 +31,11 @@
 #include "glib-marshalers.h"
 
 #include "mpx/mpx-main.hh"
+
 #include "mpx/i-youki-theme-engine.hh"
 
-#include "mpx/mpx-artist-images.hh"
+#include "rm-artist-images.hh"
+#include "resource_manager.hh"
 
 using boost::get ;
 
@@ -109,7 +111,7 @@ namespace Artist
                 Signal_1	    m_SIGNAL__changed ;
                 Signal_0	    m_SIGNAL__redraw ;
 
-		ArtistImages	  * m_ArtistImages ;
+		ResourceManager<ArtistImage> m_Images ;
 
 		Glib::RefPtr<Gdk::Pixbuf>	
 		get_icon(
@@ -119,7 +121,7 @@ namespace Artist
 		void
 		handle_got_artist_image(
 		      const std::string&
-		    , Glib::RefPtr<Gdk::Pixbuf>
+		    , ArtistImage& 
 		) ;
 
 	    public:

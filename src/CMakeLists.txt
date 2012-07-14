@@ -93,6 +93,10 @@ SET(youki_bin_SOURCES
 #  gtkmmmodule.h
   preferences.cc
   preferences.hh
+  async_queue.hh
+  resource_manager.hh
+  rm-artist-images.hh
+  rm-artist-images.cc
   splash-screen.hh
   splash-screen.cc
   webkit-album-info.hh

@@ -28,10 +28,6 @@
 #include "ld-find-nearest.hh"
 #include "id-history.hh"
 
-#if 0
-#include "playlist-manager.hh"
-#endif
-
 #include <sigx/sigx.h>
 
 namespace MPX

@@ -12,20 +12,20 @@ namespace Artist
     : m_base_model(new Model_t)
     , m_upper_bound(0)
     {
-	m_ArtistImages = new ArtistImages ;
-	m_ArtistImages->run() ;
-	m_ArtistImages->signal_got_artist_image().connect( sigc::mem_fun( *this, &DataModel::handle_got_artist_image )) ;
+	m_Images.signal_completed().connect( sigc::mem_fun( *this, &DataModel::handle_got_artist_image )) ;
     }
 
     void
     DataModel::handle_got_artist_image(
 	  const std::string&		mbid
-	, Glib::RefPtr<Gdk::Pixbuf>	icon
+	, ArtistImage&			image 
     )
     {
 	    MBIDIterMap_t::iterator i1 = m_mbid_map.find(mbid) ;
 
-	    if( i1 != m_mbid_map.end())
+	    Glib::RefPtr<Gdk::Pixbuf> icon = image.get_image() ;
+
+	    if( icon && (i1 != m_mbid_map.end()))
 	    {
 		icon = icon->scale_simple( 126, 126, Gdk::INTERP_BILINEAR ) ; 
 		
@@ -55,9 +55,7 @@ namespace Artist
     : m_base_model(model)
     , m_upper_bound(0)
     {
-	m_ArtistImages = new ArtistImages ;
-	m_ArtistImages->run() ;
-	m_ArtistImages->signal_got_artist_image().connect( sigc::mem_fun( *this, &DataModel::handle_got_artist_image )) ;
+	m_Images.signal_completed().connect( sigc::mem_fun( *this, &DataModel::handle_got_artist_image )) ;
     }
 
     void
@@ -97,7 +95,7 @@ namespace Artist
 	    const std::string& mbid
 	)
 	{
-	    Glib::RefPtr<Gdk::Pixbuf> icon = m_ArtistImages->get_image( mbid ) ;
+	    Glib::RefPtr<Gdk::Pixbuf> icon = m_Images.get(mbid).get_image() ;
 
 	    if( icon )
 	    { 
@@ -105,6 +103,7 @@ namespace Artist
 	    }
 
 	    return Glib::RefPtr<Gdk::Pixbuf>(0) ; 
+
 	}
 
 	void
@@ -136,10 +135,15 @@ namespace Artist
 		Model_t::iterator i = m_base_model->end();
 		std::advance( i, -1 );
 		m_iter_map.insert(std::make_pair(*artist_id, i));
-		m_mbid_map.insert(std::make_pair(artist_mbid, i)) ;
+		m_mbid_map.insert(std::make_pair( artist_mbid, i)) ;
 	    }
 
-	    m_ArtistImages->get_image_async(artist,artist_mbid,false) ; 
+	    auto a = m_Images.get(artist_mbid) ;
+
+	    if(a.get_image())
+	    {
+		handle_got_artist_image(artist_mbid,a) ;
+	    }
 	}
 
 	void
@@ -182,7 +186,12 @@ namespace Artist
 		m_mbid_map.insert(std::make_pair( artist_mbid, i)) ;
 	    }
 
-	    m_ArtistImages->get_image_async(artist,artist_mbid,true) ; 
+	    auto a = m_Images.get(artist_mbid) ;
+
+	    if(a.get_image())
+	    {
+		handle_got_artist_image(artist_mbid,a) ;
+	    }
 	}
 
 	void
@@ -553,8 +562,8 @@ namespace Artist
 		    , m_rounding
 		) ;
 
-	    cairo->set_line_width(selected?4:1) ;
-	    Gdk::Cairo::set_source_rgba(cairo, selected?(*c):Util::make_rgba(0.,0.,0.,.95)) ; 
+	    cairo->set_line_width(selected?6:1) ;
+	    Gdk::Cairo::set_source_rgba(cairo, selected?color_sel:Util::make_rgba(0.,0.,0.)) ; 
 	    cairo->stroke() ;
 	    cairo->restore() ;
 
@@ -677,7 +686,7 @@ namespace Artist
 		std::string name = boost::get<0>(r) ;
 		std::string mbid = boost::get<2>(r) ;
 
-		m_model->m_ArtistImages->get_image_async(name,mbid,true) ; 
+		m_model->m_Images.get(mbid) ;
 	    }
 	}
 	
@@ -1757,22 +1766,6 @@ namespace Artist
 	    , const Glib::RefPtr<Gtk::Tooltip>&     tooltip
 	)
 	{
-	    guint d = (vadj_value() + tooltip_y) / m_height__row ;
-
-	    if(!ModelExtents(d)) return false ;
-
-	    const Row_t& r = *(m_model->m_mapping[d]) ;
-
-	    Glib::RefPtr<Gdk::Pixbuf> icon = m_model->m_ArtistImages->get_image( boost::get<2>(r)) ;
-
-	    if( icon ) 
-	    {   
-		Gtk::Image * image = Gtk::manage( new Gtk::Image ) ;
-		image->set( icon ) ; 
-		tooltip->set_custom( *image ) ;
-		return true ;
-	    }
-
 	    return false ;
 	}
 

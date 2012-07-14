@@ -237,13 +237,9 @@ namespace Util
           URI u( uri ) ;
           if( u.get_protocol() == URI::PROTOCOL_HTTP )
           {
-		auto request = Soup::Request::create(Glib::ustring(u)) ;
-		request->run(); 
+		auto request = Soup::RequestSync::create(Glib::ustring(u)) ;
 
-		while(!request->is_finished())
-		    g_usleep(20) ;
-
-		if( request->status() == 200 )
+		if( request->run() == 200 )
 		try{
                     Glib::RefPtr<Gdk::PixbufLoader> loader = Gdk::PixbufLoader::create() ;
                     loader->write( reinterpret_cast<const guint8*>(request->get_data_raw()), request->get_data_size() ) ;
