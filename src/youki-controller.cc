@@ -3,6 +3,7 @@
 #endif 
 
 #include "youki-controller.hh"
+
 #include "youki-view-albums.hh"
 #include "youki-view-artist.hh"
 
@@ -22,7 +23,6 @@
 #include "mpx/com/view-tracks.hh"
 
 #include "mpx/mpx-main.hh"
-#include "mpx/mpx-covers.hh"
 #include "mpx/mpx-types.hh"
 #include "mpx/mpx-stock.hh"
 
@@ -45,6 +45,8 @@ using boost::get ;
 using boost::algorithm::split ;
 using boost::algorithm::is_any_of ;
 using boost::algorithm::find_first ;
+
+using namespace MPX::RM ;
 
 namespace
 {
@@ -280,7 +282,6 @@ namespace MPX
                 , 0
         ) ;
 
-        m_covers    = (services->get<Covers>("mpx-service-covers")).get() ;
         m_play      = (services->get<MPX::Play>("mpx-service-play")).get() ;
         m_library   = (services->get<Library>("mpx-service-library")).get() ;
 
@@ -335,6 +336,9 @@ namespace MPX
                 , &YoukiController::on_local_library_album_updated
         )) ;
 
+	m_covers.signal_completed().connect( sigc::mem_fun( *this, &YoukiController::on_covers_got_cover )) ;
+
+#if 0
 	/* Connect Covers */
         m_covers->signal_got_cover().connect(
             sigc::mem_fun(
@@ -347,6 +351,7 @@ namespace MPX
                   *this
                 , &YoukiController::on_covers_no_cover
         )) ;
+#endif
 
 	/* Connect Play */
         m_play->signal_eos().connect(
@@ -1429,7 +1434,7 @@ namespace MPX
 	for( auto& r : v ) 
 	{
 	    try{
-		private_->FilterModelAlbums->append_album( get_album_from_id( get<guint>(r["id"]))) ;
+		private_->FilterModelAlbums->append_album( get_album_from_id( get<guint>(r["id"]), false)) ;
 	    } catch( std::logic_error& cxe )
 	    {
 		g_message("%s: Error while appending album to model: %s", G_STRLOC, cxe.what()) ;
@@ -1857,7 +1862,7 @@ namespace MPX
 
 /*////////// */
     MPX::View::Albums::Album_sp
-    YoukiController::get_album_from_id( guint id )
+    YoukiController::get_album_from_id( guint id, bool acquire_cover )
     {
         SQL::RowV v ;
 
@@ -1881,20 +1886,6 @@ namespace MPX
 
         SQL::Row & r = v[0] ; 
 
-        Glib::RefPtr<Gdk::Pixbuf> cover_pb ;
-        Cairo::RefPtr<Cairo::ImageSurface> cover_is ;
-
-        m_covers->fetch(
-              get<std::string>(r["mb_album_id"])
-            , cover_pb
-            , 256
-        ) ;
-
-        if( cover_pb ) 
-        {
-            cover_is = Util::cairo_image_surface_from_pixbuf( cover_pb ) ;
-        }
-
         SQL::RowV v2 ;
         m_library->getSQL( v2, (boost::format("SELECT count(*) AS cnt FROM track_view WHERE album_j = %u") % id).str() ) ;
 
@@ -1903,7 +1894,6 @@ namespace MPX
 
         MPX::View::Albums::Album_sp album ( new MPX::View::Albums::Album ) ;
 
-        album->coverart = cover_is ;
         album->album_id = id ;
         album->artist_id = get<guint>(r["album_artist_id"]) ;
         album->album = get<std::string>(r["album"]) ;
@@ -1919,6 +1909,23 @@ namespace MPX
         album->album_playscore = get<gdouble>(r["album_playscore"]) ;
 	album->insert_date = get<guint>(r["album_insert_date"]) ;
 	album->total_time = get<guint>(v3[0]["total"]) ;
+
+        Cairo::RefPtr<Cairo::ImageSurface> cover_is ;
+
+	MPX::RM::RequestQualifier rq ; 
+	rq.mbid     =   album->mbid ; 
+	rq.artist   =   album->album_artist ; 
+	rq.album    =   album->album ; 
+	rq.id       =   *(album->album_id) ; 
+
+        AlbumImage img = m_covers.get (rq, acquire_cover) ;
+
+        if( img ) 
+        {
+            cover_is = Util::cairo_image_surface_from_pixbuf( img.get_image()->scale_simple( 256, 256, Gdk::INTERP_BILINEAR)) ;
+        }
+
+        album->coverart = cover_is ;
 
         return album ;
     }
@@ -2047,7 +2054,7 @@ namespace MPX
 	NewAlbumFetchStruct * p
     )
     {
-	MPX::View::Albums::Album_sp a_sp = get_album_from_id( p->id ) ;	
+	MPX::View::Albums::Album_sp a_sp = get_album_from_id( p->id, true ) ;	
 
         try{
             SQL::RowV v ;
@@ -2064,19 +2071,6 @@ namespace MPX
         } catch( std::logic_error ) 
         {
             g_message("Oops") ;
-        }
-
-        if( !a_sp->coverart )
-        {
-            RequestQualifier rq ; 
-            rq.mbid     =   p->s1 ;
-            rq.asin     =   p->s2 ;
-            rq.uri      =   p->s3 ;
-            rq.artist   =   p->s4 ;
-            rq.album    =   p->s5 ;
-            rq.id       =   p->id ;
-
-            m_covers->cache( rq, true, false ) ;
         }
 
 	delete p ;
@@ -2161,25 +2155,24 @@ namespace MPX
     }
 
     void
-    YoukiController::on_covers_got_cover( guint id )
+    YoukiController::on_covers_got_cover(
+	  MPX::RM::RequestQualifier const&   rq
+	, MPX::RM::AlbumImage&		    img
+    )
     {
         Glib::RefPtr<Gdk::Pixbuf> cover_pb ;
         Cairo::RefPtr<Cairo::ImageSurface> cover_is ;
 
         SQL::RowV v ;
-        m_library->getSQL( v, (boost::format( "SELECT mb_album_id FROM album WHERE album.id = '%u'") % id ).str()) ; 
-        m_covers->fetch(
-              get<std::string>(v[0]["mb_album_id"])
-            , cover_pb
-            , 256
-        ) ;
 
-        if( cover_pb ) 
+        m_library->getSQL( v, (boost::format( "SELECT mb_album_id FROM album WHERE album.id = '%u'") % rq.id ).str()) ; 
+
+        if( img ) 
         {
-            cover_is = Util::cairo_image_surface_from_pixbuf( cover_pb ) ;
+            cover_is = Util::cairo_image_surface_from_pixbuf( img.get_image()->scale_simple(256,256,Gdk::INTERP_BILINEAR)) ;
         }
 
-        private_->FilterModelAlbums->update_album_cover( id, cover_is ) ;
+        private_->FilterModelAlbums->update_album_cover( rq.id, cover_is ) ;
 
 	if( m_track_current )
 	{
@@ -2187,18 +2180,17 @@ namespace MPX
 
 	    if( track.has( ATTRIBUTE_MB_ALBUM_ID ) )
 	    {
-		    Glib::RefPtr<Gdk::Pixbuf> cover ;
+		    MPX::RM::RequestQualifier rq ;
+		    rq.mbid = boost::get<std::string>(track[ATTRIBUTE_MB_ALBUM_ID].get()) ;
+		    rq.id   = boost::get<guint>(track[ATTRIBUTE_MPX_ALBUM_ID].get()) ;
 
-		    if(  m_covers->fetch(
-			  boost::get<std::string>(track[ATTRIBUTE_MB_ALBUM_ID].get())
-			, cover
-		    ))
+		    auto a = m_covers.get(rq,false) ;
+
+		    if(a)
 		    {
-			Gdk::RGBA c = Util::pick_color_for_pixbuf(cover) ;
-			m_main_info->set_cover( cover ) ;
+			Gdk::RGBA c = Util::pick_color_for_pixbuf(a.get_image()) ;
+			m_main_info->set_cover(a.get_image()) ;
 			m_main_info->set_color(c) ;
-
-//			m_main_position->set_color(c) ;
 		    }
 	    }
 	}
@@ -2207,7 +2199,9 @@ namespace MPX
     void
     YoukiController::on_covers_no_cover( guint id )
     {
+#if 0
         private_->FilterModelAlbums->update_album_cover_cancel( id ) ;
+#endif
     }
 
     bool
@@ -2226,7 +2220,7 @@ namespace MPX
             case 1: /* album */
             {
                 try{
-                    private_->FilterModelAlbums->update_album( get_album_from_id( id )) ; 
+                    private_->FilterModelAlbums->update_album( get_album_from_id(id,true)) ; 
                 } catch( std::logic_error ) {
                 }
                 
@@ -2695,32 +2689,23 @@ namespace MPX
         {
                 Glib::RefPtr<Gdk::Pixbuf> cover ;
 
-		std::future<bool> ft = std::async(std::launch::async, [&m_covers,&track,&cover]()
-		{
-		    return (  m_covers->fetch_back1(
-			  boost::get<std::string>(track[ATTRIBUTE_MB_ALBUM_ID].get())
-			, cover
-		    )) ;
-		}) ;
-		
-		ft.wait() ;
-		bool have_cover = ft.get() ;
+		MPX::RM::RequestQualifier rq ;
+		rq.mbid = boost::get<std::string>(track[ATTRIBUTE_MB_ALBUM_ID].get()) ;
+		rq.id   = boost::get<guint>(track[ATTRIBUTE_MPX_ALBUM_ID].get()) ;
 
-                if( have_cover )
+		auto a = m_covers.get(rq,false) ;
+
+                if(a)
                 {
-		    Gdk::RGBA c = Util::pick_color_for_pixbuf(cover) ;
-		    m_main_info->set_cover( cover ) ;
+		    Gdk::RGBA c = Util::pick_color_for_pixbuf(a.get_image()) ;
+		    m_main_info->set_cover(a.get_image()) ;
 		    m_main_info->set_color(c) ;
-
-//		    m_main_position->set_color(c) ;
 		    goto skip1 ;
                 }
         }
 
 	m_main_info->set_cover( Glib::RefPtr<Gdk::Pixbuf>(0) ) ;
 	m_main_info->set_color() ;
-
-//	m_main_position->set_color() ;
 	
 	skip1:
 

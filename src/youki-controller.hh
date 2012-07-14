@@ -2,7 +2,9 @@
 #define YOUKI_CONTROLLER_HH
 
 #include "config.h"
+
 #include "mpx/i-youki-controller.hh"
+#include "mpx-mlibman-dbus-proxy-actual.hh"
 
 #include <gtkmm.h>
 #include <list>
@@ -23,12 +25,11 @@
 #include "kobo-titleinfo.hh"
 #include "webkit-album-info.hh"
 
-#include "mpx-mlibman-dbus-proxy-actual.hh"
-
 #include "ld-find-nearest.hh"
 #include "id-history.hh"
 
-#include <sigx/sigx.h>
+#include "resource_manager.hh"
+#include "rm-covers.hh"
 
 namespace MPX
 {
@@ -69,7 +70,6 @@ namespace MPX
 
     class YoukiController
     : public IYoukiController
-    , public sigx::glib_auto_dispatchable
     , public Service::Base
     {
         public: 
@@ -271,7 +271,8 @@ namespace MPX
 	    Gtk::Label			    * m_InfoLabel ; 
 	    Gtk::Button			    * m_BTN_SHUFFLE ;
 
-            Covers                          * m_covers ;
+	    ResourceManager<MPX::RM::AlbumImage> m_covers ;
+
             MPX::Play                       * m_play ;
             Library                         * m_library ;
 	    LDFindNearest		      m_find_nearest_artist ;
@@ -662,7 +663,8 @@ namespace MPX
 
             void
             on_covers_got_cover(
-                  guint
+		  const MPX::RM::RequestQualifier&
+		, MPX::RM::AlbumImage&
             ) ;
 
             void
@@ -687,7 +689,7 @@ namespace MPX
             ) ;
 
             boost::shared_ptr<MPX::View::Albums::Album>
-            get_album_from_id( guint ) ;
+            get_album_from_id( guint, bool = false ) ;
 
 	    void
 	    register_played_track() ;

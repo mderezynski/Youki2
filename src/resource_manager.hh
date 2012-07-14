@@ -4,6 +4,7 @@
 #include "async_queue.hh"
 #include <boost/ref.hpp>
 #include <unordered_map>
+#include <map>
 #include <utility>
 #include <atomic>
 #include <thread>
@@ -168,7 +169,7 @@ public:
 
 private:
 
-    std::unordered_map<ResourceKey, Resource> m_resources;
+    std::map<ResourceKey, Resource>	      m_resources;
     ResourceRetriever<Resource>               m_retriever;
     SignalCompleted			      m_signal_completed;
 

@@ -46,6 +46,8 @@ ADD_CUSTOM_COMMAND(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/mpx-app-dbus-adaptor.hh
 SET(youki_bin_SOURCES
   covers.cc
   covers-stores.cc
+  rm-covers.cc
+  rm-covers-stores.cc
   glib-marshalers.h
   glib-marshalers.c
   kobo-position.hh
