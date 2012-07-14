@@ -126,7 +126,7 @@ public:
     ~ResourceManager ()
     {}
 
-    Resource& get (ResourceKey const& key)
+    Resource& get (ResourceKey const& key, bool acquire = true )
     {
         // Look up object in table to see if it already exists in memory
 
@@ -152,8 +152,11 @@ public:
         // create stand-in dummy object
         m_resources[key] = Resource (key);
 
-        // request retrieval for actual object
-        m_retriever.request (key);
+	if(acquire)
+	{
+	    // request retrieval for actual object
+	    m_retriever.request (key);
+	}
 
 	return m_resources[key] ;
     }

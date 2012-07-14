@@ -95,7 +95,7 @@ namespace Artist
 	    const std::string& mbid
 	)
 	{
-	    Glib::RefPtr<Gdk::Pixbuf> icon = m_Images.get(mbid).get_image() ;
+	    Glib::RefPtr<Gdk::Pixbuf> icon = m_Images.get(mbid,false).get_image() ;
 
 	    if( icon )
 	    { 
@@ -138,7 +138,7 @@ namespace Artist
 		m_mbid_map.insert(std::make_pair( artist_mbid, i)) ;
 	    }
 
-	    auto a = m_Images.get(artist_mbid) ;
+	    auto a = m_Images.get(artist_mbid,false) ;
 
 	    if(a.get_image())
 	    {
@@ -186,7 +186,7 @@ namespace Artist
 		m_mbid_map.insert(std::make_pair( artist_mbid, i)) ;
 	    }
 
-	    auto a = m_Images.get(artist_mbid) ;
+	    auto a = m_Images.get(artist_mbid,true) ;
 
 	    if(a.get_image())
 	    {
@@ -686,7 +686,7 @@ namespace Artist
 		std::string name = boost::get<0>(r) ;
 		std::string mbid = boost::get<2>(r) ;
 
-		m_model->m_Images.get(mbid) ;
+		m_model->m_Images.get(mbid,true) ;
 	    }
 	}
 	
