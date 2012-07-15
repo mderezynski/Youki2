@@ -199,7 +199,7 @@ namespace MPX
             , r.y
             , r.width 
             , r.height 
-            , 4. 
+            , 2. 
         ) ;
         cairo->fill() ;
 
@@ -265,7 +265,7 @@ namespace MPX
             , r.y 
             , r.width 
             , r.height 
-            , 4. 
+            , 2. 
         ) ;
         cairo->fill(); 
 
@@ -277,7 +277,7 @@ namespace MPX
             , r.y 
             , r.width 
             , r.height 
-            , 4. 
+            , 2. 
         ) ;
         cairo->stroke_preserve() ;
 	cairo->clip() ;
@@ -312,7 +312,7 @@ namespace MPX
 		, 0 
 		, 1 
 	    ) ;
-	    RoundedRectangle( cairo, r.x+r.width-300, r.y+1, 299, 34, 4., MPX::CairoCorners::CORNERS(10)) ;
+	    RoundedRectangle( cairo, r.x+r.width-300, r.y+1, 299, 34, 2., MPX::CairoCorners::CORNERS(10)) ;
 	    Gdk::Cairo::set_source_pixbuf( cairo, m_cover, r.x+r.width-300, r.y-124 ) ;
 	    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
 	    cairo->mask(gradient) ;

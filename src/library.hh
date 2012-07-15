@@ -104,12 +104,6 @@ namespace MPX
             ) ;
 
             void
-            recacheCovers() ;
-
-	    void
-	    recacheAlbumCover( guint id ) ;
-
-            void
             getMetadata(
                   const std::string&
                 , Track&
@@ -325,17 +319,6 @@ namespace MPX
 	    std::string	  m_UUID ;
 
         protected:
-
-	    void
-	    recache_cover(
-		  SQL::Row&
-	    ) ;
-
-            bool
-            recache_covers_handler(
-                  SQL::RowV*
-                , guint*
-            ) ; 
 
             guint
             get_tag_id(

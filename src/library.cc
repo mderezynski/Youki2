@@ -26,7 +26,6 @@
 #include <glibmm/i18n.h>
 #include <giomm.h>
 
-#include "mpx/mpx-covers.hh"
 #include "mpx/mpx-main.hh"
 #include "mpx/mpx-sql.hh"
 #include "mpx/mpx-uri.hh"
@@ -95,93 +94,6 @@ namespace MPX
                       bool          use_hal
                 )
                 {
-                }
-
-	void
-		Library::recache_cover( SQL::Row& r )
-		{
-                        Track_sp t = sqlToTrack( r, false, false );
-
-                        std::string location = trackGetLocation(t) ;
-
-                        std::string mb_album_id;
-                        std::string amazon_asin;
-                        std::string album_artist;
-                        std::string album;
-
-                        if( r.count("mb_album_id"))
-                                mb_album_id = get<std::string>(r["mb_album_id"]); 
-
-                        if( r.count("amazon_asin") ) 
-                                amazon_asin = get<std::string>(r["amazon_asin"]);
-
-                        if( r.count("album_artist") )
-                                album_artist = get<std::string>(r["album_artist"]);
-
-                        if( r.count("album") )
-                                album = get<std::string>(r["album"]);
-
-                        RequestQualifier rq ;
-                        rq.mbid   = mb_album_id ;
-                        rq.asin   = amazon_asin ;
-                        rq.uri    = location ;
-                        rq.artist = album_artist ;
-                        rq.album  = album ;
-                        rq.id     = get<guint>(r["album_j"]) ;
-
-                        services->get<Covers>("mpx-service-covers")->cache(
-                              rq
-                            , true
-			    , true
-                        );
-		}
-
-	void
-		Library::recacheAlbumCover( guint id )
-		{
-                        RowV v ; 
-                        getSQL(v, (boost::format("SELECT DISTINCT album_j, location, device_id, hal_volume_udi, hal_device_udi, hal_vrp, album.mb_album_id, album.amazon_asin, album_artist.album_artist, album.album FROM track JOIN album ON album_j = album.id JOIN album_artist ON album.album_artist_j = album_artist.id WHERE album_j = '%u' GROUP BY album_j") % id).str());
-
-			if( !v.empty() )
-			{
-			    recache_cover( v[0] ) ;
-			}
-		}
-
-        bool
-                Library::recache_covers_handler (SQL::RowV *v, guint* position)
-                {
-                        Row & r = (*v)[*position]; 
-
-			recache_cover( r ) ;
-
-                        (*position)++;
-
-                        if((*position) == (*v).size())
-                        {
-                                delete v;
-                                delete position;
-                                return false;
-                        }
-
-                        return true;
-                }
-
-        void
-                Library::recacheCovers()
-                {
-                        services->get<Covers>("mpx-service-covers")->purge() ;
-                        reload () ;
-
-                        RowV * v = new RowV ;
-                        getSQL(*v, "SELECT DISTINCT album_j, location, device_id, hal_volume_udi, hal_device_udi, hal_vrp, album.mb_album_id, album.amazon_asin, album_artist.album_artist, album.album "
-                                   "FROM track JOIN album ON album_j = album.id JOIN album_artist ON album.album_artist_j = album_artist.id GROUP BY album_j");
-
-                        guint * position = new guint ;
-
-                        *position = 0;
-
-                        signal_timeout().connect( sigc::bind( sigc::mem_fun( *this, &Library::recache_covers_handler ), v, position), 500);
                 }
 
         void
