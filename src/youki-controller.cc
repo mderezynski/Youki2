@@ -2059,10 +2059,15 @@ namespace MPX
             SQL::RowV v ;
             m_library->getSQL(v, (boost::format("SELECT max(id) AS id FROM album_artist")).str()) ; 
             guint max_artist = boost::get<guint>(v[0]["id"]) ;
+
             v.clear();
             m_library->getSQL(v, (boost::format("SELECT max(id) AS id FROM album")).str()) ; 
             guint max_albums = boost::get<guint>(v[0]["id"]) ;
+
             private_->FilterModelTracks->set_sizes( max_artist, max_albums ) ;
+
+            v.clear();
+            m_library->getSQL(v, (boost::format("SELECT location AS uri FROM track_view WHERE mpx_album_id = '%u'") % p->id ).str()) ; 
 
             private_->FilterModelAlbums->insert_album( a_sp ) ; 
 
@@ -2071,6 +2076,7 @@ namespace MPX
 	    rq.artist   =   a_sp->album_artist ; 
 	    rq.album    =   a_sp->album ; 
 	    rq.id       =   *(a_sp->album_id) ; 
+	    rq.uri	=   boost::get<std::string>(v[0]["uri"]) ;
 
 	    AlbumImage img = m_covers.get(rq, true) ;
 
@@ -3035,23 +3041,19 @@ namespace MPX
     {
 	auto a = get_album_from_id(id,true) ;
 
+	SQL::RowV v ;
+	m_library->getSQL(v, (boost::format("SELECT location AS uri FROM track_view WHERE mpx_album_id = '%u'") % id ).str()) ; 
+	
 	MPX::RM::RequestQualifier rq ; 
 	rq.mbid     =   a->mbid ; 
 	rq.artist   =   a->album_artist ; 
 	rq.album    =   a->album ; 
-	rq.id       =   *(a->album_id) ; 
+	rq.id       =   id ; 
+	rq.uri	    =   boost::get<std::string>(v[0]["uri"]) ;
 
 	g_message("%s: Passing RQ to cache system", G_STRLOC) ;
 
 	AlbumImage img = m_covers.get(rq, true) ;
-
-#if 0
-	if( img ) 
-	{
-	    auto c = Util::cairo_image_surface_from_pixbuf( img.get_image()->scale_simple( 256, 256, Gdk::INTERP_BILINEAR)) ;
-	    private_->FilterModelAlbums->update_album_cover( rq.id, c ) ;
-	}
-#endif
     }
 
  

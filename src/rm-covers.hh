@@ -14,7 +14,6 @@
 
 #include "mpx/mpx-minisoup.hh"
 #include "mpx/mpx-main.hh"
-#include "mpx/mpx-covers-stores.hh"
 #include "mpx/mpx-network.hh"
 #include "mpx/mpx-services.hh"
 #include "mpx/metadatareader-taglib.hh"

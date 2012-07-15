@@ -12,7 +12,6 @@
 #include "mpx/mpx-xspf-write.hh"
 #include "mpx/mpx-types.hh"
 #include "mpx/mpx-main.hh"
-#include "mpx/mpx-covers.hh"
 #include "mpx/util-graphics.hh"
 
 #include "library.hh"
@@ -63,6 +62,7 @@ namespace MPX
 	  Playlist_t& p
     )
     {
+#if 0
 	boost::shared_ptr<MPX::Library> lib = services->get<Library>("mpx-service-library");
 	boost::shared_ptr<MPX::Covers> covers = services->get<Covers>("mpx-service-covers");
 
@@ -143,6 +143,7 @@ namespace MPX
 	icon = Util::cairo_image_surface_round( icon, 4 ) ;
 
 	p.Icon = Util::cairo_image_surface_to_pixbuf(icon) ;
+#endif
     }
 
     void

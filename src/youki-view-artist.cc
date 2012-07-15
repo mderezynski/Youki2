@@ -405,7 +405,7 @@ namespace Artist
 	void
 	Column::set_rounding(double r)
 	{
-	    m_rounding = 4 ; // r ;
+	    m_rounding = 2 ; // r ;
 	}
 
 	double

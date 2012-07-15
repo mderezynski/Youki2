@@ -269,8 +269,9 @@ namespace MPX
         ) ;
         cairo->fill(); 
 
+	cairo->save() ;
         cairo->set_source_rgba( 0.15, 0.15, 0.15, 1. ) ; 
-        cairo->set_line_width( 0.75 ) ;
+        cairo->set_line_width( 0.5 ) ;
         RoundedRectangle(
               cairo
             , r.x 
@@ -279,13 +280,13 @@ namespace MPX
             , r.height 
             , 2. 
         ) ;
-        cairo->stroke_preserve() ;
-	cairo->clip() ;
+        cairo->stroke() ;
+	cairo->restore() ;
 
 	if( m_cover )
 	{
 	    auto gradient = Cairo::LinearGradient::create(
-		  (r.x + r.width - 300)
+		  (r.x + r.width-300)
 		, r.y + (r.height/2)
 		, (r.x + r.width)
 		, r.y + (r.height/2)
@@ -299,7 +300,14 @@ namespace MPX
 		, 0 
 	    ) ;
 	    gradient->add_color_stop_rgba(
-		  .23 
+		  0.10
+		, 0 
+		, 0 
+		, 0 
+		, 0 
+	    ) ;
+	    gradient->add_color_stop_rgba(
+		  0.12 
 		, 0 
 		, 0 
 		, 0 
@@ -312,10 +320,13 @@ namespace MPX
 		, 0 
 		, 1 
 	    ) ;
+	    cairo->save() ;
 	    RoundedRectangle( cairo, r.x+r.width-300, r.y+1, 299, 34, 2., MPX::CairoCorners::CORNERS(10)) ;
+	    cairo->clip() ;
 	    Gdk::Cairo::set_source_pixbuf( cairo, m_cover, r.x+r.width-300, r.y-124 ) ;
-	    cairo->set_operator( Cairo::OPERATOR_OVER ) ;
+	    cairo->set_operator( Cairo::OPERATOR_ATOP ) ;
 	    cairo->mask(gradient) ;
+	    cairo->restore();
 	}
 
 	if( !m_info.empty() && (m_info.size() == 3))

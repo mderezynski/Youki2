@@ -36,7 +36,6 @@
 #include <locale.h>
 #include <dbus-c++/glib-integration.h>
 
-#include "mpx/mpx-covers.hh"
 #include "mpx/mpx-main.hh"
 #include "mpx/mpx-network.hh"
 #include "mpx/mpx-paths.hh"
@@ -267,11 +266,7 @@ int main(int argc, char ** argv)
 
     Gtk::Settings::get_default()->property_gtk_tooltip_timeout().set_value( 1500 ) ;
 
-    splash->set_message(_("Starting Covers"),2/10.);
-//  services->add(boost::shared_ptr<Covers>(new MPX::Covers));
-//  services->get<Covers>("mpx-service-covers")->run() ;
-
-    splash->set_message(_("Starting Library Manager..."), 2.5/10.);
+    splash->set_message(_("Starting Library Manager..."), 2/10.);
     info::backtrace::Youki::MLibMan_proxy_actual * p = new info::backtrace::Youki::MLibMan_proxy_actual( conn ) ;
     p->Start() ;
     services->add(boost::shared_ptr<info::backtrace::Youki::MLibMan_proxy_actual>( p ));

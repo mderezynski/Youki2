@@ -9,7 +9,6 @@
 #include <boost/lexical_cast.hpp>
 #include "mpx/util-string.hh"
 #include "mpx/util-graphics.hh"
-#include "mpx/mpx-covers.hh"
 #include "mpx/i-youki-theme-engine.hh"
 #include "mpx/widgets/cairo-extensions.hh"
 #include "mpx/widgets/cairo-blur.hh"
@@ -500,7 +499,7 @@ namespace Albums
 		, 3
 		, 242
 		, 83
-		, 3.
+		, m_rounding 
 	    ) ;
 	    c->set_source_rgba(0.6,0.6,0.6,0.7) ;
 	    c->fill() ;
@@ -515,7 +514,7 @@ namespace Albums
 	    double r
 	)
 	{
-	    m_rounding = 3 ; // r;
+	    m_rounding = 1 ; // r;
 	}
 
 	double
@@ -2002,6 +2001,7 @@ namespace Albums
 	    , const Glib::RefPtr<Gtk::Tooltip>&     tooltip
 	)
 	{
+#if 0
 	    guint d = (ViewMetrics.ViewPortPx.upper() + tooltip_y) / ViewMetrics.RowHeight;
 
 	    if(!ModelExtents(d)) return false;
@@ -2023,6 +2023,7 @@ namespace Albums
 		tooltip->set_custom( *image );
 		return true;
 	    }
+#endif
 
 	    return false;
 	}

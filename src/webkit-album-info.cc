@@ -4,12 +4,14 @@
 #include <future>
 
 #include <boost/format.hpp>
+
 #include "mpx/xml/xmltoc++.hh"
 #include "xmlcpp/xsd-album-info-2.0.hxx"
+
 #include "mpx/mpx-main.hh"
 #include "mpx/mpx-uri.hh"
+
 #include "mpx/util-string.hh"
-#include "mpx/mpx-covers.hh"
 
 namespace MPX
 {
