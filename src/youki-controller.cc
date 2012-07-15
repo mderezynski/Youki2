@@ -1434,7 +1434,23 @@ namespace MPX
 	for( auto& r : v ) 
 	{
 	    try{
-		private_->FilterModelAlbums->append_album( get_album_from_id( get<guint>(r["id"]), false)) ;
+		auto a = get_album_from_id( get<guint>(r["id"]), false) ;
+
+		MPX::RM::RequestQualifier rq ; 
+		rq.mbid     =   a->mbid ; 
+		rq.artist   =   a->album_artist ; 
+		rq.album    =   a->album ; 
+		rq.id       =   *(a->album_id) ; 
+
+		AlbumImage img = m_covers.get(rq, false) ;
+
+		if( img ) 
+		{
+		    a->coverart = Util::cairo_image_surface_from_pixbuf( img.get_image()->scale_simple( 256, 256, Gdk::INTERP_BILINEAR)) ;
+		}
+
+		private_->FilterModelAlbums->append_album(a) ; 
+
 	    } catch( std::logic_error& cxe )
 	    {
 		g_message("%s: Error while appending album to model: %s", G_STRLOC, cxe.what()) ;
@@ -1910,23 +1926,6 @@ namespace MPX
 	album->insert_date = get<guint>(r["album_insert_date"]) ;
 	album->total_time = get<guint>(v3[0]["total"]) ;
 
-        Cairo::RefPtr<Cairo::ImageSurface> cover_is ;
-
-	MPX::RM::RequestQualifier rq ; 
-	rq.mbid     =   album->mbid ; 
-	rq.artist   =   album->album_artist ; 
-	rq.album    =   album->album ; 
-	rq.id       =   *(album->album_id) ; 
-
-        AlbumImage img = m_covers.get (rq, acquire_cover) ;
-
-        if( img ) 
-        {
-            cover_is = Util::cairo_image_surface_from_pixbuf( img.get_image()->scale_simple( 256, 256, Gdk::INTERP_BILINEAR)) ;
-        }
-
-        album->coverart = cover_is ;
-
         return album ;
     }
 
@@ -2066,6 +2065,21 @@ namespace MPX
             private_->FilterModelTracks->set_sizes( max_artist, max_albums ) ;
 
             private_->FilterModelAlbums->insert_album( a_sp ) ; 
+
+	    MPX::RM::RequestQualifier rq ; 
+	    rq.mbid     =   a_sp->mbid ; 
+	    rq.artist   =   a_sp->album_artist ; 
+	    rq.album    =   a_sp->album ; 
+	    rq.id       =   *(a_sp->album_id) ; 
+
+	    AlbumImage img = m_covers.get(rq, true) ;
+
+	    if( img ) 
+	    {
+		auto c = Util::cairo_image_surface_from_pixbuf( img.get_image()->scale_simple( 256, 256, Gdk::INTERP_BILINEAR)) ;
+		private_->FilterModelAlbums->update_album_cover( rq.id, c ) ;
+	    }
+
 	    private_->FilterModelAlbums->regen_mapping() ;
 
         } catch( std::logic_error ) 
@@ -2160,39 +2174,28 @@ namespace MPX
 	, MPX::RM::AlbumImage&		    img
     )
     {
-        Glib::RefPtr<Gdk::Pixbuf> cover_pb ;
-        Cairo::RefPtr<Cairo::ImageSurface> cover_is ;
-
-        SQL::RowV v ;
-
-        m_library->getSQL( v, (boost::format( "SELECT mb_album_id FROM album WHERE album.id = '%u'") % rq.id ).str()) ; 
-
         if( img ) 
         {
-            cover_is = Util::cairo_image_surface_from_pixbuf( img.get_image()->scale_simple(256,256,Gdk::INTERP_BILINEAR)) ;
-        }
+            auto c = Util::cairo_image_surface_from_pixbuf( img.get_image()->scale_simple(256,256,Gdk::INTERP_BILINEAR)) ;
 
-        private_->FilterModelAlbums->update_album_cover( rq.id, cover_is ) ;
+	    private_->FilterModelAlbums->update_album_cover( rq.id, c ) ;
 
-	if( m_track_current )
-	{
-	    MPX::Track& track = *m_track_current ; 
-
-	    if( track.has( ATTRIBUTE_MB_ALBUM_ID ) )
+	    if( m_track_current )
 	    {
-		    MPX::RM::RequestQualifier rq ;
-		    rq.mbid = boost::get<std::string>(track[ATTRIBUTE_MB_ALBUM_ID].get()) ;
-		    rq.id   = boost::get<guint>(track[ATTRIBUTE_MPX_ALBUM_ID].get()) ;
+		MPX::Track& track = *m_track_current ; 
 
-		    auto a = m_covers.get(rq,false) ;
-
-		    if(a)
-		    {
-			Gdk::RGBA c = Util::pick_color_for_pixbuf(a.get_image()) ;
-			m_main_info->set_cover(a.get_image()) ;
-			m_main_info->set_color(c) ;
-		    }
+		if( rq.id == boost::get<guint>(track[ATTRIBUTE_MPX_ALBUM_ID].get()))
+		{
+		    Gdk::RGBA c = Util::pick_color_for_pixbuf(img.get_image()) ;
+		    m_main_info->set_cover(img.get_image()) ;
+		    m_main_info->set_color(c) ;
+		}
 	    }
+        }
+	else
+	{
+	    private_->FilterModelAlbums->update_album_cover_cancel( rq.id ) ;
+	    return ;
 	}
     }
 
@@ -3030,7 +3033,25 @@ namespace MPX
 	guint id
     )
     {
-	m_library->recacheAlbumCover( id ) ;
+	auto a = get_album_from_id(id,true) ;
+
+	MPX::RM::RequestQualifier rq ; 
+	rq.mbid     =   a->mbid ; 
+	rq.artist   =   a->album_artist ; 
+	rq.album    =   a->album ; 
+	rq.id       =   *(a->album_id) ; 
+
+	g_message("%s: Passing RQ to cache system", G_STRLOC) ;
+
+	AlbumImage img = m_covers.get(rq, true) ;
+
+#if 0
+	if( img ) 
+	{
+	    auto c = Util::cairo_image_surface_from_pixbuf( img.get_image()->scale_simple( 256, 256, Gdk::INTERP_BILINEAR)) ;
+	    private_->FilterModelAlbums->update_album_cover( rq.id, c ) ;
+	}
+#endif
     }
 
  

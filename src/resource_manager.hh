@@ -83,6 +83,11 @@ private:
                 }
                 while (!m_requests.empty ());
 
+		if(m_results.size())
+		{
+		    // Schedule update and notification in run in main thread
+		    Glib::signal_idle ().connect_once (sigc::mem_fun (this, &ResourceRetriever::notify));
+		}
             }
 
             std::this_thread::sleep_for (std::chrono::milliseconds (500));
@@ -131,27 +136,30 @@ public:
     {
         // Look up object in table to see if it already exists in memory
 
-        auto match = m_resources.find (key);
-
-        if (match != m_resources.end ()) {
-            // Required object already in memory, return it
-            return (*match).second ; 
-        }
-	else
+	if( !acquire )
 	{
-	    auto s = Resource::retrieve_cached (key);
+	    auto match = m_resources.find (key);
 
-	    if(s)
-	    {
-		m_resources[key] = s; 
-		return m_resources[key]; 
+	    if (match != std::end(m_resources) && bool((*match).second)) {
+		// Required object already in memory, return it
+		return (*match).second ; 
 	    }
+	    else
+	    {
+		auto resource = Resource::retrieve_cached (key);
+
+		if(resource)
+		{
+		    m_resources[key] = resource ; 
+		    return m_resources[key] ; 
+		}
+	    }
+
+	    // Resource needs to be loaded asynchronously in the background
+
+	    // create stand-in dummy object
+	    m_resources[key] = Resource (key);
 	}
-
-        // Resource needs to be loaded asynchronously in the background
-
-        // create stand-in dummy object
-        m_resources[key] = Resource (key);
 
 	if(acquire)
 	{

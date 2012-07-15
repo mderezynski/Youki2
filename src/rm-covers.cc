@@ -44,6 +44,7 @@ namespace RM
 
 	    if( Glib::file_test( thumb_path, Glib::FILE_TEST_EXISTS))
 	    {
+		g_message("%s: MBID '%s' in cache", G_STRLOC, key.mbid.c_str()) ;
 		img = Gdk::Pixbuf::create_from_file (thumb_path);
 	    }
 
@@ -59,10 +60,12 @@ namespace RM
 	    CS_v_t stores ;
 
 	    stores.push_back(CS_sh_p_t(new InlineCovers));
-	    stores.push_back(CS_sh_p_t(new MusicBrainzCovers));
 	    stores.push_back(CS_sh_p_t(new LastFMCovers));
+	    stores.push_back(CS_sh_p_t(new MusicBrainzCovers));
 
 	    Glib::RefPtr<Gdk::Pixbuf> cover ;
+
+	    g_message("%s: Trying to acquire...", G_STRLOC) ;
 
 	    for( auto store : stores )
 	    {
@@ -71,11 +74,13 @@ namespace RM
 
 		if(cover)
 		{
+		    g_message("Got cover with MBID {%s}", key.mbid.c_str()) ;
 		    cover->save (get_thumb_path (key.mbid), "png") ;
 		    return AlbumImage(key, cover);
 		}
 	    }
 
+	    g_message("No cover with MBID {%s}", key.mbid.c_str()) ;
 	    return AlbumImage(key) ;
 	}
 }}

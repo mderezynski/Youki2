@@ -817,45 +817,6 @@ namespace Albums
 		    , MPX::CairoCorners::CORNERS(12)
 		) ;
 		cairo->fill() ;
-
-#if 0
-		cairo->arc( 19, 18, 6, 0, 2*M_PI ) ;
-		cairo->set_line_width(1.5) ;
-		cairo->set_source_rgba(1,1,1,1) ;
-		cairo->fill_preserve() ;
-		cairo->set_source_rgba(0,0,0,1) ;
-		cairo->stroke() ;
-#endif
-
-#if 0
-		double r1 =  90 * (M_PI/180.0) ; 
-		double r2 = 180 * (M_PI/180.0) ; 
-
-		cairo->arc(11,32,6,r1,r2) ;
-		cairo->line_to(5,38) ;
-		cairo->line_to(11,38) ;
-		cairo->close_path() ;	
-		cairo->fill() ;
-
-		double r3 =   0 * (M_PI/180.0) ; 
-		double r4 =  90 * (M_PI/180.0) ; 
-
-		cairo->arc(248,34,4,r3,r4) ;
-		cairo->line_to(252,38) ;
-		cairo->line_to(252,34) ;
-		cairo->close_path() ;	
-		cairo->fill() ;
-
-		double r5 = 180 * (M_PI/180.0) ; 
-		double r6 = 270 * (M_PI/180.0) ; 
-
-		cairo->arc(9,84,4,r5,r6) ;
-		cairo->line_to(5,80) ;
-		cairo->line_to(5,84) ;
-		cairo->close_path() ;
-		cairo->fill() ;
-#endif
-
 		cairo->restore() ;
 	    }
 
@@ -877,7 +838,7 @@ namespace Albums
 	    //////////
 
 	    cairo->save() ;
-	    cairo->translate(16,69) ;
+	    cairo->translate(10,52) ;
 	    layout[L2]->set_text( album->album ) ;
 	    layout[L2]->get_pixel_size( width, height );
 	    cairo->move_to(
@@ -891,14 +852,14 @@ namespace Albums
 	    //////////
 
 	    cairo->save() ;
-	    cairo->translate(16,52) ;
+	    cairo->translate(10,69) ;
 	    layout[L1]->set_text( album->album_artist );
 	    layout[L1]->get_pixel_size( width, height );
 	    cairo->move_to(
 		  0 
 		, 0 
 	    );
-	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(1,1,1)) ; 
+	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(1,1,1,0.9)) ; 
 	    pango_cairo_show_layout(cairo->cobj(), layout[L1]->gobj()) ;
 	    cairo->restore() ;
 

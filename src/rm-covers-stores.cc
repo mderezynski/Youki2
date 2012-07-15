@@ -47,8 +47,9 @@
 
 #include "mpx/algorithm/ld.hh"
 #include "mpx/mpx-uri.hh"
-#include "mpx/util-string.hh"
 #include "mpx/xml/xml.hh"
+#include "mpx/util-string.hh"
+#include "mpx/util-graphics.hh"
 
 #include "rm-covers-stores.hh"
 
@@ -208,7 +209,7 @@ namespace RM
 		    {
 			std::string::size_type i = image_url.rfind(".") ;
 			std::string url_jpg = image_url.substr(0,i) + ".jpg" ; 
-			cover = RemoteStore::fetch_image( url_jpg, rq ) ;
+			cover = Util::get_image_from_uri(url_jpg) ; 
 
 			return cover;
 		    }
@@ -272,7 +273,7 @@ namespace RM
 
 	    if( !image_url.empty() )
 	    {
-		cover = RemoteStore::fetch_image( image_url, rq ) ;
+		cover = Util::get_image_from_uri(image_url) ; 
 		return cover;
 	    }
 
@@ -295,7 +296,7 @@ namespace RM
 	    if( !asin.empty() )
 	    {
 		image_url = (boost::format("http://images.amazon.com/images/P/%s.01.LZZZZZZZ.jpg") % asin).str() ;
-		cover = RemoteStore::fetch_image( image_url, rq ) ;
+		cover = Util::get_image_from_uri(image_url) ; 
 		return cover;
 	    }
         }

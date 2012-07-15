@@ -39,6 +39,11 @@ namespace RM
 	    : m_key(key)
 	    {}
 
+	    AlbumImage(AlbumImage const& other)
+	    : m_key(other.m_key)
+	    , m_contents(other.m_contents)
+	    {}
+
 	    AlbumImage(Key const& key, Glib::RefPtr<Gdk::Pixbuf> const& contents)
 		: m_key(key)
 		, m_contents(contents)
