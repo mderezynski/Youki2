@@ -52,7 +52,7 @@ namespace View
 {
 namespace Artist
 {
-        typedef boost::tuple<std::string, boost::optional<guint>, std::string, Cairo::RefPtr<Cairo::ImageSurface>, Cairo::RefPtr<Cairo::ImageSurface>, guint, guint, boost::optional<Gdk::RGBA>> Row_t ;
+        typedef boost::tuple<std::string, boost::optional<guint>, std::string, Cairo::RefPtr<Cairo::ImageSurface>, Cairo::RefPtr<Cairo::ImageSurface>, guint, guint, boost::optional<Gdk::RGBA>, double> Row_t ;
 
 	enum class RowDatum : unsigned int
 	{
@@ -110,6 +110,8 @@ namespace Artist
 
                 Signal_1	    m_SIGNAL__changed ;
                 Signal_0	    m_SIGNAL__redraw ;
+
+		Glib::Timer	    m_animation_timer ;
 
 		ResourceManager<ArtistImage> m_Images ;
 
@@ -331,6 +333,7 @@ namespace Artist
                     , const ThemeColor&			    color_sel
                     , const ThemeColor&			    color_sel_bg
 		    , const TCVector_sp&		    constraints
+		    , double				    animation_alpha
                 ) ; 
         
 } ;

@@ -60,8 +60,8 @@ namespace RM
 	    CS_v_t stores ;
 
 	    stores.push_back(CS_sh_p_t(new InlineCovers));
-	    stores.push_back(CS_sh_p_t(new LastFMCovers));
 	    stores.push_back(CS_sh_p_t(new MusicBrainzCovers));
+	    stores.push_back(CS_sh_p_t(new LastFMCovers));
 
 	    Glib::RefPtr<Gdk::Pixbuf> cover ;
 

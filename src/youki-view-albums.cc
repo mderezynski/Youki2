@@ -224,6 +224,8 @@ namespace Albums
 		    album->coverart = is;
 		    album->surface_cache.clear();
 
+		    album->animation_time = m_animation_timer.elapsed() ;
+
 		    m_SIGNAL__cover_updated.emit( id );
 		    m_SIGNAL__redraw.emit();
 		}
@@ -566,7 +568,7 @@ namespace Albums
 	    Album_sp album
 	)
 	{
-	    album->surface_cache = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, 256, 98) ;
+	    album->surface_cache = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, 256, 114) ;
 	    auto cairo = Cairo::Context::create(album->surface_cache) ;
 
 	    cairo->set_operator(Cairo::OPERATOR_CLEAR) ;
@@ -574,11 +576,14 @@ namespace Albums
 
 	    auto icon_desaturated_1 =
 		Util::cairo_image_surface_to_pixbuf( album->coverart ? album->coverart : m_image_disc ) ; 
-	    auto icon_desaturated_2 = icon_desaturated_1->copy() ;
 
-	    auto icon = icon_desaturated_1->copy() ; 
+	    auto icon_desaturated_2 =
+		icon_desaturated_1->copy() ;
 
-	    icon->saturate_and_pixelate(icon_desaturated_1, 0.85, false) ;
+	    auto icon =
+		icon_desaturated_1->copy() ; 
+
+	    icon->saturate_and_pixelate(icon_desaturated_1, 0.55, false) ;
 	    icon->saturate_and_pixelate(icon_desaturated_2, 0.25, false) ;
 
 	    cairo->set_operator(Cairo::OPERATOR_OVER) ;
@@ -591,12 +596,12 @@ namespace Albums
 		  0
 		, 0
 		, 256
-		, 130
+		, 114
 	    ) ;
 	    cairo->fill() ;
 
-
-	    album->surface_cache_blur = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, 256, 98) ;
+#if 0
+	    album->surface_cache_blur = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, 256, 114) ;
 	    cairo = Cairo::Context::create(album->surface_cache_blur) ;
 
 	    cairo->set_operator(Cairo::OPERATOR_CLEAR) ;
@@ -608,17 +613,16 @@ namespace Albums
 		,   0
 		, -80 
 	    ) ;
-
 	    cairo->rectangle(
 		  0
 		, 0
 		, 256
-		, 130
+		, 114
 	    ) ;
-	    cairo->clip() ;
 	    cairo->fill() ;
 
-//	    Util::cairo_image_surface_blur( album->surface_cache_blur, 3 ) ;
+	    Util::cairo_image_surface_blur( album->surface_cache_blur, 5 ) ;
+#endif
 	}
 
 	void
@@ -636,6 +640,7 @@ namespace Albums
 	    , guint				    model_size
 	    , bool				    selected
 	    , const TCVector_sp&		    album_constraints
+	    , double				    animation_alpha
 	)
 	{
 	    enum { L1, L2, L3, N_LS } ;
@@ -728,7 +733,7 @@ namespace Albums
 		, 5   
 		, 3   
 		, 247 
-		, 86 
+		, 102 
 		, m_rounding
 	    ) ;
 	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(0,0,0,1)) ;
@@ -740,16 +745,28 @@ namespace Albums
 
 	    if(1) // !album->caching )
 	    {
+		cairo->save() ;
+		cairo->set_source(album->surface_cache,0,0) ;
 		RoundedRectangle(
 		      cairo
 		    , 5 
 		    , 3 
 		    , 247
-		    , 86
+		    , 102
 		    , m_rounding
 		) ;
-		cairo->set_source(album->surface_cache,0,0) ;
-		cairo->fill_preserve() ;
+		cairo->clip() ;
+		cairo->paint_with_alpha(animation_alpha) ;
+		cairo->restore() ;	
+
+		RoundedRectangle(
+		      cairo
+		    , 5 
+		    , 3 
+		    , 247
+		    , 102
+		    , m_rounding
+		) ;
 
 		//////////
 
@@ -805,11 +822,11 @@ namespace Albums
 		//////////
 
 		cairo->save() ;
-		Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(selected?c5:Util::make_rgba(0,0,0,1),selected?.80:.5)) ;
+		Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(selected?c5:Util::make_rgba(0,0,0,1),selected?.8:.7)) ;
 		RoundedRectangle(
 		      cairo
 		    , 5
-		    , 49
+		    , 65
 		    , 247  
 		    , 42 
 		    , m_rounding
@@ -837,11 +854,11 @@ namespace Albums
 	    //////////
 
 	    cairo->save() ;
-	    cairo->translate(10,52) ;
+	    cairo->translate(0,68) ;
 	    layout[L2]->set_text( album->album ) ;
 	    layout[L2]->get_pixel_size( width, height );
 	    cairo->move_to(
-		  0 
+		 (256-width)/2. 
 		, 0 
 	    );
 	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(1,1,1)) ; 
@@ -851,11 +868,11 @@ namespace Albums
 	    //////////
 
 	    cairo->save() ;
-	    cairo->translate(10,69) ;
+	    cairo->translate(0,85) ;
 	    layout[L1]->set_text( album->album_artist );
 	    layout[L1]->get_pixel_size( width, height );
 	    cairo->move_to(
-		  0 
+		  (256-width)/2. 
 		, 0 
 	    );
 	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(1,1,1,0.9)) ; 
@@ -981,7 +998,7 @@ namespace Albums
 	Class::initialize_metrics ()
 	{
 	    ViewMetrics.set_base__row_height(
-		  106
+		  114
 	    );
 	}
 
@@ -1409,7 +1426,7 @@ namespace Albums
 	    if( property_vadjustment().get_value() )
 	    {
 		property_vadjustment().get_value()->freeze_notify() ;
-		property_vadjustment().get_value()->set_upper((upper<page_size)?page_size:upper);
+		property_vadjustment().get_value()->set_upper(6+((upper<page_size)?page_size:upper)) ;
 		property_vadjustment().get_value()->set_page_size( page_size ) ; 
 		property_vadjustment().get_value()->thaw_notify() ;
 	    }
@@ -1510,6 +1527,14 @@ namespace Albums
 	    {
 		int selected = m_selection && boost::get<Selection::INDEX>(m_selection.get()) == d_cur;
 
+		double timer_val = m_model->m_animation_timer.elapsed() - (**i)->animation_time ;
+		double anim_alpha = 1 ;
+
+		if( timer_val <= 0.7 )
+		{
+		    anim_alpha = (2.0 - std::cos ((timer_val/0.7) * G_PI)) / 2.0;
+		}
+
 		m_columns[0]->render(
 		      cairo
 		    , **i
@@ -1524,6 +1549,7 @@ namespace Albums
 		    , ModelCount(m_model->m_base_model->size())
 		    , selected
 		    , m_model->m_constraints_albums
+		    , anim_alpha
 		);
 
 		ypos += ViewMetrics.RowHeight;
@@ -1886,7 +1912,7 @@ namespace Albums
 		if( ModelExtents(d))
 		{
 		    const Album_sp& album = m_model->row(d) ;
-		    _signal_0.emit( album->mbid );
+		    signal_0.emit( album->mbid );
 		}
 	    }
 	}
@@ -1901,7 +1927,7 @@ namespace Albums
 		if( ModelExtents(d)) 
 		{
 		    const Album_sp& album = m_model->row(d) ;
-		    _signal_1.emit( album->mbid_artist );
+		    signal_1.emit( album->mbid_artist );
 		}
 	    }
 	}
@@ -1928,14 +1954,29 @@ namespace Albums
 
 	    if(ModelExtents(d)) 
 	    {
-		const Album_sp& album = m_model->row(d) ; 
+		Album_sp album = m_model->row(d) ; 
 
 		album->caching = true;
-		m_caching.insert( album->album_id.get());
-		_signal_2.emit( album->album_id.get());
+
+		m_caching.insert (album->album_id.get());
 
 		m_redraw_spinner_conn.disconnect();
-		m_redraw_spinner_conn = Glib::signal_timeout().connect( sigc::mem_fun( *this, &Class::handle_redraw ), 100 );
+		m_redraw_spinner_conn = Glib::signal_timeout().connect( sigc::mem_fun( *this, &Class::handle_redraw ), 30 );
+
+		signal_2.emit (album->album_id.get());
+	    }
+	}
+
+	void
+	Class::set_album_fetching(
+	      guint id
+	)
+	{
+	    m_caching.insert(id) ;
+
+	    if(!m_redraw_spinner_conn)
+	    {
+		m_redraw_spinner_conn = Glib::signal_timeout().connect( sigc::mem_fun( *this, &Class::handle_redraw ), 30 );
 	    }
 	}
 
@@ -1943,7 +1984,9 @@ namespace Albums
 	Class::handle_redraw()
 	{
 	    m_columns[0]->m_image_album_loading_iter->advance();
+
 	    queue_draw();
+
 	    while(gtk_events_pending()) gtk_main_iteration();
 
 	    if(m_caching.empty())

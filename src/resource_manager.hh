@@ -19,6 +19,22 @@ public:
     typedef ResourceT Resource;
     typedef typename Resource::Key ResourceKey;
 
+    struct RetrieveData
+    {
+	bool		Acquire ;
+	ResourceKey	Key ;
+
+	RetrieveData(ResourceKey const& key, bool acquire = true)
+	: Acquire(acquire)
+	, Key(key)
+	{}
+
+	RetrieveData(RetrieveData const& other)
+	: Acquire(other.Acquire)
+	, Key(other.Key)
+	{}
+    } ;
+    
     typedef sigc::signal<void, ResourceKey const&, Resource&> SignalCompleted;
 
     ResourceRetriever ()
@@ -36,9 +52,9 @@ public:
         m_thread.join ();
     }
 
-    void request (ResourceKey const& key)
+    void request (ResourceKey const& key, bool acquire = true)
     {
-        m_requests.push (key);
+        m_requests.push (RetrieveData(key,acquire));
     }
 
     SignalCompleted& signal_completed ()
@@ -48,8 +64,10 @@ public:
 
 private:
 
-    typedef AsyncQueue<ResourceKey> RequestQueue;
+    typedef AsyncQueue<RetrieveData> RequestQueue;
     typedef AsyncQueue<std::pair<ResourceKey, Resource>> ResultQueue;
+
+    sigc::connection  m_connection_notify ;
 
     std::thread       m_thread;
     std::atomic<bool> m_running;
@@ -65,28 +83,33 @@ private:
             if (!m_requests.empty ()) {
                 do {
                     // Get request to process
-                    auto key = m_requests.front ();
+                    auto rd = m_requests.front ();
                     m_requests.pop ();
 
-                    // Retrieve object
-                    auto object = Resource::retrieve (key);
-
-                    // Queue retrieved object
-                    m_results.push (std::make_pair (key, object));
-
-		    if(m_results.size() >= 10)
+		    if(!rd.Acquire)
 		    {
-			// Schedule update and notification in run in main thread
-			Glib::signal_idle ().connect_once (sigc::mem_fun (this, &ResourceRetriever::notify));
-		    }
+			// Retrieve object
+			auto object = Resource::retrieve_cached (rd.Key);
 
+			// Queue retrieved object
+			m_results.push (std::make_pair (rd.Key, object));
+		    }
+		    else
+		    {
+			// Retrieve object
+			auto object = Resource::retrieve (rd.Key);
+
+			// Queue retrieved object
+			m_results.push (std::make_pair (rd.Key, object));
+		    }
                 }
                 while (!m_requests.empty ());
 
 		if(m_results.size())
 		{
 		    // Schedule update and notification in run in main thread
-		    Glib::signal_idle ().connect_once (sigc::mem_fun (this, &ResourceRetriever::notify));
+		    m_connection_notify.disconnect() ;
+		    m_connection_notify = Glib::signal_timeout ().connect (sigc::mem_fun (this, &ResourceRetriever::notify), 333);
 		}
             }
 
@@ -94,9 +117,11 @@ private:
         }
     }
 
-    void notify ()
+    bool notify ()
     {
-        while (!m_results.empty ()) {
+	guint counter = 0 ;
+
+        while (counter < 5 && !m_results.empty ()) {
             // Get object in retrieval queue
             auto result = m_results.front ();
             m_results.pop ();
@@ -107,7 +132,17 @@ private:
 
             // Notify all listeners waiting on completed fetches
             m_signal_completed.emit (key, obj); 
+
+	    ++counter ;
         }
+	
+	if(m_results.empty())
+	{
+	    m_connection_notify.disconnect() ;
+	    return false ;
+	}
+
+	return true ; 
     }
 };
 
@@ -132,6 +167,11 @@ public:
     ~ResourceManager ()
     {}
 
+    void queue (ResourceKey const& key)
+    {
+	m_retriever.request (key,false);
+    }
+
     Resource& get (ResourceKey const& key, bool acquire = true )
     {
         // Look up object in table to see if it already exists in memory
@@ -144,18 +184,6 @@ public:
 		// Required object already in memory, return it
 		return (*match).second ; 
 	    }
-	    else
-	    {
-		auto resource = Resource::retrieve_cached (key);
-
-		if(resource)
-		{
-		    m_resources[key] = resource ; 
-		    return m_resources[key] ; 
-		}
-	    }
-
-	    // Resource needs to be loaded asynchronously in the background
 
 	    // create stand-in dummy object
 	    m_resources[key] = Resource (key);

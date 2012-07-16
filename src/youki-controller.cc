@@ -1436,20 +1436,19 @@ namespace MPX
 	    try{
 		auto a = get_album_from_id( get<guint>(r["id"]), false) ;
 
+		a->caching = true ;
+
+		private_->FilterModelAlbums->append_album(a) ; 
+
+		m_ListViewAlbums->set_album_fetching(*(a->album_id)) ;
+
 		MPX::RM::RequestQualifier rq ; 
 		rq.mbid     =   a->mbid ; 
 		rq.artist   =   a->album_artist ; 
 		rq.album    =   a->album ; 
 		rq.id       =   *(a->album_id) ; 
 
-		AlbumImage img = m_covers.get(rq, false) ;
-
-		if( img ) 
-		{
-		    a->coverart = Util::cairo_image_surface_from_pixbuf( img.get_image()->scale_simple( 256, 256, Gdk::INTERP_BILINEAR)) ;
-		}
-
-		private_->FilterModelAlbums->append_album(a) ; 
+		m_covers.queue(rq) ;
 
 	    } catch( std::logic_error& cxe )
 	    {
@@ -2229,8 +2228,23 @@ namespace MPX
             case 1: /* album */
             {
                 try{
-                    private_->FilterModelAlbums->update_album( get_album_from_id(id,true)) ; 
-                } catch( std::logic_error ) {
+		    auto a = get_album_from_id(id,true) ;
+                    private_->FilterModelAlbums->update_album(a) ;
+
+		    SQL::RowV v ;
+		    m_library->getSQL(v, (boost::format("SELECT location AS uri FROM track_view WHERE mpx_album_id = '%u' LIMIT 1") % id ).str()) ; 
+		    
+		    MPX::RM::RequestQualifier rq ; 
+		    rq.mbid     =   a->mbid ; 
+		    rq.artist   =   a->album_artist ; 
+		    rq.album    =   a->album ; 
+		    rq.id       =   id ; 
+		    rq.uri	=   boost::get<std::string>(v[0]["uri"]) ;
+
+		    m_covers.get(rq, true) ;
+
+                } catch( std::exception& cxe ) {
+		    g_message("%s: Error while updating album: %s", G_STRLOC, cxe.what()) ;
                 }
                 
             }

@@ -58,6 +58,8 @@ namespace Albums
             gdouble                                 album_playscore ;
             guint				    total_time ;
 
+	    gdouble				    animation_time ;
+
             bool				    caching ;
 
 	    bool operator==( const Album& other )
@@ -124,14 +126,16 @@ namespace Albums
 	struct DataModel
         : public sigc::trackable
 	{
-		Model_sp               m_base_model ;
-		IdIterMap_t            m_iter_map ;
+		Model_sp		m_base_model ;
+		IdIterMap_t		m_iter_map ;
 
-		Signal_0	       m_SIGNAL__redraw ;
-		Signal_1	       m_SIGNAL__changed ;
-		Signal_1	       m_SIGNAL__cover_updated ;
+		Signal_0		m_SIGNAL__redraw ;
+		Signal_1		m_SIGNAL__changed ;
+		Signal_1		m_SIGNAL__cover_updated ;
 
-		guint		       m_upper_bound ;
+		guint			m_upper_bound ;
+
+		Glib::Timer		m_animation_timer ; 
 
 		DataModel() ;
 		DataModel(Model_sp model) ;
@@ -356,6 +360,7 @@ namespace Albums
 		    , guint				    model_size
 		    , bool				    selected
 		    , const TCVector_sp&		    album_constraints
+		    , double				    animation_alpha
                 ) ;
         } ;
 
@@ -430,10 +435,10 @@ class Class
 
 	    public:
 
-                SignalMBID _signal_0 ;
-                SignalMBID _signal_1 ;
-                SignalID   _signal_2 ;
-		SignalVoid _signal_3 ;
+                SignalMBID signal_0 ;
+                SignalMBID signal_1 ;
+                SignalID   signal_2 ;
+		SignalVoid signal_3 ;
 
             protected:
 
@@ -588,19 +593,19 @@ class Class
                 SignalMBID&
                 signal_only_this_album_mbid()
                 {
-                    return _signal_0 ;
+                    return signal_0 ;
                 }
 
                 SignalMBID&
                 signal_only_this_artist_mbid()
                 {
-                    return _signal_1 ;
+                    return signal_1 ;
                 }
 
                 SignalID&
                 signal_refetch_cover()
                 {
-                    return _signal_2 ;
+                    return signal_2 ;
                 }
 
                 SignalVoid&
@@ -630,6 +635,11 @@ class Class
                 void
                 clear_selection(
                 ) ;
+
+		void
+		set_album_fetching(
+		      guint
+		) ;
 
                 void
                 clear_selection_quiet(

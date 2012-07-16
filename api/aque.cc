@@ -293,6 +293,14 @@ namespace
 
                 constraints.push_back(c) ;
             }
+	    else
+            if( attribute == "location" )
+            {
+                c.TargetAttr = ATTRIBUTE_LOCATION ;
+                c.TargetValue = value ;
+
+                constraints.push_back(c) ;
+            }
             else
             if( attribute == "bitrate" )
             {

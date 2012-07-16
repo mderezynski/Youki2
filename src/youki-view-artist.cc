@@ -126,6 +126,10 @@ namespace Artist
 		, artist_mbid
 		, s1 
 		, s2 
+		, 0
+		, 0
+		, boost::optional<Gdk::RGBA>()
+		, m_animation_timer.elapsed()
 	    ) ;
 
 	    m_base_model->push_back(r);
@@ -138,12 +142,7 @@ namespace Artist
 		m_mbid_map.insert(std::make_pair( artist_mbid, i)) ;
 	    }
 
-	    auto a = m_Images.get(artist_mbid,false) ;
-
-	    if(a.get_image())
-	    {
-		handle_got_artist_image(artist_mbid,a) ;
-	    }
+	    m_Images.queue(artist_mbid) ;
 	}
 
 	void
@@ -495,6 +494,7 @@ namespace Artist
 	    , const ThemeColor&			    color_sel
 	    , const ThemeColor&			    color_sel_bg
 	    , const TCVector_sp&		    constraints
+	    , double				    animation_alpha
 	)
 	{
 	    using boost::get ;
@@ -562,8 +562,8 @@ namespace Artist
 		    , m_rounding
 		) ;
 
-	    cairo->set_line_width(selected?6:1) ;
-	    Gdk::Cairo::set_source_rgba(cairo, selected?color_sel:Util::make_rgba(0.,0.,0.)) ; 
+	    cairo->set_line_width(2) ;
+	    Gdk::Cairo::set_source_rgba(cairo, selected?color_sel_bg:Util::make_rgba(0.,0.,0.)) ; 
 	    cairo->stroke() ;
 	    cairo->restore() ;
 
@@ -578,7 +578,8 @@ namespace Artist
 		, m_rounding 
 	    ) ;
 	    cairo->set_source(surface, 0, -18) ;
-	    cairo->fill() ;
+	    cairo->clip() ;
+	    cairo->paint_with_alpha(animation_alpha) ;
 	    cairo->restore() ;
 
 	    cairo->save() ;
@@ -666,7 +667,7 @@ namespace Artist
 	    cairo->translate( 0, y ) ;
 	    cairo->move_to(
 		  (widget.get_allocated_width()-width)/2. 
-		, (row_height-height) - 14 
+		, (row_height-height) - 8 
 	    );
 	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(1,1,1,1)) ; 
 	    pango_cairo_show_layout(cairo->cobj(), layout->gobj());
@@ -711,7 +712,7 @@ namespace Artist
 					    , context->get_language()
 	    ) ;
 
-	    m_height__row = 82 ;
+	    m_height__row = 76 ;
 
 	    m_height__headers = 0 ;
 #if 0
@@ -1287,39 +1288,15 @@ namespace Artist
 
 		int is_selected = (m_selection && get<S_ID>(*m_selection) == get<S_ID>(**iter)) ;
 
-#if 0
-		if( is_selected )
-		{
-		    rr.y = ypos ;
-
-		    theme->draw_selection_rectangle(
-			  cairo
-			, rr
-			, has_focus()
-			, 0
-			, MPX::CairoCorners::CORNERS(0)
-		    ) ;
-		}
-#endif
-
-#if 0
-		else
-		if(d_cur%2)
-		{
-		    rr.y = ypos ;
-
-		    cairo->rectangle(
-			  rr.x
-			, rr.y
-			, rr.width
-			, rr.height
-		    ) ;
-		    Gdk::Cairo::set_source_rgba( cairo, c_rules_hint ) ;
-		    cairo->fill() ;
-		}
-#endif
-
 		xpos = 0 ;
+
+		double timer_val = m_model->m_animation_timer.elapsed() - boost::get<8>((**iter)) ;
+		double anim_alpha = 1 ;
+
+		if( timer_val <= 0.7 )
+		{
+		    anim_alpha = (2.0 - std::cos ((timer_val/0.7) * G_PI)) / 2.0;
+		}
 
 		for( auto& c : m_columns )
 		{
@@ -1336,6 +1313,7 @@ namespace Artist
 			, is_selected ? c_text : c_text_sel
 			, c_sel_bg
 			, m_model->m_constraints_artist
+			, anim_alpha
 		    ) ;
 
 		    xpos += c->get_width();
