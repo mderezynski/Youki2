@@ -44,7 +44,6 @@ namespace RM
 
 	    if( Glib::file_test( thumb_path, Glib::FILE_TEST_EXISTS))
 	    {
-		g_message("%s: MBID '%s' in cache", G_STRLOC, key.mbid.c_str()) ;
 		img = Gdk::Pixbuf::create_from_file (thumb_path);
 	    }
 

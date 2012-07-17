@@ -543,32 +543,6 @@ namespace Artist
 
 	    cairo->save() ;
 	    cairo->translate( x, y ) ;
-	    if( selected )
-		RoundedRectangle(
-		      cairo
-		    , -1
-		    , -1
-		    , 128
-		    , 72
-		    , m_rounding
-		) ;
-	    else
-		RoundedRectangle(
-		      cairo
-		    , 0
-		    , 0
-		    , 126
-		    , 70
-		    , m_rounding
-		) ;
-
-	    cairo->set_line_width(2) ;
-	    Gdk::Cairo::set_source_rgba(cairo, selected?color_sel_bg:Util::make_rgba(0.,0.,0.)) ; 
-	    cairo->stroke() ;
-	    cairo->restore() ;
-
-	    cairo->save() ;
-	    cairo->translate( x, y ) ;
 	    RoundedRectangle(
 		  cairo
 		, 0
@@ -581,6 +555,25 @@ namespace Artist
 	    cairo->clip() ;
 	    cairo->paint_with_alpha(animation_alpha) ;
 	    cairo->restore() ;
+
+	    //////////
+
+	    cairo->save() ;
+	    cairo->translate( x, y ) ;
+	    RoundedRectangle(
+		  cairo
+		, 0
+		, 0
+		, 126
+		, 70
+		, m_rounding
+	    ) ;
+	    cairo->set_line_width(3) ;
+	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(0.,0.,0.)) ; 
+	    cairo->stroke() ;
+	    cairo->restore() ;
+
+	    //////////
 
 	    cairo->save() ;
 	    cairo->translate( x, y ) ;
@@ -598,7 +591,7 @@ namespace Artist
 		, 0 
 		, 0 
 		, 0
-		, 0.25 
+		, 0.15 
 	    ) ;
 	    gradient->add_color_stop_rgba(
 		  0.66
@@ -658,7 +651,7 @@ namespace Artist
 	    if( selected )
 		Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(color_sel_bg,0.75)) ;
 	    else
-		cairo->set_source_rgba(.3,.3,.3,0.55) ;
+		cairo->set_source_rgba(.3,.3,.3,0.85) ;
 
 	    cairo->fill() ;
 	    cairo->restore() ;
@@ -667,7 +660,7 @@ namespace Artist
 	    cairo->translate( 0, y ) ;
 	    cairo->move_to(
 		  (widget.get_allocated_width()-width)/2. 
-		, (row_height-height) - 8 
+		, (row_height-height) - 12 
 	    );
 	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(1,1,1,1)) ; 
 	    pango_cairo_show_layout(cairo->cobj(), layout->gobj());
@@ -712,7 +705,7 @@ namespace Artist
 					    , context->get_language()
 	    ) ;
 
-	    m_height__row = 76 ;
+	    m_height__row = 82 ;
 
 	    m_height__headers = 0 ;
 #if 0
@@ -1830,6 +1823,8 @@ namespace Artist
 
 	    m_SearchWindow->add( *m_SearchEntry ) ;
 	    m_SearchEntry->show() ;
+
+	    Glib::signal_timeout().connect( sigc::bind_return( sigc::mem_fun( *this, &Gtk::Widget::queue_draw), true), 30) ;
 	}
 }
 }

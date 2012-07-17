@@ -44,6 +44,12 @@ ADD_CUSTOM_COMMAND(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/mpx-app-dbus-adaptor.hh
 )
 
 SET(youki_bin_SOURCES
+  Elastic.cpp
+  Bounce.cpp
+  Expo.cpp
+  Quart.cpp
+  Sine.cpp
+  Circ.cpp
   rm-covers.cc
   rm-covers-stores.cc
   glib-marshalers.h

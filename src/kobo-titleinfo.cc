@@ -299,6 +299,7 @@ namespace MPX
 		, 0 
 		, 0 
 	    ) ;
+/*
 	    gradient->add_color_stop_rgba(
 		  0.10
 		, 0 
@@ -313,6 +314,7 @@ namespace MPX
 		, 0 
 		, 1 
 	    ) ;
+*/
 	    gradient->add_color_stop_rgba(
 		  1 
 		, 0 

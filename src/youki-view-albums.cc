@@ -15,6 +15,11 @@
 #include "mpx/algorithm/vector_compare.hh"
 #include <cmath>
 
+#include "Quart.h"
+#include "Sine.h"
+#include "Expo.h"
+#include "Circ.h"
+
 namespace
 {
     enum ReleaseType
@@ -577,14 +582,16 @@ namespace Albums
 	    auto icon_desaturated_1 =
 		Util::cairo_image_surface_to_pixbuf( album->coverart ? album->coverart : m_image_disc ) ; 
 
+/*
 	    auto icon_desaturated_2 =
 		icon_desaturated_1->copy() ;
 
 	    auto icon =
 		icon_desaturated_1->copy() ; 
+*/
 
-	    icon->saturate_and_pixelate(icon_desaturated_1, 0.55, false) ;
-	    icon->saturate_and_pixelate(icon_desaturated_2, 0.25, false) ;
+	    icon_desaturated_1->saturate_and_pixelate(icon_desaturated_1, 0.95, false) ;
+	    //icon->saturate_and_pixelate(icon_desaturated_2, 0.25, false) ;
 
 	    cairo->set_operator(Cairo::OPERATOR_OVER) ;
 	    cairo->set_source(
@@ -598,7 +605,8 @@ namespace Albums
 		, 256
 		, 114
 	    ) ;
-	    cairo->fill() ;
+	    cairo->clip() ;
+	    cairo->paint_with_alpha(0.8) ;
 
 #if 0
 	    album->surface_cache_blur = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, 256, 114) ;
@@ -727,26 +735,11 @@ namespace Albums
 
 	    //////////
 
-	    cairo->save() ;
-	    RoundedRectangle(
-		  cairo
-		, 5   
-		, 3   
-		, 247 
-		, 102 
-		, m_rounding
-	    ) ;
-	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(0,0,0,1)) ;
-	    cairo->set_line_width(3) ;
-	    cairo->stroke() ;
-	    cairo->restore() ;
-
-	    //////////
-
-	    if(1) // !album->caching )
+	    if(1)
 	    {
 		cairo->save() ;
-		cairo->set_source(album->surface_cache,0,0) ;
+		//cairo->set_source(album->surface_cache,0,-10 + (animation_alpha*10)) ;
+		cairo->set_source(album->surface_cache,0,0);
 		RoundedRectangle(
 		      cairo
 		    , 5 
@@ -759,6 +752,8 @@ namespace Albums
 		cairo->paint_with_alpha(animation_alpha) ;
 		cairo->restore() ;	
 
+		//////////
+
 		RoundedRectangle(
 		      cairo
 		    , 5 
@@ -767,8 +762,6 @@ namespace Albums
 		    , 102
 		    , m_rounding
 		) ;
-
-		//////////
 
 		auto gradient = Cairo::LinearGradient::create( 96, 3, 96, 84 ) ;
 
@@ -826,15 +819,33 @@ namespace Albums
 		RoundedRectangle(
 		      cairo
 		    , 5
-		    , 65
+		    , 61
 		    , 247  
-		    , 42 
+		    , 46 
 		    , m_rounding
 		    , MPX::CairoCorners::CORNERS(12)
 		) ;
 		cairo->fill() ;
 		cairo->restore() ;
 	    }
+
+	    //////////
+
+	    cairo->save() ;
+	    RoundedRectangle(
+		  cairo
+		, 5   
+		, 3   
+		, 247 
+		, 102 
+		, m_rounding
+	    ) ;
+	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(0,0,0,1)) ;
+	    cairo->set_line_width(3) ;
+	    cairo->stroke() ;
+	    cairo->restore() ;
+
+	    //////////
 
 	    if( album->caching )
 	    {
@@ -854,7 +865,7 @@ namespace Albums
 	    //////////
 
 	    cairo->save() ;
-	    cairo->translate(0,68) ;
+	    cairo->translate(0,66) ;
 	    layout[L2]->set_text( album->album ) ;
 	    layout[L2]->get_pixel_size( width, height );
 	    cairo->move_to(
@@ -868,7 +879,7 @@ namespace Albums
 	    //////////
 
 	    cairo->save() ;
-	    cairo->translate(0,85) ;
+	    cairo->translate(0,83) ;
 	    layout[L1]->set_text( album->album_artist );
 	    layout[L1]->get_pixel_size( width, height );
 	    cairo->move_to(
@@ -1426,7 +1437,7 @@ namespace Albums
 	    if( property_vadjustment().get_value() )
 	    {
 		property_vadjustment().get_value()->freeze_notify() ;
-		property_vadjustment().get_value()->set_upper(6+((upper<page_size)?page_size:upper)) ;
+		property_vadjustment().get_value()->set_upper(((upper<page_size)?page_size:upper)) ;
 		property_vadjustment().get_value()->set_page_size( page_size ) ; 
 		property_vadjustment().get_value()->thaw_notify() ;
 	    }
@@ -1490,49 +1501,37 @@ namespace Albums
 	    guint d_max   = std::min<guint>( m_model->size(), ViewMetrics.ViewPort.size() + 1 );
 	    gint  ypos	  = 0;
 	    gint  offset  = ViewMetrics.ViewPortPx.upper() - (d*ViewMetrics.RowHeight);
+	    guint ibar    = d ;
 	   
 	    if( offset )
 	    {
 		ypos  -= offset;
 		d_max += 1;
+
+		if( offset ) 
+		    ++ibar ;
 	    }
 
-#if 0
-	    /* Let's see if we can save some rendering */	
-	    double clip_x1, clip_y1, clip_x2, clip_y2;
-	
-	    cairo->get_clip_extents( clip_x1, clip_y1, clip_x2, clip_y2 );
-
-	    if( clip_y1 > 0 && clip_y2 == ViewMetrics.ViewPortPx.lower() )
+	    if(m_model->size() && ((ibar==0&&offset>32)) || (ibar>0)) 
 	    {
-		guint d_clip = clip_y1 / ViewMetrics.RowHeight;
-		ypos += d_clip * ViewMetrics.RowHeight;
-		d += d_clip;
-		d_max -= (d_clip-1) ;
+		cairo->push_group() ;
 	    }
-	    else
-	    if( clip_y1 == 0 && clip_y2 < ViewMetrics.ViewPortPx.lower() )
-	    {
-		guint d_clip = clip_y2 / ViewMetrics.RowHeight;
-		d_max = d_clip+1 ;
-	    }
-#endif
 
 	    guint n = 0;
 	    Algorithm::Adder<guint> d_cur( d, n );
-
 	    RowRowMapping_t::const_iterator i = m_model->iter( d_cur );
 
 	    while( n < d_max && d_cur < m_model->size()) 
 	    {
 		int selected = m_selection && boost::get<Selection::INDEX>(m_selection.get()) == d_cur;
 
-		double timer_val = m_model->m_animation_timer.elapsed() - (**i)->animation_time ;
-		double anim_alpha = 1 ;
+		double time_snapshot = (m_model->m_animation_timer.elapsed() - (**i)->animation_time) ;
 
-		if( timer_val <= 0.7 )
+		double time_animation_alpha = 1 ;
+
+		if (time_snapshot < 0.35) 
 		{
-		    anim_alpha = (2.0 - std::cos ((timer_val/0.7) * G_PI)) / 2.0;
+		    time_animation_alpha = Expo::easeIn( time_snapshot*1000, 0, 1000, 350)/1000. ;
 		}
 
 		m_columns[0]->render(
@@ -1549,13 +1548,120 @@ namespace Albums
 		    , ModelCount(m_model->m_base_model->size())
 		    , selected
 		    , m_model->m_constraints_albums
-		    , anim_alpha
+		    , time_animation_alpha
 		);
 
 		ypos += ViewMetrics.RowHeight;
 
 		++n;
 		++i;
+	    }
+
+	    if(m_model->size() && ((ibar==0&&offset>32)) || (ibar>0)) 
+	    {
+		cairo->pop_group_to_source() ;
+
+		auto gradient2 = Cairo::LinearGradient::create( get_allocated_width()/2., 0, get_allocated_width()/2., get_allocated_height()) ;
+
+		gradient2->add_color_stop_rgba(
+		      0
+		    , 0
+		    , 0
+		    , 0
+		    , 0
+		) ;
+		gradient2->add_color_stop_rgba(
+		      0.05
+		    , 0
+		    , 0
+		    , 0
+		    , 0
+		) ;
+		gradient2->add_color_stop_rgba(
+		      0.15 
+		    , 0
+		    , 0
+		    , 0
+		    , 0.9 
+		) ;
+		gradient2->add_color_stop_rgba(
+		      1 
+		    , 0
+		    , 0
+		    , 0
+		    , 1 
+		) ;
+
+		cairo->mask(gradient2) ;
+	    }
+
+	    if(m_model->size() && ((ibar==0&&offset>32)) || (ibar>0)) 
+	    {
+		cairo->reset_clip() ;
+
+		Album_sp a = m_model->row(ibar) ;
+
+		std::string const& album_artist = a->album_artist ;
+		
+		const int text_size_px = 15 ; 
+		const int text_size_pt = static_cast<int> ((text_size_px * 72)/ Util::screen_get_y_resolution(Gdk::Screen::get_default())) ;
+						
+		Pango::FontDescription font_desc ; 
+
+		Glib::RefPtr<Pango::Layout> layout  = Glib::wrap( pango_cairo_create_layout(cairo->cobj())) ;
+
+		font_desc = get_style_context()->get_font();
+		font_desc.set_size( text_size_pt * PANGO_SCALE );
+		font_desc.set_stretch( Pango::STRETCH_CONDENSED );
+		font_desc.set_variant( Pango::VARIANT_SMALL_CAPS ) ;
+		font_desc.set_weight( Pango::WEIGHT_BOLD ) ;
+
+		layout->set_font_description( font_desc );
+		layout->set_ellipsize( Pango::ELLIPSIZE_END );
+
+		layout->set_width((get_allocated_width()-4) * PANGO_SCALE);
+
+		layout->set_text(album_artist) ;
+
+		int width, height ;
+		layout->get_pixel_size( width, height );
+
+		cairo->rectangle(
+		      0
+		    , 0
+		    , get_allocated_width()
+		    , height + 14
+		) ;
+
+		auto gradient = Cairo::LinearGradient::create( get_allocated_width()/2., 0, get_allocated_width()/2., height+14 ) ;
+
+		gradient->add_color_stop_rgba(
+		      0
+		    , 0.3 
+		    , 0.3
+		    , 0.3
+		    , 1
+		) ;
+		gradient->add_color_stop_rgba(
+		      0.75
+		    , 0.3
+		    , 0.3
+		    , 0.3
+		    , 0.83
+		) ;
+		gradient->add_color_stop_rgba(
+		      1. 
+		    , 0
+		    , 0
+		    , 0
+		    , 0.05
+		) ;
+		cairo->set_source(gradient) ;
+		cairo->fill() ;
+
+		cairo->set_source_rgba(1,1,1,1) ;
+		cairo->move_to( (get_allocated_width()-width)/2., 5 ) ;
+		pango_cairo_show_layout(cairo->cobj(), layout->gobj()) ;
 	    }
 
 	    if( !is_sensitive() )
@@ -1957,11 +2063,13 @@ namespace Albums
 		Album_sp album = m_model->row(d) ; 
 
 		album->caching = true;
+		album->coverart.clear() ;
+		album->surface_cache.clear() ;
 
 		m_caching.insert (album->album_id.get());
 
 		m_redraw_spinner_conn.disconnect();
-		m_redraw_spinner_conn = Glib::signal_timeout().connect( sigc::mem_fun( *this, &Class::handle_redraw ), 30 );
+		m_redraw_spinner_conn = Glib::signal_timeout().connect( sigc::mem_fun( *this, &Class::handle_redraw ), 40 );
 
 		signal_2.emit (album->album_id.get());
 	    }
@@ -1976,7 +2084,7 @@ namespace Albums
 
 	    if(!m_redraw_spinner_conn)
 	    {
-		m_redraw_spinner_conn = Glib::signal_timeout().connect( sigc::mem_fun( *this, &Class::handle_redraw ), 30 );
+		m_redraw_spinner_conn = Glib::signal_timeout().connect( sigc::mem_fun( *this, &Class::handle_redraw ), 40 );
 	    }
 	}
 
@@ -1986,7 +2094,7 @@ namespace Albums
 	    m_columns[0]->m_image_album_loading_iter->advance();
 
 	    queue_draw();
-
+	    gdk_flush();
 	    while(gtk_events_pending()) gtk_main_iteration();
 
 	    if(m_caching.empty())

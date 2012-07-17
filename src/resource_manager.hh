@@ -109,7 +109,7 @@ private:
 		{
 		    // Schedule update and notification in run in main thread
 		    m_connection_notify.disconnect() ;
-		    m_connection_notify = Glib::signal_timeout ().connect (sigc::mem_fun (this, &ResourceRetriever::notify), 333);
+		    m_connection_notify = Glib::signal_timeout().connect (sigc::mem_fun (this, &ResourceRetriever::notify), 1000);
 		}
             }
 
@@ -121,7 +121,7 @@ private:
     {
 	guint counter = 0 ;
 
-        while (counter < 5 && !m_results.empty ()) {
+        while (counter < 20 && !m_results.empty ()) {
             // Get object in retrieval queue
             auto result = m_results.front ();
             m_results.pop ();
