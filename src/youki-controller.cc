@@ -97,9 +97,8 @@ namespace
     "		<menuitem action='ContextShowArtistSimilar'/>"
     "	    </menu>" 
     "       <separator/>"
-    "       <menuitem action='ContextLoadXSPF'/>"
-    "       <separator/>"
     "       <menuitem action='ContextSaveXSPF'/>"
+    "       <menuitem action='ContextLoadXSPF'/>"
     "       <menuitem action='ContextXSPFSaveHistory'/>"
      "</popup>"
     "</ui>"
@@ -1292,7 +1291,7 @@ namespace MPX
 	    }
 	    else
 	    {
-		m_Entry->set_placeholder_text((boost::format("%s '%s'") % _("Type to search... for example") % s).str()) ;
+		m_Entry->set_placeholder_text((boost::format("%s '%s'") % _("Type to search... try") % s).str()) ;
 	    }
 	}	
 	// else we keep the current text
@@ -2068,6 +2067,7 @@ namespace MPX
             v.clear();
             m_library->getSQL(v, (boost::format("SELECT location AS uri FROM track_view WHERE mpx_album_id = '%u'") % p->id ).str()) ; 
 
+	    m_ListViewAlbums->set_album_caching(a_sp) ;
             private_->FilterModelAlbums->insert_album( a_sp ) ; 
 
 	    MPX::RM::RequestQualifier rq ; 

@@ -32,6 +32,32 @@
 
 namespace
 {
+    boost::optional<time_t>
+    parse_date(
+	  const std::string& value
+    )
+    {
+	MPX::StrV v ;
+	boost::algorithm::split( v, value, boost::algorithm::is_any_of(".")) ;
+
+	if( v.size() == 3 )
+	{
+	    GDate * date = g_date_new() ;
+
+	    g_date_set_parse(date, value.c_str()) ;
+
+	    if(g_date_valid(date))
+	    {
+		struct tm tm ;
+		g_date_to_struct_tm(date, &tm) ;
+		time_t epoch = mktime(&tm) ;
+		return epoch ;
+	    }
+	}
+
+	return boost::optional<time_t>() ;
+    }
+
     MPX::OVariant
     _lastfm_tag_topalbums(
 	  const std::string& value
@@ -130,9 +156,13 @@ namespace
 
 	    Instance* Xml = new Instance(Glib::ustring( u )) ;
 
-	    for( auto& artist : Xml->xml().similarartists().artist() )
+	    guint c = 0 ;
+
+	    for( auto i : Xml->xml().similarartists().artist())
 	    {
-		s.insert( artist.name() ) ; 
+		s.insert(i.name()) ;
+		++c ;
+		if(c==10) break ;
 	    }
 
 	    delete Xml ;
@@ -140,8 +170,6 @@ namespace
 	catch(std::runtime_error& cxe){
 	    g_message("%s: RuntimeError: %s", G_STRLOC, cxe.what()) ;
 	}
-
-	g_message("Done!") ;
 
 	return MPX::OVariant(s) ;
     }
@@ -161,9 +189,13 @@ namespace
 
 	    Instance* Xml = new Instance(Glib::ustring( u )) ;
 
-	    for( auto& artist : Xml->xml().similarartists().artist() )
+	    guint c = 0 ;
+
+	    for( auto i : Xml->xml().similarartists().artist())
 	    {
-		s.insert( artist.mbid() ) ; 
+		s.insert(i.mbid()) ;
+		++c ;
+		if(c==10) break ;
 	    }
 
 	    delete Xml ;
@@ -361,26 +393,29 @@ namespace
             if( attribute == "added-at" )
             {
                 try{
-			StrV v ;
-			boost::algorithm::split( v, value, boost::algorithm::is_any_of(".")) ;
+			boost::optional<time_t> t_ = parse_date(value) ;
 
-			if( v.size() == 3 )
+			if(t_)
 			{
-			    GDate * date = g_date_new() ;
-			    g_date_set_parse(date, value.c_str()) ;
+			    c.TargetValue = (guint)(*t_) ; 
+			    c.TargetAttr = ATTRIBUTE_INSERT_DATE ;
+			    constraints.push_back(c) ;
+			}
 
-			    if(g_date_valid(date))
-			    {
-				struct tm tm ;
-				g_date_to_struct_tm(date, &tm) ;
+                } catch( boost::bad_lexical_cast ) {
+                }
+            }
+            else
+            if( attribute == "last-played-at" )
+            {
+                try{
+			boost::optional<time_t> t_ = parse_date(value) ;
 
-				guint epoch = mktime(&tm) ;
-
-				c.TargetValue = (guint)epoch ; 
-				c.TargetAttr = ATTRIBUTE_INSERT_DATE ;
-
-				constraints.push_back(c) ;
-			    }
+			if(t_)
+			{
+			    c.TargetValue = (guint)(*t_) ; 
+			    c.TargetAttr = ATTRIBUTE_PLAYDATE ;
+			    constraints.push_back(c) ;
 			}
 
                 } catch( boost::bad_lexical_cast ) {

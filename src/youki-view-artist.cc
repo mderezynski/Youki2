@@ -32,6 +32,8 @@ namespace Artist
 		Glib::RefPtr<Gdk::Pixbuf> icon_desaturated_1 = icon->copy() ; 
 		Glib::RefPtr<Gdk::Pixbuf> icon_desaturated_2 = icon->copy() ;
 
+		icon_desaturated_2->saturate_and_pixelate(icon_desaturated_2, 0.0, false) ;
+
 		Cairo::RefPtr<Cairo::ImageSurface>
 		      s1
 		    , s2
@@ -534,9 +536,9 @@ namespace Artist
 
 	    boost::optional<Gdk::RGBA>& c = boost::get<7>(r) ; 
 
-	    if(!c)
+	    if(!c && boost::get<3>(r))
 	    {
-		Glib::RefPtr<Gdk::Pixbuf> pb = Util::cairo_image_surface_to_pixbuf(surface) ;
+		Glib::RefPtr<Gdk::Pixbuf> pb = Util::cairo_image_surface_to_pixbuf(boost::get<3>(r)) ;
 		c = Util::pick_color_for_pixbuf(pb) ;
 		(*c).set_alpha(1) ;
 	    }
@@ -554,23 +556,6 @@ namespace Artist
 	    cairo->set_source(surface, 0, -18) ;
 	    cairo->clip() ;
 	    cairo->paint_with_alpha(animation_alpha) ;
-	    cairo->restore() ;
-
-	    //////////
-
-	    cairo->save() ;
-	    cairo->translate( x, y ) ;
-	    RoundedRectangle(
-		  cairo
-		, 0
-		, 0
-		, 126
-		, 70
-		, m_rounding
-	    ) ;
-	    cairo->set_line_width(3) ;
-	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(0.,0.,0.)) ; 
-	    cairo->stroke() ;
 	    cairo->restore() ;
 
 	    //////////
@@ -611,28 +596,71 @@ namespace Artist
 	    cairo->fill() ;
 	    cairo->restore() ;
 
-#if 0
 	    //////////
 
+	    cairo->save() ;
+	    cairo->translate( x, y ) ;
+	    RoundedRectangle(
+		  cairo
+		, 0
+		, 46
+		, 126
+		, 24
+		, m_rounding 
+		, MPX::CairoCorners::CORNERS(12)
+	    ) ;
+
 	    if( selected )
+		Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(color_sel_bg,0.95)) ;
+	    else
+		cairo->set_source_rgba(.3,.3,.3,0.95) ;
+
+	    cairo->fill() ;
+	    cairo->restore() ;
+
+	    //////////
+
+#if 0
+	    if(c)
 	    {
 		cairo->save() ;
 		cairo->translate( x, y ) ;
+
+		cairo->rectangle(
+		      0
+		    , 0
+		    , 126
+		    , 50
+		) ;
+		cairo->clip() ;
+
 		RoundedRectangle(
 		      cairo
 		    , 0
 		    , 0
 		    , 126
-		    , 70
-		    , m_rounding
+		    , 55
+		    , m_rounding 
+		    , MPX::CairoCorners::CORNERS(3)
 		) ;
-		cairo->set_source(
-		      m_image_lensflare, 0, -16
-		) ;
-		cairo->fill() ;
+
+		Gdk::Cairo::set_source_rgba(cairo,boost::ref(*c)) ;
+		cairo->paint_with_alpha(0.3) ;
 		cairo->restore() ;
 	    }
 #endif
+
+	    //////////
+
+	    cairo->save() ;
+	    cairo->translate( 0, y ) ;
+	    cairo->move_to(
+		  (widget.get_allocated_width()-width)/2. 
+		, (row_height-height) - 16 
+	    );
+	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(1,1,1,1)) ; 
+	    pango_cairo_show_layout(cairo->cobj(), layout->gobj());
+	    cairo->restore() ;
 
 	    //////////
 
@@ -641,29 +669,19 @@ namespace Artist
 	    RoundedRectangle(
 		  cairo
 		, 0
-		, 50
+		, 0
 		, 126
-		, 20
-		, m_rounding 
-		, MPX::CairoCorners::CORNERS(12)
+		, 70
+		, m_rounding
 	    ) ;
+	    cairo->set_line_width(3) ;
 
 	    if( selected )
-		Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(color_sel_bg,0.75)) ;
+		Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(color_sel_bg,0.95)) ;
 	    else
-		cairo->set_source_rgba(.3,.3,.3,0.85) ;
+		cairo->set_source_rgba(.3,.3,.3,0.95) ;
 
-	    cairo->fill() ;
-	    cairo->restore() ;
-
-	    cairo->save() ;
-	    cairo->translate( 0, y ) ;
-	    cairo->move_to(
-		  (widget.get_allocated_width()-width)/2. 
-		, (row_height-height) - 12 
-	    );
-	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(1,1,1,1)) ; 
-	    pango_cairo_show_layout(cairo->cobj(), layout->gobj());
+	    cairo->stroke() ;
 	    cairo->restore() ;
 	}
 

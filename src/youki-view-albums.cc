@@ -590,7 +590,7 @@ namespace Albums
 		icon_desaturated_1->copy() ; 
 */
 
-	    icon_desaturated_1->saturate_and_pixelate(icon_desaturated_1, 0.95, false) ;
+	    icon_desaturated_1->saturate_and_pixelate(icon_desaturated_1, 0.90, false) ;
 	    //icon->saturate_and_pixelate(icon_desaturated_2, 0.25, false) ;
 
 	    cairo->set_operator(Cairo::OPERATOR_OVER) ;
@@ -652,7 +652,7 @@ namespace Albums
 	)
 	{
 	    enum { L1, L2, L3, N_LS } ;
-	    const int text_size_px[N_LS] = { 15, 15, 12 };
+	    const int text_size_px[N_LS] = { 15, 16, 12 };
 	    const int text_size_pt[N_LS] = {   static_cast<int> ((text_size_px[L1] * 72)
 						    / Util::screen_get_y_resolution(Gdk::Screen::get_default()))
 					     , static_cast<int> ((text_size_px[L2] * 72)
@@ -798,33 +798,17 @@ namespace Albums
 
 		//////////
 
-		if(0) // ( selected )
-		{
-		    RoundedRectangle(
-			  cairo
-			, 5 
-			, 3 
-			, 247
-			, 86
-			, m_rounding
-		    ) ;
-		    cairo->set_source(m_image_lensflare,0,0) ;
-		    cairo->fill() ;
-		}
-
-		//////////
-
 		cairo->save() ;
-		Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(selected?c5:Util::make_rgba(0,0,0,1),selected?.8:.7)) ;
 		RoundedRectangle(
 		      cairo
 		    , 5
-		    , 61
+		    , 59
 		    , 247  
 		    , 46 
 		    , m_rounding
 		    , MPX::CairoCorners::CORNERS(12)
 		) ;
+		Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(selected?c5:Util::make_rgba(0,0,0,1),.7)) ;
 		cairo->fill() ;
 		cairo->restore() ;
 	    }
@@ -840,8 +824,8 @@ namespace Albums
 		, 102 
 		, m_rounding
 	    ) ;
-	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(0,0,0,1)) ;
 	    cairo->set_line_width(3) ;
+	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(selected?c5:Util::make_rgba(0,0,0,1),.7)) ;
 	    cairo->stroke() ;
 	    cairo->restore() ;
 
@@ -865,7 +849,7 @@ namespace Albums
 	    //////////
 
 	    cairo->save() ;
-	    cairo->translate(0,66) ;
+	    cairo->translate(0,64) ;
 	    layout[L2]->set_text( album->album ) ;
 	    layout[L2]->get_pixel_size( width, height );
 	    cairo->move_to(
@@ -1112,15 +1096,17 @@ namespace Albums
 	    GdkEventFocus* G_GNUC_UNUSED
 	)
 	{
+#if 0
 	    if( m_selection )
 	    { 
 		guint d = boost::get<2>(m_selection.get()) ;
 
-		if(( d <= ViewMetrics.ViewPort.upper())||(d > ViewMetrics.ViewPort.lower()))
+		if (!ViewMetrics.ViewPort(d))
 		{
 		    scroll_to_index(d) ;
 		}
 	    }
+#endif
 
 	    return false ;
 	}
@@ -1394,24 +1380,33 @@ namespace Albums
 		vadj_value_set( std::min<int>(vadj_upper(), ViewMetrics.ViewPortPx.upper() + ViewMetrics.RowHeight + (ViewMetrics.RowHeight - ymod) - ViewMetrics.Excess ));
 	    }
 
-	    if( event->button == 1 && (event->type == GDK_2BUTTON_PRESS) && m_selection )
+	    if( event->button == 1 && (m_selection && (get<Selection::INDEX>(m_selection.get()) == d)))
 	    {
-		m_SIGNAL_start_playback.emit() ;
+		clear_selection();
 	    }
+	    else
+	    if( m_selection && (get<Selection::INDEX>(m_selection.get()) != d))
+	    {
+		guint idx = get<Selection::INDEX>(*m_selection) ;
 
-	    if( (!m_selection || (get<Selection::INDEX>(m_selection.get()) != d)))
+		if (!ViewMetrics.ViewPort(idx))
+		{
+		    clear_selection() ;
+		}
+		else
+		{
+		    if( ModelExtents( d ))
+		    {
+			select_index( d );
+		    }
+		}
+	    }
+	    else
+	    if( !m_selection ) 
 	    {
 		if( ModelExtents( d ))
 		{
 		    select_index( d );
-		}
-	    }
-	    else
-	    if( event->button == 1 && (m_selection && (get<Selection::INDEX>(m_selection.get()) == d)))
-	    {
-		if( has_focus() )
-		{
-		    clear_selection();
 		}
 	    }
 
@@ -1437,7 +1432,7 @@ namespace Albums
 	    if( property_vadjustment().get_value() )
 	    {
 		property_vadjustment().get_value()->freeze_notify() ;
-		property_vadjustment().get_value()->set_upper(((upper<page_size)?page_size:upper)) ;
+		property_vadjustment().get_value()->set_upper(((upper<page_size)?page_size:(upper+6))) ;
 		property_vadjustment().get_value()->set_page_size( page_size ) ; 
 		property_vadjustment().get_value()->thaw_notify() ;
 	    }
@@ -1512,10 +1507,12 @@ namespace Albums
 		    ++ibar ;
 	    }
 
+#if 0
 	    if(m_model->size() && ((ibar==0&&offset>32)) || (ibar>0)) 
 	    {
 		cairo->push_group() ;
 	    }
+#endif
 
 	    guint n = 0;
 	    Algorithm::Adder<guint> d_cur( d, n );
@@ -1529,9 +1526,9 @@ namespace Albums
 
 		double time_animation_alpha = 1 ;
 
-		if (time_snapshot < 0.35) 
+		if (time_snapshot < 0.200) 
 		{
-		    time_animation_alpha = Expo::easeIn( time_snapshot*1000, 0, 1000, 350)/1000. ;
+		    time_animation_alpha = Circ::easeIn( time_snapshot*1000, 350, 1000, 200)/1000. ;
 		}
 
 		m_columns[0]->render(
@@ -1557,6 +1554,7 @@ namespace Albums
 		++i;
 	    }
 
+#if 0
 	    if(m_model->size() && ((ibar==0&&offset>32)) || (ibar>0)) 
 	    {
 		cairo->pop_group_to_source() ;
@@ -1663,6 +1661,7 @@ namespace Albums
 		cairo->move_to( (get_allocated_width()-width)/2., 5 ) ;
 		pango_cairo_show_layout(cairo->cobj(), layout->gobj()) ;
 	    }
+#endif
 
 	    if( !is_sensitive() )
 	    {
@@ -2061,18 +2060,22 @@ namespace Albums
 	    if(ModelExtents(d)) 
 	    {
 		Album_sp album = m_model->row(d) ; 
-
-		album->caching = true;
-		album->coverart.clear() ;
-		album->surface_cache.clear() ;
-
-		m_caching.insert (album->album_id.get());
-
-		m_redraw_spinner_conn.disconnect();
-		m_redraw_spinner_conn = Glib::signal_timeout().connect( sigc::mem_fun( *this, &Class::handle_redraw ), 40 );
-
+		set_album_caching (album) ;
 		signal_2.emit (album->album_id.get());
 	    }
+	}
+
+	void
+	Class::set_album_caching(
+	      Album_sp	album
+	)
+	{
+	    album->caching = true;
+	    album->coverart.clear() ;
+	    album->surface_cache.clear() ;
+	    m_caching.insert (album->album_id.get());
+	    m_redraw_spinner_conn.disconnect();
+	    m_redraw_spinner_conn = Glib::signal_timeout().connect( sigc::mem_fun( *this, &Class::handle_redraw ), 30 );
 	}
 
 	void
@@ -2084,7 +2087,7 @@ namespace Albums
 
 	    if(!m_redraw_spinner_conn)
 	    {
-		m_redraw_spinner_conn = Glib::signal_timeout().connect( sigc::mem_fun( *this, &Class::handle_redraw ), 40 );
+		m_redraw_spinner_conn = Glib::signal_timeout().connect( sigc::mem_fun( *this, &Class::handle_redraw ), 30 );
 	    }
 	}
 
@@ -2094,7 +2097,7 @@ namespace Albums
 	    m_columns[0]->m_image_album_loading_iter->advance();
 
 	    queue_draw();
-	    gdk_flush();
+
 	    while(gtk_events_pending()) gtk_main_iteration();
 
 	    if(m_caching.empty())

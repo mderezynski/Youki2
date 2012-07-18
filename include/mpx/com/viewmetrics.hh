@@ -4,6 +4,7 @@
 #define MPX_VIEW_METRICS_HH
 
 #include <glib.h>
+#include "mpx/algorithm/range.hh"
 
 namespace MPX
 {

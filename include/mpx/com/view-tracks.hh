@@ -1172,6 +1172,7 @@ namespace Tracks
 		    {
 			id = scroll_id ;
 		    }
+		    else
 		    if( m_mapping && m_upper_bound < m_mapping->size() )
 		    {
 			id = row(m_upper_bound)->ID ;
@@ -3467,11 +3468,11 @@ namespace Tracks
                         sigc::mem_fun(*this, &Class::on_remove_track_from_queue)) ;
                     m_ActionGroup->add( Gtk::Action::create("ContextClearQueue", "Clear Queue"),
                         sigc::mem_fun(*this, &Class::on_clear_queue)) ;
-                    m_ActionGroup->add( Gtk::Action::create("ContextSaveXSPF", "Save Queue to XSPF Playlist"),
+                    m_ActionGroup->add( Gtk::Action::create("ContextSaveXSPF", "XSPF: Save Queue"),
                         sigc::mem_fun(*this, &Class::on_save_xspf)) ;
-                    m_ActionGroup->add( Gtk::Action::create("ContextXSPFSaveHistory", "Save History to XSPF Playlist"),
+                    m_ActionGroup->add( Gtk::Action::create("ContextXSPFSaveHistory", "XSPF: Save History"),
                         sigc::mem_fun(*this, &Class::on_save_xspf_history)) ;
-                    m_ActionGroup->add( Gtk::Action::create("ContextLoadXSPF", "Load XSPF Playlist"),
+                    m_ActionGroup->add( Gtk::Action::create("ContextLoadXSPF", "XSPF: Load Playlist"),
                         sigc::mem_fun(*this, &Class::on_load_xspf)) ;
                     m_ActionGroup->add( Gtk::Action::create("ContextQueueOpArtist", "Top Tracks for Artist"),
                         sigc::mem_fun(*this, &Class::on_enqueue_toptracks)) ;

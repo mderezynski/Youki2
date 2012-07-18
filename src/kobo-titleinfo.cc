@@ -232,8 +232,8 @@ namespace MPX
         Gdk::RGBA c2 = Util::color_from_hsb( h, s, b ) ;
 
         Util::color_to_hsb( cgdk, h, s, b ) ;
-        b *= 0.71 ;
-        s *= 0.82 ;
+        b *= 0.58 ;
+        s *= 0.60 ;
         Gdk::RGBA c3 = Util::color_from_hsb( h, s, b ) ;
 
         gradient->add_color_stop_rgba(
@@ -241,14 +241,14 @@ namespace MPX
             , c1.get_red()
             , c1.get_green()
             , c1.get_blue()
-            , alpha / 1.05
+            , alpha
         ) ;
         gradient->add_color_stop_rgba(
               .20
             , c2.get_red()
             , c2.get_green()
             , c2.get_blue()
-            , alpha / 1.05
+            , alpha
         ) ;
         gradient->add_color_stop_rgba(
               1 
