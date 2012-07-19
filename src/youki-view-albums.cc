@@ -148,7 +148,7 @@ namespace Albums
 	    m_base_model->push_back( album );
 	    Model_t::iterator i = m_base_model->end();
 	    std::advance( i, -1 );
-	    m_iter_map.insert( std::make_pair( *(album->album_id), i ));
+	    m_iter_map.insert( std::make_pair( album->album_id, i ));
 	}
 
 	void
@@ -166,15 +166,17 @@ namespace Albums
 	      , album
 	    );
 
-	    m_iter_map.insert( std::make_pair( *(album->album_id), i ));
+	    m_iter_map.insert( std::make_pair( album->album_id, i ));
 	}
 
 	void
-	DataModel::update_album(const Album_sp album)
+	DataModel::update_album(Album_sp album)
 	{
-	    if( album && m_iter_map.find( *(album->album_id)) != m_iter_map.end() )
+	    auto i = m_iter_map.find(album->album_id) ; 
+
+	    if( i != m_iter_map.end() )
 	    {
-		*(m_iter_map[*(album->album_id)]) = album;
+		*(m_iter_map[album->album_id]) = album ;
 		m_SIGNAL__redraw.emit();
 	    }
 	}
@@ -205,6 +207,9 @@ namespace Albums
 		if( album )
 		{
 		    album->caching = false;
+		    album->coverart.clear() ;
+
+		    m_SIGNAL__cover_updated.emit( id );
 		    m_SIGNAL__redraw.emit();
 		}
 	    }
@@ -228,7 +233,6 @@ namespace Albums
 
 		    album->coverart = is;
 		    album->surface_cache.clear();
-
 		    album->animation_time = m_animation_timer.elapsed() ;
 
 		    m_SIGNAL__cover_updated.emit( id );
@@ -377,7 +381,7 @@ namespace Albums
     
 	    if( !m_mapping.empty()) {
 		if( m_upper_bound < m_base_model->size() && row(m_upper_bound) && row(m_upper_bound)->album_id) {
-		    upper_bound_prev_id = row(m_upper_bound)->album_id.get() ;
+		    upper_bound_prev_id = row(m_upper_bound)->album_id ;
 		}
 	    }
 
@@ -388,7 +392,7 @@ namespace Albums
 	    {
 		for( auto i = m_base_model->begin(); i != m_base_model->end(); ++i )
 		{
-		    if( upper_bound_prev_id && ((*i)->album_id.get() == upper_bound_prev_id))
+		    if( upper_bound_prev_id && ((*i)->album_id == upper_bound_prev_id))
 		    {
 			m_upper_bound = c ; 
 		    }
@@ -401,9 +405,9 @@ namespace Albums
 	    {
 		for( auto i = m_base_model->begin(); i != m_base_model->end(); ++i )
 		{
-		    if( (*m_constraints_albums)[(*i)->album_id.get()].Count ) 
+		    if( (*m_constraints_albums)[(*i)->album_id].Count ) 
 		    {
-			if( upper_bound_prev_id && ((*i)->album_id.get() == upper_bound_prev_id ))
+			if( upper_bound_prev_id && ((*i)->album_id == upper_bound_prev_id ))
 			{
 			    m_upper_bound = c ; 
 			}
@@ -438,7 +442,7 @@ namespace Albums
 	    {
 		if( m_upper_bound < m_mapping.size() && row(m_upper_bound) && row(m_upper_bound)->album_id)
 		{
-		    upper_bound_prev_id = row(m_upper_bound)->album_id.get() ;
+		    upper_bound_prev_id = row(m_upper_bound)->album_id ;
 		}
 	    }
 
@@ -447,9 +451,9 @@ namespace Albums
 
 	    for( auto i = m_mapping.begin(); i != m_mapping.end(); ++i )
 	    {
-		if( (*m_constraints_albums)[(**i)->album_id.get()].Count ) 
+		if( (*m_constraints_albums)[(**i)->album_id].Count ) 
 		{
-		    if( upper_bound_prev_id && ((**i)->album_id.get() == upper_bound_prev_id ))
+		    if( upper_bound_prev_id && ((**i)->album_id == upper_bound_prev_id ))
 		    {
 			m_upper_bound = c ; 
 		    }
@@ -521,7 +525,7 @@ namespace Albums
 	    double r
 	)
 	{
-	    m_rounding = 1 ; // r;
+	    m_rounding = 2 ; // r;
 	}
 
 	double
@@ -563,14 +567,15 @@ namespace Albums
 	    Album_sp album
 	)	
 	{
-	    Glib::RefPtr<Gdk::Pixbuf> pb = Util::cairo_image_surface_to_pixbuf(album->coverart?album->coverart:album->surface_cache) ;
+	    Glib::RefPtr<Gdk::Pixbuf> pb = Util::cairo_image_surface_to_pixbuf(album->coverart) ;
 	    album->rgba = Util::pick_color_for_pixbuf(pb) ;
 	    album->rgba->set_alpha(1);
 	}
 
 	void	
 	Column::render_icon(
-	    Album_sp album
+	      Album_sp			album
+	    , boost::optional<double>	saturation = boost::optional<double>()
 	)
 	{
 	    album->surface_cache = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, 256, 114) ;
@@ -580,18 +585,9 @@ namespace Albums
 	    cairo->paint() ;
 
 	    auto icon_desaturated_1 =
-		Util::cairo_image_surface_to_pixbuf( album->coverart ? album->coverart : m_image_disc ) ; 
+		Util::cairo_image_surface_to_pixbuf((album->coverart ? album->coverart : m_image_disc)) ; 
 
-/*
-	    auto icon_desaturated_2 =
-		icon_desaturated_1->copy() ;
-
-	    auto icon =
-		icon_desaturated_1->copy() ; 
-*/
-
-	    icon_desaturated_1->saturate_and_pixelate(icon_desaturated_1, 0.90, false) ;
-	    //icon->saturate_and_pixelate(icon_desaturated_2, 0.25, false) ;
+	    icon_desaturated_1->saturate_and_pixelate(icon_desaturated_1, (saturation?*saturation:0.90), false) ;
 
 	    cairo->set_operator(Cairo::OPERATOR_OVER) ;
 	    cairo->set_source(
@@ -607,30 +603,6 @@ namespace Albums
 	    ) ;
 	    cairo->clip() ;
 	    cairo->paint_with_alpha(0.8) ;
-
-#if 0
-	    album->surface_cache_blur = Cairo::ImageSurface::create(Cairo::FORMAT_ARGB32, 256, 114) ;
-	    cairo = Cairo::Context::create(album->surface_cache_blur) ;
-
-	    cairo->set_operator(Cairo::OPERATOR_CLEAR) ;
-	    cairo->paint() ;
-
-	    cairo->set_operator(Cairo::OPERATOR_OVER) ;
-	    cairo->set_source(
-		    Util::cairo_image_surface_from_pixbuf(icon_desaturated_2) 
-		,   0
-		, -80 
-	    ) ;
-	    cairo->rectangle(
-		  0
-		, 0
-		, 256
-		, 114
-	    ) ;
-	    cairo->fill() ;
-
-	    Util::cairo_image_surface_blur( album->surface_cache_blur, 5 ) ;
-#endif
 	}
 
 	void
@@ -720,26 +692,42 @@ namespace Albums
 	    time_t time_now = time(NULL) ;
 	    Range<time_t> WithinPast3Days(time_now-(3*24*60*60), time_now) ;
 
-	    if(!album->surface_cache) 
+	    if(!album->surface_cache)
 	    {
 		render_icon( album ) ;
 	    }
 
-	    if(!album->rgba)
+#if 0
+	    if(album->coverart && !album->rgba)
 	    {
 		render_rgba( album ) ;
 	    }
+#endif
 
 	    cairo->save() ;
 	    cairo->translate((m_width-256)/2.,ypos+7) ;
 
 	    //////////
 
-	    if(1)
+	    cairo->save() ;
+	    RoundedRectangle(
+		  cairo
+		, 5   
+		, 3   
+		, 247 
+		, 102 
+		, m_rounding
+	    ) ;
+	    cairo->set_line_width(3) ;
+	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(selected?c5:Util::make_rgba(0,0,0,1),.7)) ;
+	    cairo->stroke() ;
+	    cairo->restore() ;
+
+	    //////////
+
 	    {
 		cairo->save() ;
-		//cairo->set_source(album->surface_cache,0,-10 + (animation_alpha*10)) ;
-		cairo->set_source(album->surface_cache,0,0);
+		cairo->set_source(album->surface_cache, 0, 0);
 		RoundedRectangle(
 		      cairo
 		    , 5 
@@ -808,26 +796,10 @@ namespace Albums
 		    , m_rounding
 		    , MPX::CairoCorners::CORNERS(12)
 		) ;
-		Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(selected?c5:Util::make_rgba(0,0,0,1),.7)) ;
+		Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(selected?c5:Util::make_rgba(0,0,0,1),.8)) ;
 		cairo->fill() ;
 		cairo->restore() ;
 	    }
-
-	    //////////
-
-	    cairo->save() ;
-	    RoundedRectangle(
-		  cairo
-		, 5   
-		, 3   
-		, 247 
-		, 102 
-		, m_rounding
-	    ) ;
-	    cairo->set_line_width(3) ;
-	    Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(selected?c5:Util::make_rgba(0,0,0,1),.7)) ;
-	    cairo->stroke() ;
-	    cairo->restore() ;
 
 	    //////////
 
@@ -927,8 +899,8 @@ namespace Albums
 	    layout[L3]->set_width(184*PANGO_SCALE); 
 	    layout[L3]->set_ellipsize( Pango::ELLIPSIZE_END );
 
-	    guint album_trks = album_constraints ? ((*album_constraints)[album->album_id.get()]).Count : album->track_count ;
-	    guint album_time = album_constraints ? ((*album_constraints)[album->album_id.get()]).Time : album->total_time ;
+	    guint album_trks = album_constraints ? ((*album_constraints)[album->album_id]).Count : album->track_count ;
+	    guint album_time = album_constraints ? ((*album_constraints)[album->album_id]).Time : album->total_time ;
 
 	    std::string infostr ; 
 
@@ -1380,12 +1352,12 @@ namespace Albums
 		vadj_value_set( std::min<int>(vadj_upper(), ViewMetrics.ViewPortPx.upper() + ViewMetrics.RowHeight + (ViewMetrics.RowHeight - ymod) - ViewMetrics.Excess ));
 	    }
 
-	    if( event->button == 1 && (m_selection && (get<Selection::INDEX>(m_selection.get()) == d)))
+	    if( event->button == 1 && m_selection && (get<Selection::INDEX>(m_selection.get()) == d))
 	    {
 		clear_selection();
 	    }
 	    else
-	    if( m_selection && (get<Selection::INDEX>(m_selection.get()) != d))
+	    if( event->button == 1 && m_selection && (get<Selection::INDEX>(m_selection.get()) != d))
 	    {
 		guint idx = get<Selection::INDEX>(*m_selection) ;
 
@@ -1395,25 +1367,20 @@ namespace Albums
 		}
 		else
 		{
-		    if( ModelExtents( d ))
-		    {
-			select_index( d );
-		    }
+		    select_index( d );
 		}
 	    }
 	    else
-	    if( !m_selection ) 
+	    if( event->button == 1 && !m_selection ) 
 	    {
-		if( ModelExtents( d ))
-		{
-		    select_index( d );
-		}
+		select_index( d );
 	    }
 
 	    grab_focus();
 
 	    if( event->button == 3 )
 	    {
+		select_index( d );
 		m_pMenuPopup->popup(event->button, event->time);
 	    }
 	    else
@@ -1496,23 +1463,13 @@ namespace Albums
 	    guint d_max   = std::min<guint>( m_model->size(), ViewMetrics.ViewPort.size() + 1 );
 	    gint  ypos	  = 0;
 	    gint  offset  = ViewMetrics.ViewPortPx.upper() - (d*ViewMetrics.RowHeight);
-	    guint ibar    = d ;
+//	    guint ibar    = d ;
 	   
 	    if( offset )
 	    {
 		ypos  -= offset;
 		d_max += 1;
-
-		if( offset ) 
-		    ++ibar ;
 	    }
-
-#if 0
-	    if(m_model->size() && ((ibar==0&&offset>32)) || (ibar>0)) 
-	    {
-		cairo->push_group() ;
-	    }
-#endif
 
 	    guint n = 0;
 	    Algorithm::Adder<guint> d_cur( d, n );
@@ -1526,9 +1483,9 @@ namespace Albums
 
 		double time_animation_alpha = 1 ;
 
-		if (time_snapshot < 0.200) 
+		if (time_snapshot < 0.25) 
 		{
-		    time_animation_alpha = Circ::easeIn( time_snapshot*1000, 350, 1000, 200)/1000. ;
+		    time_animation_alpha = Quart::easeIn( time_snapshot*1000, 500, 1000, 250)/1000. ;
 		}
 
 		m_columns[0]->render(
@@ -1554,114 +1511,23 @@ namespace Albums
 		++i;
 	    }
 
-#if 0
-	    if(m_model->size() && ((ibar==0&&offset>32)) || (ibar>0)) 
+	    if(has_focus())
 	    {
-		cairo->pop_group_to_source() ;
+		GdkRectangle r ;
 
-		auto gradient2 = Cairo::LinearGradient::create( get_allocated_width()/2., 0, get_allocated_width()/2., get_allocated_height()) ;
+		r.x = 0 ;
+		r.y = 0 ;
+		r.width = get_allocated_width() ;
+		r.height = get_allocated_height() ;
 
-		gradient2->add_color_stop_rgba(
-		      0
+		m_theme->draw_focus(
+		      cairo
+		    , r 
+		    , true
 		    , 0
-		    , 0
-		    , 0
-		    , 0
+		    , MPX::CairoCorners::CORNERS(0)
 		) ;
-		gradient2->add_color_stop_rgba(
-		      0.05
-		    , 0
-		    , 0
-		    , 0
-		    , 0
-		) ;
-		gradient2->add_color_stop_rgba(
-		      0.15 
-		    , 0
-		    , 0
-		    , 0
-		    , 0.9 
-		) ;
-		gradient2->add_color_stop_rgba(
-		      1 
-		    , 0
-		    , 0
-		    , 0
-		    , 1 
-		) ;
-
-		cairo->mask(gradient2) ;
 	    }
-
-	    if(m_model->size() && ((ibar==0&&offset>32)) || (ibar>0)) 
-	    {
-		cairo->reset_clip() ;
-
-		Album_sp a = m_model->row(ibar) ;
-
-		std::string const& album_artist = a->album_artist ;
-		
-		const int text_size_px = 15 ; 
-		const int text_size_pt = static_cast<int> ((text_size_px * 72)/ Util::screen_get_y_resolution(Gdk::Screen::get_default())) ;
-						
-		Pango::FontDescription font_desc ; 
-
-		Glib::RefPtr<Pango::Layout> layout  = Glib::wrap( pango_cairo_create_layout(cairo->cobj())) ;
-
-		font_desc = get_style_context()->get_font();
-		font_desc.set_size( text_size_pt * PANGO_SCALE );
-		font_desc.set_stretch( Pango::STRETCH_CONDENSED );
-		font_desc.set_variant( Pango::VARIANT_SMALL_CAPS ) ;
-		font_desc.set_weight( Pango::WEIGHT_BOLD ) ;
-
-		layout->set_font_description( font_desc );
-		layout->set_ellipsize( Pango::ELLIPSIZE_END );
-
-		layout->set_width((get_allocated_width()-4) * PANGO_SCALE);
-
-		layout->set_text(album_artist) ;
-
-		int width, height ;
-		layout->get_pixel_size( width, height );
-
-		cairo->rectangle(
-		      0
-		    , 0
-		    , get_allocated_width()
-		    , height + 14
-		) ;
-
-		auto gradient = Cairo::LinearGradient::create( get_allocated_width()/2., 0, get_allocated_width()/2., height+14 ) ;
-
-		gradient->add_color_stop_rgba(
-		      0
-		    , 0.3 
-		    , 0.3
-		    , 0.3
-		    , 1
-		) ;
-		gradient->add_color_stop_rgba(
-		      0.75
-		    , 0.3
-		    , 0.3
-		    , 0.3
-		    , 0.83
-		) ;
-		gradient->add_color_stop_rgba(
-		      1. 
-		    , 0
-		    , 0
-		    , 0
-		    , 0.05
-		) ;
-		cairo->set_source(gradient) ;
-		cairo->fill() ;
-
-		cairo->set_source_rgba(1,1,1,1) ;
-		cairo->move_to( (get_allocated_width()-width)/2., 5 ) ;
-		pango_cairo_show_layout(cairo->cobj(), layout->gobj()) ;
-	    }
-#endif
 
 	    if( !is_sensitive() )
 	    {
@@ -2061,7 +1927,7 @@ namespace Albums
 	    {
 		Album_sp album = m_model->row(d) ; 
 		set_album_caching (album) ;
-		signal_2.emit (album->album_id.get());
+		signal_2.emit (album->album_id);
 	    }
 	}
 
@@ -2073,17 +1939,7 @@ namespace Albums
 	    album->caching = true;
 	    album->coverart.clear() ;
 	    album->surface_cache.clear() ;
-	    m_caching.insert (album->album_id.get());
-	    m_redraw_spinner_conn.disconnect();
-	    m_redraw_spinner_conn = Glib::signal_timeout().connect( sigc::mem_fun( *this, &Class::handle_redraw ), 30 );
-	}
-
-	void
-	Class::set_album_fetching(
-	      guint id
-	)
-	{
-	    m_caching.insert(id) ;
+	    m_caching.insert(album->album_id) ;
 
 	    if(!m_redraw_spinner_conn)
 	    {
@@ -2094,18 +1950,29 @@ namespace Albums
 	bool
 	Class::handle_redraw()
 	{
+	    static time_t time_snap = 0 ; 
+	    static bool   terminate = false ;
+
 	    m_columns[0]->m_image_album_loading_iter->advance();
 
 	    queue_draw();
 
 	    while(gtk_events_pending()) gtk_main_iteration();
 
-	    if(m_caching.empty())
+	    if( m_caching.empty() && !terminate ) 
 	    {
-		m_redraw_spinner_conn.disconnect();
+		time_snap = m_model->m_animation_timer.elapsed() ; 
+		terminate = true ;
 	    }
 
-	    return !m_caching.empty();
+	    if( terminate && (m_model->m_animation_timer.elapsed()-time_snap)>2) 
+	    {
+		terminate = false ;
+		time_snap = 0 ; 
+		return false ;
+	    }
+
+	    return true ;
 	}
 
 	void

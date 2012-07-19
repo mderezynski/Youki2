@@ -400,7 +400,7 @@ namespace Artist
 	    m_image_disc = Util::cairo_image_surface_from_pixbuf(
 				    Gdk::Pixbuf::create_from_file(
 					    Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "artist.png" )
-	    )->scale_simple(126, 126, Gdk::INTERP_BILINEAR)) ;
+	    )) ;
 	}
 
 	void
@@ -1334,6 +1334,24 @@ namespace Artist
 
 		++n ;
 		++iter ;
+	    }
+
+	    if(has_focus())
+	    {
+		GdkRectangle r ;
+
+		r.x = 0 ;
+		r.y = 0 ;
+		r.width = get_allocated_width() ;
+		r.height = get_allocated_height() ;
+
+		theme->draw_focus(
+		      cairo
+		    , r 
+		    , true
+		    , 0
+		    , MPX::CairoCorners::CORNERS(0)
+		) ;
 	    }
 
 	    if( !is_sensitive())

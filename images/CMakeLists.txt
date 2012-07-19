@@ -16,6 +16,8 @@ INSTALL(
 	media-shuffle.png
 	mute-small-14x14px.png
 	new.png
+	pin-grey.png
+	pin-color.png
         splash.png
 	turntable.png
 	youki-mlibman128x128.png

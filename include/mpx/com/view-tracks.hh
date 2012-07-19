@@ -740,6 +740,7 @@ namespace Tracks
                      const std::string&		text
 		   , boost::optional<guint>	id
 		   , std::string&		text_noaque
+		   , AQE::Constraints_t&	aqe_constraints_rv
                 )
                 { 
 		    const std::string m_old_filter = m_current_filter ;
@@ -752,6 +753,8 @@ namespace Tracks
 		    bool have_internet = m_NM.is_connected() ;
 
                     bool async = AQE::parse_advanced_query( m_constraints_aqe, text, m_frags ) ;
+
+		    aqe_constraints_rv = m_constraints_aqe ;
 
 		    if( async && have_internet )    
 		    {

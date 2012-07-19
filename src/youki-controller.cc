@@ -3,7 +3,6 @@
 #endif 
 
 #include "youki-controller.hh"
-
 #include "youki-view-albums.hh"
 #include "youki-view-artist.hh"
 
@@ -417,6 +416,14 @@ namespace MPX
 	/* Setup main search Entry */
         m_Entry = Gtk::manage( new Gtk::Entry ) ;
 	m_Entry->set_size_request( 650, -1 ) ;
+    
+	m_pin1 = Gdk::Pixbuf::create_from_file(Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "pin-grey.png" )) ;
+	m_pin2 = Gdk::Pixbuf::create_from_file(Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "pin-color.png" )) ;
+
+        m_Entry->set_icon_from_pixbuf(
+	      m_pin1 
+            , Gtk::ENTRY_ICON_PRIMARY
+        ) ; 
 
         m_Entry->set_icon_from_stock(
 	      Gtk::Stock::CLEAR
@@ -429,7 +436,7 @@ namespace MPX
         m_Entry->signal_icon_press().connect(
 	    sigc::mem_fun(
 		  *this
-                , &YoukiController::handle_search_entry_clear_clicked
+                , &YoukiController::handle_search_entry_icon_clicked
         )) ;
 
         m_Entry->signal_key_press_event().connect(
@@ -1438,14 +1445,13 @@ namespace MPX
 		a->caching = true ;
 
 		private_->FilterModelAlbums->append_album(a) ; 
-
-		m_ListViewAlbums->set_album_fetching(*(a->album_id)) ;
+		m_ListViewAlbums->set_album_caching(a) ;
 
 		MPX::RM::RequestQualifier rq ; 
 		rq.mbid     =   a->mbid ; 
 		rq.artist   =   a->album_artist ; 
 		rq.album    =   a->album ; 
-		rq.id       =   *(a->album_id) ; 
+		rq.id       =   a->album_id ; 
 
 		m_covers.queue(rq) ;
 
@@ -2074,7 +2080,7 @@ namespace MPX
 	    rq.mbid     =   a_sp->mbid ; 
 	    rq.artist   =   a_sp->album_artist ; 
 	    rq.album    =   a_sp->album ; 
-	    rq.id       =   *(a_sp->album_id) ; 
+	    rq.id       =   a_sp->album_id ; 
 	    rq.uri	=   boost::get<std::string>(v[0]["uri"]) ;
 
 	    AlbumImage img = m_covers.get(rq, true) ;
@@ -2179,7 +2185,7 @@ namespace MPX
 	, MPX::RM::AlbumImage&		    img
     )
     {
-        if( img ) 
+        if( img.get_image() ) 
         {
             auto c = Util::cairo_image_surface_from_pixbuf( img.get_image()->scale_simple(256,256,Gdk::INTERP_BILINEAR)) ;
 
@@ -2200,7 +2206,6 @@ namespace MPX
 	else
 	{
 	    private_->FilterModelAlbums->update_album_cover_cancel( rq.id ) ;
-	    return ;
 	}
     }
 
@@ -2952,6 +2957,13 @@ namespace MPX
         m_ListViewAlbums->clear_selection() ;
 
         private_->FilterModelTracks->clear_synthetic_constraints_quiet() ;
+
+	if( m_aqe_synthetic_pinned ) {
+	    for( auto c : *m_aqe_synthetic_pinned ) {
+		private_->FilterModelTracks->add_synthetic_constraint_quiet( c ) ;
+	    }
+	}
+	
         private_->FilterModelAlbums->clear_all_constraints_quiet() ;
 
         OptUInt id_artist = m_ListViewArtist->get_selected() ;
@@ -2988,6 +3000,12 @@ namespace MPX
     ) 
     {
         private_->FilterModelTracks->clear_synthetic_constraints_quiet() ;
+
+	if( m_aqe_synthetic_pinned ) {
+	    for( auto c : *m_aqe_synthetic_pinned ) {
+		private_->FilterModelTracks->add_synthetic_constraint_quiet( c ) ;
+	    }
+	}
 
         OptUInt id_artist = m_ListViewArtist->get_selected() ;
         OptUInt id_albums = m_ListViewAlbums->get_selected() ;
@@ -3026,7 +3044,7 @@ namespace MPX
         const std::string&  mbid
     )
     {
-        handle_search_entry_clear_clicked() ;
+        handle_search_entry_icon_clicked() ;
         m_Entry->set_text( (boost::format("album-mbid = \"%s\"") % mbid).str() ) ;
     }
 
@@ -3035,7 +3053,7 @@ namespace MPX
         const std::string&  mbid
     )
     {
-        handle_search_entry_clear_clicked() ;
+        handle_search_entry_icon_clicked() ;
         m_Entry->set_text( (boost::format("album-artist-mbid = \"%s\"") % mbid).str() ) ;
     }
 
@@ -3044,7 +3062,7 @@ namespace MPX
         const std::string&  mbid
     )
     {
-        handle_search_entry_clear_clicked() ;
+        handle_search_entry_icon_clicked() ;
         m_Entry->set_text( (boost::format("mbid-artists-similar-to = \"%s\"") % mbid).str() ) ;
     }
 
@@ -3105,7 +3123,7 @@ namespace MPX
             {
                 if( m_Entry->get_text().empty() )
                 {
-                    handle_search_entry_clear_clicked() ;
+                    handle_search_entry_icon_clicked() ;
                     return true ;
                 }
 
@@ -3117,7 +3135,7 @@ namespace MPX
             {
                 if( event->state & GDK_CONTROL_MASK )
                 {
-                    handle_search_entry_clear_clicked() ;
+                    handle_search_entry_icon_clicked() ;
                     return true ;
                 }
 
@@ -3138,7 +3156,7 @@ namespace MPX
 
             case GDK_KEY_Escape:
             {
-		handle_search_entry_clear_clicked() ;
+		handle_search_entry_icon_clicked() ;
 		m_ListViewTracks->grab_focus() ;
 		return true ;
             }
@@ -3178,13 +3196,39 @@ namespace MPX
     }
 
     void
-    YoukiController::handle_search_entry_clear_clicked(
+    YoukiController::handle_search_entry_icon_clicked(
 	  Gtk::EntryIconPosition p
 	, const GdkEventButton* G_GNUC_UNUSED
     )
     {
-	if( p != Gtk::ENTRY_ICON_SECONDARY )
+	if( p == Gtk::ENTRY_ICON_PRIMARY )
+	{
+	    if( m_aqe_synthetic_pinned ) 
+	    {
+		m_Entry->set_icon_from_pixbuf(
+		      m_pin1 
+		    , Gtk::ENTRY_ICON_PRIMARY
+		) ; 
+		m_aqe_synthetic_pinned.reset() ;
+		handle_search_entry_icon_clicked() ;
+		m_Entry->set_text(m_Entry->get_icon_tooltip_text()) ;
+		m_Entry->set_icon_tooltip_text("") ;
+		m_Entry->grab_focus() ;
+	    }
+	    else
+	    {
+		m_Entry->set_icon_from_pixbuf(
+		      m_pin2 
+		    , Gtk::ENTRY_ICON_PRIMARY
+		) ; 
+		m_aqe_synthetic_pinned = m_aqe_natural ;
+		m_Entry->set_icon_tooltip_text(m_Entry->get_text()) ;
+		handle_search_entry_icon_clicked() ;
+		m_Entry->grab_focus() ;
+	    }
+
 	    return ;
+	}
 
         m_conn1.block() ;
         m_conn2.block() ;
@@ -3194,7 +3238,14 @@ namespace MPX
         private_->FilterModelAlbums->clear_constraints_artist() ;
         private_->FilterModelAlbums->clear_constraints_albums() ;
         private_->FilterModelArtist->clear_constraints_artist() ;
+
         private_->FilterModelTracks->clear_synthetic_constraints_quiet() ;
+
+	if( m_aqe_synthetic_pinned ) {
+	    for( auto c : *m_aqe_synthetic_pinned ) {
+		private_->FilterModelTracks->add_synthetic_constraint_quiet( c ) ;
+	    }
+	}
 
 	m_ListViewArtist->clear_selection() ;
 	m_ListViewAlbums->clear_selection() ;
@@ -3317,8 +3368,13 @@ namespace MPX
         }
 
 	private_->FilterModelTracks->clear_synthetic_constraints_quiet() ;
+    
+	if( m_aqe_synthetic_pinned )
+	{
+	    private_->FilterModelTracks->m_constraints_ext = *m_aqe_synthetic_pinned ;
+	}
 
-	FilterMode mode = private_->FilterModelTracks->process_filter( m_Entry->get_text(), id, text_noaque ) ;
+	FilterMode mode = private_->FilterModelTracks->process_filter( m_Entry->get_text(), id, text_noaque, m_aqe_natural ) ;
 
 	if( mode != FilterMode::NONE ) {
 

@@ -462,6 +462,8 @@ namespace MPX
 
         const ThemeColor& c = get_color( THEME_COLOR_SELECT ) ;
 
+	std::vector<double> dash { 1, 1 } ;
+
         Gdk::RGBA cgdk ;
         cgdk.set_rgba( c.get_red(), c.get_green(), c.get_blue() ) ;
 
@@ -472,7 +474,6 @@ namespace MPX
 
         cairo->save() ;
         cairo->set_operator( Cairo::OPERATOR_OVER ) ;
-	Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(c1,0.4)) ;
         RoundedRectangle(
               cairo
             , r.x
@@ -482,9 +483,15 @@ namespace MPX
             , rounding
 	    , corners
         ) ;
-        cairo->fill_preserve() ;
-	Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(c1,0.8)) ;
+
+	//Gdk::Cairo::set_source_rgba(cairo, Util::make_rgba(c1,0.4)) ;
+        //cairo->fill_preserve() ;
+
+	Gdk::Cairo::set_source_rgba(cairo,c) ; 
+	cairo->set_dash(dash,0) ;
+	cairo->set_line_width(4) ;
 	cairo->stroke() ;
+
         cairo->restore() ;
     }
 }

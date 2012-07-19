@@ -42,7 +42,7 @@ namespace Albums
             Cairo::RefPtr<Cairo::ImageSurface>      surface_cache ;
             Cairo::RefPtr<Cairo::ImageSurface>      surface_cache_blur ;
 	    boost::optional<Gdk::RGBA>		    rgba ;
-            boost::optional<guint>		    album_id ;
+	    guint				    album_id ;
             guint                                   artist_id ;
             std::string                             album ;
             std::string                             album_artist ;
@@ -331,7 +331,8 @@ namespace Albums
 
 		void	
 		render_icon(
-		    Album_sp
+		      Album_sp
+		    , boost::optional<double>
 		) ;
 
 		void
@@ -631,11 +632,6 @@ class Class
                 void
                 clear_selection(
                 ) ;
-
-		void
-		set_album_fetching(
-		      guint
-		) ;
 
                 void
                 clear_selection_quiet(

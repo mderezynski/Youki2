@@ -19,6 +19,8 @@
 
 #include "mpx/util-string.hh"
 
+#include "mpx/algorithm/aque.hh"
+
 #include "kobo-main.hh"
 #include "kobo-position.hh"
 #include "kobo-volume.hh"
@@ -270,17 +272,24 @@ namespace MPX
 	    Gtk::InfoBar		    * m_InfoBar ;
 	    Gtk::Label			    * m_InfoLabel ; 
 	    Gtk::Button			    * m_BTN_SHUFFLE ;
+	    Glib::RefPtr<Gdk::Pixbuf>	      m_pin1, m_pin2 ;
 
 	    ResourceManager<MPX::RM::AlbumImage> m_covers ;
 
             MPX::Play                       * m_play ;
             Library                         * m_library ;
+
 	    LDFindNearest		      m_find_nearest_artist ;
 	    LDFindNearest		      m_find_nearest_artist_full ;
 	    LDFindNearest		      m_find_nearest_artist_full_lc ;
+
 	    std::string			      m_nearest ;
+
 	    StrV			      m_nearest__artists ;
 	    StrV			      m_nearest__artists_popular ;
+
+	    AQE::Constraints_t			    m_aqe_natural ;		
+	    boost::optional<AQE::Constraints_t>	    m_aqe_synthetic_pinned ;		
 
 #if 0
 	    PlaylistManager		    * m_PlaylistManager ;
@@ -434,7 +443,7 @@ namespace MPX
             handle_search_entry_activated() ;
 
             void
-            handle_search_entry_clear_clicked(
+            handle_search_entry_icon_clicked(
 		  Gtk::EntryIconPosition    = Gtk::ENTRY_ICON_SECONDARY
 		, const GdkEventButton*	    = 0
             ) ;
