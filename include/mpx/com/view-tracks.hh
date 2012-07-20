@@ -449,7 +449,6 @@ namespace Tracks
                     , m_cache_enabled(true)
 
                 {
-                    regen_mapping() ;
                 }
 
                 virtual ~DataModelFilter()
@@ -852,23 +851,16 @@ namespace Tracks
                     }
                 }
 
-                virtual void
-                create_aque_mapped_mapping(
+		virtual void
+                create_pinned_mapping(
                 )
                 {
                     m_mapping_identity = RowRowMapping_sp( new RowRowMapping_t ) ;
                     m_mapping_identity->reserve( m_base_model->size() ) ;
 
-                    for( Model_t::iterator i = m_base_model->begin(); i != m_base_model->end(); ++i )
+                    for( auto i = std::begin(*m_mapping) ; i != std::end(*m_mapping); ++i )
                     {
-			Track_sp& t = *i ;
-
-			if( !m_constraints_ext.empty() && !AQE::match_track( m_constraints_ext, t ))
-			{                            
-			    continue ;
-			}
-
-			m_mapping_identity->push_back (i) ;
+			m_mapping_identity->push_back (*i) ;
                     }
                 }
 
@@ -976,6 +968,7 @@ namespace Tracks
 
                     m_upper_bound = 0 ;
 
+#if 0
                     if( m_frags.empty() && (m_constraints_ext.empty() && m_constraints_aqe.empty()))
                     {
                         m_constraints_albums.reset() ;
@@ -994,7 +987,9 @@ namespace Tracks
 			return ;
                     }
                     else
-                    if( m_frags.empty() && !(m_constraints_ext.empty() && m_constraints_aqe.empty()) )
+#endif
+		    //if( m_frags.empty() && !(m_constraints_ext.empty() && m_constraints_aqe.empty()) )
+                    if (m_frags.empty())
                     {
                         m_constraints_albums = TCVector_sp( new TCVector_t ) ; 
                         m_constraints_albums->resize( m_max_size_constraints_albums + 1 ) ;
@@ -1008,16 +1003,16 @@ namespace Tracks
                         new_mapping->reserve( m_base_model->size() ) ;
                         new_mapping_unfiltered->reserve( m_base_model->size() ) ;
 
-                        for( Model_t::iterator i = m_base_model->begin() ; i != m_base_model->end() ; ++i ) 
+			for( auto i = std::begin(*m_mapping_identity) ; i != std::end(*m_mapping_identity) ; ++i )
                         {
-                            MPX::Track_sp t = (*i)->TrackSp ; 
+                            MPX::Track_sp t = (**i)->TrackSp ; 
 
 			    if( !m_constraints_aqe.empty() && !AQE::match_track( m_constraints_aqe, t ))
 			    {
 				continue ;
 			    }
 
-			    new_mapping_unfiltered->push_back( i ) ;
+			    new_mapping_unfiltered->push_back (*i) ;
 
 			    if( !m_constraints_ext.empty() && !AQE::match_track( m_constraints_ext, t ))
 			    {                            
@@ -1034,7 +1029,7 @@ namespace Tracks
 			    tc_art.Count ++ ; 
 			    tc_art.Time += get<guint>((*t)[ATTRIBUTE_TIME].get()) ;
 
-			    new_mapping->push_back( i ) ; 
+			    new_mapping->push_back (*i) ;
                         }
                     }
                     else
@@ -1064,9 +1059,9 @@ namespace Tracks
 
                             ModelIteratorSet_sp model_iterator_set( new ModelIteratorSet_t ) ;
 
-                            for( Model_t::const_iterator i = m_base_model->begin(); i != m_base_model->end(); ++i )
+			    for( auto i = std::begin(*m_mapping_identity) ; i != std::end(*m_mapping_identity) ; ++i )
                             {
-                                const ModelData_sp r = *i;
+                                const ModelData_sp r = **i;
 
                                 vec[0] = r->Artist ;
                                 vec[1] = r->Album ;
@@ -1075,7 +1070,7 @@ namespace Tracks
 
                                 if(Util::match_vec( m_frags[n], vec ))
                                 {
-                                    model_iterator_set->insert( i ) ; 
+                                    model_iterator_set->insert (*i) ; 
                                 }
                             }
 

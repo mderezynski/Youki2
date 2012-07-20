@@ -903,6 +903,8 @@ namespace MPX
 	    m_ScrolledWinTracks->add( *m_ListViewTracks ) ;
 	    m_ScrolledWinTracks->show_all() ;
 
+	    private_->FilterModelTracks->regen_mapping () ;
+
 	    private_->FilterModelTracks->signal_changed().connect( sigc::mem_fun(*this, &YoukiController::handle_model_changed )) ; 
         }
 
@@ -1504,7 +1506,7 @@ namespace MPX
 	    }
 	}
 
-        private_->FilterModelTracks->create_identity_mapping() ;
+	private_->FilterModelTracks->create_identity_mapping() ;
 	tracklist_regen_mapping() ;
     }
 
@@ -2974,11 +2976,13 @@ namespace MPX
 
         private_->FilterModelTracks->clear_synthetic_constraints_quiet() ;
 
+#if 0
 	if( m_aqe_synthetic_pinned ) {
 	    for( auto c : *m_aqe_synthetic_pinned ) {
 		private_->FilterModelTracks->add_synthetic_constraint_quiet( c ) ;
 	    }
 	}
+#endif
 	
         private_->FilterModelAlbums->clear_all_constraints_quiet() ;
 
@@ -3017,11 +3021,13 @@ namespace MPX
     {
         private_->FilterModelTracks->clear_synthetic_constraints_quiet() ;
 
+#if 0
 	if( m_aqe_synthetic_pinned ) {
 	    for( auto c : *m_aqe_synthetic_pinned ) {
 		private_->FilterModelTracks->add_synthetic_constraint_quiet( c ) ;
 	    }
 	}
+#endif
 
         OptUInt id_artist = m_ListViewArtist->get_selected() ;
         OptUInt id_albums = m_ListViewAlbums->get_selected() ;
@@ -3228,12 +3234,13 @@ namespace MPX
 
 		m_aqe_synthetic_pinned.reset() ;
 
+		private_->FilterModelTracks->create_identity_mapping() ;
+
 		m_Entry->set_text(m_Entry->get_icon_tooltip_text()) ;
 		m_Entry->set_icon_tooltip_text("") ;
 		m_ListViewTracks->grab_focus() ;
 	    }
 	    else
-	    if(!m_aqe_natural.empty())
 	    {
 		m_Entry->set_icon_from_pixbuf(
 		      m_pin[1] 
@@ -3241,6 +3248,8 @@ namespace MPX
 		) ; 
 
 		m_aqe_synthetic_pinned = m_aqe_natural ;
+
+		private_->FilterModelTracks->create_pinned_mapping() ;
 
 		m_Entry->set_icon_tooltip_text(m_Entry->get_text()) ;
 		m_Entry->set_text("") ;
@@ -3263,11 +3272,13 @@ namespace MPX
 
         private_->FilterModelTracks->clear_synthetic_constraints_quiet() ;
 
+#if 0
 	if( m_aqe_synthetic_pinned ) {
 	    for( auto c : *m_aqe_synthetic_pinned ) {
 		private_->FilterModelTracks->add_synthetic_constraint_quiet( c ) ;
 	    }
 	}
+#endif
 
         m_conn1.unblock() ;
         m_conn2.unblock() ;
@@ -3364,11 +3375,13 @@ namespace MPX
         }
 
 	private_->FilterModelTracks->clear_synthetic_constraints_quiet() ;
-   
+  
+#if 0 
 	if( m_aqe_synthetic_pinned )
 	{
 	    private_->FilterModelTracks->m_constraints_ext = *m_aqe_synthetic_pinned ;
 	}
+#endif
 
 	FilterMode mode = private_->FilterModelTracks->process_filter( m_Entry->get_text(), id, text_noaque, m_aqe_natural ) ;
 
