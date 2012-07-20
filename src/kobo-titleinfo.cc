@@ -352,7 +352,7 @@ namespace MPX
 	    if( line > 2 )
 	    {
 		m_update_connection.disconnect() ;
-		layout->set_markup((boost::format("<b>%s</b>  <small>•</small>  <b>%s</b>  <small>•</small>  %s")
+		layout->set_markup((boost::format("<b>%s</b>  ::  <b>%s</b> <i>%s</i>")
 		    % Glib::Markup::escape_text(m_info[2])
 		    % Glib::Markup::escape_text(m_info[0])
 		    % Glib::Markup::escape_text(m_info[1])

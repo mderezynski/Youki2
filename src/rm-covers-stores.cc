@@ -190,7 +190,7 @@ namespace RM
 		return cover ;
 	    }
 
-	    std::vector<std::string> sizes { "extralarge", "large", "normal" } ;
+	    std::vector<std::string> sizes { "mega", "extralarge", "large", "normal" } ;
 
 	    for( auto& s : sizes ) 
             {

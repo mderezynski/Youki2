@@ -41,7 +41,6 @@
 #endif
 #include <tuple>
 #include <boost/optional.hpp>
-#include "mpx/mpx-covers.hh"
 #include "mpx/mpx-main.hh"
 #include "mpx/mpx-sql.hh"
 #include "mpx/mpx-types.hh"

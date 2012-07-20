@@ -782,6 +782,8 @@ MPX::LibraryScannerThread_MLibMan::on_add(
 
         // Collect + Process Tracks
 
+	guint collect_ctr = 0 ;
+
         for( Util::FileList::iterator i2 = collection.begin(); i2 != collection.end(); ++i2 )
         {
             if( check_abort_scan() )
@@ -811,11 +813,11 @@ MPX::LibraryScannerThread_MLibMan::on_add(
             (*t)[ATTRIBUTE_MTIME] = mtime1 ; // Update the mtime in the track we're "building"
             insert_file_no_mtime_check( t, *i2, insert_path_sql, true ) ;
                         
-            if( !(std::distance(collection.begin(), i2) % 10) )
+            if( !collect_ctr % 10)
             {
                 pthreaddata->Message.emit(
                     (boost::format(_("Collecting Tracks: %u of %u"))
-                        % guint(std::distance(collection.begin(), i2))
+                        % ++collect_ctr 
                         % guint(m_ScanSummary.FilesTotal)
                     ).str()
                 ) ;
@@ -1807,6 +1809,15 @@ MPX::LibraryScannerThread_MLibMan::signal_new_entities(
     if( m_AlbumIDs.find( album_id ) != m_AlbumIDs.end() )
     {
             m_AlbumIDs.erase( album_id ) ;
+	    
+	    struct RequestQualifier
+	    {
+		std::string   mbid ; 
+		std::string   asin ;
+		std::string   uri ;
+		std::string   artist ;
+		std::string   album ;
+	    } ;
 
             RequestQualifier rq ;
 

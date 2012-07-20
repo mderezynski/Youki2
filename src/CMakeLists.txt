@@ -50,6 +50,7 @@ SET(youki_bin_SOURCES
   Quart.cpp
   Sine.cpp
   Circ.cpp
+  Linear.cpp
   rm-covers.cc
   rm-covers-stores.cc
   glib-marshalers.h

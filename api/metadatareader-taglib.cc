@@ -273,7 +273,7 @@ namespace MPX
     
 	    type = boost::get<std::string>((track)[ATTRIBUTE_TYPE].get()) ;
 
-            //if( typefind( uri, type ))
+            if( typefind( uri, type ))
             {
                 TaglibPluginsMap::const_iterator i = m_taglib_plugins.find( type );
 

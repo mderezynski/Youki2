@@ -503,7 +503,7 @@ namespace Util
 
                     if( i_begin.size() == 1 && (*(i_begin.begin())).first == 0 && (*(i_end.begin())).first == text.size() )    
                     {
-                        output += "<span weight='bold'>" + Glib::Markup::escape_text(text).raw() + "</span>";
+                        output += "<span weight='bold'><i>" + Glib::Markup::escape_text(text).raw() + "</i></span>";
                     }
                     else
                     {
@@ -529,7 +529,7 @@ namespace Util
                                     {
                                         output += Glib::Markup::escape_text( chunk ).raw();
                                         chunk.clear();
-                                        output += "<span weight='bold'>";
+                                        output += "<span weight='bold'><i>";
                                     }
                                 }
                                 else
@@ -540,7 +540,7 @@ namespace Util
                                     {
                                         output += Glib::Markup::escape_text( chunk ).raw();
                                         chunk.clear();
-                                        output += "</span>"; 
+                                        output += "</i></span>"; 
                                         c_close = 0;
                                         c_open  = 0;
                                     }
@@ -553,7 +553,7 @@ namespace Util
 
                             if( c_open )
                             {
-                                output += "</span>";
+                                output += "</i></span>";
                             }
                     }
 

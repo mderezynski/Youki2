@@ -415,13 +415,15 @@ namespace MPX
 	
 	/* Setup main search Entry */
         m_Entry = Gtk::manage( new Gtk::Entry ) ;
+	m_Entry->get_settings()->property_gtk_tooltip_timeout().set_value(1) ;
 	m_Entry->set_size_request( 650, -1 ) ;
     
-	m_pin1 = Gdk::Pixbuf::create_from_file(Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "pin-grey.png" )) ;
-	m_pin2 = Gdk::Pixbuf::create_from_file(Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "pin-color.png" )) ;
+	m_pin[0] = Gdk::Pixbuf::create_from_file(Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "pin-grey.png" )) ;
+	m_pin[1] = Gdk::Pixbuf::create_from_file(Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "pin-color.png" )) ;
+	m_pin[2] = Gdk::Pixbuf::create_from_file(Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "pin-error.png" )) ;
 
         m_Entry->set_icon_from_pixbuf(
-	      m_pin1 
+	      m_pin[0] 
             , Gtk::ENTRY_ICON_PRIMARY
         ) ; 
 
@@ -1249,6 +1251,16 @@ namespace MPX
     void
     YoukiController::update_entry_placeholder_text()
     {
+	if (m_aqe_synthetic_pinned)
+	{
+	    m_Entry->set_placeholder_text(_("Refine Your Search here...")) ;
+	}
+	else
+	{
+	    m_Entry->set_placeholder_text(_("Search Your Music here...")) ;
+	}
+
+#if 0
 	const guint MAX_WORDS = 6 ; // Psychology says the human mind can hold 5-7 "items"; so we take the middle here
 	const guint MAX_TRIES = 20 ;
 
@@ -1292,16 +1304,18 @@ namespace MPX
 	{
 	    StrV m;
 	    split( m, s, is_any_of(" "));
-	    if( m.size() > MAX_WORDS )
+
+	    if(m_aqe_synthetic_pinned)
 	    {
-		m_Entry->set_placeholder_text(_("Search Your Music here...")) ;
+		m_Entry->set_placeholder_text(_("Refine your Search here...")) ;
 	    }
 	    else
 	    {
-		m_Entry->set_placeholder_text((boost::format("%s '%s'") % _("Type to search... try") % s).str()) ;
+		m_Entry->set_placeholder_text((boost::format("%s '%s'") % _("Search your Music here... Try: ") % s).str()) ;
 	    }
 	}	
 	// else we keep the current text
+#endif
     }
 
     void
@@ -1800,13 +1814,13 @@ namespace MPX
 	    if(  sel_row_albums )
 	    {
 		auto a = private_->FilterModelAlbums->row(*sel_row_albums) ;
-		s += (boost::format("<b>%s</b>  <small>•</small>  %s") % Glib::Markup::escape_text(a->album_artist) % Glib::Markup::escape_text(a->album)).str() ;
+		s += (boost::format("<b>%s</b> %s") % Glib::Markup::escape_text(a->album_artist) % Glib::Markup::escape_text(a->album)).str() ;
 	    }
 	    else
 	    if(  sel_row_artist )
 	    {
 		auto a = private_->FilterModelArtist->row(*sel_row_artist) ;
-		s += (boost::format("Everything <small>by</small> <b>%s</b>") % Glib::Markup::escape_text(boost::get<0>(a))).str() ;
+		s += (boost::format("<b>%s</b>") % Glib::Markup::escape_text(boost::get<0>(a))).str() ;
 	    }
 	}
 
@@ -2236,6 +2250,7 @@ namespace MPX
 		    auto a = get_album_from_id(id,true) ;
                     private_->FilterModelAlbums->update_album(a) ;
 
+#if 0
 		    SQL::RowV v ;
 		    m_library->getSQL(v, (boost::format("SELECT location AS uri FROM track_view WHERE mpx_album_id = '%u' LIMIT 1") % id ).str()) ; 
 		    
@@ -2247,6 +2262,7 @@ namespace MPX
 		    rq.uri	=   boost::get<std::string>(v[0]["uri"]) ;
 
 		    m_covers.get(rq, true) ;
+#endif
 
                 } catch( std::exception& cxe ) {
 		    g_message("%s: Error while updating album: %s", G_STRLOC, cxe.what()) ;
@@ -2410,7 +2426,7 @@ namespace MPX
 	    goto x1 ;
 	}	
 
-	if(!m_play_queue.empty() && !keep_queue) /* tracks in the play queue? */
+	if(!m_play_queue.empty() && !keep_queue && m_rb2->get_active()) /* tracks in the play queue? */
 	{
 	    /* ... so get next track from the play queue! */
 	    play_next_queue_item() ;
@@ -3206,26 +3222,32 @@ namespace MPX
 	    if( m_aqe_synthetic_pinned ) 
 	    {
 		m_Entry->set_icon_from_pixbuf(
-		      m_pin1 
+		      m_pin[0] 
 		    , Gtk::ENTRY_ICON_PRIMARY
 		) ; 
+
 		m_aqe_synthetic_pinned.reset() ;
-		handle_search_entry_icon_clicked() ;
+
 		m_Entry->set_text(m_Entry->get_icon_tooltip_text()) ;
 		m_Entry->set_icon_tooltip_text("") ;
-		m_Entry->grab_focus() ;
+		m_ListViewTracks->grab_focus() ;
 	    }
 	    else
+	    if(!m_aqe_natural.empty())
 	    {
 		m_Entry->set_icon_from_pixbuf(
-		      m_pin2 
+		      m_pin[1] 
 		    , Gtk::ENTRY_ICON_PRIMARY
 		) ; 
+
 		m_aqe_synthetic_pinned = m_aqe_natural ;
+
 		m_Entry->set_icon_tooltip_text(m_Entry->get_text()) ;
-		handle_search_entry_icon_clicked() ;
-		m_Entry->grab_focus() ;
+		m_Entry->set_text("") ;
+		m_ListViewTracks->grab_focus() ;
 	    }
+
+	    update_entry_placeholder_text() ;
 
 	    return ;
 	}
@@ -3247,40 +3269,14 @@ namespace MPX
 	    }
 	}
 
-	m_ListViewArtist->clear_selection() ;
-	m_ListViewAlbums->clear_selection() ;
-
         m_conn1.unblock() ;
         m_conn2.unblock() ;
         m_conn4.unblock() ;
 	m_conn3.unblock() ;
 
-	boost::optional<guint> id ;
-
-        if( m_track_current && 
-	    Glib::RefPtr<Gtk::ToggleAction>::cast_static( m_UIActions_Main->get_action("ViewActionFollowPlayingTrack"))->get_active())
-        {
-            id = boost::get<guint>((*m_track_current)[ATTRIBUTE_MPX_TRACK_ID].get()) ;
-        }
-
-	private_->FilterModelAlbums->regen_mapping() ;
-
-	if( m_Entry->get_text().empty())
-	{
-	    private_->FilterModelTracks->regen_mapping(id) ;
-	}
-	else
-	{
-	    m_Entry->set_text("") ;
-	}
-
+	m_Entry->set_text("") ;
 	m_rb1->set_active() ;
-
-/*
-	private_->FilterModelArtist->regen_mapping() ;
-	private_->FilterModelAlbums->regen_mapping() ;
-*/
-
+	handle_search_entry_changed() ;
 	m_ListViewTracks->grab_focus() ;
     }
 
@@ -3368,7 +3364,7 @@ namespace MPX
         }
 
 	private_->FilterModelTracks->clear_synthetic_constraints_quiet() ;
-    
+   
 	if( m_aqe_synthetic_pinned )
 	{
 	    private_->FilterModelTracks->m_constraints_ext = *m_aqe_synthetic_pinned ;

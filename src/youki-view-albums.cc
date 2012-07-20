@@ -19,6 +19,8 @@
 #include "Sine.h"
 #include "Expo.h"
 #include "Circ.h"
+#include "Elastic.h"
+#include "Linear.h"
 
 namespace
 {
@@ -230,7 +232,6 @@ namespace Albums
 		if( album )
 		{
 		    album->caching = false;
-
 		    album->coverart = is;
 		    album->surface_cache.clear();
 		    album->animation_time = m_animation_timer.elapsed() ;
@@ -726,6 +727,22 @@ namespace Albums
 	    //////////
 
 	    {
+		if (animation_alpha < 1)
+		{
+		    cairo->save() ;
+		    cairo->set_source(m_image_disc, 0, -80);
+		    RoundedRectangle(
+			  cairo
+			, 5 
+			, 3 
+			, 247
+			, 102
+			, m_rounding
+		    ) ;
+		    cairo->fill() ;
+		    cairo->restore() ;	
+		}
+
 		cairo->save() ;
 		cairo->set_source(album->surface_cache, 0, 0);
 		RoundedRectangle(
@@ -949,7 +966,6 @@ namespace Albums
 
 	    //////////
 #endif
-
 
 	    if(WithinPast3Days( album->insert_date ))
 	    {
@@ -1483,9 +1499,9 @@ namespace Albums
 
 		double time_animation_alpha = 1 ;
 
-		if (time_snapshot < 0.25) 
+		if (time_snapshot < 0.35) 
 		{
-		    time_animation_alpha = Quart::easeIn( time_snapshot*1000, 500, 1000, 250)/1000. ;
+		    time_animation_alpha = Expo::easeIn( time_snapshot*1000, 0, 1000, 350)/1000. ;
 		}
 
 		m_columns[0]->render(

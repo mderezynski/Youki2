@@ -852,6 +852,26 @@ namespace Tracks
                     }
                 }
 
+                virtual void
+                create_aque_mapped_mapping(
+                )
+                {
+                    m_mapping_identity = RowRowMapping_sp( new RowRowMapping_t ) ;
+                    m_mapping_identity->reserve( m_base_model->size() ) ;
+
+                    for( Model_t::iterator i = m_base_model->begin(); i != m_base_model->end(); ++i )
+                    {
+			Track_sp& t = *i ;
+
+			if( !m_constraints_ext.empty() && !AQE::match_track( m_constraints_ext, t ))
+			{                            
+			    continue ;
+			}
+
+			m_mapping_identity->push_back (i) ;
+                    }
+                }
+
 		virtual void
 		regen_mapping_static_projection(
 		      const IdVector_t&	v 

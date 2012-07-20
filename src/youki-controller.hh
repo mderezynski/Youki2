@@ -10,6 +10,7 @@
 #include <list>
 #include <unordered_map>
 #include <unordered_set>
+#include <array>
 
 #include <boost/optional.hpp>
 #include <boost/shared_ptr.hpp>
@@ -272,7 +273,7 @@ namespace MPX
 	    Gtk::InfoBar		    * m_InfoBar ;
 	    Gtk::Label			    * m_InfoLabel ; 
 	    Gtk::Button			    * m_BTN_SHUFFLE ;
-	    Glib::RefPtr<Gdk::Pixbuf>	      m_pin1, m_pin2 ;
+	    std::array<Glib::RefPtr<Gdk::Pixbuf>,3> m_pin ;
 
 	    ResourceManager<MPX::RM::AlbumImage> m_covers ;
 

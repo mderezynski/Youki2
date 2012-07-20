@@ -27,7 +27,11 @@ namespace MPX
 
 	    if( Glib::file_test( thumb, Glib::FILE_TEST_EXISTS ))
 	    {
-		artist_image = Gdk::Pixbuf::create_from_file( thumb ) ;		    
+		try{
+		    artist_image = Gdk::Pixbuf::create_from_file( thumb ) ;		    
+		} catch( Glib::Error& cxe ) {
+		    g_message("%s: Error loading artist thumbnail for ID '%s'", G_STRLOC, key.c_str()) ;
+		}
 	    }
 
 	    return ArtistImage (key,artist_image);
