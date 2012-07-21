@@ -139,8 +139,6 @@ IF(ENABLE_HAL)
   SET(HAVE_HAL ${HAL_FOUND})
 ENDIF()
 
-PKG_CHECK_MODULES(TAGLIB REQUIRED taglib-gio>=1.4)
-
 # SMlib/ICE
 OPTION(ENABLE_SM "Enable session management support with SMlib" yes)
 IF(ENABLE_SM)

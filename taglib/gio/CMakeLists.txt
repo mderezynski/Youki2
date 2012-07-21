@@ -1,0 +1,182 @@
+INCLUDE_DIRECTORIES(
+  ${PROJECT_BINARY_DIR}
+  ${PROJECT_SOURCE_DIR}
+  ${PROJECT_SOURCE_DIR}/include	
+  ${PROJECT_SOURCE_DIR}/taglib/gio	
+  ${ALSA_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIR}
+  ${CAIROMM_INCLUDE_DIRS}
+  ${CDIO_INCLUDE_DIRS}
+  ${CDPARANOIA_INCLUDE_DIR}
+  ${DBUS_INCLUDE_DIRS}
+  ${EXO_INCLUDE_DIRS}
+  ${GDL_INCLUDE_DIRS}
+  ${GIOMM_INCLUDE_DIRS}
+  ${GLIB_INCLUDE_DIRS}
+  ${GLIBMM_INCLUDE_DIRS}
+  ${GST_INCLUDE_DIRS}
+  ${GTKGLEXT_INCLUDE_DIRS}
+  ${GTKMM_INCLUDE_DIRS}
+  ${HAL_INCLUDE_DIRS}
+  ${NM_INCLUDE_DIRS}
+  ${LIBOFA_INCLUDE_DIRS}
+  ${PYGTK_INCLUDE_DIRS}
+  ${PYTHON_INCLUDE_DIRS}
+  ${RSVG_INCLUDE_DIRS}
+  ${SEXYMM_INCLUDE_DIRS}
+  ${SOUP_INCLUDE_DIRS}
+  ${SQLITE_INCLUDE_DIRS}
+  ${STARTUP_NOTIFY_INCLUDE_DIRS}
+  ${TAGLIB_INCLUDE_DIRS}
+  ${X11_X11_INCLUDE_PATH}
+  ${XML_INCLUDE_DIRS}
+  ${XPROTO_INCLUDE_DIRS}
+  ${mpx_taglib_gio_ADD_INCLUDE_DIRS}
+)
+
+SET(mpx_taglib_gio_SOVERSION 0)
+SET(mpx_taglib_gio_VERSION 0.0)
+
+SET(mpx_taglib_gio_SOURCES
+  apefooter.cpp
+  apefooter.h
+  apeitem.cpp
+  apeitem.h
+  apetag.cpp
+  apetag.h
+  attachedpictureframe.cpp
+  attachedpictureframe.h
+  audioproperties.cpp
+  audioproperties.h
+  CMakeLists.txt
+  combinedtag.h
+  commentsframe.cpp
+  commentsframe.h
+  fileref.cpp
+  fileref.h
+  flacfile.cpp
+  flacfile.h
+  flacproperties.cpp
+  flacproperties.h
+  flactag.h
+  generalencapsulatedobjectframe.cpp
+  generalencapsulatedobjectframe.h
+  id3v1genres.cpp
+  id3v1genres.h
+  id3v1tag.cpp
+  id3v1tag.h
+  id3v2extendedheader.cpp
+  id3v2extendedheader.h
+  id3v2footer.cpp
+  id3v2footer.h
+  id3v2frame.cpp
+  id3v2framefactory.cpp
+  id3v2framefactory.h
+  id3v2frame.h
+  id3v2header.cpp
+  id3v2header.h
+  id3v2synchdata.cpp
+  id3v2synchdata.h
+  id3v2tag.cpp
+  id3v2tag.h
+  mpcfile.cpp
+  mpcfile.h
+  mpcproperties.cpp
+  mpcproperties.h
+  mpegfile.cpp
+  mpegfile.h
+  mpegheader.cpp
+  mpegheader.h
+  mpegproperties.cpp
+  mpegproperties.h
+  oggfile.cpp
+  oggfile.h
+  oggflacfile.cpp
+  oggflacfile.h
+  oggpage.cpp
+  oggpage.h
+  oggpageheader.cpp
+  oggpageheader.h
+  relativevolumeframe.cpp
+  relativevolumeframe.h
+  tag.cpp
+  tag.h
+  taglib_export.h
+  taglib-gio.h
+  tbytevector.cpp
+  tbytevector.h
+  tbytevectorlist.cpp
+  tbytevectorlist.h
+  tdebug.cpp
+  tdebug.h
+  textidentificationframe.cpp
+  textidentificationframe.h
+  tfile.cpp
+  tfile.h
+  tlist.h
+  tlist.tcc
+  tmap.h
+  tmap.tcc
+  tstring.cpp
+  tstring.h
+  tstringlist.cpp
+  tstringlist.h
+  unicode.cpp
+  unicode.h
+  uniquefileidentifierframe.cpp
+  uniquefileidentifierframe.h
+  unknownframe.cpp
+  unknownframe.h
+  vorbisfile.cpp
+  vorbisfile.h
+  vorbisproperties.cpp
+  vorbisproperties.h
+  xingheader.cpp
+  xingheader.h
+  xiphcomment.cpp
+  xiphcomment.h
+  ${mpx_taglib_gio_ADD_SOURCES}
+)
+
+ADD_LIBRARY(mpx-taglib-gio SHARED ${mpx_taglib_gio_SOURCES})
+
+SET_TARGET_PROPERTIES(mpx-taglib-gio
+  PROPERTIES
+  VERSION ${mpx_taglib_gio_VERSION}
+  SOVERSION ${mpx_taglib_gio_SOVERSION}
+)
+
+TARGET_LINK_LIBRARIES(mpx-taglib-gio
+  ${ALSA_LIBRARIES}
+  ${Boost_REGEX_LIBRARY}
+  ${Boost_FILESYSTEM_LIBRARY}
+  ${CAIROMM_LIBRARIES}
+  ${CDIO_LIBRARIES}
+  ${CDPARANOIA_LIBRARY}
+  ${DBUS_LIBRARIES}
+  ${EXO_LIBRARIES}
+  ${GDL_LIBRARIES}
+  ${GIOMM_LIBRARIES}
+  ${GLIBMM_LIBRARIES}
+  ${GST_LIBRARIES}
+  ${GTKGLEXT_LIBRARIES}
+  ${GTKMM_LIBRARIES}
+  ${HAL_LIBRARIES}
+  ${NM_LIBRARIES}
+  ${LIBOFA_LIBRARIES}
+  ${PYGTK_LIBRARIES}
+  ${PYTHON_LIBRARIES}
+  ${RSVG_LIBRARIES}
+  ${SEXYMM_LIBRARIES}
+  ${SM_LIBRARIES}
+  ${SOUP_LIBRARIES}
+  ${SQLITE_LIBRARIES}
+  ${STARTUP_NOTIFY_LIBRARIES}
+  ${TAGLIB_LIBRARIES}
+  ${XML_LIBRARIES}
+  ${X11_X11_LIB}
+  ${mpx_taglib_gio_ADD_LIBRARIES}
+)
+
+INSTALL(TARGETS mpx-taglib-gio LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+

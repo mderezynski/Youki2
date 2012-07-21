@@ -25,6 +25,7 @@ INCLUDE_DIRECTORIES(
   ${XML_INCLUDE_DIRS}
   ${XPROTO_INCLUDE_DIRS}
   ${youki_mlibman_bin_ADD_INCLUDE_DIRS}
+  ${PROJECT_SOURCE_DIR}/taglib/gio
 )
 
 # FIXME: Check definitions in GLIB_INCLUDE_DIRS and GST_INCLUDE_DIRS
@@ -86,6 +87,7 @@ TARGET_LINK_LIBRARIES(youki-mlibman-bin
   mpx-sigx
   mpx-widgets
   mpx-musicbrainz
+  mpx-taglib-gio
   ${youki_mlibman_bin_ADD_LIBRARIES}
 )
 

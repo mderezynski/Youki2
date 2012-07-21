@@ -109,6 +109,7 @@ SET(youki_bin_SOURCES
   webkit-album-info.cc
   stock.cc
   main.cc
+  ${PROJECT_SOURCE_DIR}/taglib/gio
 )
 
 # FIXME: Add definitions from: ${GLIB_CFLAGS} and ${GST_CFLAGS}
@@ -165,6 +166,7 @@ TARGET_LINK_LIBRARIES(youki-bin
   mpx-musicbrainz
   mpx-view-components
   mpx-json
+  mpx-taglib-gio
   ${youki_bin_ADD_LIBRARIES}
 )
 

@@ -2428,7 +2428,7 @@ namespace MPX
 	    goto x1 ;
 	}	
 
-	if(!m_play_queue.empty() && !keep_queue && m_rb2->get_active()) /* tracks in the play queue? */
+	if(!m_play_queue.empty())
 	{
 	    /* ... so get next track from the play queue! */
 	    play_next_queue_item() ;
