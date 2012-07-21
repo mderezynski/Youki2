@@ -9,6 +9,7 @@ INCLUDE_DIRECTORIES(
   ${CMAKE_CURRENT_SOURCE_DIR} # FIXME: Get rid of cross header dependencies between /src and /include
   ${PROJECT_SOURCE_DIR}
   ${PROJECT_SOURCE_DIR}/include
+  ${PROJECT_SOURCE_DIR}/taglib/gio
   ${ALSA_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIR}
   ${CAIROMM_INCLUDE_DIRS}
