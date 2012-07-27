@@ -102,6 +102,7 @@ namespace MPX
 
         std::vector<std::string>    m_info ;
 	Glib::RefPtr<Gdk::Pixbuf>   m_cover ;
+	Glib::RefPtr<Gdk::Pixbuf>   m_bg ;
 
         sigc::connection            m_update_connection;
 

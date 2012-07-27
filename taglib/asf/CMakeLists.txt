@@ -9,17 +9,19 @@ INCLUDE_DIRECTORIES(
 )
 
 SET(taglib_plugin_asf_SOURCES
-  plugin.cc
-  resolver.cpp
-  resolver.h
-  asfattribute.cpp
-  asfattribute.h
-  asffile.cpp
-  asffile.h
-  asfproperties.cpp
-  asfproperties.h
-  asftag.cpp
-  asftag.h
+    asfattribute.cpp
+    asfattribute.h
+    asffile.cpp
+    asffile.h
+    asfpicture.cpp
+    asfpicture.h
+    asfproperties.cpp
+    asfproperties.h
+    asftag.cpp
+    asftag.h
+    plugin.cc
+    resolver.cpp
+    resolver.h
 )
 
 ADD_LIBRARY(taglib_plugin_asf MODULE ${taglib_plugin_asf_SOURCES})
@@ -31,3 +33,4 @@ TARGET_LINK_LIBRARIES(taglib_plugin_asf
 )
 
 INSTALL(TARGETS taglib_plugin_asf LIBRARY DESTINATION ${MPX_PLUGIN_DIR}/taglib)
+

@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <unordered_map>
 
 #include <boost/shared_ptr.hpp>
 #include "mpx/i-metadatareader.hh"
@@ -27,9 +28,9 @@ namespace MPX
           const char ** (*mimetypes) ();
         };
 
-        typedef boost::shared_ptr<TaglibPlugin>        TaglibPluginPtr;
-        typedef std::vector<TaglibPluginPtr>           TaglibPluginsKeeper;
-        typedef std::map<std::string, TaglibPluginPtr> TaglibPluginsMap;
+        typedef boost::shared_ptr<TaglibPlugin>			    TaglibPluginPtr;
+        typedef std::vector<TaglibPluginPtr>			    TaglibPluginsKeeper;
+        typedef std::unordered_map<std::string, TaglibPluginPtr>    TaglibPluginsMap;
 
         TaglibPluginsMap    m_taglib_plugins;
         TaglibPluginsKeeper m_taglib_plugins_keeper;

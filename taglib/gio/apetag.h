@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *   This library is free software; you can redistribute it and/or modify  *
- *   it  under the terms of the GNU Lesser General Public License version  *
+ *   it under the terms of the GNU Lesser General Public License version   *
  *   2.1 as published by the Free Software Foundation.                     *
  *                                                                         *
  *   This library is distributed in the hope that it will be useful, but   *
@@ -15,8 +15,12 @@
  *                                                                         *
  *   You should have received a copy of the GNU Lesser General Public      *
  *   License along with this library; if not, write to the Free Software   *
- *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  *
- *   USA                                                                   *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA         *
+ *   02110-1301  USA                                                       *
+ *                                                                         *
+ *   Alternatively, this file is available under the Mozilla Public        *
+ *   License Version 1.1.  You may obtain a copy of the License at         *
+ *   http://www.mozilla.org/MPL/                                           *
  ***************************************************************************/
 
 #ifndef TAGLIB_APETAG_H
@@ -62,7 +66,7 @@ namespace TagLib {
        * Create an APE tag and parse the data in \a file with APE footer at
        * \a tagOffset.
        */
-      Tag(File *file, long tagOffset);
+      Tag(TagLib::File *file, long footerLocation);
 
       /*!
        * Destroys this Tag instance.
@@ -110,6 +114,9 @@ namespace TagLib {
        *
        * This is the most powerfull structure for accessing the items of the tag.
        *
+       * APE tags are case-insensitive, all keys in this map have been converted
+       * to upper case.
+       *
        * \warning You should not modify this data structure directly, instead
        * use setItem() and removeItem().
        */
@@ -132,6 +139,11 @@ namespace TagLib {
        * present, it will be replaced.
        */
       void setItem(const String &key, const Item &item);
+
+      /*!
+       * Returns true if the tag does not contain any data.
+       */
+      bool isEmpty() const;
 
     protected:
 

@@ -185,7 +185,7 @@ public:
 	if(acquire)
 	{
 	    // request retrieval for actual object
-	    m_retriever.request (key);
+	    m_retriever.request (key, true);
 	}
 
 	return m_resources[key] ;

@@ -1,11 +1,11 @@
 /***************************************************************************
-    copyright            : (C) 2002, 2003 by Scott Wheeler
+    copyright            : (C) 2002 - 2008 by Scott Wheeler
     email                : wheeler@kde.org
  ***************************************************************************/
 
 /***************************************************************************
  *   This library is free software; you can redistribute it and/or modify  *
- *   it  under the terms of the GNU Lesser General Public License version  *
+ *   it under the terms of the GNU Lesser General Public License version   *
  *   2.1 as published by the Free Software Foundation.                     *
  *                                                                         *
  *   This library is distributed in the hope that it will be useful, but   *
@@ -15,8 +15,12 @@
  *                                                                         *
  *   You should have received a copy of the GNU Lesser General Public      *
  *   License along with this library; if not, write to the Free Software   *
- *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  *
- *   USA                                                                   *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA         *
+ *   02110-1301  USA                                                       *
+ *                                                                         *
+ *   Alternatively, this file is available under the Mozilla Public        *
+ *   License Version 1.1.  You may obtain a copy of the License at         *
+ *   http://www.mozilla.org/MPL/                                           *
  ***************************************************************************/
 
 #ifndef TAGLIB_ID3V1TAG_H
@@ -48,20 +52,16 @@ namespace TagLib {
      *
      * \warning It is advisable <b>not</b> to write non-ISO-8859-1 data to ID3v1
      * tags.  Please consider disabling the writing of ID3v1 tags in the case
-     * that the data is ISO-8859-1.
+     * that the data is not ISO-8859-1.
      *
      * \see ID3v1::Tag::setStringHandler()
      */
 
-    class StringHandler
+    class TAGLIB_EXPORT StringHandler
     {
     public:
-      // do not fix compiler warning about missing virtual destructor
-      // since this would not be binary compatible
-      // let Scott fix it whenever he thinks BIC changes can next be applied
-      /*!
-       * Destroys this StringHandler instance.
-       */
+      // BIC: Add virtual destructor.
+
       /*!
        * Decode a string from \a data.  The default implementation assumes that
        * \a data is an ISO-8859-1 (Latin1) character array.
@@ -70,7 +70,8 @@ namespace TagLib {
 
       /*!
        * Encode a ByteVector with the data from \a s.  The default implementation
-       * assumes that \a s is an ISO-8859-1 (Latin1) string.
+       * assumes that \a s is an ISO-8859-1 (Latin1) string.  If the string is
+       * does not conform to ISO-8859-1, no value is written.
        *
        * \warning It is recommended that you <b>not</b> override this method, but
        * instead do not write an ID3v1 tag in the case that the data is not

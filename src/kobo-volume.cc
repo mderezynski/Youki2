@@ -22,7 +22,7 @@
 
 namespace
 {
-    const double rounding = 2.5 ;
+    const double rounding = 2 ;
 
     template <typename T>
     struct PangoScaleAdaptor

@@ -1,11 +1,11 @@
 /***************************************************************************
-    copyright            : (C) 2003 by Scott Wheeler
+    copyright            : (C) 2002 - 2008 by Scott Wheeler
     email                : wheeler@kde.org
  ***************************************************************************/
 
 /***************************************************************************
  *   This library is free software; you can redistribute it and/or modify  *
- *   it  under the terms of the GNU Lesser General Public License version  *
+ *   it under the terms of the GNU Lesser General Public License version   *
  *   2.1 as published by the Free Software Foundation.                     *
  *                                                                         *
  *   This library is distributed in the hope that it will be useful, but   *
@@ -15,8 +15,12 @@
  *                                                                         *
  *   You should have received a copy of the GNU Lesser General Public      *
  *   License along with this library; if not, write to the Free Software   *
- *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  *
- *   USA                                                                   *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA         *
+ *   02110-1301  USA                                                       *
+ *                                                                         *
+ *   Alternatively, this file is available under the Mozilla Public        *
+ *   License Version 1.1.  You may obtain a copy of the License at         *
+ *   http://www.mozilla.org/MPL/                                           *
  ***************************************************************************/
 
 #include <bitset>
@@ -42,7 +46,8 @@ public:
     channelMode(Stereo),
     isCopyrighted(false),
     isOriginal(false),
-    frameLength(0) {}
+    frameLength(0),
+    samplesPerFrame(0) {}
 
   bool isValid;
   Version version;
@@ -55,6 +60,7 @@ public:
   bool isCopyrighted;
   bool isOriginal;
   int frameLength;
+  int samplesPerFrame;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -133,6 +139,11 @@ int MPEG::Header::frameLength() const
   return d->frameLength;
 }
 
+int MPEG::Header::samplesPerFrame() const
+{
+  return d->samplesPerFrame;
+}
+
 MPEG::Header &MPEG::Header::operator=(const Header &h)
 {
   if(&h == this)
@@ -153,16 +164,16 @@ MPEG::Header &MPEG::Header::operator=(const Header &h)
 void MPEG::Header::parse(const ByteVector &data)
 {
   if(data.size() < 4 || uchar(data[0]) != 0xff) {
-    debug("MPEG::Header::parse() -- First byte did not mactch MPEG synch.");
+    debug("MPEG::Header::parse() -- First byte did not match MPEG synch.");
     return;
   }
 
-  std::bitset<32> flags(data.toUInt());
+  std::bitset<32> flags(TAGLIB_CONSTRUCT_BITSET(data.toUInt()));
 
   // Check for the second byte's part of the MPEG synch
 
   if(!flags[23] || !flags[22] || !flags[21]) {
-    debug("MPEG::Header::parse() -- Second byte did not mactch MPEG synch.");
+    debug("MPEG::Header::parse() -- Second byte did not match MPEG synch.");
     return;
   }
 
@@ -247,6 +258,17 @@ void MPEG::Header::parse(const ByteVector &data)
     d->frameLength = 24000 * 2 * d->bitrate / d->sampleRate + int(d->isPadded);
   else
     d->frameLength = 72000 * d->bitrate / d->sampleRate + int(d->isPadded);
+
+  // Samples per frame
+
+  static const int samplesPerFrame[3][2] = {
+    // MPEG1, 2/2.5
+    {  384,   384 }, // Layer I
+    { 1152,  1152 }, // Layer II
+    { 1152,   576 }  // Layer III
+  };
+
+  d->samplesPerFrame = samplesPerFrame[layerIndex][versionIndex];
 
   // Now that we're done parsing, set this to be a valid frame.
 

@@ -122,7 +122,8 @@ namespace MPX
         // TDRC 
         {
             const FrameList& map = tag->frameListMap()["TDRC"];
-            if( !map.isEmpty() )
+
+            if( !map.isEmpty() && map.front() )
             {
                 track[ATTRIBUTE_MB_RELEASE_DATE] = string( map.front()->toString().toCString( true ) );
             }
@@ -131,7 +132,7 @@ namespace MPX
         // TPE2 (Album Artist) 
         {
             const FrameList& map = tag->frameListMap()["TPE2"];
-            if( !map.isEmpty() )
+            if( !map.isEmpty() && map.front() )
             {
                 track[ATTRIBUTE_ALBUM_ARTIST] = string( map.front()->toString().toCString( true ) );
             }
@@ -140,7 +141,7 @@ namespace MPX
         // TPUB (Label) 
         {
             const FrameList& map = tag->frameListMap()["TPUB"];
-            if( !map.isEmpty() )
+            if( !map.isEmpty() && map.front() )
             {
                 track[ATTRIBUTE_LABEL] = string( map.front()->toString().toCString( true ) );
             }
@@ -149,7 +150,7 @@ namespace MPX
         // Totaltracks
         {
             const FrameList& map = tag->frameListMap()["TRCK"];
-            if( !map.isEmpty() )
+            if( !map.isEmpty() && map.front() )
             {
                 std::string trck_str = string( map.front()->toString().toCString( true ) );
 		std::vector<string> m ;
@@ -169,7 +170,7 @@ namespace MPX
         {
             const FrameList& map = tag->frameListMap()["TCMP"];
 
-            if( !map.isEmpty() )
+            if( !map.isEmpty() && map.front() )
             {
                 std::string tcmp_str = string( map.front()->toString().toCString( true ) );
 
@@ -188,7 +189,7 @@ namespace MPX
         // Disc Nr. 
         {
             const FrameList& map = tag->frameListMap()["TPOS"];
-            if( !map.isEmpty() )
+            if( !map.isEmpty() && map.front() )
             {
                 std::string tpos_str = string( map.front()->toString().toCString( true ) );
 		std::vector<string> m ;

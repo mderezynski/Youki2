@@ -16,7 +16,7 @@
 
 namespace
 {
-    const double rounding = 2.5 ; 
+    const double rounding = 2 ; 
 }
 
 namespace MPX
@@ -219,12 +219,31 @@ namespace MPX
             ) ;
 
             cairo->set_source( position_bar_gradient ) ;
-	    RoundedRectangle( cairo, r.x, r.y, r.width, r.height, rounding) ;
-            cairo->fill_preserve(); 
-	    Gdk::Cairo::set_source_rgba(cairo,Util::make_rgba(c1,.8)) ;
+	    RoundedRectangle(
+		  cairo
+		, r.x
+		, r.y
+		, r.width
+		, r.height
+		, rounding
+	    ) ;
+            cairo->fill(); 
+
+#if 0
+	    RoundedRectangle(
+		  cairo
+		, 1 
+		, 1 
+		, w
+		, 21
+		, rounding 
+	    ) ;
+
+	    Gdk::Cairo::set_source_rgba(cairo,Util::make_rgba(c1,.5)) ;
 	    cairo->set_line_width(1) ;
 	    cairo->stroke() ;
             cairo->restore() ;
+#endif
         }
 
 	Pango::FontDescription font_desc = get_style_context()->get_font() ;

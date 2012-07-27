@@ -1,11 +1,11 @@
 /***************************************************************************
-    copyright            : (C) 2004 by Scott Wheeler
+    copyright            : (C) 2002 - 2008 by Scott Wheeler
     email                : wheeler@kde.org
  ***************************************************************************/
 
 /***************************************************************************
  *   This library is free software; you can redistribute it and/or modify  *
- *   it  under the terms of the GNU Lesser General Public License version  *
+ *   it under the terms of the GNU Lesser General Public License version   *
  *   2.1 as published by the Free Software Foundation.                     *
  *                                                                         *
  *   This library is distributed in the hope that it will be useful, but   *
@@ -15,15 +15,19 @@
  *                                                                         *
  *   You should have received a copy of the GNU Lesser General Public      *
  *   License along with this library; if not, write to the Free Software   *
- *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  *
- *   USA                                                                   *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA         *
+ *   02110-1301  USA                                                       *
+ *                                                                         *
+ *   Alternatively, this file is available under the Mozilla Public        *
+ *   License Version 1.1.  You may obtain a copy of the License at         *
+ *   http://www.mozilla.org/MPL/                                           *
  ***************************************************************************/
 
 #ifndef TAGLIB_ATTACHEDPICTUREFRAME_H
 #define TAGLIB_ATTACHEDPICTUREFRAME_H
 
-#include <id3v2frame.h>
-#include <id3v2header.h>
+#include "id3v2frame.h"
+#include "id3v2header.h"
 #include "taglib_export.h"
 
 namespace TagLib {
@@ -201,14 +205,24 @@ namespace TagLib {
     protected:
       virtual void parseFields(const ByteVector &data);
       virtual ByteVector renderFields() const;
-
-    private:
-      AttachedPictureFrame(const ByteVector &data, Header *h);
-      AttachedPictureFrame(const AttachedPictureFrame &);
-      AttachedPictureFrame &operator=(const AttachedPictureFrame &);
-
       class AttachedPictureFramePrivate;
       AttachedPictureFramePrivate *d;
+
+    private:
+      AttachedPictureFrame(const AttachedPictureFrame &);
+      AttachedPictureFrame &operator=(const AttachedPictureFrame &);
+      AttachedPictureFrame(const ByteVector &data, Header *h);
+
+    };
+
+    //! support for ID3v2.2 PIC frames
+    class TAGLIB_EXPORT AttachedPictureFrameV22 : public AttachedPictureFrame
+    {
+    protected:
+      virtual void parseFields(const ByteVector &data);
+    private:
+      AttachedPictureFrameV22(const ByteVector &data, Header *h);
+      friend class FrameFactory;
     };
   }
 }

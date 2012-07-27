@@ -26,14 +26,15 @@
 #ifndef TAGLIB_MP4ITEM_H
 #define TAGLIB_MP4ITEM_H
 
-#include <tstringlist.h>
+#include "tstringlist.h"
 #include "mp4coverart.h"
+#include "taglib_export.h"
 
 namespace TagLib {
 
   namespace MP4 {
 
-    class Item
+    class TAGLIB_EXPORT Item
     {
     public:
       struct IntPair {

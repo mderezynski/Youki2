@@ -1,11 +1,11 @@
 /***************************************************************************
-    copyright            : (C) 2003 by Scott Wheeler
+    copyright            : (C) 2002 - 2008 by Scott Wheeler
     email                : wheeler@kde.org
  ***************************************************************************/
 
 /***************************************************************************
  *   This library is free software; you can redistribute it and/or modify  *
- *   it  under the terms of the GNU Lesser General Public License version  *
+ *   it under the terms of the GNU Lesser General Public License version   *
  *   2.1 as published by the Free Software Foundation.                     *
  *                                                                         *
  *   This library is distributed in the hope that it will be useful, but   *
@@ -15,13 +15,18 @@
  *                                                                         *
  *   You should have received a copy of the GNU Lesser General Public      *
  *   License along with this library; if not, write to the Free Software   *
- *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  *
- *   USA                                                                   *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA         *
+ *   02110-1301  USA                                                       *
+ *                                                                         *
+ *   Alternatively, this file is available under the Mozilla Public        *
+ *   License Version 1.1.  You may obtain a copy of the License at         *
+ *   http://www.mozilla.org/MPL/                                           *
  ***************************************************************************/
 
 #ifndef TAGLIB_OGGPAGE_H
 #define TAGLIB_OGGPAGE_H
 
+#include "taglib_export.h"
 #include "tbytevectorlist.h"
 
 namespace TagLib {
@@ -44,7 +49,7 @@ namespace TagLib {
      * could potentially be useful for non-meta data purposes.
      */
 
-    class Page
+    class TAGLIB_EXPORT Page
     {
     public:
       /*!
@@ -64,6 +69,14 @@ namespace TagLib {
        * invalid when the page is deleted.
        */
       const PageHeader *header() const;
+
+      /*! 
+       * Returns a copy of the page with \a sequenceNumber set as sequence number.
+       * 
+       * \see header()
+       * \see PageHeader::setPageSequenceNumber()
+       */
+      Page* getCopyWithNewPageSequenceNumber(int sequenceNumber);
 
       /*!
        * Returns the index of the first packet wholly or partially contained in

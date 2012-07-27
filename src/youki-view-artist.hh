@@ -64,11 +64,13 @@ namespace Artist
 	    , R_TRACKS
 	} ;
 
-        typedef boost::container::stable_vector<Row_t>Model_t ;
-        typedef boost::shared_ptr<Model_t> Model_sp ;
-        typedef std::map<guint, Model_t::iterator> IdIterMap_t ;
-        typedef boost::container::stable_vector<Model_t::iterator> RowRowMapping_t ;
-        typedef std::map<std::string, Model_t::iterator> MBIDIterMap_t;
+        typedef boost::container::stable_vector<Row_t>		    Model_t ;
+        typedef boost::shared_ptr<Model_t>			    Model_sp ;
+
+        typedef std::vector<Model_t::iterator>			    RowRowMapping_t ;
+
+        typedef std::map<std::string, Model_t::iterator>	    MBIDIterMap_t;
+        typedef std::map<guint, Model_t::iterator>		    IdIterMap_t ;
 
         typedef sigc::signal<void>                         Signal_0 ;
         typedef sigc::signal<void, guint>		   Signal_1 ;

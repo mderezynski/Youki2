@@ -19,25 +19,19 @@ namespace MPX
     }
 
     MainWindow::MainWindow ()
-
-        : m_bottom_pad( 0 )
-        , m_composited( Gdk::Screen::get_default()->is_composited() )
-	, m_do_disconnect( false )
-
     {
         set_title( "Youki" ) ;
 
-        a1 = Gtk::manage( new Gtk::Alignment  ) ;
-	add( *a1 ) ;
-
+	a1 = Gtk::manage( new Gtk::Alignment ) ;
         a1->property_top_padding() = 0 ;
 	a1->property_left_padding() = 0 ;
 	a1->property_right_padding() = 0 ;
         a1->property_bottom_padding() = 7 ;
-
         a1->set_border_width( 0 ) ;
 
-	set_border_width( 0 ) ;
+	add(*a1) ;
+
+	//set_border_width( 0 ) ;
 
         gtk_widget_realize( GTK_WIDGET( gobj() )) ;
 
@@ -63,13 +57,13 @@ namespace MPX
 
     void
     MainWindow::set_widget_top( Gtk::Widget & w )
-                    {
-                        a1->add( w ) ;
-                    }
+    {
+	a1->add( w ) ;
+    }
 
     void
     MainWindow::clear_widget_top()
-                    {
-                        a1->remove() ;
-                    }
+    {
+	a1->remove() ;
+    }
 }

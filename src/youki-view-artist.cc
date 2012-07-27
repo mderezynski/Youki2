@@ -44,8 +44,8 @@ namespace Artist
 
 //		Util::cairo_image_surface_blur( s1, 1 ) ;
 
-		boost::get<3>(*(i1->second)) = std::move(s1) ; 
-		boost::get<4>(*(i1->second)) = std::move(s2) ; 
+		boost::get<3>(*(i1->second)) = s1 ; 
+		boost::get<4>(*(i1->second)) = s2 ; 
 
 		m_SIGNAL__redraw.emit() ;
 	    }

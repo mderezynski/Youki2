@@ -24,7 +24,7 @@ namespace
 	using boost::algorithm::replace_all ;
 
         replace_all(mbid, "/","_") ;
-        std::string basename = (boost::format ("%s.png") % mbid).str () ;
+        std::string basename = (boost::format ("%s.jpg") % mbid).str () ;
         Glib::ScopedPtr<char> path (g_build_filename(g_get_user_cache_dir(), PACKAGE, "covers", basename.c_str(), NULL)) ;
 
         return std::string(path.get()) ;
@@ -74,8 +74,11 @@ namespace RM
 		if(cover)
 		{
 		    g_message("Got cover with MBID {%s}", key.mbid.c_str()) ;
-		    cover->save (get_thumb_path (key.mbid), "png") ;
-		    return AlbumImage(key, cover);
+		    try{
+			cover->save (get_thumb_path (key.mbid), "jpeg") ;
+			return AlbumImage(key, cover);
+		    } catch( Gdk::PixbufError& cxe ) {
+		    }
 		}
 	    }
 

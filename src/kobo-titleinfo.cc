@@ -115,6 +115,9 @@ namespace MPX
     : m_tmod( m_current_time, text_time )
     {
         m_theme = services->get<IYoukiThemeEngine>("mpx-service-theme") ;
+	m_bg = Gdk::Pixbuf::create_from_file(
+	    Glib::build_filename (DATA_DIR, "images" G_DIR_SEPARATOR_S "square_bg.png")
+	) ;
 
 	set_app_paintable (true);
         add_events( Gdk::EventMask(Gdk::BUTTON_PRESS_MASK | Gdk::ENTER_NOTIFY_MASK | Gdk::LEAVE_NOTIFY_MASK )) ;
@@ -222,25 +225,25 @@ namespace MPX
         double alpha = 1. ;
         
         Util::color_to_hsb( cgdk, h, s, b ) ;
-        b *= 0.80 ; 
-        s *= 0.90 ;
+        b *= 0.90 ; 
+        s *= 0.95 ;
         Gdk::RGBA c1 = Util::color_from_hsb( h, s, b ) ;
 
         Util::color_to_hsb( cgdk, h, s, b ) ;
-	b *= 0.75 ;
-        s *= 0.85 ;
+	b *= 0.87 ;
+        s *= 0.93 ;
         Gdk::RGBA c2 = Util::color_from_hsb( h, s, b ) ;
 
         Util::color_to_hsb( cgdk, h, s, b ) ;
-        b *= 0.58 ;
-        s *= 0.60 ;
+        b *= 0.82 ;
+        s *= 0.90 ;
         Gdk::RGBA c3 = Util::color_from_hsb( h, s, b ) ;
 
         gradient->add_color_stop_rgba(
               0
-            , c1.get_red()
-            , c1.get_green()
-            , c1.get_blue()
+            , c3.get_red()
+            , c3.get_green()
+            , c3.get_blue()
             , alpha
         ) ;
         gradient->add_color_stop_rgba(
@@ -252,9 +255,9 @@ namespace MPX
         ) ;
         gradient->add_color_stop_rgba(
               1 
-            , c3.get_red()
-            , c3.get_green()
-            , c3.get_blue()
+            , c1.get_red()
+            , c1.get_green()
+            , c1.get_blue()
             , alpha
         ) ;
         cairo->set_source( gradient ) ;
@@ -267,11 +270,12 @@ namespace MPX
             , r.height 
             , 2. 
         ) ;
-        cairo->fill(); 
+        cairo->fill_preserve(); 
 
+#if 0
 	cairo->save() ;
-        cairo->set_source_rgba( 0.15, 0.15, 0.15, 1. ) ; 
-        cairo->set_line_width( 0.5 ) ;
+	cairo->set_line_width( 0.5 ) ;
+        cairo->set_source( gradient ) ;
         RoundedRectangle(
               cairo
             , r.x 
@@ -281,6 +285,48 @@ namespace MPX
             , 2. 
         ) ;
         cairo->stroke() ;
+	cairo->restore() ;
+#endif
+
+	cairo->save() ;
+        RoundedRectangle(
+              cairo
+            , r.x 
+            , r.y 
+            , r.width 
+            , r.height 
+            , 2. 
+        ) ;
+        cairo->clip() ;
+
+	Cairo::RefPtr<Cairo::LinearGradient> gradient2 = Cairo::LinearGradient::create(
+              r.x + r.width / 2
+            , r.y  
+            , r.x + r.width / 2
+            , r.y + r.height
+        ) ;
+
+        gradient2->add_color_stop_rgba(
+              0
+            , 0 
+            , 0 
+            , 0 
+            , 0.25 
+        ) ;
+        gradient2->add_color_stop_rgba(
+              1 
+            , 0 
+            , 0
+            , 0
+            , 0.95
+        ) ;
+
+	Cairo::RefPtr<Cairo::ImageSurface> srf = Util::cairo_image_surface_from_pixbuf(m_bg) ;
+	Cairo::RefPtr<Cairo::SurfacePattern> pat = Cairo::SurfacePattern::create(srf) ;
+	pat->set_extend( Cairo::EXTEND_REPEAT ) ;
+	cairo->set_source(pat) ;
+        cairo->set_operator( Cairo::OPERATOR_OVER ) ;
+	cairo->mask(gradient2) ;
 	cairo->restore() ;
 
 	if( m_cover )
@@ -352,7 +398,7 @@ namespace MPX
 	    if( line > 2 )
 	    {
 		m_update_connection.disconnect() ;
-		layout->set_markup((boost::format("<b>%s</b>  ::  <b>%s</b> <i>%s</i>")
+		layout->set_markup((boost::format("<b>%s</b>  ::  <b>%s</b> %s")
 		    % Glib::Markup::escape_text(m_info[2])
 		    % Glib::Markup::escape_text(m_info[0])
 		    % Glib::Markup::escape_text(m_info[1])
@@ -370,11 +416,10 @@ namespace MPX
             cairo->set_operator( Cairo::OPERATOR_OVER ) ;
             cairo->translate(
                   (a.get_width()-width)/2.
-                , (a.get_height()-height)/2. 
+                , (a.get_height()-height)/2.
             ) ;
 
 	    Util::render_text_shadow( layout, 1, 1, cairo, 2, ((line>2)?0.3:alpha/3.)) ;
-
 	    cairo->move_to(0,0) ;
             cairo->set_source_rgba(
                   cgdk.get_red()

@@ -1,11 +1,11 @@
 /***************************************************************************
-    copyright            : (C) 2003 by Scott Wheeler
+    copyright            : (C) 2002 - 2008 by Scott Wheeler
     email                : wheeler@kde.org
  ***************************************************************************/
 
 /***************************************************************************
  *   This library is free software; you can redistribute it and/or modify  *
- *   it  under the terms of the GNU Lesser General Public License version  *
+ *   it under the terms of the GNU Lesser General Public License version   *
  *   2.1 as published by the Free Software Foundation.                     *
  *                                                                         *
  *   This library is distributed in the hope that it will be useful, but   *
@@ -15,8 +15,12 @@
  *                                                                         *
  *   You should have received a copy of the GNU Lesser General Public      *
  *   License along with this library; if not, write to the Free Software   *
- *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  *
- *   USA                                                                   *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA         *
+ *   02110-1301  USA                                                       *
+ *                                                                         *
+ *   Alternatively, this file is available under the Mozilla Public        *
+ *   License Version 1.1.  You may obtain a copy of the License at         *
+ *   http://www.mozilla.org/MPL/                                           *
  ***************************************************************************/
 
 #include <tbytevector.h>
@@ -79,12 +83,12 @@ String Ogg::XiphComment::comment() const
 {
   if(!d->fieldListMap["DESCRIPTION"].isEmpty()) {
     d->commentField = "DESCRIPTION";
-    return d->fieldListMap["DESCRIPTION"].front();    
+    return d->fieldListMap["DESCRIPTION"].front();
   }
 
   if(!d->fieldListMap["COMMENT"].isEmpty()) {
     d->commentField = "COMMENT";
-    return d->fieldListMap["COMMENT"].front();    
+    return d->fieldListMap["COMMENT"].front();
   }
 
   return String::null;
@@ -99,16 +103,20 @@ String Ogg::XiphComment::genre() const
 
 TagLib::uint Ogg::XiphComment::year() const
 {
-  if(d->fieldListMap["DATE"].isEmpty())
-    return 0;
-  return d->fieldListMap["DATE"].front().toInt();
+  if(!d->fieldListMap["DATE"].isEmpty())
+    return d->fieldListMap["DATE"].front().toInt();
+  if(!d->fieldListMap["YEAR"].isEmpty())
+    return d->fieldListMap["YEAR"].front().toInt();
+  return 0;
 }
 
 TagLib::uint Ogg::XiphComment::track() const
 {
-  if(d->fieldListMap["TRACKNUMBER"].isEmpty())
-    return 0;
-  return d->fieldListMap["TRACKNUMBER"].front().toInt();
+  if(!d->fieldListMap["TRACKNUMBER"].isEmpty())
+    return d->fieldListMap["TRACKNUMBER"].front().toInt();
+  if(!d->fieldListMap["TRACKNUM"].isEmpty())
+    return d->fieldListMap["TRACKNUM"].front().toInt();
+  return 0;
 }
 
 void Ogg::XiphComment::setTitle(const String &s)
@@ -138,6 +146,7 @@ void Ogg::XiphComment::setGenre(const String &s)
 
 void Ogg::XiphComment::setYear(uint i)
 {
+  removeField("YEAR");
   if(i == 0)
     removeField("DATE");
   else
@@ -146,6 +155,7 @@ void Ogg::XiphComment::setYear(uint i)
 
 void Ogg::XiphComment::setTrack(uint i)
 {
+  removeField("TRACKNUM");
   if(i == 0)
     removeField("TRACKNUMBER");
   else
@@ -259,7 +269,7 @@ ByteVector Ogg::XiphComment::render(bool addFramingBit) const
   }
 
   // Append the "framing bit".
- 
+
   if(addFramingBit)
     data.append(char(1));
 
@@ -277,7 +287,7 @@ void Ogg::XiphComment::parse(const ByteVector &data)
 
   int pos = 0;
 
-  int vendorLength = data.mid(0, 4).toUInt(false);
+  uint vendorLength = data.mid(0, 4).toUInt(false);
   pos += 4;
 
   d->vendorID = String(data.mid(pos, vendorLength), String::UTF8);
@@ -285,21 +295,31 @@ void Ogg::XiphComment::parse(const ByteVector &data)
 
   // Next the number of fields in the comment vector.
 
-  int commentFields = data.mid(pos, 4).toUInt(false);
+  uint commentFields = data.mid(pos, 4).toUInt(false);
   pos += 4;
 
-  for(int i = 0; i < commentFields; i++) {
+  if(commentFields > (data.size() - 8) / 4) {
+    return;
+  }
+
+  for(uint i = 0; i < commentFields; i++) {
 
     // Each comment field is in the format "KEY=value" in a UTF8 string and has
     // 4 bytes before the text starts that gives the length.
 
-    int commentLength = data.mid(pos, 4).toUInt(false);
+    uint commentLength = data.mid(pos, 4).toUInt(false);
     pos += 4;
 
     String comment = String(data.mid(pos, commentLength), String::UTF8);
     pos += commentLength;
+    if(pos > data.size()) {
+      break;
+    }
 
     int commentSeparatorPosition = comment.find("=");
+    if(commentSeparatorPosition == -1) {
+      break;
+    }
 
     String key = comment.substr(0, commentSeparatorPosition);
     String value = comment.substr(commentSeparatorPosition + 1);

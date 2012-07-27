@@ -487,7 +487,7 @@ namespace Albums
 	    m_image_disc = Util::cairo_image_surface_from_pixbuf(
 				    Gdk::Pixbuf::create_from_file(
 					    Glib::build_filename( DATA_DIR, "images" G_DIR_SEPARATOR_S "disc.png" )
-	    )->scale_simple(256, 256, Gdk::INTERP_BILINEAR)) ;
+	    )) ;
 
 	    m_image_new = Util::cairo_image_surface_from_pixbuf(
 				    Gdk::Pixbuf::create_from_file(
@@ -526,7 +526,7 @@ namespace Albums
 	    double r
 	)
 	{
-	    m_rounding = 2 ; // r;
+	    m_rounding = 0.75 ; // r;
 	}
 
 	double
@@ -594,7 +594,7 @@ namespace Albums
 	    cairo->set_source(
 		  Util::cairo_image_surface_from_pixbuf(icon_desaturated_1)
 		,   0
-		, -80 
+		, (album->coverart ? (-80) : (-40))
 	    ) ;
 	    cairo->rectangle(
 		  0
@@ -831,7 +831,17 @@ namespace Albums
 		    , 0
 		) ;
 		cairo->rectangle(0,0,20,20) ;
-		cairo->fill() ;
+
+		if( animation_alpha < 1 )
+		{
+		    cairo->clip() ;
+		    cairo->paint_with_alpha( 1 - animation_alpha ) ;
+		}
+		else
+		{
+		    cairo->fill() ;
+		}
+
 		cairo->restore() ;
 	    }
 
@@ -969,7 +979,7 @@ namespace Albums
 
 	    if(WithinPast3Days( album->insert_date ))
 	    {
-		Util::draw_cairo_image( cairo, m_image_new, 228, 10 );
+		Util::draw_cairo_image( cairo, m_image_new, 228, 8 );
 	    }
 
 	    cairo->restore() ;

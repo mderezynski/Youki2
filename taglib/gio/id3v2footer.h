@@ -1,11 +1,11 @@
 /***************************************************************************
-    copyright            : (C) 2002, 2003 by Scott Wheeler
+    copyright            : (C) 2002 - 2008 by Scott Wheeler
     email                : wheeler@kde.org
  ***************************************************************************/
 
 /***************************************************************************
  *   This library is free software; you can redistribute it and/or modify  *
- *   it  under the terms of the GNU Lesser General Public License version  *
+ *   it under the terms of the GNU Lesser General Public License version   *
  *   2.1 as published by the Free Software Foundation.                     *
  *                                                                         *
  *   This library is distributed in the hope that it will be useful, but   *
@@ -15,13 +15,18 @@
  *                                                                         *
  *   You should have received a copy of the GNU Lesser General Public      *
  *   License along with this library; if not, write to the Free Software   *
- *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  *
- *   USA                                                                   *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA         *
+ *   02110-1301  USA                                                       *
+ *                                                                         *
+ *   Alternatively, this file is available under the Mozilla Public        *
+ *   License Version 1.1.  You may obtain a copy of the License at         *
+ *   http://www.mozilla.org/MPL/                                           *
  ***************************************************************************/
 
 #ifndef TAGLIB_ID3V2FOOTER_H
 #define TAGLIB_ID3V2FOOTER_H
 
+#include "taglib_export.h"
 #include "tbytevector.h"
 
 namespace TagLib {
@@ -42,7 +47,7 @@ namespace TagLib {
      * has been set in the ID3v2::Tag, TagLib will render a footer.
      */
 
-    class Footer
+    class TAGLIB_EXPORT Footer
     {
     public:
       /*!
@@ -57,7 +62,7 @@ namespace TagLib {
       /*!
        * Returns the size of the footer.  Presently this is always 10 bytes.
        */
-      static const unsigned int size();
+      static uint size();
 
       /*!
        * Renders the footer based on the data in \a header.

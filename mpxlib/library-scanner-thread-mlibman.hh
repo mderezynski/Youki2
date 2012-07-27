@@ -35,6 +35,7 @@
 #include <set>
 #include <unordered_map>
 #include <unordered_set>
+#include <tuple>
 #if 0
 #include <boost/tuple/tuple.hpp>
 #include <boost/tuple/tuple_comparison.hpp>
@@ -268,7 +269,7 @@ namespace MPX
                 , ENTITY_IS_UNDEFINED
             };
 
-            typedef std::pair<guint, EntityIsNew>   EntityInfo;
+            typedef std::pair<guint, EntityIsNew> EntityInfo;
  
             EntityInfo 
             get_track_artist_id(
@@ -357,6 +358,10 @@ namespace MPX
             void
             process_insertion_list();
 
+	    bool
+	    insert_idle(
+	    ) ;
+
             void
             add_erroneous_track(
                   const std::string& uri
@@ -441,6 +446,7 @@ namespace MPX
             struct ThreadData;
             Glib::Private<ThreadData>               m_ThreadData ;
             MPX::Library_MLibMan                  & m_Library_MLibMan;
+	    MPX::MetadataReaderTagLib		  & m_TagLib ;
             boost::shared_ptr<MPX::SQL::SQLDB>      m_SQL ;
 #ifdef HAVE_HAL
             const IHAL                            & m_HAL ;

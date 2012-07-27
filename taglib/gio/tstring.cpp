@@ -1,11 +1,11 @@
 /***************************************************************************
-    copyright            : (C) 2002, 2003 by Scott Wheeler
+    copyright            : (C) 2002 - 2008 by Scott Wheeler
     email                : wheeler@kde.org
  ***************************************************************************/
 
 /***************************************************************************
  *   This library is free software; you can redistribute it and/or modify  *
- *   it  under the terms of the GNU Lesser General Public License version  *
+ *   it under the terms of the GNU Lesser General Public License version   *
  *   2.1 as published by the Free Software Foundation.                     *
  *                                                                         *
  *   This library is distributed in the hope that it will be useful, but   *
@@ -15,8 +15,12 @@
  *                                                                         *
  *   You should have received a copy of the GNU Lesser General Public      *
  *   License along with this library; if not, write to the Free Software   *
- *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  *
- *   USA                                                                   *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA         *
+ *   02110-1301  USA                                                       *
+ *                                                                         *
+ *   Alternatively, this file is available under the Mozilla Public        *
+ *   License Version 1.1.  You may obtain a copy of the License at         *
+ *   http://www.mozilla.org/MPL/                                           *
  ***************************************************************************/
 
 #include "tstring.h"
@@ -31,7 +35,7 @@ namespace TagLib {
 
   inline unsigned short byteSwap(unsigned short x)
   {
-    return ((x) >> 8) & 0xff | ((x) & 0xff) << 8;
+    return (((x) >> 8) & 0xff) | (((x) & 0xff) << 8);
   }
 
   inline unsigned short combine(unsigned char c1, unsigned char c2)
@@ -243,7 +247,7 @@ std::string String::to8Bit(bool unicode) const
   return s;
 }
 
-TagLib::wstring String::to32Bit() const
+TagLib::wstring String::toWString() const
 {
   return d->data;
 }
@@ -282,6 +286,17 @@ String::ConstIterator String::end() const
 int String::find(const String &s, int offset) const
 {
   wstring::size_type position = d->data.find(s.d->data, offset);
+
+  if(position != wstring::npos)
+    return position;
+  else
+    return -1;
+}
+
+int String::rfind(const String &s, int offset) const
+{
+  wstring::size_type position =
+    d->data.rfind(s.d->data, offset == -1 ? wstring::npos : offset);
 
   if(position != wstring::npos)
     return position;
@@ -417,16 +432,26 @@ ByteVector String::data(Type t) const
 
 int String::toInt() const
 {
+  return toInt(0);
+}
+
+int String::toInt(bool *ok) const
+{
   int value = 0;
 
-  bool negative = d->data[0] == '-';
-  uint i = negative ? 1 : 0;
+  uint size = d->data.size();
+  bool negative = size > 0 && d->data[0] == '-';
+  uint start = negative ? 1 : 0;
+  uint i = start;
 
-  for(; i < d->data.size() && d->data[i] >= '0' && d->data[i] <= '9'; i++)
+  for(; i < size && d->data[i] >= '0' && d->data[i] <= '9'; i++)
     value = value * 10 + (d->data[i] - '0');
 
   if(negative)
     value = value * -1;
+
+  if(ok)
+    *ok = (size > start && i == size);
 
   return value;
 }
@@ -455,6 +480,24 @@ String String::stripWhiteSpace() const
           *end == '\f' || *end == '\r' || *end == ' ');
 
   return String(wstring(begin, end + 1));
+}
+
+bool String::isLatin1() const
+{
+  for(wstring::const_iterator it = d->data.begin(); it != d->data.end(); it++) {
+    if(*it >= 256)
+      return false;
+  }
+  return true;
+}
+
+bool String::isAscii() const
+{
+  for(wstring::const_iterator it = d->data.begin(); it != d->data.end(); it++) {
+    if(*it >= 128)
+      return false;
+  }
+  return true;
 }
 
 String String::number(int n) // static
@@ -488,6 +531,8 @@ String String::number(int n) // static
 
 TagLib::wchar &String::operator[](int i)
 {
+  detach();
+
   return d->data[i];
 }
 
@@ -536,6 +581,8 @@ String &String::operator+=(wchar_t c)
 
 String &String::operator+=(char c)
 {
+  detach();
+
   d->data += uchar(c);
   return *this;
 }
@@ -673,7 +720,7 @@ void String::prepare(Type t)
   switch(t) {
   case UTF16:
   {
-    if(d->data.size() > 1) {
+    if(d->data.size() >= 1 && (d->data[0] == 0xfeff || d->data[0] == 0xfffe)) {
       bool swap = d->data[0] != 0xfeff;
       d->data.erase(d->data.begin(), d->data.begin() + 1);
       if(swap) {

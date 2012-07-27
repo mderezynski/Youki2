@@ -81,6 +81,8 @@ namespace
     "       <menuitem action='ContextAddToQueue'/>"
     "       <menuitem action='ContextAddToQueueNext'/>"
     "       <separator/>"
+    "	    <menuitem action='ViewActionFollowPlayingTrack'/>"
+    "       <separator/>"
     "       <menuitem action='ContextShowAlbum'/>"
     "       <menuitem action='ContextShowArtist'/>"
     "       <separator/>"
@@ -466,7 +468,7 @@ namespace MPX
 	)) ;
 
         m_VBox = Gtk::manage( new Gtk::VBox ) ;
-        m_VBox->set_spacing(2) ;
+        m_VBox->set_spacing(4) ;
 	m_VBox->set_border_width(0) ;
 
 	//////////
@@ -615,22 +617,22 @@ namespace MPX
 
         Gtk::Alignment* Entry_Align = Gtk::manage( new Gtk::Alignment ) ;
         Entry_Align->add( *m_HBox_Entry ) ;
-	Entry_Align->set_padding( 2, 4, 4, 4 ) ;
+	Entry_Align->set_padding( 2, 2, 4, 4 ) ;
 	Entry_Align->property_xalign() = 0. ;
 	Entry_Align->property_xscale() = 1. ; 
 
         Gtk::Alignment* Controls_Align = Gtk::manage( new Gtk::Alignment ) ;
         m_HBox_Controls = Gtk::manage( new Gtk::HBox ) ;
-        m_HBox_Controls->set_spacing(0) ;
+        m_HBox_Controls->set_spacing(2) ;
 	Controls_Align->add( *m_HBox_Controls ) ;
-	Controls_Align->set_padding( 0, 2, 0, 2 ) ;
+	Controls_Align->set_padding( 0, 0, 1, 3 ) ;
 
         m_VBox_Bottom = Gtk::manage( new Gtk::VBox ) ;
         m_VBox_Bottom->set_spacing(2) ;
 
 	Gtk::VBox* VBox2 = Gtk::manage( new Gtk::VBox ) ;
 	VBox2->set_border_width(0) ;
-	VBox2->set_spacing(4) ;
+	VBox2->set_spacing(5) ;
 
 	Gtk::Alignment * Main_Align = Gtk::manage( new Gtk::Alignment ) ;
 	Main_Align->add( *VBox2 ) ;
@@ -801,7 +803,7 @@ namespace MPX
         m_ScrolledWinTracks->set_kinetic_scrolling() ;
 
         m_main_position = Gtk::manage( new KoboPosition ) ;
-	m_main_position->set_size_request( -1, 23 ) ;
+	m_main_position->set_size_request( 600, 23 ) ;
         m_main_position->signal_seek_event().connect(
             sigc::mem_fun(
                   *this
@@ -903,8 +905,8 @@ namespace MPX
 	    m_ScrolledWinTracks->add( *m_ListViewTracks ) ;
 	    m_ScrolledWinTracks->show_all() ;
 
+	    private_->FilterModelTracks->create_identity_mapping() ;
 	    private_->FilterModelTracks->regen_mapping () ;
-
 	    private_->FilterModelTracks->signal_changed().connect( sigc::mem_fun(*this, &YoukiController::handle_model_changed )) ; 
         }
 
@@ -1145,6 +1147,8 @@ namespace MPX
 	m_PlaylistGUI->signal_playlist_no_selected().connect( func4 ) ;
 #endif
 
+	m_Entry->set_icon_tooltip_text(_("Click here to pin this search")) ;
+
 	handle_model_changed(0,false) ;
         on_style_changed() ;
 
@@ -1253,6 +1257,7 @@ namespace MPX
     void
     YoukiController::update_entry_placeholder_text()
     {
+#if 0
 	if (m_aqe_synthetic_pinned)
 	{
 	    m_Entry->set_placeholder_text(_("Refine Your Search here...")) ;
@@ -1261,9 +1266,9 @@ namespace MPX
 	{
 	    m_Entry->set_placeholder_text(_("Search Your Music here...")) ;
 	}
+#endif
 
-#if 0
-	const guint MAX_WORDS = 6 ; // Psychology says the human mind can hold 5-7 "items"; so we take the middle here
+	const guint MAX_WORDS = 3 ; // Psychology says the human mind can hold 5-7 "items"; so we take the middle here
 	const guint MAX_TRIES = 20 ;
 
 	SQL::RowV v ;
@@ -1302,22 +1307,16 @@ namespace MPX
 	    }
 	}
 
-	if(!s.empty())
+	if(!s.empty())	// else we keep the current text
 	{
 	    StrV m;
 	    split( m, s, is_any_of(" "));
 
-	    if(m_aqe_synthetic_pinned)
-	    {
-		m_Entry->set_placeholder_text(_("Refine your Search here...")) ;
-	    }
-	    else
+	    if( m.size() <= MAX_WORDS )
 	    {
 		m_Entry->set_placeholder_text((boost::format("%s '%s'") % _("Search your Music here... Try: ") % s).str()) ;
 	    }
 	}	
-	// else we keep the current text
-#endif
     }
 
     void
@@ -1453,7 +1452,7 @@ namespace MPX
 	    handle_sql_error( cxe ) ;
 	}
 
-	for( auto& r : v ) 
+	for( auto r : v ) 
 	{
 	    try{
 		auto a = get_album_from_id( get<guint>(r["id"]), false) ;
@@ -1461,6 +1460,7 @@ namespace MPX
 		a->caching = true ;
 
 		private_->FilterModelAlbums->append_album(a) ; 
+
 		m_ListViewAlbums->set_album_caching(a) ;
 
 		MPX::RM::RequestQualifier rq ; 
@@ -1505,9 +1505,6 @@ namespace MPX
 	    {
 	    }
 	}
-
-	private_->FilterModelTracks->create_identity_mapping() ;
-	tracklist_regen_mapping() ;
     }
 
     void
@@ -2007,13 +2004,15 @@ namespace MPX
 	private_->FilterModelTracks->set_sizes( max_artist, max_albums ) ;
 
 	private_->FilterModelTracks->clear_fragment_cache() ;
-	private_->FilterModelTracks->enable_fragment_cache() ;
+	private_->FilterModelTracks->disable_fragment_cache() ;
 	private_->FilterModelTracks->create_identity_mapping() ;
+	private_->FilterModelTracks->enable_fragment_cache() ;
 
         m_conn1.unblock() ;
         m_conn2.unblock() ;
         m_conn4.unblock() ;
 
+	private_->FilterModelTracks->create_identity_mapping() ;
 	handle_search_entry_changed() ;
 	m_ListViewTracks->queue_draw() ;
     }
@@ -2024,11 +2023,6 @@ namespace MPX
     )
     {
         m_new_tracks.push_back( id ) ;
-       
-        if( m_new_tracks.size() == 50 )  
-        {
-            push_new_tracks() ;
-        }
     }
 
     void
@@ -2043,6 +2037,7 @@ namespace MPX
         v.clear();
         m_library->getSQL(v, (boost::format("SELECT max(id) AS id FROM album")).str()) ; 
         guint max_albums = boost::get<guint>(v[0]["id"]) ;
+
         private_->FilterModelTracks->set_sizes( max_artist, max_albums ) ;
 
         v.clear();
@@ -2058,8 +2053,6 @@ namespace MPX
 	    , 0 // FIXME FIXME FIXME
             , id 
         ) ; 
-	
-	private_->FilterModelArtist->regen_mapping() ; 
     }
 
     struct YoukiController::NewAlbumFetchStruct
@@ -2089,9 +2082,6 @@ namespace MPX
             v.clear();
             m_library->getSQL(v, (boost::format("SELECT location AS uri FROM track_view WHERE mpx_album_id = '%u'") % p->id ).str()) ; 
 
-	    m_ListViewAlbums->set_album_caching(a_sp) ;
-            private_->FilterModelAlbums->insert_album( a_sp ) ; 
-
 	    MPX::RM::RequestQualifier rq ; 
 	    rq.mbid     =   a_sp->mbid ; 
 	    rq.artist   =   a_sp->album_artist ; 
@@ -2099,15 +2089,20 @@ namespace MPX
 	    rq.id       =   a_sp->album_id ; 
 	    rq.uri	=   boost::get<std::string>(v[0]["uri"]) ;
 
-	    AlbumImage img = m_covers.get(rq, true) ;
+	    AlbumImage img = m_covers.get(rq, false) ;
 
 	    if( img ) 
 	    {
 		auto c = Util::cairo_image_surface_from_pixbuf( img.get_image()->scale_simple( 256, 256, Gdk::INTERP_BILINEAR)) ;
-		private_->FilterModelAlbums->update_album_cover( rq.id, c ) ;
+		a_sp->coverart = c ;
+                private_->FilterModelAlbums->insert_album(a_sp) ; 
 	    }
-
-	    private_->FilterModelAlbums->regen_mapping() ;
+	    else
+	    {
+                private_->FilterModelAlbums->insert_album(a_sp) ; 
+		m_ListViewAlbums->set_album_caching(a_sp) ;
+		m_covers.get(rq,true) ;
+	    }
 
         } catch( std::logic_error ) 
         {
@@ -2185,8 +2180,8 @@ namespace MPX
         , int                  type
     )
     {
-	on_library_entity_deleted_idle(id,type) ;
-	//Glib::signal_idle().connect( sigc::bind( sigc::mem_fun( *this, &YoukiController::on_library_entity_deleted_idle ), id, type )) ;
+	//on_library_entity_deleted_idle(id,type) ;
+	Glib::signal_idle().connect( sigc::bind( sigc::mem_fun( *this, &YoukiController::on_library_entity_deleted_idle ), id, type )) ;
     }
 
     void
@@ -2976,14 +2971,6 @@ namespace MPX
 
         private_->FilterModelTracks->clear_synthetic_constraints_quiet() ;
 
-#if 0
-	if( m_aqe_synthetic_pinned ) {
-	    for( auto c : *m_aqe_synthetic_pinned ) {
-		private_->FilterModelTracks->add_synthetic_constraint_quiet( c ) ;
-	    }
-	}
-#endif
-	
         private_->FilterModelAlbums->clear_all_constraints_quiet() ;
 
         OptUInt id_artist = m_ListViewArtist->get_selected() ;
@@ -3006,7 +2993,7 @@ namespace MPX
 	tracklist_regen_mapping() ;
 
 	private_->FilterModelAlbums->set_constraints_albums( private_->FilterModelTracks->m_constraints_albums ) ;
-	private_->FilterModelAlbums->set_constraints_artist( private_->FilterModelTracks->m_constraints_artist ) ;
+//	private_->FilterModelAlbums->set_constraints_artist( private_->FilterModelTracks->m_constraints_artist ) ;
         private_->FilterModelAlbums->regen_mapping() ;
 
 	m_conn1.unblock() ;
@@ -3021,14 +3008,6 @@ namespace MPX
     {
         private_->FilterModelTracks->clear_synthetic_constraints_quiet() ;
 
-#if 0
-	if( m_aqe_synthetic_pinned ) {
-	    for( auto c : *m_aqe_synthetic_pinned ) {
-		private_->FilterModelTracks->add_synthetic_constraint_quiet( c ) ;
-	    }
-	}
-#endif
-
         OptUInt id_artist = m_ListViewArtist->get_selected() ;
         OptUInt id_albums = m_ListViewAlbums->get_selected() ;
 
@@ -3038,7 +3017,7 @@ namespace MPX
         {
 	    ac.TargetAttr = ATTRIBUTE_MPX_ALBUM_ID ;
 	    ac.MatchType = AQE::MT_EQUAL ;
-	    ac.TargetValue = id_albums.get() ;
+	    ac.TargetValue = *id_albums ; 
 	    private_->FilterModelTracks->add_synthetic_constraint_quiet( ac ) ;
 	}
 
@@ -3046,7 +3025,7 @@ namespace MPX
 	{
 	    ac.TargetAttr = ATTRIBUTE_MPX_ALBUM_ARTIST_ID ;
 	    ac.MatchType = AQE::MT_EQUAL ;
-	    ac.TargetValue = id_artist.get() ;
+	    ac.TargetValue = *id_artist ; 
 	    private_->FilterModelTracks->add_synthetic_constraint_quiet( ac ) ;
 	}
 
@@ -3233,11 +3212,9 @@ namespace MPX
 		) ; 
 
 		m_aqe_synthetic_pinned.reset() ;
-
 		private_->FilterModelTracks->create_identity_mapping() ;
-
 		m_Entry->set_text(m_Entry->get_icon_tooltip_text()) ;
-		m_Entry->set_icon_tooltip_text("") ;
+		m_Entry->set_icon_tooltip_text(_("Click to pin this search")) ;
 		m_ListViewTracks->grab_focus() ;
 	    }
 	    else
@@ -3248,15 +3225,11 @@ namespace MPX
 		) ; 
 
 		m_aqe_synthetic_pinned = m_aqe_natural ;
-
 		private_->FilterModelTracks->create_pinned_mapping() ;
-
 		m_Entry->set_icon_tooltip_text(m_Entry->get_text()) ;
 		m_Entry->set_text("") ;
 		m_ListViewTracks->grab_focus() ;
 	    }
-
-	    update_entry_placeholder_text() ;
 
 	    return ;
 	}
@@ -3272,22 +3245,24 @@ namespace MPX
 
         private_->FilterModelTracks->clear_synthetic_constraints_quiet() ;
 
-#if 0
-	if( m_aqe_synthetic_pinned ) {
-	    for( auto c : *m_aqe_synthetic_pinned ) {
-		private_->FilterModelTracks->add_synthetic_constraint_quiet( c ) ;
-	    }
-	}
-#endif
-
         m_conn1.unblock() ;
         m_conn2.unblock() ;
         m_conn4.unblock() ;
 	m_conn3.unblock() ;
 
-	m_Entry->set_text("") ;
 	m_rb1->set_active() ;
-	handle_search_entry_changed() ;
+
+	if( m_ListViewArtist->get_selected_id() )
+	{	
+	    m_ListViewArtist->clear_selection() ;
+	}
+
+	if( m_ListViewAlbums->get_selected_id() )
+	{	
+	    m_ListViewAlbums->clear_selection() ;
+	}
+
+	m_Entry->set_text("") ;
 	m_ListViewTracks->grab_focus() ;
     }
 

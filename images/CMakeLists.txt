@@ -18,8 +18,8 @@ INSTALL(
 	new.png
 	pin-grey.png
 	pin-color.png
-	pin-error.png
         splash.png
+	square_bg.png
 	turntable.png
 	youki-mlibman128x128.png
         youki512x512.png

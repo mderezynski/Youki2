@@ -21,6 +21,9 @@
 /usr/lib/libmpx-sigx.so.2.0
 /usr/lib/libmpx-sigx.so.0
 /usr/lib/libmpx-sigx.so
+/usr/lib/libmpx-taglib-gio.so.0.0
+/usr/lib/libmpx-taglib-gio.so.0
+/usr/lib/libmpx-taglib-gio.so
 /usr/lib/youki/plugins/taglib/libtaglib_plugin_asf.so
 /usr/lib/youki/plugins/taglib/libtaglib_plugin_flac.so
 /usr/lib/youki/plugins/taglib/libtaglib_plugin_mp3.so
@@ -36,7 +39,6 @@
 /usr/lib/youki/plugins/cppmod/libcppmod-audioqualityprefs.so
 /usr/lib/youki/plugins/cppmod/libcppmod-libraryprefs.so
 /usr/lib/youki/plugins/cppmod/libcppmod-mmkeys.so
-/usr/lib/youki/plugins/cppmod/libcppmod-notify.so
 /usr/share/applications/youki.desktop
 /usr/share/youki/ui/cppmod-mmkeys.ui
 /usr/share/youki/ui/cppmod-prefs-audio.ui
@@ -81,7 +83,10 @@
 /usr/share/youki/images/media-shuffle.png
 /usr/share/youki/images/mute-small-14x14px.png
 /usr/share/youki/images/new.png
+/usr/share/youki/images/pin-grey.png
+/usr/share/youki/images/pin-color.png
 /usr/share/youki/images/splash.png
+/usr/share/youki/images/square_bg.png
 /usr/share/youki/images/turntable.png
 /usr/share/youki/images/youki-mlibman128x128.png
 /usr/share/youki/images/youki512x512.png

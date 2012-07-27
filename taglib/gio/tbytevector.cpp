@@ -1,11 +1,11 @@
 /***************************************************************************
-    copyright            : (C) 2002 - 2004 by Scott Wheeler
+    copyright            : (C) 2002 - 2008 by Scott Wheeler
     email                : wheeler@kde.org
  ***************************************************************************/
 
 /***************************************************************************
  *   This library is free software; you can redistribute it and/or modify  *
- *   it  under the terms of the GNU Lesser General Public License version  *
+ *   it under the terms of the GNU Lesser General Public License version   *
  *   2.1 as published by the Free Software Foundation.                     *
  *                                                                         *
  *   This library is distributed in the hope that it will be useful, but   *
@@ -15,8 +15,12 @@
  *                                                                         *
  *   You should have received a copy of the GNU Lesser General Public      *
  *   License along with this library; if not, write to the Free Software   *
- *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  *
- *   USA                                                                   *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA         *
+ *   02110-1301  USA                                                       *
+ *                                                                         *
+ *   Alternatively, this file is available under the Mozilla Public        *
+ *   License Version 1.1.  You may obtain a copy of the License at         *
+ *   http://www.mozilla.org/MPL/                                           *
  ***************************************************************************/
 
 #include <iostream>
@@ -38,6 +42,8 @@
 #define DATA(x) (&(x->data[0]))
 
 namespace TagLib {
+  static const char hexTable[17] = "0123456789abcdef";
+
   static const uint crcTable[256] = {
     0x00000000, 0x04c11db7, 0x09823b6e, 0x0d4326d9, 0x130476dc, 0x17c56b6b,
     0x1a864db2, 0x1e475005, 0x2608edb8, 0x22c9f00f, 0x2f8ad6d6, 0x2b4bcb61,
@@ -85,13 +91,13 @@ namespace TagLib {
   };
 
   /*!
-   * A templatized find that works both with a ByteVector and a ByteVectorMirror.
+   * A templatized KMP find that works both with a ByteVector and a ByteVectorMirror.
    */
 
   template <class Vector>
   int vectorFind(const Vector &v, const Vector &pattern, uint offset, int byteAlign)
   {
-    if(pattern.size() > v.size() || offset >= v.size() - 1)
+    if(pattern.size() > v.size() || offset > v.size() - 1)
       return -1;
 
     // Let's go ahead and special case a pattern of size one since that's common
@@ -112,7 +118,7 @@ namespace TagLib {
       lastOccurrence[i] = uchar(pattern.size());
 
     for(uint i = 0; i < pattern.size() - 1; ++i)
-      lastOccurrence[unsigned(pattern[i])] = uchar(pattern.size() - i - 1);
+      lastOccurrence[uchar(pattern[i])] = uchar(pattern.size() - i - 1);
 
     for(uint i = pattern.size() - 1 + offset; i < v.size(); i += lastOccurrence[uchar(v.at(i))]) {
       int iBuffer = i;
@@ -142,12 +148,13 @@ namespace TagLib {
   {
   public:
     ByteVectorMirror(const ByteVector &source) : v(source) {}
-    const char operator[](int index) const
+
+    char operator[](int index) const
     {
       return v[v.size() - index - 1];
     }
 
-    const char at(int index) const
+    char at(int index) const
     {
       return v.at(v.size() - index - 1);
     }
@@ -166,6 +173,12 @@ namespace TagLib {
     {
       ByteVectorMirror v(*this);
 
+      if(offset > 0) {
+        offset = size() - offset - pattern.size();
+        if(offset >= size())
+          offset = 0;
+      }
+
       const int pos = vectorFind<ByteVectorMirror>(v, pattern, offset, byteAlign);
 
       // If the offset is zero then we need to adjust the location in the search
@@ -180,14 +193,11 @@ namespace TagLib {
       if(pos == -1)
         return -1;
 
-      if(offset == 0)
-        return size() - pos - pattern.size();
-      else
-        return pos - offset;
+      return size() - pos - pattern.size();
     }
 
   private:
-    const ByteVector v;
+    const ByteVector &v;
   };
 
   template <class T>
@@ -353,7 +363,7 @@ ByteVector ByteVector::mid(uint index, uint length) const
 
   ConstIterator endIt;
 
-  if(length < 0xffffffff && length + index < size())
+  if(length < size() - index)
     endIt = d->data.begin() + index + length;
   else
     endIt = d->data.end();
@@ -414,6 +424,37 @@ bool ByteVector::startsWith(const ByteVector &pattern) const
 bool ByteVector::endsWith(const ByteVector &pattern) const
 {
   return containsAt(pattern, size() - pattern.size());
+}
+
+ByteVector &ByteVector::replace(const ByteVector &pattern, const ByteVector &with)
+{
+  if(pattern.size() == 0 || pattern.size() > size())
+    return *this;
+
+  const int patternSize = pattern.size();
+  const int withSize = with.size();
+
+  int offset = find(pattern);
+
+  while(offset >= 0) {
+
+    const int originalSize = size();
+
+    if(withSize > patternSize)
+      resize(originalSize + withSize - patternSize);
+
+    if(patternSize != withSize)
+      ::memcpy(data() + offset + withSize, mid(offset + patternSize).data(), originalSize - offset - patternSize);
+
+    if(withSize < patternSize)
+      resize(originalSize + withSize - patternSize);
+
+    ::memcpy(data() + offset, with.data(), withSize);
+
+    offset = find(pattern, offset + withSize);
+  }
+
+  return *this;
 }
 
 int ByteVector::endsWithPartialMatch(const ByteVector &pattern) const
@@ -524,6 +565,11 @@ short ByteVector::toShort(bool mostSignificantByteFirst) const
   return toNumber<unsigned short>(d->data, mostSignificantByteFirst);
 }
 
+unsigned short ByteVector::toUShort(bool mostSignificantByteFirst) const
+{
+  return toNumber<unsigned short>(d->data, mostSignificantByteFirst);
+}
+
 long long ByteVector::toLongLong(bool mostSignificantByteFirst) const
 {
   return toNumber<unsigned long long>(d->data, mostSignificantByteFirst);
@@ -612,6 +658,20 @@ ByteVector &ByteVector::operator=(const char *data)
 {
   *this = ByteVector(data);
   return *this;
+}
+
+ByteVector ByteVector::toHex() const
+{
+  ByteVector encoded(size() * 2);
+
+  uint j = 0;
+  for(uint i = 0; i < size(); i++) {
+    unsigned char c = d->data[i];
+    encoded[j++] = hexTable[(c >> 4) & 0x0F];
+    encoded[j++] = hexTable[(c     ) & 0x0F];
+  }
+
+  return encoded;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

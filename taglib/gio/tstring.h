@@ -1,11 +1,11 @@
 /***************************************************************************
-    copyright            : (C) 2002, 2003 by Scott Wheeler
+    copyright            : (C) 2002 - 2008 by Scott Wheeler
     email                : wheeler@kde.org
  ***************************************************************************/
 
 /***************************************************************************
  *   This library is free software; you can redistribute it and/or modify  *
- *   it  under the terms of the GNU Lesser General Public License version  *
+ *   it under the terms of the GNU Lesser General Public License version   *
  *   2.1 as published by the Free Software Foundation.                     *
  *                                                                         *
  *   This library is distributed in the hope that it will be useful, but   *
@@ -15,8 +15,12 @@
  *                                                                         *
  *   You should have received a copy of the GNU Lesser General Public      *
  *   License along with this library; if not, write to the Free Software   *
- *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  *
- *   USA                                                                   *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA         *
+ *   02110-1301  USA                                                       *
+ *                                                                         *
+ *   Alternatively, this file is available under the Mozilla Public        *
+ *   License Version 1.1.  You may obtain a copy of the License at         *
+ *   http://www.mozilla.org/MPL/                                           *
  ***************************************************************************/
 
 #ifndef TAGLIB_STRING_H
@@ -27,12 +31,15 @@
 #include "tbytevector.h"
 
 #include <string>
-#include <ostream>
+#include <iostream>
 
 /*!
  * \relates TagLib::String
  *
- * Converts a TagLib::String to a QString without a requirement to link to Qt.
+ * Converts a QString to a TagLib::String without a requirement to link to Qt.
+ *
+ * \note consider conversion via usual char-by-char for loop to avoid UTF16->UTF8->UTF16
+ * conversion happening in the background
  */
 #define QStringToTString(s) TagLib::String(s.utf8().data(), TagLib::String::UTF8)
 
@@ -40,6 +47,10 @@
  * \relates TagLib::String
  *
  * Converts a TagLib::String to a QString without a requirement to link to Qt.
+ *
+ * \note consider conversion via usual char-by-char for loop to avoid UTF16->UTF8->UTF16
+ * conversion happening in the background
+ *
  */
 #define TStringToQString(s) QString::fromUtf8(s.toCString(true))
 
@@ -174,7 +185,7 @@ namespace TagLib {
     /*!
      * Returns a wstring version of the TagLib string as a wide string.
      */
-    wstring to32Bit() const;
+    wstring toWString() const;
 
     /*!
      * Creates and returns a C-String based on the data.  This string is still
@@ -220,6 +231,13 @@ namespace TagLib {
      * \a offset.  If the pattern is not found, -1 is returned.
      */
     int find(const String &s, int offset = 0) const;
+
+    /*!
+     * Finds the last occurrence of pattern \a s in this string, searched backwards,
+     * either from the end of the string or starting from \a offset. If the pattern
+     * is not found, -1 is returned.
+     */
+    int rfind(const String &s, int offset = -1) const;
 
     /*!
      * Returns true if the strings starts with the substring \a s.
@@ -280,13 +298,36 @@ namespace TagLib {
 
     /*!
      * Convert the string to an integer.
+     *
+     * Returns the integer if the conversion was successfull or 0 if the
+     * string does not represent a number.
      */
+    // BIC: merge with the method below
     int toInt() const;
+
+    /*!
+     * Convert the string to an integer.
+     *
+     * If the conversion was successfull, it sets the value of \a *ok to
+     * true and returns the integer. Otherwise it sets \a *ok to false
+     * and the result is undefined.
+     */
+    int toInt(bool *ok) const;
 
     /*!
      * Returns a string with the leading and trailing whitespace stripped.
      */
     String stripWhiteSpace() const;
+
+    /*!
+     * Returns true if the file only uses characters required by Latin1.
+     */
+    bool isLatin1() const;
+
+    /*!
+     * Returns true if the file only uses characters required by (7-bit) ASCII.
+     */
+    bool isAscii() const;
 
     /*!
      * Converts the base-10 integer \a n to a string.
@@ -415,21 +456,21 @@ namespace TagLib {
  *
  * Concatenates \a s1 and \a s2 and returns the result as a string.
  */
-const TagLib::String operator+(const TagLib::String &s1, const TagLib::String &s2);
+TAGLIB_EXPORT const TagLib::String operator+(const TagLib::String &s1, const TagLib::String &s2);
 
 /*!
  * \relates TagLib::String
  *
  * Concatenates \a s1 and \a s2 and returns the result as a string.
  */
-const TagLib::String operator+(const char *s1, const TagLib::String &s2);
+TAGLIB_EXPORT const TagLib::String operator+(const char *s1, const TagLib::String &s2);
 
 /*!
  * \relates TagLib::String
  *
  * Concatenates \a s1 and \a s2 and returns the result as a string.
  */
-const TagLib::String operator+(const TagLib::String &s1, const char *s2);
+TAGLIB_EXPORT const TagLib::String operator+(const TagLib::String &s1, const char *s2);
 
 
 /*!

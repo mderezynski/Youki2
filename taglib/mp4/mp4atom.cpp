@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *   This library is free software; you can redistribute it and/or modify  *
- *   it  under the terms of the GNU Lesser General Public License version  *
+ *   it under the terms of the GNU Lesser General Public License version   *
  *   2.1 as published by the Free Software Foundation.                     *
  *                                                                         *
  *   This library is distributed in the hope that it will be useful, but   *
@@ -15,13 +15,21 @@
  *                                                                         *
  *   You should have received a copy of the GNU Lesser General Public      *
  *   License along with this library; if not, write to the Free Software   *
- *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  *
- *   USA                                                                   *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA         *
+ *   02110-1301  USA                                                       *
+ *                                                                         *
+ *   Alternatively, this file is available under the Mozilla Public        *
+ *   License Version 1.1.  You may obtain a copy of the License at         *
+ *   http://www.mozilla.org/MPL/                                           *
  ***************************************************************************/
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#include <tdebug.h>
 #include <tstring.h>
 #include "mp4atom.h"
-#include "aux.hh"
 
 using namespace TagLib;
 
@@ -34,13 +42,29 @@ MP4::Atom::Atom(File *file)
 {
   offset = file->tell();
   ByteVector header = file->readBlock(8);
-  length = header.mid(0, 4).toUInt();
-
-  if (length == 1) {
-    debug("MP4: 64-bit atoms are not supported");
+  if (header.size() != 8) {
+    // The atom header must be 8 bytes long, otherwise there is either
+    // trailing garbage or the file is truncated
+    debug("MP4: Couldn't read 8 bytes of data for atom header");
     length = 0;
     file->seek(0, File::End);
     return;
+  }
+
+  length = header.mid(0, 4).toUInt();
+
+  if (length == 1) {
+    long long longLength = file->readBlock(8).toLongLong();
+    if (longLength >= 8 && longLength <= 0xFFFFFFFF) {
+        // The atom has a 64-bit length, but it's actually a 32-bit value
+        length = (long)longLength;
+    }
+    else {
+        debug("MP4: 64-bit atoms are not supported");
+        length = 0;
+        file->seek(0, File::End);
+        return;
+    }
   }
   if (length < 8) {
     debug("MP4: Invalid atom size");
@@ -57,7 +81,10 @@ MP4::Atom::Atom(File *file)
         file->seek(4, File::Current);
       }
       while(file->tell() < offset + length) {
-        children.append(new MP4::Atom(file));
+        MP4::Atom *child = new MP4::Atom(file);
+        children.append(child);
+        if (child->length == 0)
+          return;
       }
       return;
     }
@@ -124,7 +151,10 @@ MP4::Atoms::Atoms(File *file)
   long end = file->tell();
   file->seek(0);
   while(file->tell() + 8 <= end) {
-    atoms.append(new MP4::Atom(file));
+    MP4::Atom *atom = new MP4::Atom(file);
+    atoms.append(atom);
+    if (atom->length == 0)
+      break;
   }
 }
 
@@ -161,3 +191,4 @@ MP4::Atoms::path(const char *name1, const char *name2, const char *name3, const 
   }
   return path;
 }
+

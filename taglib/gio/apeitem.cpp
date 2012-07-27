@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *   This library is free software; you can redistribute it and/or modify  *
- *   it  under the terms of the GNU Lesser General Public License version  *
+ *   it under the terms of the GNU Lesser General Public License version   *
  *   2.1 as published by the Free Software Foundation.                     *
  *                                                                         *
  *   This library is distributed in the hope that it will be useful, but   *
@@ -15,8 +15,12 @@
  *                                                                         *
  *   You should have received a copy of the GNU Lesser General Public      *
  *   License along with this library; if not, write to the Free Software   *
- *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  *
- *   USA                                                                   *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA         *
+ *   02110-1301  USA                                                       *
+ *                                                                         *
+ *   Alternatively, this file is available under the Mozilla Public        *
+ *   License Version 1.1.  You may obtain a copy of the License at         *
+ *   http://www.mozilla.org/MPL/                                           *
  ***************************************************************************/
 
 #include <tbytevectorlist.h>
@@ -143,6 +147,11 @@ StringList APE::Item::toStringList() const
   return d->text;
 }
 
+StringList APE::Item::values() const
+{
+  return d->text;
+}
+
 String APE::Item::toString() const
 {
   return isEmpty() ? String::null : d->text.front();
@@ -151,14 +160,14 @@ String APE::Item::toString() const
 bool APE::Item::isEmpty() const
 {
   switch(d->type) {
-    case 0:
-    case 1:
+    case Text:
+    case Binary:
       if(d->text.isEmpty())
         return true;
       if(d->text.size() == 1 && d->text.front().isEmpty())
         return true;
       return false;
-    case 2:
+    case Locator:
       return d->value.isEmpty();
     default:
       return false;
@@ -197,8 +206,9 @@ ByteVector APE::Item::render() const
   if(isEmpty())
     return data;
 
-  if(d->type != Item::Binary) {
+  if(d->type == Text) {
     StringList::ConstIterator it = d->text.begin();
+
     value.append(it->data(String::UTF8));
     it++;
     for(; it != d->text.end(); ++it) {

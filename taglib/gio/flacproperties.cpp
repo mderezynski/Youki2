@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *   This library is free software; you can redistribute it and/or modify  *
- *   it  under the terms of the GNU Lesser General Public License version  *
+ *   it under the terms of the GNU Lesser General Public License version   *
  *   2.1 as published by the Free Software Foundation.                     *
  *                                                                         *
  *   This library is distributed in the hope that it will be useful, but   *
@@ -15,8 +15,12 @@
  *                                                                         *
  *   You should have received a copy of the GNU Lesser General Public      *
  *   License along with this library; if not, write to the Free Software   *
- *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  *
- *   USA                                                                   *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA         *
+ *   02110-1301  USA                                                       *
+ *                                                                         *
+ *   Alternatively, this file is available under the Mozilla Public        *
+ *   License Version 1.1.  You may obtain a copy of the License at         *
+ *   http://www.mozilla.org/MPL/                                           *
  ***************************************************************************/
 
 #include <tstring.h>
@@ -48,6 +52,7 @@ public:
   int sampleRate;
   int sampleWidth;
   int channels;
+  ByteVector signature;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -64,7 +69,7 @@ FLAC::Properties::Properties(File *file, ReadStyle style) : AudioProperties(styl
 {
   d = new PropertiesPrivate(file->streamInfoData(), file->streamLength(), style);
   read();
-}	
+}
 
 FLAC::Properties::~Properties()
 {
@@ -94,6 +99,11 @@ int FLAC::Properties::sampleWidth() const
 int FLAC::Properties::channels() const
 {
   return d->channels;
+}
+
+ByteVector FLAC::Properties::signature() const
+{
+  return d->signature;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -137,10 +147,12 @@ void FLAC::Properties::read()
   pos += 4;
 
   // Uncompressed bitrate:
-  
+
   //d->bitrate = ((d->sampleRate * d->channels) / 1000) * d->sampleWidth;
-  
+
   // Real bitrate:
-  
-  d->bitrate = d->length > 0 ? ((d->streamLength * 8L) / d->length) / 1000 : 0;
+
+  d->bitrate = d->length > 0 ? ((d->streamLength * 8UL) / d->length) / 1000 : 0;
+
+  d->signature = d->data.mid(pos, 32);
 }

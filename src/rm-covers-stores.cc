@@ -115,7 +115,7 @@ namespace RM
 	    loader->write( reinterpret_cast<const guint8*>( data ), size ) ;
 	    loader->close() ;
 	    cover = loader->get_pixbuf();
-	} catch( Glib::Error& cxe ) {
+	} catch( Gdk::PixbufError& cxe ) {
 	    g_message("%s: Error: %s", G_STRLOC, cxe.what().c_str()) ;
 	    cover.reset() ;
 	}
@@ -179,7 +179,7 @@ namespace RM
 
 		std::size_t ld = ld_distance<Glib::ustring>( utf8_album, utf8_album_rq ) ;
 
-                if( ld > 0 )
+                if( ld > 3 )
                 {
                     return cover ;
                 }
@@ -190,9 +190,9 @@ namespace RM
 		return cover ;
 	    }
 
-	    std::vector<std::string> sizes { "mega", "extralarge", "large", "normal" } ;
+	    std::vector<std::string> sizes { /*"mega",*/ "extralarge", "large", "normal" } ;
 
-	    for( auto& s : sizes ) 
+	    for( auto s : sizes ) 
             {
                 try
                 {
@@ -207,16 +207,24 @@ namespace RM
 
 		    if(!image_url.empty())
 		    {
-			std::string::size_type i = image_url.rfind(".") ;
-			std::string url_jpg = image_url.substr(0,i) + ".jpg" ; 
-			cover = Util::get_image_from_uri(url_jpg) ; 
+			try{
+			    std::string::size_type i = image_url.rfind(".") ;
+			    std::string url_jpg = image_url.substr(0,i) + ".jpg" ; 
+			    cover = Util::get_image_from_uri(url_jpg) ; 
+			} catch( Gdk::PixbufError& cxe ) {
+			}
 
 			return cover;
 		    }
                 } 
-                catch( std::runtime_error& cxe)
+                catch( std::runtime_error& cxe ) 
 		{
 		    g_message("%s: Exception: %s", G_STRLOC, cxe.what()) ;
+		    return cover;
+		}
+                catch( Gdk::PixbufError& cxe)
+		{
+		    g_message("%s: Exception: %s", G_STRLOC, cxe.what().c_str()) ;
 		    return cover;
 		}
             }
@@ -273,8 +281,15 @@ namespace RM
 
 	    if( !image_url.empty() )
 	    {
-		cover = Util::get_image_from_uri(image_url) ; 
-		return cover;
+		try{
+		    cover = Util::get_image_from_uri(image_url) ; 
+		    return cover;
+		} catch( Gdk::PixbufError& cxe )
+		{
+		    g_message("%s: Exception: %s", G_STRLOC, cxe.what().c_str()) ;
+		    return cover;
+		}
+
 	    }
 
 	    // Try ASIN
@@ -295,8 +310,11 @@ namespace RM
 
 	    if( !asin.empty() )
 	    {
-		image_url = (boost::format("http://images.amazon.com/images/P/%s.01.LZZZZZZZ.jpg") % asin).str() ;
-		cover = Util::get_image_from_uri(image_url) ; 
+		try{
+		    image_url = (boost::format("http://images.amazon.com/images/P/%s.01.LZZZZZZZ.jpg") % asin).str() ;
+		    cover = Util::get_image_from_uri(image_url) ; 
+		} catch( Gdk::PixbufError&cxe ) {
+		}
 		return cover;
 	    }
         }
@@ -342,14 +360,45 @@ namespace RM
 				TagLib::ID3v2::AttachedPictureFrame const* picture =
 				    dynamic_cast<TagLib::ID3v2::AttachedPictureFrame const*>(frame);
 
-				if( picture && picture->type() == TagLib::ID3v2::AttachedPictureFrame::FrontCover )
+				if(!picture)
+				    picture = dynamic_cast<TagLib::ID3v2::AttachedPictureFrameV22 const*>(frame);
+
+				if( picture ) 
 				{
-				    Glib::RefPtr<Gdk::PixbufLoader> loader = Gdk::PixbufLoader::create();
+				    std::string mimetype = picture->mimeType().toCString(true) ;
 				    ByteVector picdata = picture->picture() ;
-				    loader->write (reinterpret_cast<const guint8*>(picdata.data()), picdata.size());
-				    loader->close ();
-				    cover = loader->get_pixbuf();
-				    g_message("InlineCovers: Got cover for MBID ['%s']", rq.mbid.c_str()) ;
+				    Glib::RefPtr<Gdk::PixbufLoader> loader ; 
+
+				    g_message("%s: APIC MIME: %s", G_STRLOC, picture->toString().toCString(true)) ; 
+
+				    try{
+					if( mimetype.empty()) {
+					    loader = Gdk::PixbufLoader::create("jpeg",false);
+					}
+
+					loader->write (reinterpret_cast<const guint8*>(picdata.data()), picdata.size());
+					loader->close ();
+
+					cover = loader->get_pixbuf();
+
+					g_message("InlineCovers: Got cover for MBID ['%s']", rq.mbid.c_str()) ;
+
+				    } catch( Gdk::PixbufError& cxe)
+				    {
+					try{
+					    loader = Gdk::PixbufLoader::create("png",false);
+
+					    loader->write (reinterpret_cast<const guint8*>(picdata.data()), picdata.size());
+					    loader->close ();
+
+					    cover = loader->get_pixbuf();
+
+					    g_message("InlineCovers: Got cover for MBID ['%s']", rq.mbid.c_str()) ;
+					} catch( Gdk::PixbufError& cxe )
+					{
+					    g_message("%s: Pixbuf Error: %s", G_STRLOC, cxe.what().c_str()) ;
+					}
+				    }
 				}
 			    }
 			}

@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *   This library is free software; you can redistribute it and/or modify  *
- *   it  under the terms of the GNU Lesser General Public License version  *
+ *   it under the terms of the GNU Lesser General Public License version   *
  *   2.1 as published by the Free Software Foundation.                     *
  *                                                                         *
  *   This library is distributed in the hope that it will be useful, but   *
@@ -15,15 +15,23 @@
  *                                                                         *
  *   You should have received a copy of the GNU Lesser General Public      *
  *   License along with this library; if not, write to the Free Software   *
- *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  *
- *   USA                                                                   *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA         *
+ *   02110-1301  USA                                                       *
+ *                                                                         *
+ *   Alternatively, this file is available under the Mozilla Public        *
+ *   License Version 1.1.  You may obtain a copy of the License at         *
+ *   http://www.mozilla.org/MPL/                                           *
  ***************************************************************************/
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#include <tdebug.h>
 #include <tstring.h>
 #include "mp4file.h"
 #include "mp4atom.h"
 #include "mp4properties.h"
-#include "aux.hh"
 
 using namespace TagLib;
 
@@ -81,15 +89,24 @@ MP4::Properties::Properties(File *file, MP4::Atoms *atoms, ReadStyle style)
 
   file->seek(mdhd->offset);
   data = file->readBlock(mdhd->length);
-  if(data[8] == 0) {
-    unsigned int unit = data.mid(20, 4).toUInt();
-    unsigned int length = data.mid(24, 4).toUInt();
-    d->length = length / unit;
-  }
-  else {
+  uint version = data[8];
+  if(version == 1) {
+    if (data.size() < 36 + 8) {
+      debug("MP4: Atom 'trak.mdia.mdhd' is smaller than expected");
+      return;
+    }
     long long unit = data.mid(28, 8).toLongLong();
     long long length = data.mid(36, 8).toLongLong();
-    d->length = int(length / unit);
+    d->length = unit ? int(length / unit) : 0;
+  }
+  else {
+    if (data.size() < 24 + 4) {
+      debug("MP4: Atom 'trak.mdia.mdhd' is smaller than expected");
+      return;
+    }
+    unsigned int unit = data.mid(20, 4).toUInt();
+    unsigned int length = data.mid(24, 4).toUInt();
+    d->length = unit ? length / unit : 0;
   }
 
   MP4::Atom *atom = trak->find("mdia", "minf", "stbl", "stsd");
@@ -155,3 +172,4 @@ MP4::Properties::bitsPerSample() const
 {
   return d->bitsPerSample;
 }
+

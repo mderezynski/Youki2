@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *   This library is free software; you can redistribute it and/or modify  *
- *   it  under the terms of the GNU Lesser General Public License version  *
+ *   it under the terms of the GNU Lesser General Public License version   *
  *   2.1 as published by the Free Software Foundation.                     *
  *                                                                         *
  *   This library is distributed in the hope that it will be useful, but   *
@@ -15,14 +15,23 @@
  *                                                                         *
  *   You should have received a copy of the GNU Lesser General Public      *
  *   License along with this library; if not, write to the Free Software   *
- *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  *
- *   USA                                                                   *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA         *
+ *   02110-1301  USA                                                       *
+ *                                                                         *
+ *   Alternatively, this file is available under the Mozilla Public        *
+ *   License Version 1.1.  You may obtain a copy of the License at         *
+ *   http://www.mozilla.org/MPL/                                           *
  ***************************************************************************/
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#include <tdebug.h>
 #include <tstring.h>
 #include "mp4atom.h"
 #include "mp4tag.h"
-#include "aux.hh"
+#include "id3v1genres.h"
 
 using namespace TagLib;
 
@@ -31,12 +40,12 @@ class MP4::Tag::TagPrivate
 public:
   TagPrivate() : file(0), atoms(0) {}
   ~TagPrivate() {}
-  File *file;
+  TagLib::File *file;
   Atoms *atoms;
   ItemListMap items;
 };
 
-MP4::Tag::Tag(File *file, MP4::Atoms *atoms)
+MP4::Tag::Tag(TagLib::File *file, MP4::Atoms *atoms)
 {
   d = new TagPrivate;
   d->file = file;
@@ -63,10 +72,21 @@ MP4::Tag::Tag(File *file, MP4::Atoms *atoms)
     else if(atom->name == "tmpo") {
       parseInt(atom, file);
     }
+    else if(atom->name == "gnre") {
+      parseGnre(atom, file);
+    }
+    else if(atom->name == "covr") {
+      parseCovr(atom, file);
+    }
     else {
       parseText(atom, file);
     }
   }
+}
+
+MP4::Tag::~Tag()
+{
+  delete d;
 }
 
 ByteVectorList
@@ -82,18 +102,18 @@ MP4::Tag::parseData(MP4::Atom *atom, TagLib::File *file, int expectedFlags, bool
     int flags = data.mid(pos + 8, 4).toUInt();
     if(freeForm && i < 2) {
       if(i == 0 && name != "mean") {
-        debug("MP4: Unexpected atom \"" + std::string(name.data()) + "\", expecting \"mean\"");
+        debug("MP4: Unexpected atom \"" + name + "\", expecting \"mean\"");
         return result;
       }
       else if(i == 1 && name != "name") {
-        debug("MP4: Unexpected atom \"" + std::string(name.data()) + "\", expecting \"name\"");
+        debug("MP4: Unexpected atom \"" + name + "\", expecting \"name\"");
         return result;
       }
       result.append(data.mid(pos + 12, length - 12));
     }
     else {
       if(name != "data") {
-        debug("MP4: Unexpected atom \"" + std::string(name.data()) + "\", expecting \"data\"");
+        debug("MP4: Unexpected atom \"" + name + "\", expecting \"data\"");
         return result;
       }
       if(expectedFlags == -1 || flags == expectedFlags) {
@@ -116,6 +136,18 @@ MP4::Tag::parseInt(MP4::Atom *atom, TagLib::File *file)
 }
 
 void
+MP4::Tag::parseGnre(MP4::Atom *atom, TagLib::File *file)
+{
+  ByteVectorList data = parseData(atom, file);
+  if(data.size()) {
+    int idx = (int)data[0].toShort();
+    if(!d->items.contains("\251gen") && idx > 0) {
+      d->items.insert("\251gen", StringList(ID3v1::genre(idx - 1)));
+    }
+  }
+}
+
+void
 MP4::Tag::parseIntPair(MP4::Atom *atom, TagLib::File *file)
 {
   ByteVectorList data = parseData(atom, file);
@@ -131,7 +163,8 @@ MP4::Tag::parseBool(MP4::Atom *atom, TagLib::File *file)
 {
   ByteVectorList data = parseData(atom, file);
   if(data.size()) {
-    d->items.insert(atom->name, data[0][0] != '\0');
+    bool value = data[0].size() ? data[0][0] != '\0' : false;
+    d->items.insert(atom->name, value);
   }
 }
 
@@ -157,9 +190,33 @@ MP4::Tag::parseFreeForm(MP4::Atom *atom, TagLib::File *file)
     for(unsigned int i = 2; i < data.size(); i++) {
       value.append(String(data[i], String::UTF8));
     }
-    String name = "----:" + data[0] + ":" + data[1];
+    String name = "----:" + data[0] + ':' + data[1];
     d->items.insert(name, value);
   }
+}
+
+void
+MP4::Tag::parseCovr(MP4::Atom *atom, TagLib::File *file)
+{
+  MP4::CoverArtList value;
+  ByteVector data = file->readBlock(atom->length - 8);
+  unsigned int pos = 0;
+  while(pos < data.size()) {
+    int length = data.mid(pos, 4).toUInt();
+    ByteVector name = data.mid(pos + 4, 4);
+    int flags = data.mid(pos + 8, 4).toUInt();
+    if(name != "data") {
+      debug("MP4: Unexpected atom \"" + name + "\", expecting \"data\"");
+      break;
+    }
+    if(flags == MP4::CoverArt::PNG || flags == MP4::CoverArt::JPEG) {
+      value.append(MP4::CoverArt(MP4::CoverArt::Format(flags),
+                                 data.mid(pos + 16, length - 16)));
+    }
+    pos += length;
+  }
+  if(value.size() > 0)
+    d->items.insert(atom->name, value);
 }
 
 ByteVector
@@ -211,7 +268,7 @@ MP4::Tag::renderIntPair(const ByteVector &name, MP4::Item &item)
               ByteVector::fromShort(item.toIntPair().first) +
               ByteVector::fromShort(item.toIntPair().second) +
               ByteVector(2, '\0'));
-  return renderData(name, 0x15, data);
+  return renderData(name, 0x00, data);
 }
 
 ByteVector
@@ -221,7 +278,7 @@ MP4::Tag::renderIntPairNoTrailing(const ByteVector &name, MP4::Item &item)
   data.append(ByteVector(2, '\0') +
               ByteVector::fromShort(item.toIntPair().first) +
               ByteVector::fromShort(item.toIntPair().second));
-  return renderData(name, 0x15, data);
+  return renderData(name, 0x00, data);
 }
 
 ByteVector
@@ -236,11 +293,23 @@ MP4::Tag::renderText(const ByteVector &name, MP4::Item &item, int flags)
 }
 
 ByteVector
+MP4::Tag::renderCovr(const ByteVector &name, MP4::Item &item)
+{
+  ByteVector data;
+  MP4::CoverArtList value = item.toCoverArtList();
+  for(unsigned int i = 0; i < value.size(); i++) {
+    data.append(renderAtom("data", ByteVector::fromUInt(value[i].format()) +
+                                   ByteVector(4, '\0') + value[i].data()));
+  }
+  return renderAtom(name, data);
+}
+
+ByteVector
 MP4::Tag::renderFreeForm(const String &name, MP4::Item &item)
 {
   StringList header = StringList::split(name, ":");
   if (header.size() != 3) {
-    debug("MP4: Invalid free-form item name \"" + std::string(name.toCString()) + "\"");
+    debug("MP4: Invalid free-form item name \"" + name + "\"");
     return ByteVector::null;
   }
   ByteVector data;
@@ -259,8 +328,7 @@ MP4::Tag::save()
   ByteVector data;
   for(MP4::ItemListMap::Iterator i = d->items.begin(); i != d->items.end(); i++) {
     const String name = i->first;
-    std::string cpp_string (name.toCString());
-    if(cpp_string.substr(0, 4) == "----") {
+    if(name.startsWith("----")) {
       data.append(renderFreeForm(name, i->second));
     }
     else if(name == "trkn") {
@@ -275,11 +343,14 @@ MP4::Tag::save()
     else if(name == "tmpo") {
       data.append(renderInt(name.data(String::Latin1), i->second));
     }
+    else if(name == "covr") {
+      data.append(renderCovr(name.data(String::Latin1), i->second));
+    }
     else if(name.size() == 4){
       data.append(renderText(name.data(String::Latin1), i->second));
     }
     else {
-      debug("MP4: Unknown item name \"" + std::string(name.toCString()) + "\"");
+      debug("MP4: Unknown item name \"" + name + "\"");
     }
   }
   data = renderAtom("ilst", data);
@@ -300,9 +371,20 @@ MP4::Tag::updateParents(AtomList &path, long delta, int ignore)
 {
   for(unsigned int i = 0; i < path.size() - ignore; i++) {
     d->file->seek(path[i]->offset);
-    long size = d->file->readBlock(4).toUInt() + delta;
-    d->file->seek(path[i]->offset);
-    d->file->writeBlock(ByteVector::fromUInt(size));
+    long size = d->file->readBlock(4).toUInt();
+    // 64-bit
+    if (size == 1) {
+      d->file->seek(4, File::Current); // Skip name
+      long long longSize = d->file->readBlock(8).toLongLong();
+      // Seek the offset of the 64-bit size
+      d->file->seek(path[i]->offset + 8);
+      d->file->writeBlock(ByteVector::fromLongLong(longSize + delta));
+    }
+    // 32-bit
+    else {
+      d->file->seek(path[i]->offset);
+      d->file->writeBlock(ByteVector::fromUInt(size + delta));
+    }
   }
 }
 
@@ -323,7 +405,7 @@ MP4::Tag::updateOffsets(long delta, long offset)
       d->file->seek(atom->offset + 16);
       int pos = 4;
       while(count--) {
-        int o = data.mid(pos, 4).toUInt();
+        long o = data.mid(pos, 4).toUInt();
         if(o > offset) {
           o += delta;
         }
@@ -406,6 +488,8 @@ MP4::Tag::saveExisting(ByteVector &data, AtomList &path)
 
   MP4::Atom *meta = path[path.size() - 2];
   AtomList::Iterator index = meta->children.find(ilst);
+
+  // check if there is an atom before 'ilst', and possibly use it as padding
   if(index != meta->children.begin()) {
     AtomList::Iterator prevIndex = index;
     prevIndex--;
@@ -415,9 +499,10 @@ MP4::Tag::saveExisting(ByteVector &data, AtomList &path)
       length += prev->length;
     }
   }
-  if(index != meta->children.end()) {
-    AtomList::Iterator nextIndex = index;
-    nextIndex++;
+  // check if there is an atom after 'ilst', and possibly use it as padding
+  AtomList::Iterator nextIndex = index;
+  nextIndex++;
+  if(nextIndex != meta->children.end()) {
     MP4::Atom *next = *nextIndex;
     if(next->name == "free") {
       length += next->length;

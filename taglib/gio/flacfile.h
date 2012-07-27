@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *   This library is free software; you can redistribute it and/or modify  *
- *   it  under the terms of the GNU Lesser General Public License version  *
+ *   it under the terms of the GNU Lesser General Public License version   *
  *   2.1 as published by the Free Software Foundation.                     *
  *                                                                         *
  *   This library is distributed in the hope that it will be useful, but   *
@@ -15,8 +15,12 @@
  *                                                                         *
  *   You should have received a copy of the GNU Lesser General Public      *
  *   License along with this library; if not, write to the Free Software   *
- *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  *
- *   USA                                                                   *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA         *
+ *   02110-1301  USA                                                       *
+ *                                                                         *
+ *   Alternatively, this file is available under the Mozilla Public        *
+ *   License Version 1.1.  You may obtain a copy of the License at         *
+ *   http://www.mozilla.org/MPL/                                           *
  ***************************************************************************/
 
 #ifndef TAGLIB_FLACFILE_H
@@ -24,7 +28,9 @@
 
 #include "taglib_export.h"
 #include "tfile.h"
+#include "tlist.h"
 
+#include "flacpicture.h"
 #include "flacproperties.h"
 
 namespace TagLib {
@@ -68,7 +74,7 @@ namespace TagLib {
        * \deprecated This constructor will be dropped in favor of the one below
        * in a future version.
        */
-      File(const char *file, bool readProperties = true,
+      File(FileName file, bool readProperties = true,
            Properties::ReadStyle propertiesStyle = Properties::Average);
 
       /*!
@@ -80,7 +86,7 @@ namespace TagLib {
        * \a frameFactory.
        */
       // BIC: merge with the above constructor
-      File(const char *file, ID3v2::FrameFactory *frameFactory,
+      File(FileName file, ID3v2::FrameFactory *frameFactory,
            bool readProperties = true,
            Properties::ReadStyle propertiesStyle = Properties::Average);
 
@@ -156,7 +162,7 @@ namespace TagLib {
       /*!
        * Set the ID3v2::FrameFactory to something other than the default.  This
        * can be used to specify the way that ID3v2 frames will be interpreted
-       * when 
+       * when
        *
        * \see ID3v2FrameFactory
        */
@@ -178,6 +184,24 @@ namespace TagLib {
        */
       long streamLength();  // BIC: remove
 
+      /*!
+       * Returns a list of pictures attached to the FLAC file.
+       */
+      List<Picture *> pictureList();
+
+      /*!
+       * Remove all attached images.
+       */
+      void removePictures();
+
+      /*!
+       * Add a new picture to the file. The file takes ownership of the
+       * picture and will handle freeing its memory.
+       *
+       * \note The file will be saved only after calling save().
+       */
+      void addPicture(Picture *picture);
+
     private:
       File(const File &);
       File &operator=(const File &);
@@ -186,7 +210,8 @@ namespace TagLib {
       void scan();
       long findID3v2();
       long findID3v1();
-      ByteVector xiphCommentData();
+      ByteVector xiphCommentData() const;
+      long findPaddingBreak(long nextPageOffset, long targetOffset, bool *isLast);
 
       class FilePrivate;
       FilePrivate *d;

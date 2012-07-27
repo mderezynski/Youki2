@@ -424,12 +424,37 @@ namespace
             else
             if( attribute == "year" )
             {
-                try{
-                        c.TargetValue = (unsigned int)(boost::lexical_cast<int>(value)) ;
-                        c.TargetAttr = ATTRIBUTE_DATE ;
-                        constraints.push_back(c) ;
+                c.TargetAttr = ATTRIBUTE_DATE ;
 
-                } catch( boost::bad_lexical_cast ) {
+                try{
+			StrV v ;
+			boost::algorithm::split( v, value, boost::algorithm::is_any_of("-")) ;
+
+			guint year1, year2 ; 
+
+			if( v.size() == 2 )
+			{
+			    year1 = std::stoi(v[0]) ; 
+			    year2 = std::stoi(v[1]) ; 
+
+			    c.TargetValue = year1 ; 
+			    c.MatchType = MT_GREATER_THAN_OR_EQUAL ;
+			    constraints.push_back(c) ;
+
+			    c.TargetValue = year2 ; 
+			    c.MatchType = MT_LESSER_THAN_OR_EQUAL ;
+			    constraints.push_back(c) ;
+			}
+			if( v.size() == 1 )
+			{
+			    year1 = std::stoi(v[0]) ;  
+
+			    c.TargetValue = year1 ; 
+			    c.MatchType = MT_EQUAL ;
+			    constraints.push_back(c) ;
+			}
+
+                } catch( std::exception ) {
                 }
             }
             else
@@ -564,7 +589,7 @@ namespace AQE
         Glib::ustring line ;
         Glib::ustring kv[2] ;
 
-        MatchType_t type ;
+        MatchType_t type = MT_EQUAL ; 
 
         bool inverse = false ;
         bool done_reading_pair  = false ;
@@ -932,11 +957,14 @@ namespace AQE
         , const MPX::Track_sp&  t
     )
     {
+	if(!t)
+	    return false ;
+
         const MPX::Track& track = *t ;
 
-        for( auto& c : constraints ) 
+        for( auto c : constraints ) 
         {
-            if( !track.has( c.TargetAttr ))
+            if( !track[c.TargetAttr])
             {
                 return false ;
             }

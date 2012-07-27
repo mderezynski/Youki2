@@ -1,11 +1,11 @@
 /***************************************************************************
-    copyright            : (C) 2002 - 2004 by Scott Wheeler
+    copyright            : (C) 2002 - 2008 by Scott Wheeler
     email                : wheeler@kde.org
  ***************************************************************************/
 
 /***************************************************************************
  *   This library is free software; you can redistribute it and/or modify  *
- *   it  under the terms of the GNU Lesser General Public License version  *
+ *   it under the terms of the GNU Lesser General Public License version   *
  *   2.1 as published by the Free Software Foundation.                     *
  *                                                                         *
  *   This library is distributed in the hope that it will be useful, but   *
@@ -15,8 +15,12 @@
  *                                                                         *
  *   You should have received a copy of the GNU Lesser General Public      *
  *   License along with this library; if not, write to the Free Software   *
- *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  *
- *   USA                                                                   *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA         *
+ *   02110-1301  USA                                                       *
+ *                                                                         *
+ *   Alternatively, this file is available under the Mozilla Public        *
+ *   License Version 1.1.  You may obtain a copy of the License at         *
+ *   http://www.mozilla.org/MPL/                                           *
  ***************************************************************************/
 
 #ifndef TAGLIB_BYTEVECTOR_H
@@ -26,7 +30,7 @@
 #include "taglib_export.h"
 
 #include <vector>
-#include <ostream>
+#include <iostream>
 
 namespace TagLib {
 
@@ -159,6 +163,12 @@ namespace TagLib {
     bool endsWith(const ByteVector &pattern) const;
 
     /*!
+     * Replaces \a pattern with \a with and returns a reference to the ByteVector
+     * after the operation.  This \e does modify the vector.
+     */
+    ByteVector &replace(const ByteVector &pattern, const ByteVector &with);
+
+    /*!
      * Checks for a partial match of \a pattern at the end of the vector.  It
      * returns the offset of the partial match within the vector, or -1 if the
      * pattern is not found.  This method is particularly useful when searching for
@@ -255,6 +265,17 @@ namespace TagLib {
      * \see fromShort()
      */
     short toShort(bool mostSignificantByteFirst = true) const;
+
+    /*!
+     * Converts the first 2 bytes of the vector to a unsigned short.
+     *
+     * If \a mostSignificantByteFirst is true this will operate left to right
+     * evaluating the integer.  For example if \a mostSignificantByteFirst is
+     * true then $00 $01 == 0x0001 == 1, if false, $01 00 == 0x01000000 == 1.
+     *
+     * \see fromShort()
+     */
+    unsigned short toUShort(bool mostSignificantByteFirst = true) const;
 
     /*!
      * Converts the first 8 bytes of the vector to a (signed) long long.
@@ -375,6 +396,11 @@ namespace TagLib {
      */
     static ByteVector null;
 
+    /*!
+	   * Returns a hex-encoded copy of the byte vector.
+	   */
+    ByteVector toHex() const;
+
   protected:
     /*
      * If this ByteVector is being shared via implicit sharing, do a deep copy
@@ -394,6 +420,6 @@ namespace TagLib {
  * \relates TagLib::ByteVector
  * Streams the ByteVector \a v to the output stream \a s.
  */
-std::ostream &operator<<(std::ostream &s, const TagLib::ByteVector &v);
+TAGLIB_EXPORT std::ostream &operator<<(std::ostream &s, const TagLib::ByteVector &v);
 
 #endif

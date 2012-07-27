@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *   This library is free software; you can redistribute it and/or modify  *
- *   it  under the terms of the GNU Lesser General Public License version  *
+ *   it under the terms of the GNU Lesser General Public License version   *
  *   2.1 as published by the Free Software Foundation.                     *
  *                                                                         *
  *   This library is distributed in the hope that it will be useful, but   *
@@ -15,18 +15,23 @@
  *                                                                         *
  *   You should have received a copy of the GNU Lesser General Public      *
  *   License along with this library; if not, write to the Free Software   *
- *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  *
- *   USA                                                                   *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA         *
+ *   02110-1301  USA                                                       *
+ *                                                                         *
+ *   Alternatively, this file is available under the Mozilla Public        *
+ *   License Version 1.1.  You may obtain a copy of the License at         *
+ *   http://www.mozilla.org/MPL/                                           *
  ***************************************************************************/
 
 #ifndef TAGLIB_MP4TAG_H
 #define TAGLIB_MP4TAG_H
 
-#include <tag.h>
-#include <tbytevectorlist.h>
-#include <tfile.h>
-#include <tmap.h>
-#include <tstringlist.h>
+#include "tag.h"
+#include "tbytevectorlist.h"
+#include "tfile.h"
+#include "tmap.h"
+#include "tstringlist.h"
+#include "taglib_export.h"
 #include "mp4atom.h"
 #include "mp4item.h"
 
@@ -36,10 +41,11 @@ namespace TagLib {
 
     typedef TagLib::Map<String, Item> ItemListMap;
 
-    class  Tag: public TagLib::Tag
+    class TAGLIB_EXPORT Tag: public TagLib::Tag
     {
     public:
         Tag(TagLib::File *file, Atoms *atoms);
+        ~Tag();
         bool save();
 
         String title() const;
@@ -65,8 +71,10 @@ namespace TagLib {
         void parseText(Atom *atom, TagLib::File *file, int expectedFlags = 1);
         void parseFreeForm(Atom *atom, TagLib::File *file);
         void parseInt(Atom *atom, TagLib::File *file);
+        void parseGnre(Atom *atom, TagLib::File *file);
         void parseIntPair(Atom *atom, TagLib::File *file);
         void parseBool(Atom *atom, TagLib::File *file);
+        void parseCovr(Atom *atom, TagLib::File *file);
 
         TagLib::ByteVector padIlst(const ByteVector &data, int length = -1);
         TagLib::ByteVector renderAtom(const ByteVector &name, const TagLib::ByteVector &data);
@@ -77,6 +85,7 @@ namespace TagLib {
         TagLib::ByteVector renderInt(const ByteVector &name, Item &item);
         TagLib::ByteVector renderIntPair(const ByteVector &name, Item &item);
         TagLib::ByteVector renderIntPairNoTrailing(const ByteVector &name, Item &item);
+        TagLib::ByteVector renderCovr(const ByteVector &name, Item &item);
 
         void updateParents(AtomList &path, long delta, int ignore = 0);
         void updateOffsets(long delta, long offset);

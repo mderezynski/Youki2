@@ -5,7 +5,7 @@
 
 /***************************************************************************
  *   This library is free software; you can redistribute it and/or modify  *
- *   it  under the terms of the GNU Lesser General Public License version  *
+ *   it under the terms of the GNU Lesser General Public License version   *
  *   2.1 as published by the Free Software Foundation.                     *
  *                                                                         *
  *   This library is distributed in the hope that it will be useful, but   *
@@ -15,12 +15,17 @@
  *                                                                         *
  *   You should have received a copy of the GNU Lesser General Public      *
  *   License along with this library; if not, write to the Free Software   *
- *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  *
- *   USA                                                                   *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA         *
+ *   02110-1301  USA                                                       *
+ *                                                                         *
+ *   Alternatively, this file is available under the Mozilla Public        *
+ *   License Version 1.1.  You may obtain a copy of the License at         *
+ *   http://www.mozilla.org/MPL/                                           *
  ***************************************************************************/
 
 #include <tbytevector.h>
 #include <tstring.h>
+#include <tdebug.h>
 
 #include <xiphcomment.h>
 #include "oggflacfile.h"
@@ -63,7 +68,7 @@ public:
 // public members
 ////////////////////////////////////////////////////////////////////////////////
 
-Ogg::FLAC::File::File(const char *file, bool readProperties,
+Ogg::FLAC::File::File(FileName file, bool readProperties,
                       Properties::ReadStyle propertiesStyle) : Ogg::File(file)
 {
   d = new FilePrivate;
@@ -88,7 +93,7 @@ Properties *Ogg::FLAC::File::audioProperties() const
 
 bool Ogg::FLAC::File::save()
 {
-  d->xiphCommentData = d->comment->render();
+  d->xiphCommentData = d->comment->render(false);
 
   // Create FLAC metadata-block:
 
@@ -124,6 +129,7 @@ void Ogg::FLAC::File::read(bool readProperties, Properties::ReadStyle properties
   ByteVector oggHeader = packet(0);
 
   if (oggHeader.mid(28,4) != "fLaC") {
+    debug("Ogg::FLAC::File::read() -- Not an Ogg/FLAC file");
     setValid(false);
     return;
   }*/
@@ -221,6 +227,7 @@ void Ogg::FLAC::File::scan()
   // Sanity: First block should be the stream_info metadata
 
   if(blockType != 0) {
+    debug("Ogg::FLAC::File::scan() -- Invalid Ogg/FLAC stream");
     return;
   }
 
@@ -241,12 +248,16 @@ void Ogg::FLAC::File::scan()
     overhead += length;
 
     if(blockType == 1) {
+      // debug("Ogg::FLAC::File::scan() -- Padding found");
     }
     else if(blockType == 4) {
+      // debug("Ogg::FLAC::File::scan() -- Vorbis-comments found");
       d->xiphCommentData = metadataHeader.mid(4, length);
       d->hasXiphComment = true;
       d->commentPacket = ipacket;
     }
+    else if(blockType > 5)
+      debug("Ogg::FLAC::File::scan() -- Unknown metadata block");
 
   }
 

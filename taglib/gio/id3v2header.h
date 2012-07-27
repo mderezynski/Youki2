@@ -1,11 +1,11 @@
 /***************************************************************************
-    copyright            : (C) 2002, 2003 by Scott Wheeler
+    copyright            : (C) 2002 - 2008 by Scott Wheeler
     email                : wheeler@kde.org
  ***************************************************************************/
 
 /***************************************************************************
  *   This library is free software; you can redistribute it and/or modify  *
- *   it  under the terms of the GNU Lesser General Public License version  *
+ *   it under the terms of the GNU Lesser General Public License version   *
  *   2.1 as published by the Free Software Foundation.                     *
  *                                                                         *
  *   This library is distributed in the hope that it will be useful, but   *
@@ -15,8 +15,12 @@
  *                                                                         *
  *   You should have received a copy of the GNU Lesser General Public      *
  *   License along with this library; if not, write to the Free Software   *
- *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  *
- *   USA                                                                   *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA         *
+ *   02110-1301  USA                                                       *
+ *                                                                         *
+ *   Alternatively, this file is available under the Mozilla Public        *
+ *   License Version 1.1.  You may obtain a copy of the License at         *
+ *   http://www.mozilla.org/MPL/                                           *
  ***************************************************************************/
 
 #ifndef TAGLIB_ID3V2HEADER_H
@@ -64,6 +68,17 @@ namespace TagLib {
        * ID3v2.4.0.  The 2 is implied.)
        */
       uint majorVersion() const;
+
+      /*!
+       * Set the the major version number to \a version.  (Note: This is
+       * the 4, not the 2 in ID3v2.4.0.  The 2 is implied.)
+       * \see majorVersion()
+       *
+       * \note This is used by the internal parser; this will not change the
+       * version which is written and in general should not be called by API
+       * users.
+       */
+      void setMajorVersion(uint version);
 
       /*!
        * Returns the revision number.  (Note: This is the 0, not the 4 in

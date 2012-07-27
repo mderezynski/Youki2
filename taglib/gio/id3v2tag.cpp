@@ -1,11 +1,11 @@
 /***************************************************************************
-    copyright            : (C) 2002, 2003 by Scott Wheeler
+    copyright            : (C) 2002 - 2008 by Scott Wheeler
     email                : wheeler@kde.org
  ***************************************************************************/
 
 /***************************************************************************
  *   This library is free software; you can redistribute it and/or modify  *
- *   it  under the terms of the GNU Lesser General Public License version  *
+ *   it under the terms of the GNU Lesser General Public License version   *
  *   2.1 as published by the Free Software Foundation.                     *
  *                                                                         *
  *   This library is distributed in the hope that it will be useful, but   *
@@ -15,8 +15,12 @@
  *                                                                         *
  *   You should have received a copy of the GNU Lesser General Public      *
  *   License along with this library; if not, write to the Free Software   *
- *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  *
- *   USA                                                                   *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA         *
+ *   02110-1301  USA                                                       *
+ *                                                                         *
+ *   Alternatively, this file is available under the Mozilla Public        *
+ *   License Version 1.1.  You may obtain a copy of the License at         *
+ *   http://www.mozilla.org/MPL/                                           *
  ***************************************************************************/
 
 #include <tfile.h>
@@ -26,6 +30,7 @@
 #include "id3v2header.h"
 #include "id3v2extendedheader.h"
 #include "id3v2footer.h"
+#include "id3v2synchdata.h"
 
 #include "id3v1genres.h"
 
@@ -113,9 +118,20 @@ String ID3v2::Tag::album() const
 
 String ID3v2::Tag::comment() const
 {
-  if(!d->frameListMap["COMM"].isEmpty())
-    return d->frameListMap["COMM"].front()->toString();
-  return String::null;
+  const FrameList &comments = d->frameListMap["COMM"];
+
+  if(comments.isEmpty())
+    return String::null;
+
+  for(FrameList::ConstIterator it = comments.begin(); it != comments.end(); ++it)
+  {
+    CommentsFrame *frame = dynamic_cast<CommentsFrame *>(*it);
+
+    if(frame && frame->description().isEmpty())
+      return (*it)->toString();
+  }
+
+  return comments.front()->toString();
 }
 
 String ID3v2::Tag::genre() const
@@ -145,19 +161,13 @@ String ID3v2::Tag::genre() const
 
   for(StringList::Iterator it = fields.begin(); it != fields.end(); ++it) {
 
-    bool isNumber = true;
+    if((*it).isEmpty())
+      continue;
 
-    for(String::ConstIterator charIt = (*it).begin();
-        isNumber && charIt != (*it).end();
-        ++charIt)
-    {
-      isNumber = *charIt >= '0' && *charIt <= '9';
-    }
-
-    if(isNumber) {
-      int number = (*it).toInt();
-      if(number >= 0 && number <= 255)
-        *it = ID3v1::genre(number);
+    bool ok;
+    int number = (*it).toInt(&ok);
+    if(ok && number >= 0 && number <= 255) {
+      *it = ID3v1::genre(number);
     }
 
     if(std::find(genres.begin(), genres.end(), *it) == genres.end())
@@ -333,6 +343,11 @@ ByteVector ID3v2::Tag::render() const
   // Loop through the frames rendering them and adding them to the tagData.
 
   for(FrameList::Iterator it = d->frameList.begin(); it != d->frameList.end(); it++) {
+    if((*it)->header()->frameID().size() != 4) {
+      debug("A frame of unsupported or unknown type \'"
+          + String((*it)->header()->frameID()) + "\' has been discarded");
+      continue;
+    }
     if(!(*it)->header()->tagAlterPreservation())
       tagData.append((*it)->render());
   }
@@ -377,8 +392,13 @@ void ID3v2::Tag::read()
   }
 }
 
-void ID3v2::Tag::parse(const ByteVector &data)
+void ID3v2::Tag::parse(const ByteVector &origData)
 {
+  ByteVector data = origData;
+
+  if(d->header.unsynchronisation() && d->header.majorVersion() <= 3)
+    data = SynchData::decode(data);
+
   uint frameDataPosition = 0;
   uint frameDataLength = data.size();
 
@@ -420,7 +440,7 @@ void ID3v2::Tag::parse(const ByteVector &data)
     }
 
     Frame *frame = d->factory->createFrame(data.mid(frameDataPosition),
-                                           d->header.majorVersion());
+                                           &d->header);
 
     if(!frame)
       return;
