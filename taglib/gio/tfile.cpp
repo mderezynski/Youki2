@@ -33,8 +33,6 @@
  #include <unistd.h>
 #endif
 #include <stdlib.h>
-#include <string>
-#include <string.h>
 
 #ifndef R_OK
 # define R_OK 4
@@ -56,9 +54,6 @@ public:
   , name(g_filename_from_uri(uri, NULL, NULL))
   , istream(0)
   , ostream(0)
-  , istream_file(0)
-  , data(0)
-  , memsize(0)
   , readOnly(true)
   , valid(true)
   , size(0)
@@ -73,15 +68,12 @@ public:
   GFile * file;
   const char *uri;
   const char *name;
-  GMemoryInputStream * istream;
+  GFileInputStream * istream;
   GFileOutputStream * ostream;
-  GFileInputStream * istream_file ;
-  char * data ;
-  size_t memsize  ;
   bool readOnly;
   bool valid;
   ulong size;
-  static const uint bufferSize = 31457680 ; 
+  static const uint bufferSize = 1024;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -111,7 +103,7 @@ File::File(const char *uri)
     }
 
     GError * error = 0;
-    d->istream_file = g_file_read(d->file, NULL, &error);
+    d->istream = g_file_read(d->file, NULL, &error);
 
     if( error )
     {
@@ -120,7 +112,6 @@ File::File(const char *uri)
         error = NULL;
     }
 
-#if 0
     GFileInfo * info = g_file_query_info(
           G_FILE(d->file),
           G_FILE_ATTRIBUTE_ACCESS_CAN_WRITE,
@@ -144,9 +135,8 @@ File::File(const char *uri)
     }
 
     g_object_unref( info );
-#endif
 
-    if(!G_IS_FILE_INPUT_STREAM(d->istream_file))
+    if(!G_IS_FILE_INPUT_STREAM(d->istream))
     {
         debug("Could not get IStream for: '" + String(uri)) ;
         if(error)
@@ -157,7 +147,6 @@ File::File(const char *uri)
         }
     }
 
-#if 0
     if(!G_IS_FILE_OUTPUT_STREAM(d->ostream))
     {
         debug("Could not get OStream for: '" + String(uri)) ;
@@ -169,10 +158,6 @@ File::File(const char *uri)
             d->readOnly = true;
         }
     }
-#endif
-
-    g_file_load_contents(G_FILE(d->istream), NULL, &(d->data), &(d->memsize), NULL, NULL) ;
-    d->istream = G_MEMORY_INPUT_STREAM(g_memory_input_stream_new_from_data(d->data, d->memsize, NULL)) ;
 }
 
 File::~File()
@@ -267,7 +252,6 @@ long File::find(const ByteVector &pattern, long fromOffset, const ByteVector &be
   if(!G_IS_FILE_INPUT_STREAM(d->istream) || pattern.size() > d->bufferSize)
       return -1;
 
-#if 0
   // The position in the file that the current buffer starts at.
 
   long bufferOffset = fromOffset;
@@ -281,11 +265,9 @@ long File::find(const ByteVector &pattern, long fromOffset, const ByteVector &be
 
   // Save the location of the current read pointer.  We will restore the
   // position using seek() before all returns.
-#endif
 
   long originalPosition = tell();
 
-#if 0
   // Start the search at the offset.
 
   seek(fromOffset);
@@ -355,19 +337,8 @@ long File::find(const ByteVector &pattern, long fromOffset, const ByteVector &be
 
     bufferOffset += d->bufferSize;
   }
-#endif
 
   // Since we hit the end of the file, reset the status before continuing.
-
-  ptrdiff_t position ;
-  char * pos_ptr = static_cast<char*>(memmem(d->data + fromOffset,d->memsize-fromOffset,pattern.data(),pattern.size())) ;
-
-  if(pos_ptr)
-  {
-	position = pos_ptr - d->data ;
-	seek(position) ;
-	return position ;
-  }
 
   clear();
   seek(originalPosition);
