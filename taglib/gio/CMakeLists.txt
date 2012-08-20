@@ -27,7 +27,6 @@ INCLUDE_DIRECTORIES(
   ${SOUP_INCLUDE_DIRS}
   ${SQLITE_INCLUDE_DIRS}
   ${STARTUP_NOTIFY_INCLUDE_DIRS}
-  ${TAGLIB_INCLUDE_DIRS}
   ${X11_X11_INCLUDE_PATH}
   ${XML_INCLUDE_DIRS}
   ${XPROTO_INCLUDE_DIRS}
@@ -38,17 +37,20 @@ SET(mpx_taglib_gio_SOVERSION 0)
 SET(mpx_taglib_gio_VERSION 0.0)
 
 SET(mpx_taglib_gio_SOURCES
+  apefile.cpp
+  apefile.h
   apefooter.cpp
   apefooter.h
   apeitem.cpp
   apeitem.h
+  apeproperties.cpp
+  apeproperties.h
   apetag.cpp
   apetag.h
   attachedpictureframe.cpp
   attachedpictureframe.h
   audioproperties.cpp
   audioproperties.h
-  CMakeLists.txt
   combinedtag.h
   commentsframe.cpp
   commentsframe.h
@@ -56,9 +58,15 @@ SET(mpx_taglib_gio_SOURCES
   fileref.h
   flacfile.cpp
   flacfile.h
+  flacmetadatablock.cpp
+  flacmetadatablock.h
+  flacpicture.cpp
+  flacpicture.h
   flacproperties.cpp
   flacproperties.h
   flactag.h
+  flacunknownmetadatablock.cpp
+  flacunknownmetadatablock.h
   generalencapsulatedobjectframe.cpp
   generalencapsulatedobjectframe.h
   id3v1genres.cpp
@@ -97,12 +105,18 @@ SET(mpx_taglib_gio_SOURCES
   oggpage.h
   oggpageheader.cpp
   oggpageheader.h
+  popularimeterframe.cpp
+  popularimeterframe.h
+  privateframe.cpp
+  privateframe.h
   relativevolumeframe.cpp
   relativevolumeframe.h
   tag.cpp
   tag.h
   taglib_export.h
   taglib-gio.h
+  tagunion.cpp
+  tagunion.h
   tbytevector.cpp
   tbytevector.h
   tbytevectorlist.cpp
@@ -127,6 +141,10 @@ SET(mpx_taglib_gio_SOURCES
   uniquefileidentifierframe.h
   unknownframe.cpp
   unknownframe.h
+  unsynchronizedlyricsframe.cpp
+  unsynchronizedlyricsframe.h
+  urllinkframe.cpp
+  urllinkframe.h
   vorbisfile.cpp
   vorbisfile.h
   vorbisproperties.cpp
@@ -135,7 +153,6 @@ SET(mpx_taglib_gio_SOURCES
   xingheader.h
   xiphcomment.cpp
   xiphcomment.h
-  ${mpx_taglib_gio_ADD_SOURCES}
 )
 
 ADD_LIBRARY(mpx-taglib-gio SHARED ${mpx_taglib_gio_SOURCES})
@@ -172,10 +189,8 @@ TARGET_LINK_LIBRARIES(mpx-taglib-gio
   ${SOUP_LIBRARIES}
   ${SQLITE_LIBRARIES}
   ${STARTUP_NOTIFY_LIBRARIES}
-  ${TAGLIB_LIBRARIES}
   ${XML_LIBRARIES}
   ${X11_X11_LIB}
-  ${mpx_taglib_gio_ADD_LIBRARIES}
 )
 
 INSTALL(TARGETS mpx-taglib-gio LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})

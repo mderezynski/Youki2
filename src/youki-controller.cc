@@ -243,6 +243,7 @@ namespace MPX
     , private_( new Private )
     , m_MainWindow(0)
     {
+	try{
         m_C_SIG_ID_track_new =
             g_signal_new(
                   "track-new"
@@ -1147,7 +1148,7 @@ namespace MPX
 	m_PlaylistGUI->signal_playlist_no_selected().connect( func4 ) ;
 #endif
 
-	m_Entry->set_icon_tooltip_text(_("Click here to pin this search")) ;
+	m_Entry->set_icon_tooltip_text(_("Click here to pin this Query")) ;
 
 	handle_model_changed(0,false) ;
         on_style_changed() ;
@@ -1156,6 +1157,10 @@ namespace MPX
 	m_InfoBar->hide() ;
 	m_ActivitySpinner->hide() ; 
 //	m_ScrolledWindowPlaylists->hide() ;
+
+	} catch( std::system_error& cxe ) {
+	    g_message("%s: exception raised: %s", G_STRLOC, cxe.what()) ;
+	}
     }
 
     void
@@ -1257,66 +1262,98 @@ namespace MPX
     void
     YoukiController::update_entry_placeholder_text()
     {
-#if 0
-	if (m_aqe_synthetic_pinned)
-	{
-	    m_Entry->set_placeholder_text(_("Refine Your Search here...")) ;
-	}
-	else
-	{
-	    m_Entry->set_placeholder_text(_("Search Your Music here...")) ;
-	}
-#endif
-
-	const guint MAX_WORDS = 3 ; // Psychology says the human mind can hold 5-7 "items"; so we take the middle here
-	const guint MAX_TRIES = 20 ;
-
 	SQL::RowV v ;
 
 	std::tr1::mt19937 eng;
 	eng.seed(time(NULL)) ;
 	std::tr1::uniform_int<unsigned int> uni(0,2) ;
+	std::tr1::uniform_int<unsigned int> un2(0,1) ;
     
+	std::string placeholder_text ;
 	std::string s ;
 
-	for( guint n = 0 ; n < MAX_TRIES ; ++n )
+	s.clear() ;
+	v.clear() ;
+
+	guint r = uni(eng) ; 
+
+	switch(r)
 	{
-	    s.clear() ;
-
-	    guint r = uni(eng) ; 
-
-	    switch(r)
+	    case 0:
 	    {
-		case 0:
-		    m_library->getSQL(v, "SELECT artist AS s FROM artist ORDER BY random() LIMIT 1") ;
-		    break;
-
-		case 1:
-		    m_library->getSQL(v, "SELECT album AS s FROM album ORDER BY random() LIMIT 1") ;
-		    break;
-
-		case 2:
-		    m_library->getSQL(v, "SELECT title AS s FROM track WHERE pcount IS NOT NULL ORDER BY random() LIMIT 1") ;
-		    break;
+		m_library->getSQL(v, "SELECT artist AS s FROM artist ORDER BY random() LIMIT 1") ;
+		if(v.empty())
+		    break ;
+		std::string s = boost::get<std::string>(v[0]["s"]) ;
+		m_Entry->set_placeholder_text((boost::format("Search here... maybe '%s'?") % s).str()) ;
+		break;
 	    }
 
-	    if(!v.empty())
+	    case 1:
 	    {
-		s = std::move(boost::get<std::string>(v[0]["s"])) ;
-		break ;
+		guint r2 = un2(eng) ;
+
+		switch(r2)
+		{
+		    case 0:
+		    {
+			m_library->getSQL(v, "SELECT album,album_playscore FROM album WHERE album_playscore IS 0 ORDER BY album_playscore ASC LIMIT 5") ;
+			if(v.empty())
+			    break ;
+			std::random_shuffle(std::begin(v), std::end(v)) ;
+			std::string s = boost::get<std::string>(v[0]["album"]) ;
+			m_Entry->set_placeholder_text((boost::format("Search Here... How about '%s'? You never listened this.") % s).str()) ;
+			break;
+		    }
+
+		    case 1:
+		    {
+			m_library->getSQL(v, "SELECT album AS s FROM album ORDER BY random() LIMIT 1") ;
+			if(v.empty())
+			    break ;
+			std::string s = boost::get<std::string>(v[0]["s"]) ;
+			m_Entry->set_placeholder_text((boost::format("Search here... maybe '%s'?") % s).str()) ;
+			break ;
+		    }
+
+		    default: break ;
+		}
+
+		break;
 	    }
+
+	    case 2:
+	    {
+		guint r2 = un2(eng) ;
+
+		switch(r2)
+		{
+		    case 0:
+		    {
+			m_library->getSQL(v, "select id, title, album_j, pcount, pdate, strftime('%s','now') - pdate AS pd FROM track WHERE pcount is not null AND pd > 172800 order by pcount asc limit 5") ;
+			if(v.empty())
+			    break ;
+			std::random_shuffle(std::begin(v), std::end(v)) ;
+			std::string s = boost::get<std::string>(v[0]["title"]) ;
+			m_Entry->set_placeholder_text((boost::format("Search here... maybe '%s'? Seems you forgot this track") % s).str()) ;
+
+			break ;
+		    }
+
+		    case 1:
+		    {
+			m_library->getSQL(v, "SELECT title AS s FROM track WHERE pcount IS NOT NULL ORDER BY random() LIMIT 1") ;
+			if(v.empty())
+			    break ;
+			std::string s = boost::get<std::string>(v[0]["s"]) ;
+			m_Entry->set_placeholder_text((boost::format("Search here... maybe '%s'?") % s).str()) ;
+			break;
+		    }
+
+		    default: break ;
+		}
+	    }	
 	}
-
-	if(!s.empty())	// else we keep the current text
-	{
-	    StrV m;
-	    split( m, s, is_any_of(" "));
-
-	    if( m.size() <= MAX_WORDS )
-	    {
-		m_Entry->set_placeholder_text((boost::format("%s '%s'") % _("Search your Music here... Try: ") % s).str()) ;
-	    }
-	}	
     }
 
     void
@@ -3045,8 +3082,25 @@ namespace MPX
         const std::string&  mbid
     )
     {
-        handle_search_entry_icon_clicked() ;
-        m_Entry->set_text( (boost::format("album-mbid = \"%s\"") % mbid).str() ) ;
+	m_Entry->set_text("") ;
+
+	SQL::RowV v ;
+
+	m_library->getSQL( v, mprintf("SELECT * FROM album WHERE mb_album_id = '%q'", mbid.c_str())) ;
+
+	if(v.empty())
+	    return ;
+
+	guint id_alb = boost::get<guint>(v[0]["id"]) ;
+	guint id_art = boost::get<guint>(v[0]["album_artist_j"]) ;
+
+	m_ListViewArtist->select_id(id_art) ;
+	auto idx_art = m_ListViewArtist->get_selected_index() ;
+	m_ListViewArtist->scroll_to_index(*idx_art) ;
+
+	m_ListViewAlbums->select_id(id_alb) ;
+	auto idx_alb = m_ListViewAlbums->get_selected_index() ;
+	m_ListViewAlbums->scroll_to_index(*idx_alb) ;
     }
 
     void
@@ -3211,10 +3265,14 @@ namespace MPX
 		    , Gtk::ENTRY_ICON_PRIMARY
 		) ; 
 
-		m_aqe_synthetic_pinned.reset() ;
 		private_->FilterModelTracks->create_identity_mapping() ;
-		m_Entry->set_text(m_Entry->get_icon_tooltip_text()) ;
-		m_Entry->set_icon_tooltip_text(_("Click to pin this search")) ;
+
+		m_Entry->set_icon_tooltip_text(_("Click here to pin this Query")) ;
+		m_Entry->set_text(*m_pinned_query) ;
+
+		m_aqe_synthetic_pinned.reset() ;
+		m_pinned_query.reset() ;
+
 		m_ListViewTracks->grab_focus() ;
 	    }
 	    else
@@ -3225,9 +3283,13 @@ namespace MPX
 		) ; 
 
 		m_aqe_synthetic_pinned = m_aqe_natural ;
+		m_pinned_query = m_Entry->get_text() ;
+
 		private_->FilterModelTracks->create_pinned_mapping() ;
-		m_Entry->set_icon_tooltip_text(m_Entry->get_text()) ;
+
+		m_Entry->set_icon_tooltip_markup((boost::format("You have pinned <b>%s</b>") % Glib::Markup::escape_text(m_Entry->get_text().c_str())).str()) ;
 		m_Entry->set_text("") ;
+
 		m_ListViewTracks->grab_focus() ;
 	    }
 

@@ -46,6 +46,7 @@ SET(mpx_api_SOURCES
   aque.cc
   base64.c
   error.cc
+  library.cc
   libxml2-sax-base.cc
   md5.c
   metadatareader-taglib.cc

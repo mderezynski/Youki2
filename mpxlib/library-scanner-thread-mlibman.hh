@@ -446,7 +446,7 @@ namespace MPX
             struct ThreadData;
             Glib::Private<ThreadData>               m_ThreadData ;
             MPX::Library_MLibMan                  & m_Library_MLibMan;
-	    MPX::MetadataReaderTagLib		  & m_TagLib ;
+	    MPX::MetadataReaderTagLib		  * m_TagLib ;
             boost::shared_ptr<MPX::SQL::SQLDB>      m_SQL ;
 #ifdef HAVE_HAL
             const IHAL                            & m_HAL ;

@@ -73,7 +73,6 @@ SET(youki_bin_SOURCES
   youki-view-artist.hh
   youki-view-artist.cc
   ld-find-nearest.hh
-  library.cc
   library.hh
   mpx-mlibman-dbus-proxy-actual.hh
   ${CMAKE_CURRENT_BINARY_DIR}/mpx-mlibman-dbus-proxy.hh
@@ -110,7 +109,6 @@ SET(youki_bin_SOURCES
   webkit-album-info.cc
   stock.cc
   main.cc
-  ${PROJECT_SOURCE_DIR}/taglib/gio
 )
 
 # FIXME: Add definitions from: ${GLIB_CFLAGS} and ${GST_CFLAGS}

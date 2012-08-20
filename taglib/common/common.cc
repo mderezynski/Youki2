@@ -39,25 +39,11 @@ namespace MPX
     {
       Glib::ustring value;
 
-      value = (file->tag()->artist().to8Bit (true));
-      if (!value.empty() && value.validate())
-          track [ ATTRIBUTE_ARTIST ] = value;
-
-      value = (file->tag()->album().to8Bit (true));
-      if (!value.empty() && value.validate())
-          track [ ATTRIBUTE_ALBUM ] = value;
-
-      value = (file->tag()->title().to8Bit (true));
-      if (!value.empty() && value.validate())
-          track [ ATTRIBUTE_TITLE ] = value; 
-
-      value = (file->tag()->genre().to8Bit (true));
-      if (!value.empty() && value.validate())
-          track [ ATTRIBUTE_GENRE ] = value;
-
-      value = (file->tag()->comment().to8Bit (true));
-      if (!value.empty() && value.validate())
-          track [ ATTRIBUTE_COMMENT ] = value;
+      track [ ATTRIBUTE_ARTIST ] = (file->tag()->artist().to8Bit (true));
+      track [ ATTRIBUTE_ALBUM ] = (file->tag()->album().to8Bit (true));
+      track [ ATTRIBUTE_TITLE ] = (file->tag()->title().to8Bit (true));
+      track [ ATTRIBUTE_GENRE ] = (file->tag()->genre().to8Bit (true));
+      track [ ATTRIBUTE_COMMENT ] =(file->tag()->comment().to8Bit (true));
 
       if (file->audioProperties())
       {

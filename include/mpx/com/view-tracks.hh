@@ -261,12 +261,6 @@ namespace Tracks
                 if( order_date_b < order_date_a )
                     return false ;
 
-                if( order_track[0] < order_track[1] )
-                    return true ;
-
-                if( order_track[1] < order_track[0] )
-                    return false ;
-
                 if( order_album_a < order_album_b )
                     return true ;
 
@@ -284,6 +278,12 @@ namespace Tracks
                 	if( discnr_b < discnr_a )
 	                    return false ;
 		}
+
+                if( order_track[0] < order_track[1] )
+                    return true ;
+
+                if( order_track[1] < order_track[0] )
+                    return false ;
 
                 return false ;
             }

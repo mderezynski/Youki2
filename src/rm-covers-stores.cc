@@ -357,47 +357,26 @@ namespace RM
 
 			    if( frame )
 			    {
-				TagLib::ID3v2::AttachedPictureFrame const* picture =
-				    dynamic_cast<TagLib::ID3v2::AttachedPictureFrame const*>(frame);
+				TagLib::ByteVector ID = frame->frameID() ;
 
-				if(!picture)
-				    picture = dynamic_cast<TagLib::ID3v2::AttachedPictureFrameV22 const*>(frame);
-
-				if( picture ) 
+				if( ID == "APIC" )  
 				{
+				    g_message("%s: Have APIC frame", G_STRLOC) ;
+
+				    TagLib::ID3v2::AttachedPictureFrame const* picture = dynamic_cast<TagLib::ID3v2::AttachedPictureFrame const*>(frame) ;
+
 				    std::string mimetype = picture->mimeType().toCString(true) ;
 				    ByteVector picdata = picture->picture() ;
-				    Glib::RefPtr<Gdk::PixbufLoader> loader ; 
-
-				    g_message("%s: APIC MIME: %s", G_STRLOC, picture->toString().toCString(true)) ; 
 
 				    try{
-					if( mimetype.empty()) {
-					    loader = Gdk::PixbufLoader::create("jpeg",false);
-					}
-
-					loader->write (reinterpret_cast<const guint8*>(picdata.data()), picdata.size());
+					auto loader = Gdk::PixbufLoader::create(mimetype,true) ;
+					loader->write ((guint8*)(picdata.data()), picdata.size());
 					loader->close ();
-
 					cover = loader->get_pixbuf();
-
 					g_message("InlineCovers: Got cover for MBID ['%s']", rq.mbid.c_str()) ;
 
 				    } catch( Gdk::PixbufError& cxe)
 				    {
-					try{
-					    loader = Gdk::PixbufLoader::create("png",false);
-
-					    loader->write (reinterpret_cast<const guint8*>(picdata.data()), picdata.size());
-					    loader->close ();
-
-					    cover = loader->get_pixbuf();
-
-					    g_message("InlineCovers: Got cover for MBID ['%s']", rq.mbid.c_str()) ;
-					} catch( Gdk::PixbufError& cxe )
-					{
-					    g_message("%s: Pixbuf Error: %s", G_STRLOC, cxe.what().c_str()) ;
-					}
 				    }
 				}
 			    }

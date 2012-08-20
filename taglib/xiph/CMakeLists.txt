@@ -21,4 +21,5 @@ SET_TARGET_PROPERTIES(mpx_xiph_reader
 TARGET_LINK_LIBRARIES(mpx_xiph_reader
   ${TAGLIB_LIBRARIES}
   ${GLIBMM_LIBRARIES}
+  mpx-taglib-gio
 )

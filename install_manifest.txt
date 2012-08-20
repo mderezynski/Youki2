@@ -1,8 +1,8 @@
 /usr/lib/pkgconfig/mpx.pc
 /usr/share/man/man1/mpx.1
-/usr/share/dbus-1/services/info.backtrace.youki.sentinel.service
 /usr/share/dbus-1/services/info.backtrace.youki.app.service
 /usr/share/dbus-1/services/info.backtrace.youki.mlibman.service
+/usr/share/dbus-1/services/info.backtrace.youki.sentinel.service
 /usr/share/locale/sv/LC_MESSAGES/youki.mo
 /usr/lib/libmpx-parsers.so.0.0
 /usr/lib/libmpx-parsers.so.0

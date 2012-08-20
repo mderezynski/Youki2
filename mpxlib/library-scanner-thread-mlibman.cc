@@ -401,7 +401,7 @@ MPX::LibraryScannerThread_MLibMan::LibraryScannerThread_MLibMan(
 , m_SQL(new SQL::SQLDB(*((m_Library_MLibMan.get_sql_db()))))
 #ifdef HAVE_HAL
 , m_HAL( *(services->get<IHAL>("mpx-service-hal").get()) )
-, m_TagLib( *(services->get<MetadataReaderTagLib>("mpx-service-taglib").get()) )
+, m_TagLib((services->get<MetadataReaderTagLib>("mpx-service-taglib").get()))
 #endif // HAVE_HAL
 , m_Flags(flags)
 {
@@ -1518,7 +1518,7 @@ MPX::LibraryScannerThread_MLibMan::insert_file_no_mtime_check(
             return ;
         }
 
-        if( !m_TagLib.get( uri, t )) // Failed to read metadata at all?
+        if( !m_TagLib->get( uri, t )) // Failed to read metadata at all?
         {
             // If so, the track is erroneous
             add_erroneous_track( uri, _("Could not acquire metadata (using taglib-gio)")) ;
@@ -2031,6 +2031,7 @@ MPX::LibraryScannerThread_MLibMan::do_remove_dangling ()
 
     for( auto id : r )
     {
+	pthreaddata->Message.emit((boost::format(_("Deleting Artist '%u'")) % id).str()) ; 
 	sql.exec_sql((delete_f % "artist" % id).str()) ;
 	pthreaddata->EntityDeleted( id, ENTITY_ARTIST ) ;
     }
@@ -2053,6 +2054,7 @@ MPX::LibraryScannerThread_MLibMan::do_remove_dangling ()
 
     for( auto id : r )
     {
+	pthreaddata->Message.emit((boost::format(_("Deleting Album '%u'")) % id).str()) ; 
 	sql.exec_sql((delete_f % "album" % id).str()) ;
 	pthreaddata->EntityDeleted( id, ENTITY_ALBUM ) ;
     }
@@ -2075,6 +2077,7 @@ MPX::LibraryScannerThread_MLibMan::do_remove_dangling ()
 
     for( auto id : r )
     {
+	pthreaddata->Message.emit((boost::format(_("Deleting AlbumArtist '%u'")) % id).str()) ; 
 	sql.exec_sql((delete_f % "album_artist" % id).str()) ;
 	pthreaddata->EntityDeleted( id, ENTITY_ALBUM_ARTIST ) ;
     }

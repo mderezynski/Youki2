@@ -179,10 +179,11 @@ Frame *FrameFactory::createFrame(const ByteVector &origData, Header *tagHeader) 
 
   if(frameID == "APIC") {
     AttachedPictureFrame *f = new AttachedPictureFrame(data, header);
-    d->setTextEncoding(f);
+    //d->setTextEncoding(f);
     return f;
   }
 
+/*
   // ID3v2.2 Attached Picture
 
 	if(frameID == "PIC") {
@@ -190,6 +191,7 @@ Frame *FrameFactory::createFrame(const ByteVector &origData, Header *tagHeader) 
     d->setTextEncoding(f);
     return f;
   }
+*/
 
 	// Relative Volume Adjustment (frames 4.11)
 

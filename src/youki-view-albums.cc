@@ -730,7 +730,7 @@ namespace Albums
 		if (animation_alpha < 1)
 		{
 		    cairo->save() ;
-		    cairo->set_source(m_image_disc, 0, -80);
+		    cairo->set_source(m_image_disc, 0, -40);
 		    RoundedRectangle(
 			  cairo
 			, 5 
@@ -823,7 +823,7 @@ namespace Albums
 	    if( album->caching )
 	    {
 		cairo->save() ;
-		cairo->translate(14,12) ;
+		cairo->translate(228,12) ;
 		Gdk::Cairo::set_source_pixbuf(
 		      cairo
 		    , m_image_album_loading_iter->get_pixbuf()
@@ -979,7 +979,7 @@ namespace Albums
 
 	    if(WithinPast3Days( album->insert_date ))
 	    {
-		Util::draw_cairo_image( cairo, m_image_new, 228, 8 );
+		Util::draw_cairo_image( cairo, m_image_new, -1, 10 );
 	    }
 
 	    cairo->restore() ;
@@ -1016,7 +1016,7 @@ namespace Albums
 		{
 		    guint d = (vadj_value() + m_y_old) / ViewMetrics.RowHeight;
 
-		    if( !m_selection || (boost::get<Selection::INDEX>(m_selection.get()) != d))
+		    if( !m_selection || (boost::get<Selection::INDEX>(*m_selection) != d))
 		    {
 			if( ModelExtents( d ))
 			{
@@ -1489,7 +1489,6 @@ namespace Albums
 	    guint d_max   = std::min<guint>( m_model->size(), ViewMetrics.ViewPort.size() + 1 );
 	    gint  ypos	  = 0;
 	    gint  offset  = ViewMetrics.ViewPortPx.upper() - (d*ViewMetrics.RowHeight);
-//	    guint ibar    = d ;
 	   
 	    if( offset )
 	    {
@@ -1554,6 +1553,41 @@ namespace Albums
 		    , MPX::CairoCorners::CORNERS(0)
 		) ;
 	    }
+
+#if 0
+	    if((m_model->size() > 1))
+	    {
+		const int text_size_px = 14 ;
+		const int text_size_pt = static_cast<int> ((text_size_px * 72)
+					/ Util::screen_get_y_resolution(Gdk::Screen::get_default())) ;
+
+		Pango::FontDescription font_desc ;
+		Glib::RefPtr<Pango::Layout> layout = Glib::wrap( pango_cairo_create_layout(cairo->cobj())) ;
+
+		font_desc = get_style_context()->get_font();
+		font_desc.set_size( text_size_pt * PANGO_SCALE );
+		font_desc.set_stretch( Pango::STRETCH_EXTRA_CONDENSED );
+		font_desc.set_weight( Pango::WEIGHT_BOLD );
+
+		layout->set_font_description( font_desc );
+		layout->set_ellipsize( Pango::ELLIPSIZE_END );
+		layout->set_width((get_allocated_width() - 8) * PANGO_SCALE);
+
+		if(offset)
+		    layout->set_text( m_model->row(ViewMetrics.ViewPort.upper()+1)->album_artist ) ;
+	    
+		int width, height ;
+		layout->get_pixel_size( width, height );
+
+		cairo->rectangle(0,0,get_allocated_width(), height+8 ) ;
+		cairo->set_source_rgba(0,0,0,.8) ;
+		cairo->fill() ;
+
+		cairo->move_to( 4, 4 ) ;
+		cairo->set_source_rgba(1,1,1,1) ;
+		pango_cairo_show_layout(cairo->cobj(), layout->gobj()) ;
+	    }
+#endif
 
 	    if( !is_sensitive() )
 	    {

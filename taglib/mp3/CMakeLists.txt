@@ -18,6 +18,7 @@ TARGET_LINK_LIBRARIES(taglib_plugin_mp3
   ${GLIBMM_LIBRARIES}
   mpx_id3v2_reader
   mpx_common_reader
+  mpx-taglib-gio
 )
 
 INSTALL(TARGETS taglib_plugin_mp3 LIBRARY DESTINATION ${MPX_PLUGIN_DIR}/taglib)

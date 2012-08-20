@@ -274,6 +274,7 @@ namespace MPX
 	    Gtk::Label			    * m_InfoLabel ; 
 	    Gtk::Button			    * m_BTN_SHUFFLE ;
 	    std::array<Glib::RefPtr<Gdk::Pixbuf>,3> m_pin ;
+	    boost::optional<std::string>      m_pinned_query ;
 
 	    ResourceManager<MPX::RM::AlbumImage> m_covers ;
 

@@ -4,6 +4,7 @@
 #include <future>
 #include <ratio>
 #include <ctime>
+#include <unordered_map>
 
 #include <glibmm/ustring.h>
 #include <gtk/gtk.h>
@@ -30,8 +31,13 @@
 #include "xmlcpp/xsd-artist-toptracks-2.0.hxx"
 #include "xmlcpp/xsd-tag-toptracks-2.0.hxx"
 
+#include "mpx/mpx-main.hh"
+#include "src/library.hh"
+
 namespace
 {
+    using namespace MPX ;
+
     boost::optional<time_t>
     parse_date(
 	  const std::string& value
@@ -206,6 +212,31 @@ namespace
 
 	return MPX::OVariant(s) ;
     }
+
+    MPX::OVariant
+    _duplicates(
+	  const std::string& value
+    )
+    {
+	g_message("value: %s", value.c_str()) ;
+
+	auto lib = services->get<MPX::Library>("mpx-service-library");
+
+	MPX::SQL::RowV v ;
+	MPX::StrS s ;
+
+	lib->getSQL( v, mprintf("SELECT %s FROM (SELECT %s, count(*) AS c FROM track_view GROUP BY %s) X WHERE c > 1",value.c_str(),value.c_str(),value.c_str())) ; 
+
+	for( auto r : v )
+	{
+	    const std::string& rval = boost::get<std::string>(r[value]) ; 
+	    s.insert(rval) ; 
+
+	    g_message("rval: %s", rval.c_str()) ;
+	}
+
+	return MPX::OVariant(s) ;
+    } 
 }
 
 namespace
@@ -257,6 +288,44 @@ namespace
 		c.GetValue = sigc::ptr_fun( &_lastfm_artist_toptracks ) ;	
                 constraints.push_back(c) ;
             }
+	    else
+	    if( attribute == "duplicates" )
+	    {
+		auto lib = services->get<MPX::Library>("mpx-service-library");
+
+		MPX::SQL::RowV v ;
+		MPX::StrS s ;
+
+		lib->getSQL( v, mprintf("SELECT %s FROM (SELECT %s, count(*) AS c FROM track_view GROUP BY %s) X WHERE c > 1",value.c_str(),value.c_str(),value.c_str())) ; 
+
+		for( auto r : v )
+		{
+		    const std::string& rval = boost::get<std::string>(r[value]) ; 
+		    s.insert(rval) ; 
+		}
+
+		std::unordered_map<std::string, int> att_m ; 
+
+		att_m.insert(std::make_pair("title",ATTRIBUTE_TITLE)) ;
+		att_m.insert(std::make_pair("album",ATTRIBUTE_ALBUM)) ;
+		att_m.insert(std::make_pair("artist",ATTRIBUTE_ARTIST)) ;
+
+		auto i = att_m.find(value) ;
+
+		if( i != std::end(att_m))
+		{
+/*
+		    c.TargetAttr = i->second ;
+		    c.Processing = CONSTRAINT_PROCESSING_ASYNC ;
+		    c.SourceValue = value ;
+		    c.GetValue = sigc::ptr_fun( &_duplicates ) ;	
+*/
+		    c.TargetAttr    = i->second ;
+		    c.TargetValue   = s ;
+
+		    constraints.push_back(c) ;
+		}
+	    }
             else
             if( attribute == "artists-similar-to" )
             {
@@ -547,7 +616,7 @@ namespace AQE
 	  Constraints_t&	    constraints
     )
     {
-	for( auto& c : constraints ) 
+	for( auto c : constraints ) 
 	{
 	    if( c.Processing == CONSTRAINT_PROCESSING_ASYNC )
 	    {
@@ -923,7 +992,7 @@ namespace AQE
         , const MPX::Track_sp&  t
     )
     {
-        const MPX::Track& track = *(t.get()) ;
+        const MPX::Track& track = *t ;
 
         g_return_val_if_fail(track.has(c.TargetAttr), false) ;
 

@@ -68,12 +68,15 @@ public:
   GFile * file;
   const char *uri;
   const char *name;
-  GFileInputStream * istream;
+  GInputStream * istream;
   GFileOutputStream * ostream;
   bool readOnly;
   bool valid;
   ulong size;
-  static const uint bufferSize = 1024;
+  static const uint bufferSize = 4096 ;
+
+  char * _contents ;
+  gsize  _size ;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -103,7 +106,13 @@ File::File(const char *uri)
     }
 
     GError * error = 0;
+
+/*
     d->istream = g_file_read(d->file, NULL, &error);
+*/
+
+    g_file_load_contents(d->file, NULL, &(d->_contents), &(d->_size), NULL, NULL) ;
+    d->istream = g_memory_input_stream_new_from_data(d->_contents, d->_size, g_free) ;
 
     if( error )
     {
@@ -136,7 +145,7 @@ File::File(const char *uri)
 
     g_object_unref( info );
 
-    if(!G_IS_FILE_INPUT_STREAM(d->istream))
+    if(!G_IS_INPUT_STREAM(d->istream))
     {
         debug("Could not get IStream for: '" + String(uri)) ;
         if(error)
@@ -147,7 +156,7 @@ File::File(const char *uri)
         }
     }
 
-    if(!G_IS_FILE_OUTPUT_STREAM(d->ostream))
+    if(!G_IS_OUTPUT_STREAM(d->ostream))
     {
         debug("Could not get OStream for: '" + String(uri)) ;
         if(error)
@@ -187,7 +196,7 @@ char const* File::uri() const
 
 ByteVector File::readBlock(ulong length)
 {
-  if(!G_IS_FILE_INPUT_STREAM(d->istream))
+  if(!G_IS_INPUT_STREAM(d->istream))
   {
     debug("File::readBlock() -- Invalid File");
     return ByteVector::null;
@@ -222,7 +231,7 @@ ByteVector File::readBlock(ulong length)
 
 void File::writeBlock(const ByteVector &data)
 {
-  if(!G_IS_FILE_INPUT_STREAM(d->istream))
+  if(!G_IS_INPUT_STREAM(d->istream))
     return;
 
   if(d->readOnly) {
@@ -249,7 +258,7 @@ void File::writeBlock(const ByteVector &data)
 
 long File::find(const ByteVector &pattern, long fromOffset, const ByteVector &before)
 {
-  if(!G_IS_FILE_INPUT_STREAM(d->istream) || pattern.size() > d->bufferSize)
+  if(!G_IS_INPUT_STREAM(d->istream) || pattern.size() > d->bufferSize)
       return -1;
 
   // The position in the file that the current buffer starts at.
@@ -348,7 +357,7 @@ long File::find(const ByteVector &pattern, long fromOffset, const ByteVector &be
 
 long File::rfind(const ByteVector &pattern, long fromOffset, const ByteVector &before)
 {
-  if(!G_IS_FILE_INPUT_STREAM(d->istream) || pattern.size() > d->bufferSize)
+  if(!G_IS_INPUT_STREAM(d->istream) || pattern.size() > d->bufferSize)
       return -1;
 
   // The position in the file that the current buffer starts at.
@@ -414,7 +423,7 @@ long File::rfind(const ByteVector &pattern, long fromOffset, const ByteVector &b
 
 void File::insert(const ByteVector &data, ulong start, ulong replace)
 {
-  if(!G_IS_FILE_INPUT_STREAM(d->istream))
+  if(!G_IS_INPUT_STREAM(d->istream))
     return;
 
   if(data.size() == replace) {
@@ -655,7 +664,7 @@ bool File::isValid() const
 
 void File::seek(long offset, Position p)
 {
-  if(!G_IS_FILE_INPUT_STREAM(d->istream))
+  if(!G_IS_INPUT_STREAM(d->istream))
   {
     debug("File::seek() -- trying to seek in a file that isn't opened.");
     return;
@@ -719,7 +728,7 @@ long File::length()
   if(!G_IS_FILE(d->file))
     return 0;
 
-  if(!G_IS_FILE_INPUT_STREAM(d->istream))
+  if(!G_IS_INPUT_STREAM(d->istream))
     return 0;
 
   GError * error = 0;

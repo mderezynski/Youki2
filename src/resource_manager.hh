@@ -108,7 +108,7 @@ private:
 		if(!m_results.empty())
 		{
 		    // Schedule update and notification in run in main thread
-		    Glib::signal_timeout().connect(sigc::mem_fun (this, &ResourceRetriever::notify), 400);
+		    Glib::signal_idle().connect(sigc::mem_fun (this, &ResourceRetriever::notify), 400);
 		}
             }
 
@@ -120,7 +120,7 @@ private:
     {
 	guint counter = 0 ;
 
-        while (counter<10 && !m_results.empty ()) {
+        while (/*counter<10 && */ !m_results.empty ()) {
             // Get object in retrieval queue
             auto result = m_results.front ();
             m_results.pop ();
@@ -135,7 +135,7 @@ private:
 	    ++counter ;
         }
 
-	return !m_results.empty() ;
+	return false; // !m_results.empty() ;
     }
 };
 

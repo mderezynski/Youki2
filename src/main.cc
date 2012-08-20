@@ -271,6 +271,7 @@ int main(int argc, char ** argv)
     p->Start() ;
     services->add(boost::shared_ptr<info::backtrace::Youki::MLibMan_proxy_actual>( p ));
 
+try{
     splash->set_message(_("Starting Library"),3/10.);
     services->add(boost::shared_ptr<Library>(new MPX::Library));
 
@@ -285,6 +286,10 @@ int main(int argc, char ** argv)
 
     splash->set_message(_("Starting Youki..."),7.5/10.);
     services->add(boost::shared_ptr<YoukiController>(new YoukiController ));
+} catch( std::exception& cxe )
+{
+    g_message("%s: exception: %s", G_STRLOC, cxe.what()) ;
+}
 
     splash->set_message(_("Starting Plugins..."),8/10.);
     services->add(boost::shared_ptr<PluginManager>(new MPX::PluginManager));
@@ -303,8 +308,6 @@ int main(int argc, char ** argv)
     delete splash;
 
     gtk->run() ;
-
-//    services->get<Covers>("mpx-service-covers")->finish() ;
 
     delete services ;
     delete mcs ;

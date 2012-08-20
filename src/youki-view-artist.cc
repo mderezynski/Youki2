@@ -554,8 +554,9 @@ namespace Artist
 		, m_rounding 
 	    ) ;
 	    cairo->set_source(surface, 0, -18) ;
-	    cairo->clip() ;
-	    cairo->paint_with_alpha(animation_alpha) ;
+	    //cairo->clip() ;
+	    //cairo->paint_with_alpha(animation_alpha) ;
+	    cairo->fill() ;
 	    cairo->restore() ;
 
 	    //////////
@@ -1860,7 +1861,7 @@ namespace Artist
 	    m_SearchWindow->add( *m_SearchEntry ) ;
 	    m_SearchEntry->show() ;
 
-	    Glib::signal_timeout().connect( sigc::bind_return( sigc::mem_fun( *this, &Gtk::Widget::queue_draw), true), 30) ;
+//	    Glib::signal_timeout().connect( sigc::bind_return( sigc::mem_fun( *this, &Gtk::Widget::queue_draw), true), 30) ;
 	}
 }
 }

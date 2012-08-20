@@ -64,11 +64,13 @@ namespace
     if(frameID.size() != 4)
       return false;
 
+#if 0
     for(ByteVector::ConstIterator it = frameID.begin(); it != frameID.end(); it++) {
       if( (*it < 'A' || *it > 'Z') && (*it < '1' || *it > '9') ) {
         return false;
       }
     }
+#endif
     return true;
   }
 }

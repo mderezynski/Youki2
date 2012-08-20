@@ -18,6 +18,7 @@ TARGET_LINK_LIBRARIES(taglib_plugin_ogg
   ${GLIBMM_LIBRARIES}
   mpx_xiph_reader
   mpx_common_reader
+  mpx-taglib-gio
 )
 
 INSTALL(TARGETS taglib_plugin_ogg LIBRARY DESTINATION ${MPX_PLUGIN_DIR}/taglib)

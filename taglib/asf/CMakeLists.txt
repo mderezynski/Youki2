@@ -30,6 +30,7 @@ TARGET_LINK_LIBRARIES(taglib_plugin_asf
   ${TAGLIB_LIBRARIES}
   ${GLIBMM_LIBRARIES}
   mpx_common_reader
+  mpx-taglib-gio
 )
 
 INSTALL(TARGETS taglib_plugin_asf LIBRARY DESTINATION ${MPX_PLUGIN_DIR}/taglib)
